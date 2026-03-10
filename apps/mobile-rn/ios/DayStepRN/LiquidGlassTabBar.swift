@@ -1,8 +1,11 @@
 /**
- * LiquidGlassTabBar — Phase 1
- * iOS 26+: SwiftUI .glassEffect(in: RoundedRectangle) 네이티브 탭바
- *          RN Animated.View가 높이 변경 → Spacer 자동 확장 → 글래스 효과도 확장
+ * LiquidGlassTabBar — Phase 2
+ * iOS 26+: SwiftUI glassEffectID + @Namespace 매칭 기하학 모프
+ *          축소(탭바) ↔ 확장(패널+탭바) 글래스 모프 전환
  * iOS 25-: JS 폴백 (GlassBackground) 사용 — 이 파일의 뷰는 렌더링 안됨
+ *
+ * 핵심: FuelCard 패턴 — ObservableObject + setupOnce() + @Namespace 유지
+ *       → glassEffectID("tabbar") 로 축소/확장 간 자동 모프
  */
 
 import Foundation
@@ -15,6 +18,14 @@ struct TabItem {
   let sfSymbol: String
 }
 
+// MARK: - Menu Item Data
+struct MoreMenuItem: Equatable {
+  let label: String
+  let sfSymbol: String
+  let screenName: String
+  let isActive: Bool
+}
+
 // MARK: - Observable State (UIHostingController 재생성 방지)
 class TabBarState: ObservableObject {
   @Published var tabs: [TabItem] = []
@@ -22,6 +33,12 @@ class TabBarState: ObservableObject {
   @Published var primaryColor: Color = Color(hex: "#F97316")
   /// Timer progress 0~1 when active, -1 when inactive
   @Published var timerProgress: Double = -1
+  /// MorePanel 확장 상태
+  @Published var isExpanded: Bool = false
+  /// MorePanel 메뉴 아이템
+  @Published var menuItems: [MoreMenuItem] = []
+  /// 그리드 라벨 표시 여부
+  @Published var showLabels: Bool = true
 }
 
 // MARK: - SwiftUI View (iOS 26+)
@@ -29,95 +46,231 @@ class TabBarState: ObservableObject {
 struct LiquidGlassTabBarContent: View {
   @ObservedObject var state: TabBarState
   var onTabPress: ((Int) -> Void)?
+  var onMenuItemPress: ((String) -> Void)?
+  var onToggleLabels: ((Bool) -> Void)?
+  var onHeightChange: ((CGFloat) -> Void)?
+
+  @Namespace private var morphNamespace
   @State private var morphScale: CGFloat = 1.0
   @State private var morphWhite: CGFloat = 0.0
 
   var body: some View {
+    Group {
+      if state.isExpanded {
+        expandedView
+          .glassEffect(in: RoundedRectangle(cornerRadius: 32))
+          .glassEffectID("tabbar", in: morphNamespace)
+      } else {
+        collapsedView
+          .glassEffect(in: RoundedRectangle(cornerRadius: 32))
+          .glassEffectID("tabbar", in: morphNamespace)
+      }
+    }
+    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isExpanded)
+    .background {
+      GeometryReader { geo in
+        Color.clear
+          .onAppear { emitHeight(geo.size.height) }
+          .onChange(of: geo.size.height) { newH in emitHeight(newH) }
+          .onChange(of: state.isExpanded) { _ in
+            // 애니메이션 완료 후 높이 재보고
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+              emitHeight(geo.size.height)
+            }
+          }
+      }
+    }
+  }
+
+  private func emitHeight(_ h: CGFloat) {
+    onHeightChange?(h)
+  }
+
+  // MARK: - Collapsed View (탭 아이콘만)
+  private var collapsedView: some View {
     ZStack(alignment: .bottom) {
-      Color.clear  // glass 효과 영역 확보 (확장 시 전체 커버)
+      Color.clear
 
-      // 하단 탭 아이콘 행 (항상 하단 고정)
-      HStack(spacing: 0) {
-        ForEach(Array(state.tabs.enumerated()), id: \.offset) { index, tab in
-          let isSelected = index == state.selectedIndex
-          let iconColor = isSelected
-            ? state.primaryColor
-            : Color(red: 0.612, green: 0.639, blue: 0.686)
-          let showTimerRing = index == 2 && state.timerProgress >= 0
+      tabIconRow
+        .background {
+          GeometryReader { geo in
+            let count = max(state.tabs.count, 1)
+            let tabWidth = geo.size.width / CGFloat(count)
+            RoundedRectangle(cornerRadius: 22)
+              .fill(Color.white.opacity(morphWhite))
+              .glassEffect(in: RoundedRectangle(cornerRadius: 22))
+              .frame(width: tabWidth - 8, height: geo.size.height)
+              .scaleEffect(morphScale)
+              .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 0)
+          }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
+        .onChange(of: state.selectedIndex) { _ in
+          withAnimation(.easeOut(duration: 0.15)) {
+            morphScale = 1.4
+            morphWhite = 0.15
+          }
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
+              morphScale = 1.0
+              morphWhite = 0.0
+            }
+          }
+        }
+        .frame(height: 44)
+        .padding(.bottom, 6)
+    }
+    .frame(maxWidth: .infinity)
+    .frame(height: 56)
+  }
 
-          Button {
-            onTabPress?(index)
-          } label: {
-            VStack(spacing: 4) {
-              if showTimerRing {
-                ZStack {
-                  Circle()
-                    .stroke(Color(red: 0.898, green: 0.906, blue: 0.922), lineWidth: 3)
-                    .frame(width: 24, height: 24)
-                  Circle()
-                    .trim(from: 0, to: CGFloat(min(max(state.timerProgress, 0), 1)))
-                    .stroke(iconColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 24, height: 24)
+  // MARK: - Expanded View (헤더 + 그리드 + 탭 아이콘)
+  private var expandedView: some View {
+    VStack(spacing: 0) {
+      // 헤더: "더 보기" + 이름 토글
+      HStack {
+        Text("더 보기")
+          .font(.system(size: 15, weight: .semibold))
+          .foregroundColor(Color(red: 0.122, green: 0.161, blue: 0.216))
+
+        Spacer()
+
+        HStack(spacing: 6) {
+          Text("이름")
+            .font(.system(size: 13, weight: .medium))
+            .foregroundColor(state.showLabels ? state.primaryColor : Color(red: 0.612, green: 0.639, blue: 0.686))
+
+          Toggle("", isOn: Binding(
+            get: { state.showLabels },
+            set: { newVal in onToggleLabels?(newVal) }
+          ))
+          .toggleStyle(SwitchToggleStyle(tint: state.primaryColor))
+          .scaleEffect(0.75)
+          .frame(width: 40)
+        }
+      }
+      .padding(.horizontal, 16)
+      .padding(.top, 14)
+      .padding(.bottom, 8)
+
+      // 5열 아이콘 그리드
+      menuGrid
+
+      // 하단 탭 아이콘 행
+      tabIconRow
+        .frame(height: 44)
+        .padding(.bottom, 6)
+    }
+    .frame(maxWidth: .infinity)
+  }
+
+  // MARK: - Menu Grid (5열 SF Symbol)
+  private var menuGrid: some View {
+    let columns = 5
+    let rows = stride(from: 0, to: state.menuItems.count, by: columns).map { startIdx in
+      Array(state.menuItems[startIdx..<min(startIdx + columns, state.menuItems.count)])
+    }
+
+    return VStack(spacing: 8) {
+      ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+        HStack(spacing: 0) {
+          ForEach(Array(row.enumerated()), id: \.offset) { _, item in
+            Button {
+              onMenuItemPress?(item.screenName)
+            } label: {
+              VStack(spacing: state.showLabels ? 4 : 0) {
+                Image(systemName: item.sfSymbol)
+                  .font(.system(size: 24, weight: .regular))
+                  .foregroundColor(
+                    item.isActive
+                      ? state.primaryColor
+                      : Color(red: 0.612, green: 0.639, blue: 0.686)
+                  )
+                  .frame(height: 24)
+
+                if state.showLabels {
+                  Text(item.label)
+                    .font(.system(size: 10))
+                    .foregroundColor(
+                      item.isActive
+                        ? state.primaryColor
+                        : Color(red: 0.420, green: 0.451, blue: 0.502)
+                    )
+                    .lineLimit(1)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
+              }
+              .frame(maxWidth: .infinity)
+              .padding(.vertical, state.showLabels ? 8 : 6)
+            }
+            .buttonStyle(.plain)
+          }
+
+          // 빈 셀 채우기
+          if row.count < columns {
+            ForEach(0..<(columns - row.count), id: \.self) { _ in
+              Color.clear
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, state.showLabels ? 8 : 6)
+            }
+          }
+        }
+      }
+    }
+    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: state.showLabels)
+  }
+
+  // MARK: - Tab Icon Row (공통)
+  private var tabIconRow: some View {
+    HStack(spacing: 0) {
+      ForEach(Array(state.tabs.enumerated()), id: \.offset) { index, tab in
+        let isSelected = index == state.selectedIndex
+        let iconColor = isSelected
+          ? state.primaryColor
+          : Color(red: 0.612, green: 0.639, blue: 0.686)
+        let showTimerRing = index == 2 && state.timerProgress >= 0
+
+        Button {
+          onTabPress?(index)
+        } label: {
+          VStack(spacing: 4) {
+            if showTimerRing {
+              ZStack {
+                Circle()
+                  .stroke(Color(red: 0.898, green: 0.906, blue: 0.922), lineWidth: 3)
+                  .frame(width: 24, height: 24)
+                Circle()
+                  .trim(from: 0, to: CGFloat(min(max(state.timerProgress, 0), 1)))
+                  .stroke(iconColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                  .rotationEffect(.degrees(-90))
+                  .frame(width: 24, height: 24)
+              }
+              .frame(height: 24)
+              .animation(
+                .spring(response: 0.3, dampingFraction: 0.8),
+                value: state.timerProgress
+              )
+            } else {
+              Image(systemName: tab.sfSymbol)
+                .font(.system(
+                  size: 22,
+                  weight: isSelected ? .semibold : .regular
+                ))
+                .foregroundColor(iconColor)
                 .frame(height: 24)
                 .animation(
                   .spring(response: 0.3, dampingFraction: 0.8),
-                  value: state.timerProgress
+                  value: state.selectedIndex
                 )
-              } else {
-                Image(systemName: tab.sfSymbol)
-                  .font(.system(
-                    size: 22,
-                    weight: isSelected ? .semibold : .regular
-                  ))
-                  .foregroundColor(iconColor)
-                  .frame(height: 24)
-                  .animation(
-                    .spring(response: 0.3, dampingFraction: 0.8),
-                    value: state.selectedIndex
-                  )
-              }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
           }
-          .buttonStyle(.plain)
-          .accessibilityIdentifier("tab_\(tab.name)")
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 10)
         }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("tab_\(tab.name)")
       }
-      .background {
-        GeometryReader { geo in
-          let count = max(state.tabs.count, 1)
-          let tabWidth = geo.size.width / CGFloat(count)
-          RoundedRectangle(cornerRadius: 22)
-            .fill(Color.white.opacity(morphWhite))
-            .glassEffect(in: RoundedRectangle(cornerRadius: 22))
-            .frame(width: tabWidth - 8, height: geo.size.height)
-            .scaleEffect(morphScale)
-            .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 0)
-        }
-      }
-      .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
-      .onChange(of: state.selectedIndex) { _ in
-        // Phase 1: 확장 + 맑은 유리 (이륙 — white fill로 밝게)
-        withAnimation(.easeOut(duration: 0.15)) {
-          morphScale = 1.4
-          morphWhite = 0.15
-        }
-        // Phase 2: 수축 + 원래 질감 (착지 — fill clear 복귀)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-          withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
-            morphScale = 1.0
-            morphWhite = 0.0
-          }
-        }
-      }
-      .frame(height: 44)
-      .padding(.bottom, 6)  // top: 0, bottom: 6 → 아이콘을 바닥 가까이 배치
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .glassEffect(in: RoundedRectangle(cornerRadius: 32))
   }
 }
 
@@ -126,6 +279,9 @@ class LiquidGlassTabBarUIView: UIView {
 
   // RN Props
   @objc var onTabPress: RCTDirectEventBlock?
+  @objc var onMenuItemPress: RCTDirectEventBlock?
+  @objc var onToggleLabels: RCTDirectEventBlock?
+  @objc var onHeightChange: RCTDirectEventBlock?
 
   private let tabState = TabBarState()
   private var hostingController: UIHostingController<AnyView>?
@@ -159,7 +315,31 @@ class LiquidGlassTabBarUIView: UIView {
     tabState.timerProgress = value.doubleValue
   }
 
-  // MARK: - 1회 초기화
+  @objc func setIsExpanded(_ value: Bool) {
+    tabState.isExpanded = value
+  }
+
+  @objc func setMenuItems(_ value: NSArray) {
+    var items: [MoreMenuItem] = []
+    for item in value {
+      guard
+        let dict = item as? [String: Any],
+        let label = dict["label"] as? String,
+        let sfSymbol = dict["sfSymbol"] as? String,
+        let screenName = dict["screenName"] as? String
+      else { continue }
+      let isActive = dict["isActive"] as? Bool ?? false
+      items.append(MoreMenuItem(label: label, sfSymbol: sfSymbol, screenName: screenName, isActive: isActive))
+    }
+    tabState.menuItems = items
+    setupOnce()
+  }
+
+  @objc func setShowLabels(_ value: Bool) {
+    tabState.showLabels = value
+  }
+
+  // MARK: - 1회 초기화 (@Namespace 유지를 위해 UIHostingController 재생성 금지)
   private func setupOnce() {
     guard !hasSetUp, !tabState.tabs.isEmpty else { return }
     hasSetUp = true
@@ -170,9 +350,21 @@ class LiquidGlassTabBarUIView: UIView {
       return
     }
 
-    let swiftUIView = LiquidGlassTabBarContent(state: tabState) { [weak self] index in
-      self?.onTabPress?(["index": index])
-    }
+    let swiftUIView = LiquidGlassTabBarContent(
+      state: tabState,
+      onTabPress: { [weak self] index in
+        self?.onTabPress?(["index": index])
+      },
+      onMenuItemPress: { [weak self] screenName in
+        self?.onMenuItemPress?(["screenName": screenName])
+      },
+      onToggleLabels: { [weak self] showLabels in
+        self?.onToggleLabels?(["showLabels": showLabels])
+      },
+      onHeightChange: { [weak self] height in
+        self?.onHeightChange?(["height": height])
+      }
+    )
 
     let hc = UIHostingController(rootView: AnyView(swiftUIView))
     hc.view.backgroundColor = .clear
@@ -187,6 +379,14 @@ class LiquidGlassTabBarUIView: UIView {
       hc.view.topAnchor.constraint(equalTo: topAnchor),
       hc.view.bottomAnchor.constraint(equalTo: bottomAnchor),
     ])
+  }
+
+  override var intrinsicContentSize: CGSize {
+    guard let hc = hostingController, bounds.width > 0 else {
+      return CGSize(width: UIView.noIntrinsicMetric, height: 56)
+    }
+    let size = hc.sizeThatFits(in: CGSize(width: bounds.width, height: .greatestFiniteMagnitude))
+    return CGSize(width: UIView.noIntrinsicMetric, height: size.height)
   }
 }
 
