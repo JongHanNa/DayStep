@@ -108,6 +108,12 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isHomeShowingMoreScreen =
     activeHomeScreen != null && MORE_SCREENS.has(activeHomeScreen);
 
+  // More 탭의 nested state에서 현재 활성 화면명 추출
+  const moreRoute = state.routes.find(r => r.name === 'More');
+  const moreNestedState = moreRoute?.state;
+  const activeMoreScreen =
+    moreNestedState?.routes?.[moreNestedState.index ?? 0]?.name;
+
   const tabBarBottom = Math.max(insets.bottom, 8);
 
   // More 패널에서 화면 선택 시
@@ -194,8 +200,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
                 onSelectScreen={handleSelectScreen}
                 onClose={handleClosePanel}
                 primaryColor={primaryColor}
+                activeScreenName={activeMoreScreen}
               />
-              <View style={styles.divider} />
             </View>
           )}
         </Animated.View>
@@ -235,11 +241,9 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
               onClose={handleClosePanel}
               primaryColor={primaryColor}
               onHeightChange={handlePanelHeightChange}
+              activeScreenName={activeMoreScreen}
             />
           )}
-
-          {/* 구분선 (패널 열림 시) */}
-          {morePanelVisible && <View style={styles.divider} />}
 
           {/* 기존 탭 아이콘 행 */}
           <View style={styles.tabRow}>
@@ -452,10 +456,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 0.5,
-  },
-  divider: {
-    height: 1,
-    marginHorizontal: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.06)',
   },
 });

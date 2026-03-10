@@ -25,6 +25,7 @@ interface MorePanelContentProps {
   onClose: () => void;
   primaryColor: string;
   onHeightChange?: (height: number) => void;
+  activeScreenName?: string;
 }
 
 interface MenuItem {
@@ -68,6 +69,7 @@ export function MorePanelContent({
   onClose,
   primaryColor,
   onHeightChange,
+  activeScreenName,
 }: MorePanelContentProps) {
   const [showLabels, setShowLabels] = useState(true);
 
@@ -127,9 +129,18 @@ export function MorePanelContent({
                   onSelectScreen(item.screenName);
                   onClose();
                 }}>
-                <item.Icon size={24} color="#374151" strokeWidth={1.6} />
+                <item.Icon
+                  size={24}
+                  color={item.screenName === activeScreenName ? primaryColor : '#9CA3AF'}
+                  strokeWidth={1.6}
+                />
                 {showLabels && (
-                  <Text style={styles.gridLabel} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.gridLabel,
+                      item.screenName === activeScreenName && {color: primaryColor},
+                    ]}
+                    numberOfLines={1}>
                     {item.label}
                   </Text>
                 )}
