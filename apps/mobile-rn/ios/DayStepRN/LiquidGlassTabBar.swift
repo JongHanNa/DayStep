@@ -31,9 +31,8 @@ struct LiquidGlassTabBarContent: View {
   var onTabPress: ((Int) -> Void)?
 
   var body: some View {
-    VStack(spacing: 0) {
-      // 상단 영역: RN 오버레이 콘텐츠가 차지 (Spacer가 자동 확장)
-      Spacer(minLength: 0)
+    ZStack(alignment: .bottom) {
+      Color.clear  // glass 효과 영역 확보 (확장 시 전체 커버)
 
       // 하단 탭 아이콘 행 (항상 하단 고정)
       HStack(spacing: 0) {
@@ -98,6 +97,7 @@ struct LiquidGlassTabBarContent: View {
       }
       .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
       .frame(height: 44)
+      .padding(.bottom, 10)  // (64-44)/2 = 10pt → 축소 시 수직 중앙
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .glassEffect(in: RoundedRectangle(cornerRadius: 32))
