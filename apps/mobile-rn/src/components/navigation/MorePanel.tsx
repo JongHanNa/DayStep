@@ -4,12 +4,11 @@
  * 부모(CustomTabBar)의 글래스 컨테이너 안에 렌더링됨
  */
 import React, {useEffect} from 'react';
-import {View, Text, Pressable, StyleSheet, Platform} from 'react-native';
+import {View, Text, Pressable, Switch, StyleSheet} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  interpolateColor,
 } from 'react-native-reanimated';
 import {springs} from '@/theme/animations';
 import {useSettingsStore} from '@/stores/settingsStore';
@@ -59,7 +58,7 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 const COLUMNS = 5;
-const HEADER_HEIGHT = 40; // paddingTop 14 + paddingBottom 8 + text ~18
+const HEADER_HEIGHT = 48; // paddingTop 14 + paddingBottom 8 + 축소된 Switch ~26
 const ROW_HEIGHT_WITH_LABEL = 56; // paddingVertical 8*2 + icon 24 + marginTop 4 + label 12
 const ROW_HEIGHT_WITHOUT_LABEL = 44; // paddingVertical 8*2 + icon 24 + some spacing
 const ROW_GAP = 8; // marginBottom
@@ -84,69 +83,16 @@ export function MorePanelContent({
   const showLabels = useSettingsStore(s => s.morePanelShowLabels);
   const setShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
 
-  // 색상/라벨 진행도
+  // 그리드 라벨 애니메이션용 진행도
   const toggleProgress = useSharedValue(showLabels ? 1 : 0);
-  // 모프 전환용: 위치 + 수평 스케일
-  const thumbX = useSharedValue(showLabels ? 12 : 0);
-  const thumbScaleX = useSharedValue(1);
 
   useEffect(() => {
-    const targetX = showLabels ? 12 : 0;
-
-    // ① 수평 팽창 (액체가 늘어나는 느낌)
-    thumbScaleX.value = withSpring(1.3, {damping: 15, stiffness: 400}, () => {
-      // ③ 수축 복원 (도착 후 정착, 살짝 오버슈트)
-      thumbScaleX.value = withSpring(1, {damping: 12, stiffness: 200});
-    });
-
-    // ② 슬라이드 이동 (팽창과 동시에)
-    thumbX.value = withSpring(targetX, {damping: 22, stiffness: 350, mass: 0.5});
-
-    // 색상/라벨 진행도
     toggleProgress.value = withSpring(showLabels ? 1 : 0, springs.snappy);
   }, [showLabels]);
 
   useEffect(() => {
     onHeightChange?.(getMorePanelHeight(showLabels));
   }, [showLabels, onHeightChange]);
-
-  // 토글 트랙 — 글라스 모피즘
-  const trackStyle = useAnimatedStyle(() => {
-    const backgroundColor = interpolateColor(
-      toggleProgress.value,
-      [0, 1],
-      ['rgba(209, 213, 219, 0.5)', `${primaryColor}88`],
-    );
-    const borderColor = interpolateColor(
-      toggleProgress.value,
-      [0, 1],
-      ['rgba(255, 255, 255, 0.3)', `${primaryColor}44`],
-    );
-    return {backgroundColor, borderColor};
-  });
-
-  // 토글 썸 — 모프 전환 (팽창→이동→수축)
-  const thumbStyle = useAnimatedStyle(() => ({
-    transform: [
-      {translateX: thumbX.value},
-      {scaleX: thumbScaleX.value},
-    ],
-  }));
-
-  // inner glow 레이어
-  const innerGlowStyle = useAnimatedStyle(() => ({
-    opacity: toggleProgress.value * 0.3,
-  }));
-
-  // "이름" 텍스트 — 색상 인터폴레이션
-  const labelTextStyle = useAnimatedStyle(() => {
-    const color = interpolateColor(
-      toggleProgress.value,
-      [0, 1],
-      ['#9CA3AF', primaryColor],
-    );
-    return {color};
-  });
 
   // 그리드 라벨 — 페이드 + 슬라이드
   const gridLabelStyle = useAnimatedStyle(() => ({
@@ -173,18 +119,22 @@ export function MorePanelContent({
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>더 보기</Text>
-        <Pressable
-          style={styles.toggleButton}
-          onPress={() => setShowLabels(!showLabels)}
-          hitSlop={8}>
-          <Animated.Text style={[styles.toggleText, labelTextStyle]}>
+        <View style={styles.toggleButton}>
+          <Text
+            style={[
+              styles.toggleText,
+              {color: showLabels ? primaryColor : '#9CA3AF'},
+            ]}>
             이름
-          </Animated.Text>
-          <Animated.View style={[styles.toggleTrack, trackStyle]}>
-            <Animated.View style={[styles.toggleInnerGlow, innerGlowStyle]} />
-            <Animated.View style={[styles.toggleThumb, thumbStyle]} />
-          </Animated.View>
-        </Pressable>
+          </Text>
+          <Switch
+            value={showLabels}
+            onValueChange={v => setShowLabels(v)}
+            trackColor={{false: '#E5E7EB', true: primaryColor + '80'}}
+            thumbColor={showLabels ? primaryColor : '#F3F4F6'}
+            style={{transform: [{scaleX: 0.75}, {scaleY: 0.75}]}}
+          />
+        </View>
       </View>
 
       {/* 아이콘 그리드 */}
@@ -252,39 +202,6 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 13,
     fontWeight: '500',
-  },
-  toggleTrack: {
-    width: 28,
-    height: 16,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 2,
-    borderWidth: 0.5,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    ...(Platform.OS === 'android' ? {elevation: 1} : {}),
-    overflow: 'hidden',
-  },
-  toggleThumb: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.15,
-    shadowRadius: 1.5,
-    ...(Platform.OS === 'android' ? {elevation: 2} : {}),
-  },
-  toggleInnerGlow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
   },
   grid: {
     paddingHorizontal: 0,

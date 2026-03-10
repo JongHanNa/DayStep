@@ -246,6 +246,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
                 onSelectScreen={handleSelectScreen}
                 onClose={handleClosePanel}
                 primaryColor={primaryColor}
+                onHeightChange={handlePanelHeightChange}
                 activeScreenName={activeMoreScreen}
               />
             </View>
