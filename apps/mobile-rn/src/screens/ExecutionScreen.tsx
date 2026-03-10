@@ -27,10 +27,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ChevronRight, Square, Pause, Play, Check, Sparkles} from 'lucide-react-native';
-import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {ChevronRight, Square, Pause, Play, Check, Sparkles, Clock} from 'lucide-react-native';
+import {ScreenContainer, AnimatedPressable, GlassBackground} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {FocusPickerModal} from '@/components/execution/FocusPickerModal';
+import {FocusStatsModal} from '@/components/execution/FocusStatsModal';
 import type {FocusPickerResult} from '@/components/execution/FocusPickerModal';
 import {useHaptic} from '@/hooks/useHaptic';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
@@ -118,33 +119,6 @@ function QuickNotePrompt({
 }
 
 // ============================================
-// Stats Bar
-// ============================================
-
-function StatsBar({bottomInset}: {bottomInset: number}) {
-  const {stats} = usePomodoroStore();
-
-  return (
-    <Animated.View entering={FadeInUp.delay(400).duration(400)} style={[styles.statsBar, {paddingBottom: Math.max(bottomInset, 8) + 16}]}>
-      <View style={styles.statItem}>
-        <Text style={styles.statNumber}>{stats.todaySessions}</Text>
-        <Text style={styles.statLabel}>오늘 집중</Text>
-      </View>
-      <View style={styles.statDivider} />
-      <View style={styles.statItem}>
-        <Text style={styles.statNumber}>{stats.totalFocusTime}분</Text>
-        <Text style={styles.statLabel}>총 시간</Text>
-      </View>
-      <View style={styles.statDivider} />
-      <View style={styles.statItem}>
-        <Text style={styles.statNumber}>{stats.currentStreak}</Text>
-        <Text style={styles.statLabel}>연속</Text>
-      </View>
-    </Animated.View>
-  );
-}
-
-// ============================================
 // Main Screen
 // ============================================
 
@@ -171,8 +145,9 @@ export default function ExecutionScreen() {
 
   const hasActiveSession = timerState.isRunning || timerState.isPaused;
 
-  // FocusPickerModal state
+  // Modal states
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [statsVisible, setStatsVisible] = useState(false);
   const [selectedFocus, setSelectedFocus] = useState<FocusPickerResult | null>(null);
 
   // Celebration / Note prompt
@@ -448,6 +423,22 @@ export default function ExecutionScreen() {
           // IDLE 상태
           // ============================
           <View style={styles.flex}>
+            {/* 상단 헤더: 통계 버튼 */}
+            <Animated.View entering={FadeIn.duration(300)} style={styles.idleHeaderRow}>
+              <AnimatedPressable
+                onPress={() => setStatsVisible(true)}
+                hapticType="light"
+                scaleValue={0.9}
+                style={styles.glassStatsBtn}>
+                <GlassBackground
+                  blurAmount={16}
+                  overlayColor="rgba(255,255,255,0.55)"
+                  style={styles.glassStatsBtnInner}>
+                  <Clock size={20} color="#6B7280" />
+                </GlassBackground>
+              </AnimatedPressable>
+            </Animated.View>
+
             {/* "포커스 >" 텍스트 */}
             <Animated.View entering={FadeIn.duration(300)} style={styles.focusTriggerArea}>
               <AnimatedPressable
@@ -493,8 +484,6 @@ export default function ExecutionScreen() {
               </AnimatedPressable>
             </Animated.View>
 
-            {/* 통계 바 */}
-            <StatsBar bottomInset={insets.bottom} />
           </View>
         )}
 
@@ -510,6 +499,12 @@ export default function ExecutionScreen() {
         visible={pickerVisible}
         onClose={() => setPickerVisible(false)}
         onSelect={handlePickerSelect}
+      />
+
+      {/* FocusStatsModal */}
+      <FocusStatsModal
+        visible={statsVisible}
+        onClose={() => setStatsVisible(false)}
       />
     </ScreenContainer>
   );
@@ -641,31 +636,24 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  // ---- Stats bar ----
-  statsBar: {
+  // ---- Idle header (stats button) ----
+  idleHeaderRow: {
     flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  glassStatsBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  glassStatsBtnInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 20,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: '#E5E7EB',
   },
 
   // ---- Celebration overlay ----

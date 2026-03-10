@@ -84,10 +84,25 @@ export function MorePanelContent({
   const showLabels = useSettingsStore(s => s.morePanelShowLabels);
   const setShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
 
-  // 단일 shared value 드라이버: 0 = OFF, 1 = ON
+  // 색상/라벨 진행도
   const toggleProgress = useSharedValue(showLabels ? 1 : 0);
+  // 모프 전환용: 위치 + 수평 스케일
+  const thumbX = useSharedValue(showLabels ? 12 : 0);
+  const thumbScaleX = useSharedValue(1);
 
   useEffect(() => {
+    const targetX = showLabels ? 12 : 0;
+
+    // ① 수평 팽창 (액체가 늘어나는 느낌)
+    thumbScaleX.value = withSpring(1.3, {damping: 15, stiffness: 400}, () => {
+      // ③ 수축 복원 (도착 후 정착, 살짝 오버슈트)
+      thumbScaleX.value = withSpring(1, {damping: 12, stiffness: 200});
+    });
+
+    // ② 슬라이드 이동 (팽창과 동시에)
+    thumbX.value = withSpring(targetX, {damping: 22, stiffness: 350, mass: 0.5});
+
+    // 색상/라벨 진행도
     toggleProgress.value = withSpring(showLabels ? 1 : 0, springs.snappy);
   }, [showLabels]);
 
@@ -110,9 +125,12 @@ export function MorePanelContent({
     return {backgroundColor, borderColor};
   });
 
-  // 토글 썸 — 스프링 슬라이드
+  // 토글 썸 — 모프 전환 (팽창→이동→수축)
   const thumbStyle = useAnimatedStyle(() => ({
-    transform: [{translateX: toggleProgress.value * 12}],
+    transform: [
+      {translateX: thumbX.value},
+      {scaleX: thumbScaleX.value},
+    ],
   }));
 
   // inner glow 레이어
