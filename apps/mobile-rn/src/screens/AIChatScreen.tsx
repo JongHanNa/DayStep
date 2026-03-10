@@ -14,29 +14,20 @@ import {
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
-import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ScreenContainer} from '@/components/core';
 import {
   Send,
   Sparkles,
   Trash2,
-  ChevronDown,
 } from 'lucide-react-native';
 import {
   useAIPlanningStore,
   type ChatMessage,
-  type AIProvider,
 } from '@/stores/aiPlanningStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
-
-const PROVIDER_LABELS: Record<AIProvider, {label: string; color: string}> = {
-  claude: {label: 'Claude', color: '#D97706'},
-  openai: {label: 'GPT', color: '#10A37F'},
-  groq: {label: 'Groq', color: '#F55036'},
-  gemini: {label: 'Gemini', color: '#4285F4'},
-};
 
 function ChatBubble({message}: {message: ChatMessage}) {
   const isUser = message.role === 'user';
@@ -62,64 +53,6 @@ function ChatBubble({message}: {message: ChatMessage}) {
   );
 }
 
-function ProviderSelector({
-  selected,
-  available,
-  onSelect,
-  visible,
-  onToggle,
-}: {
-  selected: AIProvider;
-  available: AIProvider[];
-  onSelect: (provider: AIProvider) => void;
-  visible: boolean;
-  onToggle: () => void;
-}) {
-  const info = PROVIDER_LABELS[selected];
-
-  return (
-    <View>
-      <TouchableOpacity
-        onPress={onToggle}
-        className="flex-row items-center bg-gray-100 rounded-full px-3 py-1.5">
-        <View
-          className="w-2 h-2 rounded-full mr-1.5"
-          style={{backgroundColor: info.color}}
-        />
-        <Text className="text-xs font-medium text-gray-600">{info.label}</Text>
-        <ChevronDown size={12} color="#9CA3AF" style={{marginLeft: 2}} />
-      </TouchableOpacity>
-
-      {visible && (
-        <Animated.View
-          entering={FadeIn.duration(150)}
-          className="absolute top-10 left-0 bg-white rounded-xl shadow-md z-10 py-1"
-          style={{minWidth: 120}}>
-          {available.map(provider => (
-            <TouchableOpacity
-              key={provider}
-              onPress={() => {
-                onSelect(provider);
-                onToggle();
-              }}
-              className={`flex-row items-center px-4 py-2 ${
-                provider === selected ? 'bg-gray-50' : ''
-              }`}>
-              <View
-                className="w-2 h-2 rounded-full mr-2"
-                style={{backgroundColor: PROVIDER_LABELS[provider].color}}
-              />
-              <Text className="text-sm text-gray-700">
-                {PROVIDER_LABELS[provider].label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </Animated.View>
-      )}
-    </View>
-  );
-}
-
 export default function AIChatScreen() {
   const user = useAuthStore(s => s.user);
   const {hasActiveSubscription} = useSubscriptionStore();
@@ -127,12 +60,9 @@ export default function AIChatScreen() {
     messages,
     isLoading,
     isStreaming,
-    provider,
-    availableProviders,
     usage,
     error,
     sendMessage,
-    setProvider,
     setIsPro,
     fetchUsage,
     clearMessages,
@@ -143,7 +73,6 @@ export default function AIChatScreen() {
   const bottomPadding = insets.bottom + TAB_BAR_OFFSET;
 
   const [inputText, setInputText] = useState('');
-  const [showProviders, setShowProviders] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -191,27 +120,17 @@ export default function AIChatScreen() {
         className="flex-1"
         keyboardVerticalOffset={0}>
         {/* 헤더 */}
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          className="px-4 pt-2 pb-3 flex-row items-center justify-end border-b border-gray-100">
-          <View className="flex-row items-center">
-            <ProviderSelector
-              selected={provider}
-              available={availableProviders}
-              onSelect={setProvider}
-              visible={showProviders}
-              onToggle={() => setShowProviders(!showProviders)}
-            />
-            {messages.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClear}
-                className="ml-3"
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                <Trash2 size={18} color="#9CA3AF" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </Animated.View>
+        {messages.length > 0 && (
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            className="px-4 pt-2 pb-3 flex-row items-center justify-end border-b border-gray-100">
+            <TouchableOpacity
+              onPress={handleClear}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              <Trash2 size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         {/* 사용량 표시 */}
         {usage && (

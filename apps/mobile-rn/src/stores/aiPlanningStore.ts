@@ -246,7 +246,16 @@ export const useAIPlanningStore = create<AIPlanningState>()((set, get) => ({
 
       if (response.ok) {
         const data = await response.json();
-        set({usage: data as AIUsage});
+        const u = data.usage ?? data;
+        set({usage: {
+          currentCount: u.current_count ?? u.currentCount ?? 0,
+          dailyLimit: u.daily_limit ?? u.dailyLimit ?? 0,
+          remaining: u.remaining ?? 0,
+          isLimitExceeded: u.is_limit_exceeded ?? u.isLimitExceeded ?? false,
+          inputTokens: u.input_tokens ?? u.inputTokens ?? 0,
+          outputTokens: u.output_tokens ?? u.outputTokens ?? 0,
+          estimatedCost: u.estimated_cost ?? u.estimatedCost ?? 0,
+        }});
       }
     } catch (err) {
       console.error('[AIPlanningStore] Usage fetch error:', err);
