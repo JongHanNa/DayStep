@@ -29,6 +29,8 @@ class TabBarState: ObservableObject {
 struct LiquidGlassTabBarContent: View {
   @ObservedObject var state: TabBarState
   var onTabPress: ((Int) -> Void)?
+  @State private var morphScale: CGFloat = 1.0
+  @State private var morphWhite: CGFloat = 0.0
 
   var body: some View {
     ZStack(alignment: .bottom) {
@@ -89,13 +91,28 @@ struct LiquidGlassTabBarContent: View {
           let count = max(state.tabs.count, 1)
           let tabWidth = geo.size.width / CGFloat(count)
           RoundedRectangle(cornerRadius: 22)
-            .fill(.clear)
+            .fill(Color.white.opacity(morphWhite))
             .glassEffect(in: RoundedRectangle(cornerRadius: 22))
             .frame(width: tabWidth - 8, height: geo.size.height)
+            .scaleEffect(morphScale)
             .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 0)
         }
       }
       .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
+      .onChange(of: state.selectedIndex) { _ in
+        // Phase 1: 확장 + 맑은 유리 (이륙 — white fill로 밝게)
+        withAnimation(.easeOut(duration: 0.15)) {
+          morphScale = 1.4
+          morphWhite = 0.15
+        }
+        // Phase 2: 수축 + 원래 질감 (착지 — fill clear 복귀)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+          withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
+            morphScale = 1.0
+            morphWhite = 0.0
+          }
+        }
+      }
       .frame(height: 44)
       .padding(.bottom, 6)  // top: 0, bottom: 6 → 아이콘을 바닥 가까이 배치
     }
