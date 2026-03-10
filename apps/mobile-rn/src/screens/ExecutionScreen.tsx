@@ -471,7 +471,7 @@ export default function ExecutionScreen() {
             </Animated.View>
 
             {/* 시작 버튼 (pill) */}
-            <Animated.View entering={FadeInDown.delay(200).duration(400)} style={styles.startBtnWrapper}>
+            <Animated.View entering={FadeInDown.delay(200).duration(400)} style={[styles.startBtnWrapper, { paddingBottom: Math.max(insets.bottom, 8) + 60 }]}>
               <AnimatedPressable
                 onPress={handleStart}
                 hapticType="medium"
@@ -567,7 +567,6 @@ const styles = StyleSheet.create({
   // ---- Start button (idle) ----
   startBtnWrapper: {
     paddingHorizontal: 48,
-    paddingBottom: 24,
   },
   startBtn: {
     paddingVertical: 16,
