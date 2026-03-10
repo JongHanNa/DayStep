@@ -1,0 +1,26 @@
+diff --git a/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift b/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift
+index d699315..ca8d8fa 100644
+--- a/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift
++++ b/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift
+@@ -117,6 +117,21 @@ struct BottomAccessoryRepresentableView: PlatformViewRepresentable {
+     emitPlacementChanged(for: view)
+   }
+ 
++  func sizeThatFits(
++    _ proposal: ProposedViewSize,
++    uiView: PlatformView,
++    context: Context
++  ) -> CGSize? {
++    guard let rnView = uiView.subviews.first else { return nil }
++    var maxHeight: CGFloat = 0
++    for child in rnView.subviews {
++      maxHeight = max(maxHeight, child.frame.maxY)
++    }
++    guard maxHeight > 0 else { return nil }
++    let width = proposal.width ?? UIScreen.main.bounds.width
++    return CGSize(width: width, height: maxHeight)
++  }
++
+   private func emitPlacementChanged(for uiView: PlatformView) {
+     if let contentView = uiView.value(forKey: "bottomAccessoryProvider") as? BottomAccessoryProvider {
+       contentView.emitPlacementChanged(tabViewBottomAccessoryPlacement)

@@ -1,23 +1,20 @@
 /**
  * Main Tab Navigator — 하이브리드 네이티브 탭바
  * react-native-bottom-tabs (네이티브 SwiftUI TabView) → Liquid Glass 자동
- * More 패널: 네이티브 글래스 오버레이 (탭바 위에 표시)
+ * More 패널: iOS 26+ renderBottomAccessoryView (네이티브 탭바 글래스 자체 확장)
+ *           iOS 25-: 기존 GlassBackground 오버레이
  *
  * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 더 보기
  */
 import React, {useState, useCallback, useRef} from 'react';
-import {View, Pressable, StyleSheet} from 'react-native';
+import {View, Pressable, StyleSheet, Dimensions} from 'react-native';
 import {createNativeBottomTabNavigator} from '@bottom-tabs/react-navigation';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '@/theme';
 import {useSettingsStore} from '@/stores/settingsStore';
-import {
-  MoreGlassPanelNative,
-  isIOS26Plus,
-  type NativeMenuItemData,
-} from '@/components/native';
-import {MorePanelContent} from '@/components/navigation/MorePanel';
+import {isIOS26Plus, type NativeMenuItemData} from '@/components/native';
+import {MorePanelContent, getMorePanelHeight} from '@/components/navigation/MorePanel';
 import {GlassBackground} from '@/components/core';
 
 // Screens
@@ -38,21 +35,6 @@ import ContactScreen from '../screens/ContactScreen';
 import GratitudeScreen from '../screens/GratitudeScreen';
 import ActivityScreen from '../screens/ActivityScreen';
 import CleanupScreen from '../screens/CleanupScreen';
-
-// MorePanel 메뉴 아이템 (네이티브 SF Symbol 버전)
-const NATIVE_MENU_ITEMS: Omit<NativeMenuItemData, 'isActive'>[] = [
-  {label: '설정', sfSymbol: 'gear', screenName: 'MoreLanding'},
-  {label: '월간계획', sfSymbol: 'calendar', screenName: 'MonthlyPlanner'},
-  {label: '계획보기', sfSymbol: 'list.clipboard', screenName: 'AIPlan'},
-  {label: 'AI계획', sfSymbol: 'sparkles', screenName: 'AIChat'},
-  {label: 'Claude', sfSymbol: 'message', screenName: 'Guide'},
-  {label: '정리', sfSymbol: 'trash', screenName: 'Cleanup'},
-  {label: '원동력', sfSymbol: 'flame', screenName: 'Record'},
-  {label: '관계기록', sfSymbol: 'newspaper', screenName: 'News'},
-  {label: '소식', sfSymbol: 'phone', screenName: 'Contact'},
-  {label: '연락', sfSymbol: 'heart', screenName: 'Gratitude'},
-  {label: '감사', sfSymbol: 'chart.bar', screenName: 'Activity'},
-];
 
 // Home Stack (메인 + 하위 화면)
 const HomeStack = createNativeStackNavigator();
@@ -114,11 +96,16 @@ export default function MainTabNavigator() {
   const setShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
   const insets = useSafeAreaInsets();
 
-  // 탭 내비게이션 참조 (패널 오버레이에서 More 스택 내비게이션용)
+  // 탭 내비게이션 참조 (패널에서 More 스택 내비게이션용)
   const tabNavigationRef = useRef<any>(null);
 
   // More 스택 현재 화면 추적
   const [activeMoreScreen, setActiveMoreScreen] = useState<string | undefined>();
+
+  // 패널 닫기
+  const handleDismissPanel = useCallback(() => {
+    setMorePanelVisible(false);
+  }, []);
 
   // 패널에서 화면 선택 시
   const handleSelectScreen = useCallback(
@@ -127,30 +114,6 @@ export default function MainTabNavigator() {
       setMorePanelVisible(false);
     },
     [],
-  );
-
-  const handleDismissPanel = useCallback(() => {
-    setMorePanelVisible(false);
-  }, []);
-
-  // 네이티브 메뉴 아이템 (isActive 주입)
-  const nativeMenuItems: NativeMenuItemData[] = NATIVE_MENU_ITEMS.map(item => ({
-    ...item,
-    isActive: item.screenName === activeMoreScreen,
-  }));
-
-  const handleNativeMenuItemPress = useCallback(
-    (event: {nativeEvent: {screenName: string}}) => {
-      handleSelectScreen(event.nativeEvent.screenName);
-    },
-    [handleSelectScreen],
-  );
-
-  const handleNativeToggleLabels = useCallback(
-    (event: {nativeEvent: {showLabels: boolean}}) => {
-      setShowLabels(event.nativeEvent.showLabels);
-    },
-    [setShowLabels],
   );
 
   const panelBottom = Math.max(insets.bottom, 8);
@@ -162,9 +125,28 @@ export default function MainTabNavigator() {
         translucent
         hapticFeedbackEnabled
         tabBarActiveTintColor={primaryColor}
-        screenOptions={{
-          // 네이티브 탭바는 헤더를 자체 관리하지 않음 (각 화면의 Stack이 담당)
-        }}
+        screenOptions={{}}
+        // iOS 26+: 네이티브 탭바 글래스 자체가 확장되어 MorePanel 표시
+        renderBottomAccessoryView={
+          isIOS26Plus
+            ? ({placement}) => {
+                if (!morePanelVisible) return null;
+                return (
+                  <View style={{
+                    width: Dimensions.get('window').width,
+                    height: getMorePanelHeight(showLabels),
+                  }}>
+                    <MorePanelContent
+                      onSelectScreen={handleSelectScreen}
+                      onClose={handleDismissPanel}
+                      primaryColor={primaryColor}
+                      activeScreenName={activeMoreScreen}
+                    />
+                  </View>
+                );
+              }
+            : undefined
+        }
         screenListeners={({route, navigation}) => ({
           focus: () => {
             // 탭 내비게이션 참조 캡처
@@ -233,45 +215,26 @@ export default function MainTabNavigator() {
         />
       </Tab.Navigator>
 
-      {/* More 글래스 패널 오버레이 */}
-      {morePanelVisible && (
+      {/* iOS 25-: renderBottomAccessoryView 미지원 → 기존 GlassBackground 오버레이 */}
+      {!isIOS26Plus && morePanelVisible && (
         <>
-          {/* 투명 배경 터치 캐처 */}
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={handleDismissPanel}
           />
-
-          {/* 패널 컨테이너 — 탭바 바로 위에 위치 */}
-          <View
-            style={[
-              styles.panelContainer,
-              {bottom: panelBottom + 56}, // 네이티브 탭바 높이(~49-56) 위
-            ]}>
-            {isIOS26Plus ? (
-              <MoreGlassPanelNative
-                menuItems={nativeMenuItems}
-                showLabels={showLabels}
+          <View style={[styles.panelContainer, {bottom: panelBottom + 56}]}>
+            <GlassBackground
+              blurType="chromeMaterialLight"
+              blurAmount={32}
+              overlayColor="rgba(255, 255, 255, 0.55)"
+              style={styles.jsPanel}>
+              <MorePanelContent
+                onSelectScreen={handleSelectScreen}
+                onClose={handleDismissPanel}
                 primaryColor={primaryColor}
-                onMenuItemPress={handleNativeMenuItemPress}
-                onToggleLabels={handleNativeToggleLabels}
-                onDismiss={handleDismissPanel}
-                style={styles.nativePanel}
+                activeScreenName={activeMoreScreen}
               />
-            ) : (
-              <GlassBackground
-                blurType="chromeMaterialLight"
-                blurAmount={32}
-                overlayColor="rgba(255, 255, 255, 0.55)"
-                style={styles.jsPanel}>
-                <MorePanelContent
-                  onSelectScreen={handleSelectScreen}
-                  onClose={handleDismissPanel}
-                  primaryColor={primaryColor}
-                  activeScreenName={activeMoreScreen}
-                />
-              </GlassBackground>
-            )}
+            </GlassBackground>
           </View>
         </>
       )}
@@ -287,9 +250,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-  },
-  nativePanel: {
-    minHeight: 200,
   },
   jsPanel: {
     borderRadius: 24,
