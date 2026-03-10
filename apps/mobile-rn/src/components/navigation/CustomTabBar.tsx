@@ -63,7 +63,7 @@ const COLLAPSED_HEIGHT = 56;
 const TIMING_CONFIG = {duration: 250, easing: Easing.inOut(Easing.ease)};
 
 // iOS 26+ 네이티브 탭바 확장 높이
-const NATIVE_COLLAPSED = 64;
+const NATIVE_COLLAPSED = 56;
 
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -444,6 +444,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
+    borderRadius: 32,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
