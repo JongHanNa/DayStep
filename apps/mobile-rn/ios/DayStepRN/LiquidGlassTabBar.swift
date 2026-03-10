@@ -88,16 +88,16 @@ struct LiquidGlassTabBarContent: View {
         GeometryReader { geo in
           let count = max(state.tabs.count, 1)
           let tabWidth = geo.size.width / CGFloat(count)
-          RoundedRectangle(cornerRadius: 18)
+          RoundedRectangle(cornerRadius: 22)
             .fill(.clear)
-            .glassEffect(in: RoundedRectangle(cornerRadius: 18))
+            .glassEffect(in: RoundedRectangle(cornerRadius: 22))
             .frame(width: tabWidth - 8, height: geo.size.height)
             .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 0)
         }
       }
       .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
       .frame(height: 44)
-      .padding(.bottom, 10)  // top: 2, bottom: 10 → 아이콘 더 아래로
+      .padding(.bottom, 6)  // top: 0, bottom: 6 → 아이콘을 바닥 가까이 배치
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .glassEffect(in: RoundedRectangle(cornerRadius: 32))
