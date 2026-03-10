@@ -91,13 +91,13 @@ struct LiquidGlassTabBarContent: View {
           RoundedRectangle(cornerRadius: 18)
             .fill(.clear)
             .glassEffect(in: RoundedRectangle(cornerRadius: 18))
-            .frame(width: tabWidth - 8, height: geo.size.height - 2)
-            .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 1)
+            .frame(width: tabWidth - 8, height: geo.size.height)
+            .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 0)
         }
       }
       .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
       .frame(height: 44)
-      .padding(.bottom, 8)  // top: 4, bottom: 8 → 시각적 중앙 (약간 아래로)
+      .padding(.bottom, 10)  // top: 2, bottom: 10 → 아이콘 더 아래로
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .glassEffect(in: RoundedRectangle(cornerRadius: 32))
