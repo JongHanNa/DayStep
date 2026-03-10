@@ -11,7 +11,6 @@
 		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
 		0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		24AF1E9FD7B1F890C4E155B2 /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 511CEB6B0AE6818D00C27C21 /* libPods-DayStepRN.a */; };
 		63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */; };
 		671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -23,6 +22,7 @@
 		A41F7D8C2F500BD800A4C1D8 /* DayStepWidgetModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */; };
 		A41F7D8D2F500BD800A4C1D8 /* DayStepWidgetModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */; };
 		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
+		CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */; };
 		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
 /* End PBXBuildFile section */
@@ -61,12 +61,12 @@
 		2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassTabBarBridge.m; path = DayStepRN/LiquidGlassTabBarBridge.m; sourceTree = "<group>"; };
 		42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassFuelCardBridge.m; path = DayStepRN/LiquidGlassFuelCardBridge.m; sourceTree = "<group>"; };
 		4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassBackgroundView.swift; path = DayStepRN/LiquidGlassBackgroundView.swift; sourceTree = "<group>"; };
-		511CEB6B0AE6818D00C27C21 /* libPods-DayStepRN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DayStepRN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassUtils.swift; path = DayStepRN/LiquidGlassUtils.swift; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DayStepRN/AppDelegate.swift; sourceTree = "<group>"; };
+		7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DayStepRN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7D4E3731DA56DD9E092197C5 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = DayStepRN/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassTabBar.swift; path = DayStepRN/LiquidGlassTabBar.swift; sourceTree = "<group>"; };
-		934DE732F8983F094AAA965F /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
 		A41F7D662F483FF800A4C1D8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = DayStepRN.entitlements; path = DayStepRN/DayStepRN.entitlements; sourceTree = "<group>"; };
 		A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepCalendarWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -75,13 +75,13 @@
 		A41F7D892F500A6D00A4C1D8 /* DayStepCalendarWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DayStepCalendarWidgetExtension.entitlements; sourceTree = "<group>"; };
 		A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = DayStepWidgetModule.m; path = DayStepRN/DayStepWidgetModule.m; sourceTree = "<group>"; };
 		A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepWidgetModule.swift; path = DayStepRN/DayStepWidgetModule.swift; sourceTree = "<group>"; };
-		BC637E3DAF953FA361157DB6 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
 		D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Products.storekit; path = DayStepRN/Products.storekit; sourceTree = "<group>"; };
+		E8A1EDB0D0389AC7DA2DA4C5 /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A41F7D832F500A4E00A4C1D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		A41F7D832F500A4E00A4C1D8 /* Exceptions for "DayStepCalendarWidget" folder in "DayStepCalendarWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -91,7 +91,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A41F7D832F500A4E00A4C1D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = DayStepCalendarWidget; sourceTree = "<group>"; };
+		A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A41F7D832F500A4E00A4C1D8 /* Exceptions for "DayStepCalendarWidget" folder in "DayStepCalendarWidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = DayStepCalendarWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,8 +110,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				24AF1E9FD7B1F890C4E155B2 /* libPods-DayStepRN.a in Frameworks */,
 				A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */,
+				CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -142,9 +153,9 @@
 			children = (
 				A41F7D662F483FF800A4C1D8 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				511CEB6B0AE6818D00C27C21 /* libPods-DayStepRN.a */,
 				A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */,
 				A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */,
+				7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -186,8 +197,8 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				BC637E3DAF953FA361157DB6 /* Pods-DayStepRN.debug.xcconfig */,
-				934DE732F8983F094AAA965F /* Pods-DayStepRN.release.xcconfig */,
+				7D4E3731DA56DD9E092197C5 /* Pods-DayStepRN.debug.xcconfig */,
+				E8A1EDB0D0389AC7DA2DA4C5 /* Pods-DayStepRN.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -199,14 +210,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DayStepRN" */;
 			buildPhases = (
-				8222B56E707FCC9BEAE8C2FD /* [CP] Check Pods Manifest.lock */,
+				A2513768FB88CD6097ED6756 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				F416E35D5BAC6537C6CF7AF1 /* [CP] Embed Pods Frameworks */,
-				7A8B5C275AF80CE13F336682 /* [CP] Copy Pods Resources */,
 				A41F7D872F500A4E00A4C1D8 /* Embed Foundation Extensions */,
+				E7867A4383EB27670144D3E6 /* [CP] Embed Pods Frameworks */,
+				8C39B84D2916700F1750DDD9 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -311,7 +322,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
 		};
-		7A8B5C275AF80CE13F336682 /* [CP] Copy Pods Resources */ = {
+		8C39B84D2916700F1750DDD9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -319,20 +330,16 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8222B56E707FCC9BEAE8C2FD /* [CP] Check Pods Manifest.lock */ = {
+		A2513768FB88CD6097ED6756 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -354,7 +361,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		F416E35D5BAC6537C6CF7AF1 /* [CP] Embed Pods Frameworks */ = {
+		E7867A4383EB27670144D3E6 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -362,13 +369,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -415,7 +418,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BC637E3DAF953FA361157DB6 /* Pods-DayStepRN.debug.xcconfig */;
+			baseConfigurationReference = 7D4E3731DA56DD9E092197C5 /* Pods-DayStepRN.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -446,7 +449,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 934DE732F8983F094AAA965F /* Pods-DayStepRN.release.xcconfig */;
+			baseConfigurationReference = E8A1EDB0D0389AC7DA2DA4C5 /* Pods-DayStepRN.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

@@ -1,25 +1,10 @@
 /**
- * MorePanel — "더 보기" 확장 패널
- * 탭바 위에 글래스 패널로 표시, 11개 부가 화면 아이콘 그리드
+ * MorePanelContent — "더 보기" 확장 패널 콘텐츠
+ * 순수 콘텐츠만 export: 헤더("더 보기" + "편집") + 4열 아이콘 그리드
+ * 부모(CustomTabBar)의 글래스 컨테이너 안에 렌더링됨
  */
-import React, {useEffect} from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
-import {GlassBackground} from '@/components/core';
-import {useTheme} from '@/theme';
+import React from 'react';
+import {View, Text, Pressable, StyleSheet} from 'react-native';
 import {
   Settings,
   Calendar,
@@ -28,7 +13,6 @@ import {
   MessageSquare,
   Trash2,
   Flame,
-  Users,
   Newspaper,
   Phone,
   Heart,
@@ -36,11 +20,10 @@ import {
 } from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
 
-interface MorePanelProps {
-  visible: boolean;
-  onClose: () => void;
+interface MorePanelContentProps {
   onSelectScreen: (screenName: string) => void;
-  tabBarBottom: number;
+  onClose: () => void;
+  primaryColor: string;
 }
 
 interface MenuItem {
@@ -64,138 +47,60 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 const COLUMNS = 4;
-const PANEL_HEIGHT = 220;
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
 
-export function MorePanel({
-  visible,
-  onClose,
+/** 패널 콘텐츠 높이 (탭바 확장 계산에 사용) */
+export const MORE_PANEL_CONTENT_HEIGHT = 220;
+
+export function MorePanelContent({
   onSelectScreen,
-  tabBarBottom,
-}: MorePanelProps) {
-  const {primaryColor} = useTheme();
-  const panelHeight = useSharedValue(0);
-  const opacity = useSharedValue(0);
-  const backdropOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (visible) {
-      panelHeight.value = withSpring(PANEL_HEIGHT, {
-        damping: 20,
-        stiffness: 300,
-      });
-      opacity.value = withTiming(1, {duration: 200});
-      backdropOpacity.value = withTiming(1, {duration: 200});
-    } else {
-      panelHeight.value = withSpring(0, {damping: 20, stiffness: 300});
-      opacity.value = withTiming(0, {duration: 150});
-      backdropOpacity.value = withTiming(0, {duration: 150});
-    }
-  }, [visible, panelHeight, opacity, backdropOpacity]);
-
-  const panelStyle = useAnimatedStyle(() => ({
-    height: panelHeight.value,
-    opacity: opacity.value,
-  }));
-
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOpacity.value,
-  }));
-
-  if (!visible) return null;
-
+  onClose,
+  primaryColor,
+}: MorePanelContentProps) {
   // 4열 그리드로 배치
   const rows: MenuItem[][] = [];
   for (let i = 0; i < MENU_ITEMS.length; i += COLUMNS) {
     rows.push(MENU_ITEMS.slice(i, i + COLUMNS));
   }
 
-  const TAB_BAR_HEIGHT = 56;
-
   return (
-    <Modal transparent visible={visible} animationType="none">
-      {/* 백드롭 */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose}>
-        <Animated.View
-          style={[styles.backdrop, backdropStyle]}
-        />
-      </Pressable>
+    <View>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>더 보기</Text>
+        <Text style={[styles.editButton, {color: primaryColor}]}>편집</Text>
+      </View>
 
-      {/* 패널 — 탭바 바로 위 */}
-      <Animated.View
-        style={[
-          styles.panelWrapper,
-          panelStyle,
-          {bottom: tabBarBottom + TAB_BAR_HEIGHT},
-        ]}>
-        <GlassBackground
-          blurType="chromeMaterialLight"
-          blurAmount={32}
-          overlayColor="rgba(255, 255, 255, 0.55)"
-          style={styles.panelGlass}>
-          {/* 헤더 */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>더 보기</Text>
-            <Text style={[styles.editButton, {color: primaryColor}]}>
-              편집
-            </Text>
-          </View>
-
-          {/* 아이콘 그리드 */}
-          <View style={styles.grid}>
-            {rows.map((row, rowIdx) => (
-              <View key={rowIdx} style={styles.gridRow}>
-                {row.map(item => (
-                  <Pressable
-                    key={item.screenName}
-                    style={styles.gridItem}
-                    onPress={() => {
-                      onSelectScreen(item.screenName);
-                      onClose();
-                    }}>
-                    <item.Icon size={24} color="#374151" strokeWidth={1.6} />
-                    <Text style={styles.gridLabel} numberOfLines={1}>
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                ))}
-                {/* 빈 셀 채우기 */}
-                {row.length < COLUMNS &&
-                  Array.from({length: COLUMNS - row.length}).map((_, i) => (
-                    <View key={`empty-${i}`} style={styles.gridItem} />
-                  ))}
-              </View>
+      {/* 아이콘 그리드 */}
+      <View style={styles.grid}>
+        {rows.map((row, rowIdx) => (
+          <View key={rowIdx} style={styles.gridRow}>
+            {row.map(item => (
+              <Pressable
+                key={item.screenName}
+                style={styles.gridItem}
+                onPress={() => {
+                  onSelectScreen(item.screenName);
+                  onClose();
+                }}>
+                <item.Icon size={24} color="#374151" strokeWidth={1.6} />
+                <Text style={styles.gridLabel} numberOfLines={1}>
+                  {item.label}
+                </Text>
+              </Pressable>
             ))}
+            {/* 빈 셀 채우기 */}
+            {row.length < COLUMNS &&
+              Array.from({length: COLUMNS - row.length}).map((_, i) => (
+                <View key={`empty-${i}`} style={styles.gridItem} />
+              ))}
           </View>
-        </GlassBackground>
-      </Animated.View>
-    </Modal>
+        ))}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-  },
-  panelWrapper: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    overflow: 'hidden',
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: -4},
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  panelGlass: {
-    flex: 1,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

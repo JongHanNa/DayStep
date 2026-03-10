@@ -68,6 +68,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - MMKV (2.2.4):
+    - MMKVCore (~> 2.2.4)
   - MMKVCore (2.2.4)
   - NitroMmkv (4.1.2):
     - boost
@@ -3178,6 +3180,7 @@ DEPENDENCIES:
   - glog (from `../../../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - lottie-react-native (from `../../../node_modules/lottie-react-native`)
+  - MMKV
   - NitroMmkv (from `../../../node_modules/react-native-mmkv`)
   - NitroModules (from `../../../node_modules/react-native-nitro-modules`)
   - RCT-Folly (from `../../../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -3277,6 +3280,7 @@ SPEC REPOS:
     - GTMAppAuth
     - GTMSessionFetcher
     - lottie-ios
+    - MMKV
     - MMKVCore
     - PromisesObjC
     - PurchasesHybridCommon
@@ -3495,6 +3499,7 @@ SPEC CHECKSUMS:
   hermes-engine: 98d02f60a14b782c6e6c3fcee6793277080abccc
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: 691b8363e8c591fb78a78254ff2517258891456b
+  MMKV: 1a8e7dbce7f9cad02c52e1b1091d07bd843aefaf
   MMKVCore: f2dd4c9befea04277a55e84e7812f930537993df
   NitroMmkv: 0be91455465952f2b943f753b9ee7df028d89e5c
   NitroModules: d0e5470ab0c26d531ee75be456cd77ddde9be7de
@@ -3588,6 +3593,6 @@ SPEC CHECKSUMS:
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Yoga: 5456bb010373068fc92221140921b09d126b116e
 
-PODFILE CHECKSUM: 745cd528cc1c7479247eba6d2b568762da1d992e
+PODFILE CHECKSUM: d57afc0765eed00db41497155e4d0bdbf3d7dbca
 
 COCOAPODS: 1.16.2

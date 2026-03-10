@@ -1,6 +1,7 @@
 /**
  * LiquidGlassTabBar — Phase 1
- * iOS 26+: SwiftUI .glassEffect(in: .capsule) 네이티브 탭바
+ * iOS 26+: SwiftUI .glassEffect(in: RoundedRectangle) 네이티브 탭바
+ *          RN Animated.View가 높이 변경 → Spacer 자동 확장 → 글래스 효과도 확장
  * iOS 25-: JS 폴백 (GlassBackground) 사용 — 이 파일의 뷰는 렌더링 안됨
  */
 
@@ -30,70 +31,76 @@ struct LiquidGlassTabBarContent: View {
   var onTabPress: ((Int) -> Void)?
 
   var body: some View {
-    HStack(spacing: 0) {
-      ForEach(Array(state.tabs.enumerated()), id: \.offset) { index, tab in
-        let isSelected = index == state.selectedIndex
-        let iconColor = isSelected
-          ? state.primaryColor
-          : Color(red: 0.612, green: 0.639, blue: 0.686)
-        let showTimerRing = index == 2 && state.timerProgress >= 0
+    VStack(spacing: 0) {
+      // 상단 영역: RN 오버레이 콘텐츠가 차지 (Spacer가 자동 확장)
+      Spacer(minLength: 0)
 
-        Button {
-          onTabPress?(index)
-        } label: {
-          VStack(spacing: 4) {
-            if showTimerRing {
-              ZStack {
-                Circle()
-                  .stroke(Color(red: 0.898, green: 0.906, blue: 0.922), lineWidth: 3)
-                  .frame(width: 24, height: 24)
-                Circle()
-                  .trim(from: 0, to: CGFloat(min(max(state.timerProgress, 0), 1)))
-                  .stroke(iconColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                  .rotationEffect(.degrees(-90))
-                  .frame(width: 24, height: 24)
-              }
-              .frame(height: 24)
-              .animation(
-                .spring(response: 0.3, dampingFraction: 0.8),
-                value: state.timerProgress
-              )
-            } else {
-              Image(systemName: tab.sfSymbol)
-                .font(.system(
-                  size: 22,
-                  weight: isSelected ? .semibold : .regular
-                ))
-                .foregroundColor(iconColor)
+      // 하단 탭 아이콘 행 (항상 하단 고정)
+      HStack(spacing: 0) {
+        ForEach(Array(state.tabs.enumerated()), id: \.offset) { index, tab in
+          let isSelected = index == state.selectedIndex
+          let iconColor = isSelected
+            ? state.primaryColor
+            : Color(red: 0.612, green: 0.639, blue: 0.686)
+          let showTimerRing = index == 2 && state.timerProgress >= 0
+
+          Button {
+            onTabPress?(index)
+          } label: {
+            VStack(spacing: 4) {
+              if showTimerRing {
+                ZStack {
+                  Circle()
+                    .stroke(Color(red: 0.898, green: 0.906, blue: 0.922), lineWidth: 3)
+                    .frame(width: 24, height: 24)
+                  Circle()
+                    .trim(from: 0, to: CGFloat(min(max(state.timerProgress, 0), 1)))
+                    .stroke(iconColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 24, height: 24)
+                }
                 .frame(height: 24)
                 .animation(
                   .spring(response: 0.3, dampingFraction: 0.8),
-                  value: state.selectedIndex
+                  value: state.timerProgress
                 )
-            }
+              } else {
+                Image(systemName: tab.sfSymbol)
+                  .font(.system(
+                    size: 22,
+                    weight: isSelected ? .semibold : .regular
+                  ))
+                  .foregroundColor(iconColor)
+                  .frame(height: 24)
+                  .animation(
+                    .spring(response: 0.3, dampingFraction: 0.8),
+                    value: state.selectedIndex
+                  )
+              }
 
-            if isSelected {
-              Capsule()
-                .fill(state.primaryColor)
-                .frame(width: 20, height: 3)
-                .transition(.scale.combined(with: .opacity))
-            } else {
-              Color.clear.frame(height: 3)
+              if isSelected {
+                Capsule()
+                  .fill(state.primaryColor)
+                  .frame(width: 20, height: 3)
+                  .transition(.scale.combined(with: .opacity))
+              } else {
+                Color.clear.frame(height: 3)
+              }
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .animation(
+              .spring(response: 0.3, dampingFraction: 0.8),
+              value: state.selectedIndex
+            )
           }
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, 10)
-          .animation(
-            .spring(response: 0.3, dampingFraction: 0.8),
-            value: state.selectedIndex
-          )
+          .buttonStyle(.plain)
+          .accessibilityIdentifier("tab_\(tab.name)")
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("tab_\(tab.name)")
       }
     }
-    .frame(maxWidth: .infinity)
-    .glassEffect(in: .capsule)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .glassEffect(in: RoundedRectangle(cornerRadius: 32))
   }
 }
 

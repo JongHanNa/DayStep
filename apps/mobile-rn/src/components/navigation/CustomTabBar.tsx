@@ -3,15 +3,20 @@
  * 5탭: 홈 / 플래너 / 실행 / 노트 / 더 보기
  * Liquid Glass 플로팅 탭바 — 아이콘만 표시, 화이트 글래스
  *
- * iOS 26+: 네이티브 SwiftUI .glassEffect(in: .capsule) 탭바
+ * iOS 26+: 네이티브 SwiftUI .glassEffect 탭바
+ *          → More 패널 열림 시 네이티브 탭바 자체가 위로 확장 (글래스 효과 유지)
  * iOS 25-: JS GlassBackground 폴백
+ *
+ * More 패널: 탭바 자체가 위로 확장되어 하나의 글래스 카드 안에
+ *            그리드 + 탭 아이콘이 함께 표시됨 (어두운 배경 없음)
  */
-import React, {useState, useCallback} from 'react';
-import {View, StyleSheet, type ViewStyle} from 'react-native';
+import React, {useState, useCallback, useEffect} from 'react';
+import {View, Pressable, StyleSheet, type ViewStyle} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  withSpring,
 } from 'react-native-reanimated';
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {AnimatedPressable} from '@/components/core';
@@ -26,7 +31,7 @@ import {
 } from '@/components/native';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {Canvas, Path, Skia} from '@shopify/react-native-skia';
-import {MorePanel} from './MorePanel';
+import {MorePanelContent, MORE_PANEL_CONTENT_HEIGHT} from './MorePanel';
 
 const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
   Home: {Icon: Home},
@@ -45,12 +50,58 @@ const SF_SYMBOL_MAP: Record<string, string> = {
   More: 'ellipsis',
 };
 
+// HomeStack 내 "More 소속" 화면 목록
+const MORE_SCREENS = new Set([
+  'MonthlyPlanner', 'AIPlan', 'AIChat', 'Guide',
+  'Record', 'News', 'Contact', 'Gratitude', 'Activity', 'Cleanup',
+]);
+
+const COLLAPSED_HEIGHT = 56;
+const EXPANDED_HEIGHT = COLLAPSED_HEIGHT + MORE_PANEL_CONTENT_HEIGHT;
+const SPRING_CONFIG = {damping: 20, stiffness: 300};
+
+// iOS 26+ 네이티브 탭바 확장 높이
+const NATIVE_COLLAPSED = 64;
+const NATIVE_EXPANDED = NATIVE_COLLAPSED + MORE_PANEL_CONTENT_HEIGHT;
+
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const {primaryColor} = useTheme();
   const timerState = usePomodoroStore(s => s.timerState);
   const isTimerActive = timerState.isRunning || timerState.isPaused;
   const [morePanelVisible, setMorePanelVisible] = useState(false);
+
+  // JS 탭바 높이 애니메이션 (iOS 25-)
+  const tabBarHeight = useSharedValue(COLLAPSED_HEIGHT);
+  // 네이티브 탭바 높이 애니메이션 (iOS 26+)
+  const nativeTabBarHeight = useSharedValue(NATIVE_COLLAPSED);
+
+  useEffect(() => {
+    tabBarHeight.value = withSpring(
+      morePanelVisible ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT,
+      SPRING_CONFIG,
+    );
+    nativeTabBarHeight.value = withSpring(
+      morePanelVisible ? NATIVE_EXPANDED : NATIVE_COLLAPSED,
+      SPRING_CONFIG,
+    );
+  }, [morePanelVisible, tabBarHeight, nativeTabBarHeight]);
+
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    height: tabBarHeight.value,
+  }));
+
+  const animatedNativeStyle = useAnimatedStyle(() => ({
+    height: nativeTabBarHeight.value,
+  }));
+
+  // HomeStack의 현재 nested route 확인 → More 소속 화면이면 "..." 활성화
+  const homeRoute = state.routes.find(r => r.name === 'Home');
+  const homeNestedState = homeRoute?.state;
+  const activeHomeScreen =
+    homeNestedState?.routes?.[homeNestedState.index ?? 0]?.name;
+  const isHomeShowingMoreScreen =
+    activeHomeScreen != null && MORE_SCREENS.has(activeHomeScreen);
 
   const tabBarBottom = Math.max(insets.bottom, 8);
 
@@ -62,6 +113,10 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     [navigation],
   );
 
+  const handleClosePanel = useCallback(() => {
+    setMorePanelVisible(false);
+  }, []);
+
   // 포커스된 화면이 탭 바 숨김을 요청하면 렌더링하지 않음
   const focusedRoute = state.routes[state.index];
   const focusedOptions = descriptors[focusedRoute.key].options;
@@ -70,7 +125,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     return null;
   }
 
-  // iOS 26+: 네이티브 Liquid Glass 탭바
+  // iOS 26+: 네이티브 Liquid Glass 탭바 (자체 확장 방식)
   if (isIOS26Plus) {
     const nativeTabs: NativeTabData[] = state.routes.map(route => ({
       name: route.name,
@@ -103,92 +158,129 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
     return (
       <>
-        <LiquidGlassTabBarNative
-          tabs={nativeTabs}
-          selectedIndex={state.index}
-          primaryColor={primaryColor}
-          timerProgress={isTimerActive ? timerState.progress : -1}
-          onTabPress={handleNativeTabPress}
+        {/* 투명 터치 캐처 (패널 열림 시) */}
+        {morePanelVisible && (
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={handleClosePanel}
+          />
+        )}
+
+        <Animated.View
           style={[
             styles.container,
-            styles.nativeContainer,
             {bottom: tabBarBottom},
-          ]}
-        />
-        <MorePanel
-          visible={morePanelVisible}
-          onClose={() => setMorePanelVisible(false)}
-          onSelectScreen={handleSelectScreen}
-          tabBarBottom={tabBarBottom}
-        />
+            animatedNativeStyle,
+          ]}>
+          {/* 네이티브 글래스 탭바 (전체 영역 채움) */}
+          <LiquidGlassTabBarNative
+            tabs={nativeTabs}
+            selectedIndex={isHomeShowingMoreScreen ? state.routes.findIndex(r => r.name === 'More') : state.index}
+            primaryColor={primaryColor}
+            timerProgress={isTimerActive ? timerState.progress : -1}
+            onTabPress={handleNativeTabPress}
+            style={styles.nativeFill}
+          />
+
+          {/* 패널 콘텐츠 오버레이 (탭 아이콘 위 영역) */}
+          {morePanelVisible && (
+            <View style={styles.panelOverlay} pointerEvents="box-none">
+              <MorePanelContent
+                onSelectScreen={handleSelectScreen}
+                onClose={handleClosePanel}
+                primaryColor={primaryColor}
+              />
+              <View style={styles.divider} />
+            </View>
+          )}
+        </Animated.View>
       </>
     );
   }
 
-  // iOS 25 이하: JS GlassBackground 폴백
+  // JS 글래스 탭바 (iOS 25- 또는 패널 열림 시)
   return (
     <>
-      <GlassBackground
-        blurType="chromeMaterialLight"
-        blurAmount={32}
-        overlayColor="rgba(255, 255, 255, 0.55)"
+      {/* 투명 터치 캐처 — 패널 외부 터치로 닫기 (어두운 배경 없음) */}
+      {morePanelVisible && (
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleClosePanel}
+        />
+      )}
+
+      <Animated.View
         style={[
           styles.container,
-          {
-            bottom: tabBarBottom,
-            borderRadius: 32,
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.4)',
-          },
+          {bottom: tabBarBottom},
+          animatedContainerStyle,
         ]}>
-        {/* 상단 하이라이트 — 빛 반사 효과 */}
-        <View style={styles.topHighlight} />
-        <View style={styles.tabRow}>
-          {state.routes.map((route, index) => {
-            const isFocused = state.index === index;
-            const tabInfo = TAB_CONFIG[route.name] ?? {Icon: Home};
+        <GlassBackground
+          blurType="chromeMaterialLight"
+          blurAmount={32}
+          overlayColor="rgba(255, 255, 255, 0.55)"
+          style={styles.glassContainer}>
+          {/* 상단 하이라이트 — 빛 반사 효과 */}
+          <View style={styles.topHighlight} />
 
-            const onPress = () => {
-              // More 탭: 패널 토글
-              if (route.name === 'More') {
-                setMorePanelVisible(prev => !prev);
-                return;
+          {/* 패널 열림 시: 그리드 콘텐츠 */}
+          {morePanelVisible && (
+            <MorePanelContent
+              onSelectScreen={handleSelectScreen}
+              onClose={handleClosePanel}
+              primaryColor={primaryColor}
+            />
+          )}
+
+          {/* 구분선 (패널 열림 시) */}
+          {morePanelVisible && <View style={styles.divider} />}
+
+          {/* 기존 탭 아이콘 행 */}
+          <View style={styles.tabRow}>
+            {state.routes.map((route, index) => {
+              let isFocused = state.index === index;
+              if (isHomeShowingMoreScreen) {
+                if (route.name === 'Home') isFocused = false;
+                if (route.name === 'More') isFocused = true;
               }
+              const tabInfo = TAB_CONFIG[route.name] ?? {Icon: Home};
 
-              // 다른 탭: 패널 닫기 + 정상 내비게이션
-              setMorePanelVisible(false);
+              const onPress = () => {
+                // More 탭: 패널 토글
+                if (route.name === 'More') {
+                  setMorePanelVisible(prev => !prev);
+                  return;
+                }
 
-              const event = navigation.emit({
-                type: 'tabPress',
-                target: route.key,
-                canPreventDefault: true,
-              });
-              if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name);
-              }
-            };
+                // 다른 탭: 패널 닫기 + 정상 내비게이션
+                setMorePanelVisible(false);
 
-            return (
-              <TabButton
-                key={route.key}
-                Icon={tabInfo.Icon}
-                isFocused={isFocused}
-                primaryColor={primaryColor}
-                onPress={onPress}
-                isTimerActive={route.name === 'Execute' && isTimerActive}
-                timerProgress={timerState.progress}
-                tabName={route.name}
-              />
-            );
-          })}
-        </View>
-      </GlassBackground>
-      <MorePanel
-        visible={morePanelVisible}
-        onClose={() => setMorePanelVisible(false)}
-        onSelectScreen={handleSelectScreen}
-        tabBarBottom={tabBarBottom}
-      />
+                const event = navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!isFocused && !event.defaultPrevented) {
+                  navigation.navigate(route.name);
+                }
+              };
+
+              return (
+                <TabButton
+                  key={route.key}
+                  Icon={tabInfo.Icon}
+                  isFocused={isFocused}
+                  primaryColor={primaryColor}
+                  onPress={onPress}
+                  isTimerActive={route.name === 'Execute' && isTimerActive}
+                  timerProgress={timerState.progress}
+                  tabName={route.name}
+                />
+              );
+            })}
+          </View>
+        </GlassBackground>
+      </Animated.View>
     </>
   );
 }
@@ -299,15 +391,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.12,
     shadowRadius: 24,
     elevation: 12,
   },
-  // iOS 26 네이티브 탭바: 높이 고정 (SwiftUI 내부 레이아웃에 맞춤)
-  nativeContainer: {
-    height: 64,
+  glassContainer: {
+    flex: 1,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  // iOS 26 네이티브 탭바: 부모 Animated.View 전체 채움
+  nativeFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  // 패널 콘텐츠 오버레이: 탭 아이콘 영역(하단 64pt) 제외
+  panelOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: NATIVE_COLLAPSED,
   },
   tabRow: {
     flexDirection: 'row',
@@ -335,5 +446,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
     borderRadius: 0.5,
+  },
+  divider: {
+    height: 1,
+    marginHorizontal: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
   },
 });

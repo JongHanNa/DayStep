@@ -17,6 +17,8 @@ end
 target 'DayStepRN' do
   config = use_native_modules!
 
+  pod 'MMKV'  # AppDelegate에서 import MMKV 사용 (UI 테스트 세션 주입)
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
