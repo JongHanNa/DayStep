@@ -3,8 +3,9 @@
  * 순수 콘텐츠만 export: 헤더("더 보기" + 이름 토글) + 5열 아이콘 그리드
  * 부모(CustomTabBar)의 글래스 컨테이너 안에 렌더링됨
  */
-import React, {useState, useEffect} from 'react';
+import React, {useEffect} from 'react';
 import {View, Text, Pressable, StyleSheet} from 'react-native';
+import {useSettingsStore} from '@/stores/settingsStore';
 import {
   Settings,
   Calendar,
@@ -71,7 +72,8 @@ export function MorePanelContent({
   onHeightChange,
   activeScreenName,
 }: MorePanelContentProps) {
-  const [showLabels, setShowLabels] = useState(true);
+  const showLabels = useSettingsStore(s => s.morePanelShowLabels);
+  const setShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
 
   useEffect(() => {
     onHeightChange?.(getMorePanelHeight(showLabels));
@@ -90,7 +92,7 @@ export function MorePanelContent({
         <Text style={styles.headerTitle}>더 보기</Text>
         <Pressable
           style={styles.toggleButton}
-          onPress={() => setShowLabels(prev => !prev)}
+          onPress={() => setShowLabels(!showLabels)}
           hitSlop={8}>
           <Text
             style={[

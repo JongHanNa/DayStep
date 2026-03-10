@@ -16,7 +16,8 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
+  Easing,
 } from 'react-native-reanimated';
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {AnimatedPressable} from '@/components/core';
@@ -57,7 +58,7 @@ const MORE_SCREENS = new Set([
 ]);
 
 const COLLAPSED_HEIGHT = 56;
-const SPRING_CONFIG = {damping: 20, stiffness: 300};
+const TIMING_CONFIG = {duration: 250, easing: Easing.inOut(Easing.ease)};
 
 // iOS 26+ 네이티브 탭바 확장 높이
 const NATIVE_COLLAPSED = 64;
@@ -82,13 +83,13 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   useEffect(() => {
     const expandedHeight = COLLAPSED_HEIGHT + panelContentHeight;
     const nativeExpandedHeight = NATIVE_COLLAPSED + panelContentHeight;
-    tabBarHeight.value = withSpring(
+    tabBarHeight.value = withTiming(
       morePanelVisible ? expandedHeight : COLLAPSED_HEIGHT,
-      SPRING_CONFIG,
+      TIMING_CONFIG,
     );
-    nativeTabBarHeight.value = withSpring(
+    nativeTabBarHeight.value = withTiming(
       morePanelVisible ? nativeExpandedHeight : NATIVE_COLLAPSED,
-      SPRING_CONFIG,
+      TIMING_CONFIG,
     );
   }, [morePanelVisible, panelContentHeight, tabBarHeight, nativeTabBarHeight]);
 

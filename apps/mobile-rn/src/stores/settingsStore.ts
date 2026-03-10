@@ -23,6 +23,9 @@ interface SettingsState {
   // 배경 설정
   backgroundPreset: BackgroundPreset;
 
+  // More 패널
+  morePanelShowLabels: boolean;
+
   // 동기화
   _lastSyncedAt: string | null;
 
@@ -32,6 +35,7 @@ interface SettingsState {
   setShowFuelBadges: (show: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setBackgroundPreset: (preset: BackgroundPreset) => void;
+  setMorePanelShowLabels: (show: boolean) => void;
   loadFromDB: (settings: Record<string, any>) => void;
 }
 
@@ -43,6 +47,7 @@ export const useSettingsStore = create<SettingsState>()(
       showFuelBadges: true,
       notificationsEnabled: true,
       backgroundPreset: 'calmBackground',
+      morePanelShowLabels: true,
       _lastSyncedAt: null,
 
       setColorTheme: (theme) => set({colorTheme: theme}),
@@ -50,6 +55,7 @@ export const useSettingsStore = create<SettingsState>()(
       setShowFuelBadges: (show) => set({showFuelBadges: show}),
       setNotificationsEnabled: (enabled) => set({notificationsEnabled: enabled}),
       setBackgroundPreset: (preset) => set({backgroundPreset: preset}),
+      setMorePanelShowLabels: (show) => set({morePanelShowLabels: show}),
       loadFromDB: (settings) =>
         set((state) => ({
           ...state,
@@ -63,3 +69,17 @@ export const useSettingsStore = create<SettingsState>()(
     },
   ),
 );
+
+/** DB 저장용 설정 추출 (액션 함수 제외) */
+export function getSettingsForSync() {
+  const state = useSettingsStore.getState();
+  return {
+    colorTheme: state.colorTheme,
+    showDescriptions: state.showDescriptions,
+    showFuelBadges: state.showFuelBadges,
+    notificationsEnabled: state.notificationsEnabled,
+    backgroundPreset: state.backgroundPreset,
+    morePanelShowLabels: state.morePanelShowLabels,
+    _lastSyncedAt: state._lastSyncedAt,
+  };
+}

@@ -15,6 +15,7 @@ import {
 } from '@/lib/revenueCat';
 import Purchases from 'react-native-purchases';
 import {useRealtimeSync} from '@/hooks/useRealtimeSync';
+import {useSettingsSync} from '@/hooks/useSettingsSync';
 import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {supabase} from '@/lib/supabase';
@@ -35,6 +36,10 @@ const Stack = createNativeStackNavigator();
  */
 function AuthenticatedApp() {
   useRealtimeSync();
+
+  // 설정 DB 동기화 (morePanelShowLabels 등)
+  const settingsUser = useAuthStore(s => s.user);
+  useSettingsSync(settingsUser?.id);
 
   // plan_limits fetch + Realtime 구독 (인증 완료 시 1회)
   const {fetchLimits, subscribeLimits, unsubscribeLimits} = usePlanLimitsStore();
