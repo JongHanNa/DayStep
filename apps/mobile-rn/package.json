@@ -12,6 +12,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@bottom-tabs/react-navigation": "^1.1.0",
     "@daystep/shared-core": "*",
     "@daystep/shared-utils": "*",
     "@gorhom/bottom-sheet": "^5.2.8",
@@ -35,6 +36,7 @@
     "nativewind": "^4.2.1",
     "react": "19.2.0",
     "react-native": "0.83.1",
+    "react-native-bottom-tabs": "^1.1.0",
     "react-native-config": "^1.6.1",
     "react-native-css-interop": "^0.2.1",
     "react-native-gesture-handler": "^2.25.0",

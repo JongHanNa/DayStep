@@ -157,13 +157,8 @@ export default function ExecutionScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ---- 탭바 숨김 ----
-  useEffect(() => {
-    if (hasActiveSession || showCelebration || showNotePrompt) {
-      navigation.setOptions({tabBarStyle: {display: 'none'}});
-    } else {
-      navigation.setOptions({tabBarStyle: undefined});
-    }
-  }, [hasActiveSession, showCelebration, showNotePrompt, navigation]);
+  // 네이티브 탭바(react-native-bottom-tabs)는 tabBarStyle 미지원
+  // 타이머 활성 시에도 네이티브 탭바는 유지됨 (UITabBarController 기본 동작)
 
   // ---- tick 인터벌 (항상 이 화면에서 틱) ----
   useEffect(() => {
@@ -434,7 +429,9 @@ export default function ExecutionScreen() {
                   blurAmount={16}
                   overlayColor="rgba(255,255,255,0.55)"
                   style={styles.glassStatsBtnInner}>
-                  <Clock size={20} color="#6B7280" />
+                  <View style={styles.glassStatsBtnContent}>
+                    <Clock size={20} color="#6B7280" />
+                  </View>
                 </GlassBackground>
               </AnimatedPressable>
             </Animated.View>
@@ -570,7 +567,7 @@ const styles = StyleSheet.create({
   // ---- Start button (idle) ----
   startBtnWrapper: {
     paddingHorizontal: 48,
-    paddingBottom: 8,
+    paddingBottom: 24,
   },
   startBtn: {
     paddingVertical: 16,
@@ -652,6 +649,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+  },
+  glassStatsBtnContent: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
