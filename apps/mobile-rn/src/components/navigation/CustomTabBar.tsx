@@ -228,6 +228,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             styles.container,
             {bottom: tabBarBottom},
             animatedNativeStyle,
+            morePanelVisible && {backgroundColor: 'rgba(255, 255, 255, 0.92)'},
           ]}>
           {/* 네이티브 글래스 탭바 (전체 영역 채움) */}
           <LiquidGlassTabBarNative
@@ -473,7 +474,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: NATIVE_COLLAPSED,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
   },
   tabRow: {
     flexDirection: 'row',
