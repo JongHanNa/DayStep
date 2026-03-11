@@ -30,8 +30,10 @@ import {
   LiquidGlassTabBarNative,
   isIOS26Plus,
   type NativeTabData,
+  type NativeMenuItemData,
 } from '@/components/native';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
+import {useSettingsStore} from '@/stores/settingsStore';
 import {Canvas, Path, Skia} from '@shopify/react-native-skia';
 import {MorePanelContent, MORE_PANEL_CONTENT_HEIGHT} from './MorePanel';
 
@@ -57,6 +59,41 @@ const MORE_SCREENS = new Set([
   'MonthlyPlanner', 'AIPlan', 'AIChat', 'Guide',
   'Record', 'News', 'Contact', 'Gratitude', 'Activity', 'Cleanup',
 ]);
+
+// iOS 26+ 네이티브 확장 패널용 SF Symbol 매핑
+const MENU_SF_SYMBOLS: Record<string, string> = {
+  MoreLanding: 'gearshape',
+  MonthlyPlanner: 'calendar',
+  AIPlan: 'list.clipboard',
+  AIChat: 'sparkles',
+  Guide: 'message',
+  Cleanup: 'trash',
+  Record: 'flame',
+  News: 'newspaper',
+  Contact: 'phone',
+  Gratitude: 'heart',
+  Activity: 'waveform.path.ecg',
+};
+
+const MENU_LABELS: Record<string, string> = {
+  MoreLanding: '설정',
+  MonthlyPlanner: '월간계획',
+  AIPlan: '계획보기',
+  AIChat: 'AI계획',
+  Guide: 'Claude',
+  Cleanup: '정리',
+  Record: '원동력',
+  News: '관계기록',
+  Contact: '소식',
+  Gratitude: '연락',
+  Activity: '감사',
+};
+
+// 네이티브 메뉴 아이템 순서 (MorePanel의 MENU_ITEMS와 동일)
+const MENU_SCREEN_ORDER = [
+  'MoreLanding', 'MonthlyPlanner', 'AIPlan', 'AIChat', 'Guide',
+  'Cleanup', 'Record', 'News', 'Contact', 'Gratitude', 'Activity',
+];
 
 const TAB_COUNT = 5;
 const COLLAPSED_HEIGHT = 56;
@@ -184,9 +221,20 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
   // iOS 26+: 네이티브 Liquid Glass 탭바 (자체 확장 방식)
   if (isIOS26Plus) {
+    const showLabels = useSettingsStore(s => s.morePanelShowLabels);
+    const setMorePanelShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
+
     const nativeTabs: NativeTabData[] = state.routes.map(route => ({
       name: route.name,
       sfSymbol: SF_SYMBOL_MAP[route.name] ?? 'circle',
+    }));
+
+    // 네이티브 expandedView용 메뉴 아이템 생성
+    const nativeMenuItems: NativeMenuItemData[] = MENU_SCREEN_ORDER.map(screenName => ({
+      label: MENU_LABELS[screenName] ?? screenName,
+      sfSymbol: MENU_SF_SYMBOLS[screenName] ?? 'circle',
+      screenName,
+      isActive: screenName === activeMoreScreen,
     }));
 
     const handleNativeTabPress = (event: {nativeEvent: {index: number}}) => {
@@ -213,6 +261,19 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       }
     };
 
+    const handleNativeMenuItemPress = (event: {nativeEvent: {screenName: string}}) => {
+      handleSelectScreen(event.nativeEvent.screenName);
+      handleClosePanel();
+    };
+
+    const handleNativeToggleLabels = (event: {nativeEvent: {showLabels: boolean}}) => {
+      setMorePanelShowLabels(event.nativeEvent.showLabels);
+    };
+
+    const handleNativeHeightChange = (event: {nativeEvent: {height: number}}) => {
+      nativeTabBarHeight.value = withTiming(event.nativeEvent.height, TIMING_CONFIG);
+    };
+
     return (
       <>
         {/* 투명 터치 캐처 (패널 열림 시) */}
@@ -228,29 +289,22 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             styles.container,
             {bottom: tabBarBottom},
             animatedNativeStyle,
-            morePanelVisible && {backgroundColor: 'rgba(255, 255, 255, 0.92)'},
           ]}>
-          {/* 네이티브 글래스 탭바 (전체 영역 채움) */}
+          {/* 네이티브 글래스 탭바 — isExpanded 시 expandedView 활성화 */}
           <LiquidGlassTabBarNative
             tabs={nativeTabs}
             selectedIndex={isHomeShowingMoreScreen ? state.routes.findIndex(r => r.name === 'More') : state.index}
             primaryColor={primaryColor}
             timerProgress={isTimerActive ? timerState.progress : -1}
+            isExpanded={morePanelVisible}
+            menuItems={nativeMenuItems}
+            showLabels={showLabels}
             onTabPress={handleNativeTabPress}
+            onMenuItemPress={handleNativeMenuItemPress}
+            onToggleLabels={handleNativeToggleLabels}
+            onHeightChange={handleNativeHeightChange}
             style={styles.nativeFill}
           />
-
-          {/* 패널 콘텐츠 오버레이 (탭 아이콘 위 영역) */}
-          {morePanelVisible && (
-            <View style={styles.panelOverlay} pointerEvents="box-none">
-              <MorePanelContent
-                onSelectScreen={handleSelectScreen}
-                onClose={handleClosePanel}
-                primaryColor={primaryColor}
-                activeScreenName={activeMoreScreen}
-              />
-            </View>
-          )}
         </Animated.View>
       </>
     );
