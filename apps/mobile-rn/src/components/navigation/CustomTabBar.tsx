@@ -280,7 +280,10 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     };
 
     const handleNativeHeightChange = (event: {nativeEvent: {height: number}}) => {
-      nativeTabBarHeight.value = event.nativeEvent.height; // 직접 동기화 (네이티브 애니메이션 추종)
+      nativeTabBarHeight.value = withTiming(event.nativeEvent.height, {
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+      });
     };
 
     return (

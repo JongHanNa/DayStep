@@ -53,18 +53,17 @@ struct LiquidGlassTabBarContent: View {
   @State private var pillWhite: CGFloat = 0.0
 
   var body: some View {
-    ZStack(alignment: .bottom) {
-      // 패널 콘텐츠 (조건부 — 탭바 뒤에서 슬라이드업)
+    VStack(spacing: 0) {
+      // 패널 콘텐츠 (조건부 — tabRow 위에 쌓임)
       if state.isExpanded {
         VStack(spacing: 0) {
           headerView
           menuGrid
         }
-        .padding(.bottom, 50) // 탭바 높이만큼 하단 여백
-        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .transition(.opacity.combined(with: .move(edge: .bottom)))
       }
 
-      // 탭바 아이콘 행 (항상 존재, 고정 — 절대 재생성 안됨)
+      // 탭바 아이콘 행 (항상 존재, VStack 하단 = 화면 고정)
       tabIconRow
         .background {
           selectionPillBackground
@@ -72,7 +71,6 @@ struct LiquidGlassTabBarContent: View {
             .animation(.easeInOut(duration: 0.2), value: state.isExpanded)
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
-        .animation(nil, value: state.isExpanded)
         .onChange(of: state.selectedIndex) { _ in
           withAnimation(.easeOut(duration: 0.15)) {
             pillScale = 1.4
@@ -89,20 +87,12 @@ struct LiquidGlassTabBarContent: View {
         .padding(.bottom, 6)
     }
     .frame(maxWidth: .infinity)
-    .frame(height: state.isExpanded ? nil : 56) // collapsed: 고정 56pt, expanded: 콘텐츠 크기
     .glassEffect(in: RoundedRectangle(cornerRadius: 32))
-    // withAnimation in setIsExpanded handles this
     .background {
       GeometryReader { geo in
         Color.clear
           .onAppear { emitHeight(geo.size.height) }
           .onChange(of: geo.size.height) { newH in emitHeight(newH) }
-          .onChange(of: state.isExpanded) { _ in
-            // 애니메이션 완료 후 높이 재보고
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-              emitHeight(geo.size.height)
-            }
-          }
       }
     }
   }
