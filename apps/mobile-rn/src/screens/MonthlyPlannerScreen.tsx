@@ -18,6 +18,7 @@ import {
 } from '@/components/todo/TodoFormBottomSheet';
 import {MonthCalendarGrid, MonthlyFAB} from '@/components/monthly-planner';
 import {useTodoStore} from '@/stores/todoStore';
+import {useCalendarStore} from '@/stores/calendarStore';
 import {format, addMonths, subMonths} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {ChevronLeft, ChevronRight} from 'lucide-react-native';
@@ -28,6 +29,7 @@ export default function MonthlyPlannerScreen() {
   const navigation = useNavigation<any>();
   const {monthViewData, monthViewLoading, fetchTodosForMonthView, setSelectedDate} =
     useTodoStore();
+  const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
 
   const insets = useSafeAreaInsets();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -35,9 +37,14 @@ export default function MonthlyPlannerScreen() {
 
   const loadMonth = useCallback(
     (date: Date) => {
-      fetchTodosForMonthView(date.getFullYear(), date.getMonth() + 1);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      fetchTodosForMonthView(year, month);
+      if (isConnected) {
+        fetchEventsForMonth(year, month);
+      }
     },
-    [fetchTodosForMonthView],
+    [fetchTodosForMonthView, isConnected, fetchEventsForMonth],
   );
 
   useEffect(() => {
@@ -115,6 +122,7 @@ export default function MonthlyPlannerScreen() {
           <MonthCalendarGrid
             currentMonth={currentMonth}
             monthViewData={monthViewData}
+            calendarEvents={isConnected ? monthEvents : undefined}
             onDayPress={handleDayPress}
           />
         )}

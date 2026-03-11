@@ -1,26 +1,211 @@
+diff --git a/node_modules/react-native-bottom-tabs/ios/RCTBottomAccessoryComponentView.mm b/node_modules/react-native-bottom-tabs/ios/RCTBottomAccessoryComponentView.mm
+index 62d9595..e1c61c0 100644
+--- a/node_modules/react-native-bottom-tabs/ios/RCTBottomAccessoryComponentView.mm
++++ b/node_modules/react-native-bottom-tabs/ios/RCTBottomAccessoryComponentView.mm
+@@ -40,6 +40,22 @@ - (instancetype)initWithFrame:(CGRect)frame
+   return self;
+ }
+ 
++- (void)didAddSubview:(UIView *)subview {
++    [super didAddSubview:subview];
++    // Fabric이 자식 추가 후 레이아웃 적용 → wrapper에게 레이아웃 갱신 알림
++    dispatch_async(dispatch_get_main_queue(), ^{
++        [self.superview setNeedsLayout];
++    });
++}
++
++- (void)layoutSubviews {
++    [super layoutSubviews];
++    // Fabric 자식 프레임 적용 후 → wrapper에게 레이아웃 갱신 알림
++    dispatch_async(dispatch_get_main_queue(), ^{
++        [self.superview setNeedsLayout];
++    });
++}
++
+ - (void)setFrame:(CGRect)frame
+ {
+   [super setFrame:frame];
+diff --git a/node_modules/react-native-bottom-tabs/ios/TabItemEventModifier.swift b/node_modules/react-native-bottom-tabs/ios/TabItemEventModifier.swift
+index 42eb1e6..446de6e 100644
+--- a/node_modules/react-native-bottom-tabs/ios/TabItemEventModifier.swift
++++ b/node_modules/react-native-bottom-tabs/ios/TabItemEventModifier.swift
+@@ -33,7 +33,13 @@ private final class TabBarDelegate: NSObject, UITabBarControllerDelegate {
+     if let index = tabBarController.viewControllers?.firstIndex(of: viewController) {
+       let defaultPrevented = onClick?(index) ?? false
+ 
+-      return !defaultPrevented
++      if defaultPrevented {
++        if #available(iOS 26, *) {
++          return true  // iOS 26: shouldSelect false causes segfault → return true + SwiftUI bounce-back
++        }
++        return false  // iOS 25-: safe to return false
++      }
++      return true
+     }
+ 
+     return false
 diff --git a/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift b/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift
-index d699315..ca8d8fa 100644
+index d699315..62d4888 100644
 --- a/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift
 +++ b/node_modules/react-native-bottom-tabs/ios/TabView/NewTabView.swift
-@@ -117,6 +117,21 @@ struct BottomAccessoryRepresentableView: PlatformViewRepresentable {
+@@ -58,6 +58,7 @@ struct NewTabView: AnyTabView {
+ 
+ struct ConditionalBottomAccessoryModifier: ViewModifier {
+   @ObservedObject var props: TabViewProps
++  @State private var accessoryHeight: CGFloat = 0
+ 
+   private var bottomAccessoryView: PlatformView? {
+     props.children.first { child in
+@@ -87,7 +88,16 @@ struct ConditionalBottomAccessoryModifier: ViewModifier {
+     #if !os(macOS)
+     if let bottomAccessoryView {
+       if #available(iOS 26.0, *) {
+-        BottomAccessoryRepresentableView(view: bottomAccessoryView)
++        BottomAccessoryRepresentableView(
++          view: bottomAccessoryView,
++          onHeightMeasured: { height in
++            if height != accessoryHeight {
++              accessoryHeight = height
++            }
++          }
++        )
++        .frame(height: max(accessoryHeight, 0))
++        .clipped()
+       }
+     }
+     #endif
+@@ -95,28 +105,84 @@ struct ConditionalBottomAccessoryModifier: ViewModifier {
+ }
+ 
+ #if !os(macOS)
++class BottomAccessoryWrapperView: UIView {
++  var heightDidChange: ((CGFloat) -> Void)?
++  private var lastReportedHeight: CGFloat = 0
++
++  override func layoutSubviews() {
++    super.layoutSubviews()
++    let height = measureContentHeight()
++    if height > 0 && height != lastReportedHeight {
++      lastReportedHeight = height
++      DispatchQueue.main.async { [weak self] in
++        self?.heightDidChange?(height)
++      }
++    }
++  }
++
++  func measureContentHeight() -> CGFloat {
++    guard let rnView = subviews.first else { return 0 }
++    var maxHeight: CGFloat = 0
++    for child in rnView.subviews {
++      maxHeight = max(maxHeight, child.frame.maxY)
++    }
++    return maxHeight
++  }
++
++  override var intrinsicContentSize: CGSize {
++    let h = measureContentHeight()
++    guard h > 0 else {
++      return CGSize(width: UIView.noIntrinsicMetric, height: UIView.noIntrinsicMetric)
++    }
++    return CGSize(width: UIView.noIntrinsicMetric, height: h)
++  }
++}
++
+ @available(iOS 26.0, *)
+-struct BottomAccessoryRepresentableView: PlatformViewRepresentable {
++struct BottomAccessoryRepresentableView: UIViewRepresentable {
+   @Environment(\.tabViewBottomAccessoryPlacement) var tabViewBottomAccessoryPlacement
+   var view: PlatformView
++  var onHeightMeasured: ((CGFloat) -> Void)?
+ 
+-  func makeUIView(context: Context) -> PlatformView {
+-    let wrapper = UIView()
+-    wrapper.addSubview(view)
++  func makeCoordinator() -> Coordinator {
++    Coordinator()
++  }
+ 
++  func makeUIView(context: Context) -> BottomAccessoryWrapperView {
++    let wrapper = BottomAccessoryWrapperView()
++    wrapper.addSubview(view)
+     view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+-
++    context.coordinator.onHeightMeasured = onHeightMeasured
++    wrapper.heightDidChange = { height in
++      context.coordinator.onHeightMeasured?(height)
++    }
+     emitPlacementChanged(for: view)
+     return wrapper
+   }
+ 
+-  func updateUIView(_ uiView: PlatformView, context: Context) {
++  func updateUIView(_ uiView: BottomAccessoryWrapperView, context: Context) {
++    context.coordinator.onHeightMeasured = onHeightMeasured
+     if let subview = uiView.subviews.first {
+       subview.frame = uiView.bounds
+     }
      emitPlacementChanged(for: view)
    }
  
 +  func sizeThatFits(
 +    _ proposal: ProposedViewSize,
-+    uiView: PlatformView,
++    uiView: BottomAccessoryWrapperView,
 +    context: Context
 +  ) -> CGSize? {
-+    guard let rnView = uiView.subviews.first else { return nil }
-+    var maxHeight: CGFloat = 0
-+    for child in rnView.subviews {
-+      maxHeight = max(maxHeight, child.frame.maxY)
-+    }
-+    guard maxHeight > 0 else { return nil }
-+    let width = proposal.width ?? UIScreen.main.bounds.width
-+    return CGSize(width: width, height: maxHeight)
++    let h = uiView.measureContentHeight()
++    guard h > 0 else { return nil }
++    let w = proposal.width ?? UIScreen.main.bounds.width
++    return CGSize(width: w, height: h)
++  }
++
++  class Coordinator {
++    var onHeightMeasured: ((CGFloat) -> Void)?
 +  }
 +
    private func emitPlacementChanged(for uiView: PlatformView) {
      if let contentView = uiView.value(forKey: "bottomAccessoryProvider") as? BottomAccessoryProvider {
        contentView.emitPlacementChanged(tabViewBottomAccessoryPlacement)
+diff --git a/node_modules/react-native-bottom-tabs/ios/TabViewImpl.swift b/node_modules/react-native-bottom-tabs/ios/TabViewImpl.swift
+index 72938be..6d3fa98 100644
+--- a/node_modules/react-native-bottom-tabs/ios/TabViewImpl.swift
++++ b/node_modules/react-native-bottom-tabs/ios/TabViewImpl.swift
+@@ -6,6 +6,7 @@ import SwiftUI
+ /// SwiftUI implementation of TabView used to render React Native views.
+ struct TabViewImpl: View {
+   @ObservedObject var props: TabViewProps
++  @State private var lastNonPreventedPage: String = ""
+   #if os(macOS)
+     @Weak var tabBar: NSTabView?
+   #else
+@@ -83,6 +84,21 @@ struct TabViewImpl: View {
+       .getSidebarAdaptable(enabled: props.sidebarAdaptable ?? false)
+       .onChange(of: props.selectedPage ?? "") { newValue in
+         #if !os(macOS)
++          // iOS 26+ bounce-back for preventsDefault tabs
++          if #available(iOS 26, *) {
++            if let item = props.filteredItems.first(where: { $0.key == newValue }),
++               item.preventsDefault == true {
++              // Restore previous tab immediately (no animation)
++              UIView.setAnimationsEnabled(false)
++              props.selectedPage = lastNonPreventedPage
++              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
++                UIView.setAnimationsEnabled(true)
++              }
++              return
++            }
++            lastNonPreventedPage = newValue
++          }
++
+           if props.disablePageAnimations {
+             UIView.setAnimationsEnabled(false)
+             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+@@ -94,6 +110,9 @@ struct TabViewImpl: View {
+           onSelect(newValue)
+         #endif
+       }
++      .onAppear {
++        lastNonPreventedPage = props.selectedPage ?? ""
++      }
+   }
+ 
+   func emitHapticFeedback(longPress: Bool = false) {

@@ -16,7 +16,9 @@ import {
   CreditCard,
   LogOut,
   ShieldCheck,
+  Calendar,
 } from 'lucide-react-native';
+import {useCalendarStore} from '@/stores/calendarStore';
 
 interface SettingsMainViewProps {
   onNavigate: (view: string) => void;
@@ -26,7 +28,10 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const {primaryColor} = useTheme();
   const {user, signOut} = useAuthStore();
   const settings = useSettingsStore();
+  const {isConnected, connectGoogleCalendar, disconnectGoogleCalendar} =
+    useCalendarStore();
   const [isAdmin, setIsAdmin] = useState(false);
+  const isGoogleUser = user?.app_metadata?.provider === 'google';
 
   useEffect(() => {
     if (!user?.id) return;
@@ -39,6 +44,21 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
         setIsAdmin(data?.role === 'admin');
       });
   }, [user?.id]);
+
+  const handleCalendarToggle = useCallback(() => {
+    if (isConnected) {
+      Alert.alert('Google 캘린더 연결 해제', '캘린더 이벤트가 더 이상 표시되지 않습니다.', [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '해제',
+          style: 'destructive',
+          onPress: () => disconnectGoogleCalendar(),
+        },
+      ]);
+    } else {
+      connectGoogleCalendar();
+    }
+  }, [isConnected, connectGoogleCalendar, disconnectGoogleCalendar]);
 
   const handleSignOut = useCallback(() => {
     Alert.alert('로그아웃', '정말 로그아웃하시겠어요?', [
@@ -90,6 +110,23 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           primaryColor={primaryColor}
         />
       </View>
+
+      {/* 연동 서비스 (Google 로그인 사용자만) */}
+      {isGoogleUser && (
+        <>
+          <Text style={styles.sectionTitle}>연동 서비스</Text>
+          <View style={styles.section}>
+            <SettingsRow
+              icon={Calendar}
+              iconColor="#4285F4"
+              title="Google 캘린더"
+              subtitle={isConnected ? '연결됨' : '월간 계획에 일정을 표시합니다'}
+              value={isConnected ? '연결됨 ✓' : '연결하기'}
+              onPress={handleCalendarToggle}
+            />
+          </View>
+        </>
+      )}
 
       {/* 관리자 섹션 (admin 역할만) */}
       {isAdmin && (

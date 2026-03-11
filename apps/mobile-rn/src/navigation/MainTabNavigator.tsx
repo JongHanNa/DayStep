@@ -1,20 +1,19 @@
 /**
  * Main Tab Navigator — 하이브리드 네이티브 탭바
  * react-native-bottom-tabs (네이티브 SwiftUI TabView) → Liquid Glass 자동
- * More 패널: iOS 26+ renderBottomAccessoryView (네이티브 탭바 글래스 자체 확장)
- *           iOS 25-: 기존 GlassBackground 오버레이
+ * More 패널: GlassBackground 오버레이 (전 iOS 버전 통합)
+ *   iOS 26+: LiquidGlassBackgroundNative (UIGlassEffect) → 네이티브 글래스
+ *   iOS 25-: BlurView → 유사 글래스
  *
  * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 더 보기
  */
 import React, {useState, useCallback, useRef} from 'react';
-import {View, Pressable, StyleSheet, Dimensions} from 'react-native';
+import {View, Pressable, StyleSheet} from 'react-native';
 import {createNativeBottomTabNavigator} from '@bottom-tabs/react-navigation';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '@/theme';
-import {useSettingsStore} from '@/stores/settingsStore';
-import {isIOS26Plus, type NativeMenuItemData} from '@/components/native';
-import {MorePanelContent, getMorePanelHeight} from '@/components/navigation/MorePanel';
+import {MorePanelContent} from '@/components/navigation/MorePanel';
 import {GlassBackground} from '@/components/core';
 
 // Screens
@@ -92,8 +91,6 @@ const Tab = createNativeBottomTabNavigator();
 export default function MainTabNavigator() {
   const {primaryColor} = useTheme();
   const [morePanelVisible, setMorePanelVisible] = useState(false);
-  const showLabels = useSettingsStore(s => s.morePanelShowLabels);
-  const setShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
   const insets = useSafeAreaInsets();
 
   // 탭 내비게이션 참조 (패널에서 More 스택 내비게이션용)
@@ -126,27 +123,6 @@ export default function MainTabNavigator() {
         hapticFeedbackEnabled
         tabBarActiveTintColor={primaryColor}
         screenOptions={{}}
-        // iOS 26+: 네이티브 탭바 글래스 자체가 확장되어 MorePanel 표시
-        renderBottomAccessoryView={
-          isIOS26Plus
-            ? ({placement}) => {
-                if (!morePanelVisible) return null;
-                return (
-                  <View style={{
-                    width: Dimensions.get('window').width,
-                    height: getMorePanelHeight(showLabels),
-                  }}>
-                    <MorePanelContent
-                      onSelectScreen={handleSelectScreen}
-                      onClose={handleDismissPanel}
-                      primaryColor={primaryColor}
-                      activeScreenName={activeMoreScreen}
-                    />
-                  </View>
-                );
-              }
-            : undefined
-        }
         screenListeners={({route, navigation}) => ({
           focus: () => {
             // 탭 내비게이션 참조 캡처
@@ -163,12 +139,13 @@ export default function MainTabNavigator() {
               }
             }
           },
-          tabPress: () => {
-            if (route.name === 'More' && navigation.isFocused()) {
-              // More 탭이 이미 포커스 → 패널 토글
+          tabPress: (e) => {
+            if (route.name === 'More') {
+              e.preventDefault(); // RN navigate dispatch 차단
               setMorePanelVisible(prev => !prev);
+              // morePanelVisible 상태변경 → re-render → selectedPage prop이 현재 탭으로 유지
+              // → SwiftUI TabView(selection: $props.selectedPage) 바인딩이 원래 탭으로 복원
             } else {
-              // 다른 탭 전환 → 패널 닫기
               setMorePanelVisible(false);
             }
           },
@@ -211,12 +188,13 @@ export default function MainTabNavigator() {
           component={MoreStackNavigator}
           options={{
             tabBarIcon: () => ({sfSymbol: 'ellipsis'}),
+            preventsDefault: true,
           }}
         />
       </Tab.Navigator>
 
-      {/* iOS 25-: renderBottomAccessoryView 미지원 → 기존 GlassBackground 오버레이 */}
-      {!isIOS26Plus && morePanelVisible && (
+      {/* GlassBackground 오버레이 — 전 iOS 버전 통합 */}
+      {morePanelVisible && (
         <>
           <Pressable
             style={StyleSheet.absoluteFill}
