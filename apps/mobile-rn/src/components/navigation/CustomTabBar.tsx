@@ -233,6 +233,11 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     return null;
   }
 
+  // 집중 모드(타이머 실행 중) + Execute 탭이면 탭바 숨김
+  if (isTimerActive && focusedRoute.name === 'Execute') {
+    return null;
+  }
+
   // iOS 26+: 네이티브 Liquid Glass 탭바 (자체 확장 방식)
   if (isIOS26Plus) {
     const showLabels = true;
