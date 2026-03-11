@@ -32,8 +32,6 @@ import {
   Link,
   Lightbulb,
   PenLine,
-  MessageCircle,
-  Heart,
   BarChart3,
   Trash2,
 } from 'lucide-react-native';
@@ -196,32 +194,12 @@ export default function HomeScreen() {
         iconColor: VIOLET_ICON,
         onPress: () => navigation.navigate('Record'),
       },
-      {
-        id: 'news',
-        icon: <MessageCircle size={20} color={VIOLET_ICON} />,
-        label: '소식 챙기기',
-        description: '소식 흐름 시간순 보기',
-        iconBgColor: VIOLET_BG,
-        iconColor: VIOLET_ICON,
-        onPress: () => navigation.navigate('News'),
-        isPro: SCREEN_REGISTRY.news.isPro,
-      },
     ],
     [navigation],
   );
 
   const careItems: FeatureItem[] = useMemo(
     () => [
-      {
-        id: 'gratitude',
-        icon: <Heart size={20} color={EMERALD_ICON} />,
-        label: '감사 기록하기',
-        description: '감사한 순간 기록',
-        iconBgColor: EMERALD_BG,
-        iconColor: EMERALD_ICON,
-        onPress: () => navigation.navigate('Gratitude'),
-        isPro: SCREEN_REGISTRY.gratitude.isPro,
-      },
       {
         id: 'activity',
         icon: <BarChart3 size={20} color={EMERALD_ICON} />,

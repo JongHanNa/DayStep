@@ -1,8 +1,9 @@
 /**
- * Record Screen — 관계 기록하기
+ * Record Screen — 관계 기록하기 (통합 리디자인)
  * 3단계 플로우: select-person → write-news → completed
+ * Step 1: 사람 중심 카드 + 인라인 소식/감사 프리뷰
  */
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useMemo} from 'react';
 import {
   Text,
   View,
@@ -18,12 +19,17 @@ import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, AnimatedPressable, GlassBackground} from '@/components/core';
 import {
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Search,
   Plus,
   Heart,
   Check,
   Users,
   Clock,
+  MoreHorizontal,
+  MessageCircle,
+  AlertTriangle,
 } from 'lucide-react-native';
 import {RelationshipStatsModal} from '@/components/record/RelationshipStatsModal';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
@@ -35,9 +41,10 @@ import {
   INTERACTION_TYPE_LABELS,
   type InteractionType,
   type CareInteractionInput,
+  type NoteWithPerson,
 } from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {format} from 'date-fns';
+import {format, differenceInDays} from 'date-fns';
 
 type Step = 'select-person' | 'write-news' | 'completed';
 
@@ -84,6 +91,44 @@ function InteractionTypeGrid({
   );
 }
 
+/** 인라인 노트 프리뷰 (소식/감사 1줄씩) */
+function NotePreview({notes}: {notes: NoteWithPerson[]}) {
+  if (notes.length === 0) return null;
+  return (
+    <View className="mt-2 pl-11">
+      {notes.map(note => {
+        const isNews = !!note.recent_news;
+        const content = note.recent_news || note.gratitude_note || '';
+        return (
+          <View key={note.id} className="flex-row items-center mb-1">
+            {isNews ? (
+              <MessageCircle size={12} color="#3B82F6" />
+            ) : (
+              <Heart size={12} color="#22C55E" />
+            )}
+            <Text className={`text-xs ml-1.5 ${isNews ? 'text-blue-600' : 'text-green-600'}`}>
+              {isNews ? '소식' : '감사'}
+            </Text>
+            <Text className="text-xs text-gray-500 ml-2 flex-1" numberOfLines={1}>
+              {content}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+/** 퀵 스탯 pill */
+function QuickStatPill({label, value}: {label: string; value: string}) {
+  return (
+    <View className="bg-white/70 rounded-full px-4 py-2 mr-2">
+      <Text className="text-xs text-gray-500">{label}</Text>
+      <Text className="text-sm font-semibold text-gray-800">{value}</Text>
+    </View>
+  );
+}
+
 export default function RecordScreen() {
   const user = useAuthStore(s => s.user);
   const {
@@ -94,12 +139,20 @@ export default function RecordScreen() {
     addPerson,
     addInteraction,
     addInteractionWithTodo,
+    getRecentNotesPerPerson,
+    getRelationshipStats,
   } = useCherishedPeopleStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
 
   const [step, setStep] = useState<Step>('select-person');
   const [selectedPerson, setSelectedPerson] = useState<CherishedPerson | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedPersonId, setExpandedPersonId] = useState<string | null>(null);
+
+  // 사람별 최근 기록
+  const [notesPerPerson, setNotesPerPerson] = useState<Map<string, NoteWithPerson[]>>(new Map());
+  // 퀵 스탯
+  const [stats, setStats] = useState({totalPeople: 0, thisMonthCount: 0, needsAttention: 0});
 
   // Form state
   const [interactionType, setInteractionType] = useState<InteractionType>('message');
@@ -117,6 +170,14 @@ export default function RecordScreen() {
     if (user?.id) {
       loadPeople(user.id);
       loadRecommendations(user.id);
+      getRecentNotesPerPerson(user.id).then(setNotesPerPerson);
+      getRelationshipStats(user.id).then(s => {
+        setStats({
+          totalPeople: s.totalPeople,
+          thisMonthCount: s.totalInteractions,
+          needsAttention: s.needsAttention,
+        });
+      });
     }
   }, [user?.id]);
 
@@ -124,9 +185,20 @@ export default function RecordScreen() {
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const recommendedPeople = recommendations
-    .slice(0, 5)
-    .map(r => r.person);
+  // 관심 필요 사람 (recommendations에서)
+  const attentionPeople = useMemo(() => recommendations.slice(0, 5), [recommendations]);
+
+  // 최근 활동 사람 (recommendations에 없는 나머지, 마지막 연락 기준 정렬)
+  const recentActivityPeople = useMemo(() => {
+    const attentionIds = new Set(attentionPeople.map(r => r.person.id));
+    return [...people]
+      .filter(p => !attentionIds.has(p.id))
+      .sort((a, b) => {
+        const aDate = a.last_interaction_at ? new Date(a.last_interaction_at).getTime() : 0;
+        const bDate = b.last_interaction_at ? new Date(b.last_interaction_at).getTime() : 0;
+        return bDate - aDate;
+      });
+  }, [people, attentionPeople]);
 
   const handleSelectPerson = useCallback((person: CherishedPerson) => {
     setSelectedPerson(person);
@@ -165,7 +237,6 @@ export default function RecordScreen() {
   const handleSave = useCallback(async () => {
     if (!user?.id || !selectedPerson) return;
 
-    // 관심 기록 한도 체크
     const allowed = await checkLimit('care_interaction');
     if (!allowed) return;
 
@@ -224,6 +295,22 @@ export default function RecordScreen() {
     setTodoTitle('');
     setWantToCreateTodo(false);
   }, []);
+
+  /** 사람 카드에 표시할 마지막 연락 메타 정보 */
+  const getPersonMeta = useCallback((person: CherishedPerson) => {
+    if (!person.last_interaction_at) return '아직 기록 없음';
+    const days = differenceInDays(new Date(), new Date(person.last_interaction_at));
+    if (days === 0) return '오늘';
+    return `${days}일 전`;
+  }, []);
+
+  /** 사람에게 소식/감사 dot 표시 여부 */
+  const getNoteDots = useCallback((personId: string) => {
+    const notes = notesPerPerson.get(personId) ?? [];
+    const hasNews = notes.some(n => !!n.recent_news);
+    const hasGratitude = notes.some(n => !!n.gratitude_note);
+    return {hasNews, hasGratitude};
+  }, [notesPerPerson]);
 
   // ── Step 3: 완료 ──
   if (step === 'completed') {
@@ -420,11 +507,11 @@ export default function RecordScreen() {
     );
   }
 
-  // ── Step 1: 사람 선택 ──
+  // ── Step 1: 사람 중심 카드 UI ──
   return (
     <ScreenContainer gradient="warmBackground">
-      {/* 상단 헤더: 통계 버튼 */}
-      <Animated.View entering={FadeIn.duration(300)} style={recordStyles.idleHeaderRow}>
+      {/* 상단 헤더: 통계 버튼 + 타이틀 + 더보기 */}
+      <Animated.View entering={FadeIn.duration(300)} style={recordStyles.headerRow}>
         <AnimatedPressable
           onPress={() => setStatsVisible(true)}
           hapticType="light"
@@ -439,11 +526,41 @@ export default function RecordScreen() {
             </View>
           </GlassBackground>
         </AnimatedPressable>
+
+        <Text className="text-lg font-bold text-gray-800 flex-1 text-center">
+          관계 기록
+        </Text>
+
+        <AnimatedPressable
+          onPress={() => {/* 추후 편집/설정 */}}
+          hapticType="light"
+          scaleValue={0.9}
+          style={recordStyles.glassStatsBtn}>
+          <GlassBackground
+            blurAmount={16}
+            overlayColor="rgba(255,255,255,0.55)"
+            style={recordStyles.glassStatsBtnInner}>
+            <View style={recordStyles.glassStatsBtnContent}>
+              <MoreHorizontal size={20} color="#6B7280" />
+            </View>
+          </GlassBackground>
+        </AnimatedPressable>
       </Animated.View>
 
       <ScrollView
         contentContainerStyle={{paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
+
+        {/* 퀵 스탯 바 */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 8}}>
+          <QuickStatPill label="소중한 분" value={`${stats.totalPeople}명`} />
+          <QuickStatPill label="총 기록" value={`${stats.thisMonthCount}건`} />
+          <QuickStatPill label="관심 필요" value={`${stats.needsAttention}명`} />
+        </ScrollView>
+
         {/* 검색 */}
         <View className="px-4 mb-4">
           <View className="flex-row items-center bg-white rounded-xl px-4 py-3">
@@ -458,24 +575,40 @@ export default function RecordScreen() {
           </View>
         </View>
 
-        {/* 추천 섹션 */}
-        {recommendedPeople.length > 0 && !searchQuery && (
+        {/* 검색 중일 때: 필터링된 결과 */}
+        {searchQuery ? (
           <View className="px-4 mb-4">
             <AnimatedCard enterDelay={100}>
-              <Text className="text-sm font-semibold text-gray-700 mb-3">
-                오래 연락 안 한 분들
-              </Text>
-              {recommendedPeople.map(person => (
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-sm font-semibold text-gray-700">
+                  검색 결과 ({filteredPeople.length})
+                </Text>
+                {searchQuery.trim() && filteredPeople.length === 0 && (
+                  <TouchableOpacity
+                    onPress={handleAddNewPerson}
+                    className="flex-row items-center">
+                    <Plus size={16} color="#8B5CF6" />
+                    <Text className="text-sm text-violet-600 ml-1">새로 추가</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {filteredPeople.map(person => (
                 <TouchableOpacity
                   key={person.id}
                   onPress={() => handleSelectPerson(person)}
-                  className="flex-row items-center py-2 border-b border-gray-50">
-                  <View className="w-8 h-8 rounded-full bg-violet-100 items-center justify-center mr-3">
-                    <Text className="text-violet-600 font-bold text-sm">
+                  className="flex-row items-center py-3 border-b border-gray-50">
+                  <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-3">
+                    <Text className="text-gray-600 font-bold text-sm">
                       {person.name.charAt(0)}
                     </Text>
                   </View>
-                  <Text className="text-sm text-gray-800 flex-1">{person.name}</Text>
+                  <View className="flex-1">
+                    <Text className="text-sm text-gray-800">{person.name}</Text>
+                    {person.nickname && (
+                      <Text className="text-xs text-gray-400">{person.nickname}</Text>
+                    )}
+                  </View>
+                  <Text className="text-xs text-gray-400 mr-2">{getPersonMeta(person)}</Text>
                   <ChevronLeft
                     size={16}
                     color="#9CA3AF"
@@ -485,57 +618,146 @@ export default function RecordScreen() {
               ))}
             </AnimatedCard>
           </View>
-        )}
-
-        {/* 전체 목록 */}
-        <View className="px-4 mb-4">
-          <AnimatedCard enterDelay={200}>
-            <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-sm font-semibold text-gray-700">
-                전체 ({filteredPeople.length})
-              </Text>
-              {searchQuery.trim() && filteredPeople.length === 0 && (
-                <TouchableOpacity
-                  onPress={handleAddNewPerson}
-                  className="flex-row items-center">
-                  <Plus size={16} color="#8B5CF6" />
-                  <Text className="text-sm text-violet-600 ml-1">새로 추가</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            {filteredPeople.map(person => (
-              <TouchableOpacity
-                key={person.id}
-                onPress={() => handleSelectPerson(person)}
-                className="flex-row items-center py-2 border-b border-gray-50">
-                <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-3">
-                  <Text className="text-gray-600 font-bold text-sm">
-                    {person.name.charAt(0)}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-sm text-gray-800">{person.name}</Text>
-                  {person.nickname && (
-                    <Text className="text-xs text-gray-400">{person.nickname}</Text>
-                  )}
-                </View>
-                <ChevronLeft
-                  size={16}
-                  color="#9CA3AF"
-                  style={{transform: [{rotate: '180deg'}]}}
-                />
-              </TouchableOpacity>
-            ))}
-            {filteredPeople.length === 0 && !searchQuery && (
-              <View className="items-center py-8">
-                <Users size={36} color="#D1D5DB" />
-                <Text className="text-gray-400 text-sm mt-2 text-center">
-                  아직 등록된 사람이 없어요
-                </Text>
+        ) : (
+          <>
+            {/* "관심이 필요해요" 섹션 */}
+            {attentionPeople.length > 0 && (
+              <View className="px-4 mb-4">
+                <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+                  <View className="flex-row items-center mb-3">
+                    <AlertTriangle size={16} color="#F59E0B" />
+                    <Text className="text-sm font-semibold text-gray-700 ml-1.5">
+                      관심이 필요해요
+                    </Text>
+                  </View>
+                  {attentionPeople.map(rec => {
+                    const person = rec.person;
+                    const personNotes = notesPerPerson.get(person.id) ?? [];
+                    return (
+                      <TouchableOpacity
+                        key={person.id}
+                        onPress={() => handleSelectPerson(person)}
+                        activeOpacity={0.7}
+                        style={recordStyles.attentionCard}>
+                        <View className="flex-row items-center">
+                          <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center mr-3">
+                            <Text className="text-amber-600 font-bold text-sm">
+                              {person.name.charAt(0)}
+                            </Text>
+                          </View>
+                          <View className="flex-1">
+                            <View className="flex-row items-center">
+                              <Text className="text-sm font-medium text-gray-800">
+                                {person.name}
+                              </Text>
+                              <View className="bg-amber-100 rounded-full px-2 py-0.5 ml-2">
+                                <Text className="text-[10px] text-amber-700 font-medium">
+                                  관심 필요
+                                </Text>
+                              </View>
+                            </View>
+                            <Text className="text-xs text-gray-400 mt-0.5">
+                              {rec.daysSinceContact >= 999
+                                ? '아직 기록 없음'
+                                : `${rec.daysSinceContact}일째 연락 없음`}
+                            </Text>
+                          </View>
+                          <ChevronLeft
+                            size={16}
+                            color="#9CA3AF"
+                            style={{transform: [{rotate: '180deg'}]}}
+                          />
+                        </View>
+                        {/* 인라인 소식/감사 프리뷰 */}
+                        <NotePreview notes={personNotes} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </Animated.View>
               </View>
             )}
-          </AnimatedCard>
-        </View>
+
+            {/* "최근 활동" 섹션 */}
+            <View className="px-4 mb-4">
+              <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+                <Text className="text-sm font-semibold text-gray-700 mb-3">
+                  최근 활동
+                </Text>
+                {recentActivityPeople.length === 0 && people.length === 0 && (
+                  <AnimatedCard enterDelay={200}>
+                    <View className="items-center py-8">
+                      <Users size={36} color="#D1D5DB" />
+                      <Text className="text-gray-400 text-sm mt-2 text-center">
+                        아직 등록된 사람이 없어요
+                      </Text>
+                    </View>
+                  </AnimatedCard>
+                )}
+                {recentActivityPeople.map(person => {
+                  const {hasNews, hasGratitude} = getNoteDots(person.id);
+                  const isExpanded = expandedPersonId === person.id;
+                  const personNotes = notesPerPerson.get(person.id) ?? [];
+
+                  return (
+                    <View key={person.id} style={recordStyles.activityCard}>
+                      <TouchableOpacity
+                        onPress={() => handleSelectPerson(person)}
+                        activeOpacity={0.7}
+                        className="flex-row items-center">
+                        <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
+                          <Text className="text-gray-600 font-bold text-sm">
+                            {person.name.charAt(0)}
+                          </Text>
+                        </View>
+                        <View className="flex-1">
+                          <View className="flex-row items-center">
+                            <Text className="text-sm font-medium text-gray-800">
+                              {person.name}
+                            </Text>
+                            {/* 소식/감사 dot */}
+                            {hasNews && (
+                              <View className="w-2 h-2 rounded-full bg-blue-500 ml-1.5" />
+                            )}
+                            {hasGratitude && (
+                              <View className="w-2 h-2 rounded-full bg-green-500 ml-1" />
+                            )}
+                          </View>
+                          <Text className="text-xs text-gray-400 mt-0.5">
+                            {getPersonMeta(person)}
+                          </Text>
+                        </View>
+                        <ChevronLeft
+                          size={16}
+                          color="#9CA3AF"
+                          style={{transform: [{rotate: '180deg'}]}}
+                        />
+                      </TouchableOpacity>
+
+                      {/* 확장 토글 (기록이 있을 때만) */}
+                      {personNotes.length > 0 && (
+                        <TouchableOpacity
+                          onPress={() => setExpandedPersonId(isExpanded ? null : person.id)}
+                          className="flex-row items-center justify-center mt-1 py-1">
+                          <Text className="text-[10px] text-gray-400 mr-1">
+                            {isExpanded ? '접기' : `최근 기록 ${personNotes.length}건`}
+                          </Text>
+                          {isExpanded ? (
+                            <ChevronUp size={12} color="#9CA3AF" />
+                          ) : (
+                            <ChevronDown size={12} color="#9CA3AF" />
+                          )}
+                        </TouchableOpacity>
+                      )}
+
+                      {/* 확장된 인라인 프리뷰 */}
+                      {isExpanded && <NotePreview notes={personNotes} />}
+                    </View>
+                  );
+                })}
+              </Animated.View>
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* FAB: 새 사람 추가 */}
@@ -574,8 +796,9 @@ export default function RecordScreen() {
 }
 
 const recordStyles = StyleSheet.create({
-  idleHeaderRow: {
+  headerRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 4,
@@ -595,6 +818,30 @@ const recordStyles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  attentionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F59E0B',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  activityCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   fab: {
     position: 'absolute',

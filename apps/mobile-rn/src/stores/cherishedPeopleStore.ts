@@ -66,6 +66,9 @@ interface CherishedPeopleState {
   getGratitudeNotes: (userId: string, personId?: string) => Promise<NoteWithPerson[]>;
   getRecentNewsNotes: (userId: string, personId?: string) => Promise<NoteWithPerson[]>;
 
+  // 사람별 최근 기록 조회 (관계기록 통합 UI용)
+  getRecentNotesPerPerson: (userId: string) => Promise<Map<string, NoteWithPerson[]>>;
+
   // 통계 (신규)
   getDetailedStats: (userId: string) => Promise<DetailedStats>;
   getRelationshipStats: (userId: string) => Promise<RelationshipStats>;
@@ -431,6 +434,47 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Get news notes error:', err);
           return [];
+        }
+      },
+
+      // ── 사람별 최근 기록 조회 ──
+
+      getRecentNotesPerPerson: async (userId) => {
+        try {
+          const {data, error} = await supabase
+            .from('care_interactions')
+            .select('*, cherished_people!inner(name, nickname)')
+            .eq('user_id', userId)
+            .or('recent_news.not.is.null,gratitude_note.not.is.null')
+            .order('interaction_date', {ascending: false})
+            .limit(100);
+
+          if (error) throw error;
+
+          const map = new Map<string, NoteWithPerson[]>();
+          for (const item of data ?? []) {
+            const note: NoteWithPerson = {
+              id: item.id,
+              person_id: item.person_id,
+              person_name: item.cherished_people?.name ?? '',
+              person_nickname: item.cherished_people?.nickname,
+              interaction_type: item.interaction_type,
+              interaction_date: item.interaction_date,
+              gratitude_note: item.gratitude_note,
+              recent_news: item.recent_news,
+              description: item.description,
+              created_at: item.created_at,
+            };
+            const existing = map.get(item.person_id) ?? [];
+            if (existing.length < 2) {
+              existing.push(note);
+              map.set(item.person_id, existing);
+            }
+          }
+          return map;
+        } catch (err: any) {
+          console.error('[CherishedPeopleStore] Get recent notes per person error:', err);
+          return new Map();
         }
       },
 
