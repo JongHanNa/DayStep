@@ -36,7 +36,8 @@ import {
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useSettingsStore} from '@/stores/settingsStore';
 import {Canvas, Path, Skia} from '@shopify/react-native-skia';
-import {MorePanelContent, MORE_PANEL_CONTENT_HEIGHT} from './MorePanel';
+// MorePanel 높이 상수 (iOS 25- JS 폴백용)
+const MORE_PANEL_CONTENT_HEIGHT = 200;
 
 const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
   Home: {Icon: Home},
@@ -353,18 +354,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             {/* 상단 하이라이트 — 빛 반사 효과 */}
             <View style={styles.topHighlight} />
 
-            {/* 패널 열림 시: 그리드 콘텐츠 (fade in/out) */}
-            {shouldRenderPanel && (
-              <Animated.View style={panelAnimatedStyle}>
-                <MorePanelContent
-                  onSelectScreen={handleSelectScreen}
-                  onClose={handleClosePanel}
-                  primaryColor={primaryColor}
-                  onHeightChange={handlePanelHeightChange}
-                  activeScreenName={activeMoreScreen}
-                />
-              </Animated.View>
-            )}
+            {/* 패널 열림 시: iOS 26+에서는 네이티브 사용, iOS 25-에서는 미지원 */}
 
             {/* 탭 아이콘 행 — glassInner가 flex-end이므로 하단 배치, 레이아웃 고정 */}
             <View style={styles.tabRow}>

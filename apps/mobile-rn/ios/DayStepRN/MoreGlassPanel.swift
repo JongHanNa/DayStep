@@ -35,19 +35,6 @@ struct MoreGlassPanelContent: View {
 
         Spacer()
 
-        HStack(spacing: 6) {
-          Text("이름")
-            .font(.system(size: 13, weight: .medium))
-            .foregroundColor(state.showLabels ? state.primaryColor : Color(red: 0.612, green: 0.639, blue: 0.686))
-
-          Toggle("", isOn: Binding(
-            get: { state.showLabels },
-            set: { newVal in onToggleLabels?(newVal) }
-          ))
-          .toggleStyle(SwitchToggleStyle(tint: state.primaryColor))
-          .scaleEffect(0.75)
-          .frame(width: 40)
-        }
       }
       .padding(.horizontal, 16)
       .padding(.top, 14)
@@ -59,7 +46,7 @@ struct MoreGlassPanelContent: View {
     }
     .frame(maxWidth: .infinity)
     .glassEffect(in: RoundedRectangle(cornerRadius: 24))
-    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: state.showLabels)
+    .animation(.easeInOut(duration: 0.25), value: state.showLabels)
   }
 
   // MARK: - Menu Grid (5열 SF Symbol)
