@@ -12,9 +12,10 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
 } from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
+import {ScreenContainer, AnimatedCard, AnimatedPressable, GlassBackground} from '@/components/core';
 import {
   ChevronLeft,
   Search,
@@ -22,7 +23,9 @@ import {
   Heart,
   Check,
   Users,
+  Clock,
 } from 'lucide-react-native';
+import {RelationshipStatsModal} from '@/components/record/RelationshipStatsModal';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
@@ -108,6 +111,7 @@ export default function RecordScreen() {
   const [todoTitle, setTodoTitle] = useState('');
   const [wantToCreateTodo, setWantToCreateTodo] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [statsVisible, setStatsVisible] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -419,6 +423,24 @@ export default function RecordScreen() {
   // ── Step 1: 사람 선택 ──
   return (
     <ScreenContainer gradient="warmBackground">
+      {/* 상단 헤더: 통계 버튼 */}
+      <Animated.View entering={FadeIn.duration(300)} style={recordStyles.idleHeaderRow}>
+        <AnimatedPressable
+          onPress={() => setStatsVisible(true)}
+          hapticType="light"
+          scaleValue={0.9}
+          style={recordStyles.glassStatsBtn}>
+          <GlassBackground
+            blurAmount={16}
+            overlayColor="rgba(255,255,255,0.55)"
+            style={recordStyles.glassStatsBtnInner}>
+            <View style={recordStyles.glassStatsBtnContent}>
+              <Clock size={20} color="#6B7280" />
+            </View>
+          </GlassBackground>
+        </AnimatedPressable>
+      </Animated.View>
+
       <ScrollView
         contentContainerStyle={{paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
@@ -514,28 +536,28 @@ export default function RecordScreen() {
             )}
           </AnimatedCard>
         </View>
-
-        {/* 새 사람 추가 */}
-        <View className="px-4">
-          <TouchableOpacity
-            onPress={() => {
-              Alert.prompt
-                ? Alert.prompt('새 사람 추가', '이름을 입력하세요', async (name: string) => {
-                    if (name.trim() && user?.id) {
-                      const allowed = await checkLimit('cherished_people');
-                      if (!allowed) return;
-                      const person = await addPerson(user.id, {name: name.trim()});
-                      if (person) handleSelectPerson(person);
-                    }
-                  })
-                : Alert.alert('새 사람 추가', '이 기능은 iOS에서만 지원됩니다');
-            }}
-            className="bg-violet-50 rounded-xl py-3 flex-row items-center justify-center">
-            <Plus size={18} color="#8B5CF6" />
-            <Text className="text-violet-600 font-medium ml-2">새 사람 추가</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
+
+      {/* FAB: 새 사람 추가 */}
+      <AnimatedPressable
+        onPress={() => {
+          Alert.prompt
+            ? Alert.prompt('새 사람 추가', '이름을 입력하세요', async (name: string) => {
+                if (name.trim() && user?.id) {
+                  const allowed = await checkLimit('cherished_people');
+                  if (!allowed) return;
+                  const person = await addPerson(user.id, {name: name.trim()});
+                  if (person) handleSelectPerson(person);
+                }
+              })
+            : Alert.alert('새 사람 추가', '이 기능은 iOS에서만 지원됩니다');
+        }}
+        hapticType="light"
+        scaleValue={0.9}
+        style={recordStyles.fab}>
+        <Text style={recordStyles.fabText}>+</Text>
+      </AnimatedPressable>
+
       <LimitReachedModal
         visible={isLimitReached}
         onClose={closeLimitModal}
@@ -543,6 +565,57 @@ export default function RecordScreen() {
         currentCount={currentCount}
         maxCount={maxCount}
       />
+      <RelationshipStatsModal
+        visible={statsVisible}
+        onClose={() => setStatsVisible(false)}
+      />
     </ScreenContainer>
   );
 }
+
+const recordStyles = StyleSheet.create({
+  idleHeaderRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  glassStatsBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  glassStatsBtnInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  glassStatsBtnContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 100,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#8B5CF6',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '300',
+    lineHeight: 32,
+  },
+});

@@ -25,7 +25,6 @@ import AIChatScreen from '../screens/AIChatScreen';
 import GuideScreen from '../screens/GuideScreen';
 import RecordScreen from '../screens/RecordScreen';
 import NewsScreen from '../screens/NewsScreen';
-import ContactScreen from '../screens/ContactScreen';
 import GratitudeScreen from '../screens/GratitudeScreen';
 import ActivityScreen from '../screens/ActivityScreen';
 import CleanupScreen from '../screens/CleanupScreen';
@@ -47,7 +46,6 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Guide" component={GuideScreen} />
       <HomeStack.Screen name="Record" component={RecordScreen} />
       <HomeStack.Screen name="News" component={NewsScreen} />
-      <HomeStack.Screen name="Contact" component={ContactScreen} />
       <HomeStack.Screen name="Gratitude" component={GratitudeScreen} />
       <HomeStack.Screen name="Activity" component={ActivityScreen} />
       <HomeStack.Screen name="Cleanup" component={CleanupScreen} />
@@ -73,7 +71,6 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="Guide" component={GuideScreen} />
       <MoreStack.Screen name="Record" component={RecordScreen} />
       <MoreStack.Screen name="News" component={NewsScreen} />
-      <MoreStack.Screen name="Contact" component={ContactScreen} />
       <MoreStack.Screen name="Gratitude" component={GratitudeScreen} />
       <MoreStack.Screen name="Activity" component={ActivityScreen} />
       <MoreStack.Screen name="Cleanup" component={CleanupScreen} />
