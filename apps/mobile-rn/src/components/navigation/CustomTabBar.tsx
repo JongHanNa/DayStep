@@ -235,8 +235,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
   // iOS 26+: 네이티브 Liquid Glass 탭바 (자체 확장 방식)
   if (isIOS26Plus) {
-    const showLabels = useSettingsStore(s => s.morePanelShowLabels);
-    const setMorePanelShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
+    const showLabels = true;
 
     const nativeTabs: NativeTabData[] = state.routes.map(route => ({
       name: route.name,
@@ -280,10 +279,6 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       handleClosePanel();
     };
 
-    const handleNativeToggleLabels = (event: {nativeEvent: {showLabels: boolean}}) => {
-      setMorePanelShowLabels(event.nativeEvent.showLabels);
-    };
-
     const handleNativeHeightChange = (event: {nativeEvent: {height: number}}) => {
       nativeTabBarHeight.value = event.nativeEvent.height; // 직접 동기화 (네이티브 애니메이션 추종)
     };
@@ -315,7 +310,6 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             showLabels={showLabels}
             onTabPress={handleNativeTabPress}
             onMenuItemPress={handleNativeMenuItemPress}
-            onToggleLabels={handleNativeToggleLabels}
             onHeightChange={handleNativeHeightChange}
             style={styles.nativeFill}
           />
