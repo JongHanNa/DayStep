@@ -3,9 +3,8 @@
  * 5탭: 홈 / 플래너 / 실행 / 노트 / 더 보기
  * Liquid Glass 플로팅 탭바 — 아이콘만 표시, 화이트 글래스
  *
- * iOS 26+: 네이티브 SwiftUI glassEffectID 모프 탭바
- *          → More 패널: SwiftUI 내부에서 SF Symbol 그리드 렌더링
- *          → 축소 ↔ 확장 글래스 컨테이너 모프 (RN 높이 제어 불필요)
+ * iOS 26+: 네이티브 SwiftUI .glassEffect 탭바
+ *          → More 패널 열림 시 네이티브 탭바 자체가 위로 확장 (글래스 효과 유지)
  * iOS 25-: JS GlassBackground 폴백
  *
  * More 패널: 탭바 자체가 위로 확장되어 하나의 글래스 카드 안에
@@ -31,12 +30,10 @@ import {
   LiquidGlassTabBarNative,
   isIOS26Plus,
   type NativeTabData,
-  type NativeMenuItemData,
 } from '@/components/native';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
-import {useSettingsStore} from '@/stores/settingsStore';
 import {Canvas, Path, Skia} from '@shopify/react-native-skia';
-import {MorePanelContent, getMorePanelHeight} from './MorePanel';
+import {MorePanelContent, MORE_PANEL_CONTENT_HEIGHT} from './MorePanel';
 
 const TAB_CONFIG: Record<string, {Icon: LucideIcon}> = {
   Home: {Icon: Home},
@@ -55,21 +52,6 @@ const SF_SYMBOL_MAP: Record<string, string> = {
   More: 'ellipsis',
 };
 
-// MorePanel 메뉴 아이템 (네이티브 SF Symbol 버전)
-const NATIVE_MENU_ITEMS: Omit<NativeMenuItemData, 'isActive'>[] = [
-  {label: '설정', sfSymbol: 'gear', screenName: 'MoreLanding'},
-  {label: '월간계획', sfSymbol: 'calendar', screenName: 'MonthlyPlanner'},
-  {label: '계획보기', sfSymbol: 'list.clipboard', screenName: 'AIPlan'},
-  {label: 'AI계획', sfSymbol: 'sparkles', screenName: 'AIChat'},
-  {label: 'Claude', sfSymbol: 'message', screenName: 'Guide'},
-  {label: '정리', sfSymbol: 'trash', screenName: 'Cleanup'},
-  {label: '원동력', sfSymbol: 'flame', screenName: 'Record'},
-  {label: '관계기록', sfSymbol: 'newspaper', screenName: 'News'},
-  {label: '소식', sfSymbol: 'phone', screenName: 'Contact'},
-  {label: '연락', sfSymbol: 'heart', screenName: 'Gratitude'},
-  {label: '감사', sfSymbol: 'chart.bar', screenName: 'Activity'},
-];
-
 // HomeStack 내 "More 소속" 화면 목록
 const MORE_SCREENS = new Set([
   'MonthlyPlanner', 'AIPlan', 'AIChat', 'Guide',
@@ -78,8 +60,10 @@ const MORE_SCREENS = new Set([
 
 const TAB_COUNT = 5;
 const COLLAPSED_HEIGHT = 56;
+const TIMING_CONFIG = {duration: 250, easing: Easing.inOut(Easing.ease)};
+
+// iOS 26+ 네이티브 탭바 확장 높이
 const NATIVE_COLLAPSED = 56;
-const PANEL_TIMING = {duration: 280, easing: Easing.bezier(0.25, 0.1, 0.25, 1)};
 
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -87,36 +71,36 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const timerState = usePomodoroStore(s => s.timerState);
   const isTimerActive = timerState.isRunning || timerState.isPaused;
   const [morePanelVisible, setMorePanelVisible] = useState(false);
+  const [panelContentHeight, setPanelContentHeight] = useState(MORE_PANEL_CONTENT_HEIGHT);
 
-  // settingsStore에서 라벨 상태
-  const showLabels = useSettingsStore(s => s.morePanelShowLabels);
-  const setShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
+  // JS 탭바 높이 애니메이션 (iOS 25-)
+  const tabBarHeight = useSharedValue(COLLAPSED_HEIGHT);
+  // 네이티브 탭바 높이 애니메이션 (iOS 26+)
+  const nativeTabBarHeight = useSharedValue(NATIVE_COLLAPSED);
 
-  // 단일 SharedValue: 0(닫힘) → 1(열림) — 높이 + 콘텐츠 opacity 동시 구동
-  const panelProgress = useSharedValue(0);
-
-  // panelContentHeight를 SharedValue로 — UI 스레드에서 stale 참조 방지
-  const panelContentHeightSV = useSharedValue(getMorePanelHeight(showLabels));
+  const handlePanelHeightChange = useCallback((height: number) => {
+    setPanelContentHeight(height);
+  }, []);
 
   useEffect(() => {
-    panelContentHeightSV.value = withTiming(
-      getMorePanelHeight(showLabels),
-      PANEL_TIMING,
+    const expandedHeight = COLLAPSED_HEIGHT + panelContentHeight;
+    const nativeExpandedHeight = NATIVE_COLLAPSED + panelContentHeight;
+    tabBarHeight.value = withTiming(
+      morePanelVisible ? expandedHeight : COLLAPSED_HEIGHT,
+      TIMING_CONFIG,
     );
-  }, [showLabels, panelContentHeightSV]);
+    nativeTabBarHeight.value = withTiming(
+      morePanelVisible ? nativeExpandedHeight : NATIVE_COLLAPSED,
+      TIMING_CONFIG,
+    );
+  }, [morePanelVisible, panelContentHeight, tabBarHeight, nativeTabBarHeight]);
 
-  useEffect(() => {
-    panelProgress.value = withTiming(morePanelVisible ? 1 : 0, PANEL_TIMING);
-  }, [morePanelVisible, panelProgress]);
-
-  // JS 탭바 (iOS 25-)
   const animatedContainerStyle = useAnimatedStyle(() => ({
-    height: COLLAPSED_HEIGHT + panelProgress.value * panelContentHeightSV.value,
+    height: tabBarHeight.value,
   }));
 
-  // iOS 26+ 네이티브 래퍼
   const animatedNativeStyle = useAnimatedStyle(() => ({
-    height: NATIVE_COLLAPSED + panelProgress.value * panelContentHeightSV.value,
+    height: nativeTabBarHeight.value,
   }));
 
   // HomeStack의 현재 nested route 확인 → More 소속 화면이면 "..." 활성화
@@ -158,21 +142,17 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       isFirstRender.current = false;
       return;
     }
-    // More 탭 전환 시에는 스퀴시 스킵 (높이 변경만으로 충분한 피드백)
-    const isMoreTab = effectiveFocusedIndex === state.routes.findIndex(r => r.name === 'More');
-    if (!isMoreTab) {
-      // 스퀴시: 수평 압축 → 복원 (관성 느낌)
-      pillScaleX.value = withSpring(0.85, {damping: 15, stiffness: 400}, () => {
-        pillScaleX.value = withSpring(1, {damping: 12, stiffness: 200});
-      });
-    }
+    // 스퀴시: 수평 압축 → 복원 (관성 느낌)
+    pillScaleX.value = withSpring(0.85, {damping: 15, stiffness: 400}, () => {
+      pillScaleX.value = withSpring(1, {damping: 12, stiffness: 200});
+    });
     // 슬라이딩
     pillTranslateX.value = withSpring(targetX, {
       damping: 22,
       stiffness: 350,
       mass: 0.5,
     });
-  }, [effectiveFocusedIndex, tabWidth, pillWidth, pillTranslateX, pillScaleX, state.routes]);
+  }, [effectiveFocusedIndex, tabWidth, pillWidth, pillTranslateX, pillScaleX]);
 
   const glassPillStyle = useAnimatedStyle(() => ({
     transform: [
@@ -202,21 +182,11 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     return null;
   }
 
-  // ═══════════════════════════════════════════════
-  // iOS 26+: 네이티브 Liquid Glass 탭바 (SwiftUI 모프)
-  // SwiftUI가 glassEffectID로 축소↔확장 모프를 자체 처리
-  // RN은 데이터만 전달, 높이 제어하지 않음
-  // ═══════════════════════════════════════════════
+  // iOS 26+: 네이티브 Liquid Glass 탭바 (자체 확장 방식)
   if (isIOS26Plus) {
     const nativeTabs: NativeTabData[] = state.routes.map(route => ({
       name: route.name,
       sfSymbol: SF_SYMBOL_MAP[route.name] ?? 'circle',
-    }));
-
-    // 메뉴 아이템에 isActive 상태 주입
-    const nativeMenuItems: NativeMenuItemData[] = NATIVE_MENU_ITEMS.map(item => ({
-      ...item,
-      isActive: item.screenName === activeMoreScreen,
     }));
 
     const handleNativeTabPress = (event: {nativeEvent: {index: number}}) => {
@@ -243,19 +213,6 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       }
     };
 
-    const handleNativeMenuItemPress = (event: {nativeEvent: {screenName: string}}) => {
-      handleSelectScreen(event.nativeEvent.screenName);
-      setMorePanelVisible(false);
-    };
-
-    const handleNativeToggleLabels = (event: {nativeEvent: {showLabels: boolean}}) => {
-      setShowLabels(event.nativeEvent.showLabels);
-    };
-
-    const handleNativeHeightChange = (event: {nativeEvent: {height: number}}) => {
-      // SwiftUI가 높이를 자체 관리하므로 필요 시 레이아웃 조정용
-    };
-
     return (
       <>
         {/* 투명 터치 캐처 (패널 열림 시) */}
@@ -266,30 +223,39 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
           />
         )}
 
-        {/* Animated.View 래퍼: 높이 제어 + 터치 영역 확보 */}
-        <Animated.View style={[styles.container, {bottom: tabBarBottom}, animatedNativeStyle]}>
+        <Animated.View
+          style={[
+            styles.container,
+            {bottom: tabBarBottom},
+            animatedNativeStyle,
+          ]}>
+          {/* 네이티브 글래스 탭바 (전체 영역 채움) */}
           <LiquidGlassTabBarNative
             tabs={nativeTabs}
             selectedIndex={isHomeShowingMoreScreen ? state.routes.findIndex(r => r.name === 'More') : state.index}
             primaryColor={primaryColor}
             timerProgress={isTimerActive ? timerState.progress : -1}
-            isExpanded={morePanelVisible}
-            menuItems={nativeMenuItems}
-            showLabels={showLabels}
             onTabPress={handleNativeTabPress}
-            onMenuItemPress={handleNativeMenuItemPress}
-            onToggleLabels={handleNativeToggleLabels}
-            onHeightChange={handleNativeHeightChange}
             style={styles.nativeFill}
           />
+
+          {/* 패널 콘텐츠 오버레이 (탭 아이콘 위 영역) */}
+          {morePanelVisible && (
+            <View style={styles.panelOverlay} pointerEvents="box-none">
+              <MorePanelContent
+                onSelectScreen={handleSelectScreen}
+                onClose={handleClosePanel}
+                primaryColor={primaryColor}
+                activeScreenName={activeMoreScreen}
+              />
+            </View>
+          )}
         </Animated.View>
       </>
     );
   }
 
-  // ═══════════════════════════════════════════════
-  // iOS 25-: JS 글래스 탭바 폴백
-  // ═══════════════════════════════════════════════
+  // JS 글래스 탭바 (iOS 25- 또는 패널 열림 시)
   return (
     <>
       {/* 투명 터치 캐처 — 패널 외부 터치로 닫기 (어두운 배경 없음) */}
@@ -314,16 +280,16 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
           {/* 상단 하이라이트 — 빛 반사 효과 */}
           <View style={styles.topHighlight} />
 
-          {/* 패널 콘텐츠 — 항상 렌더링, panelProgress로 fade 제어 */}
-          <View pointerEvents={morePanelVisible ? 'auto' : 'none'}>
+          {/* 패널 열림 시: 그리드 콘텐츠 */}
+          {morePanelVisible && (
             <MorePanelContent
               onSelectScreen={handleSelectScreen}
               onClose={handleClosePanel}
               primaryColor={primaryColor}
+              onHeightChange={handlePanelHeightChange}
               activeScreenName={activeMoreScreen}
-              panelProgress={panelProgress}
             />
-          </View>
+          )}
 
           {/* 기존 탭 아이콘 행 */}
           <View style={styles.tabRow}>
@@ -486,7 +452,13 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 12,
   },
-  // iOS 26+ 네이티브 탭바: Animated.View 내부에서 절대 채움
+  glassContainer: {
+    flex: 1,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  // iOS 26 네이티브 탭바: 부모 Animated.View 전체 채움
   nativeFill: {
     position: 'absolute',
     top: 0,
@@ -494,11 +466,14 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  glassContainer: {
-    flex: 1,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+  // 패널 콘텐츠 오버레이: 탭 아이콘 영역(하단 64pt) 제외
+  panelOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: NATIVE_COLLAPSED,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
   },
   tabRow: {
     flexDirection: 'row',
