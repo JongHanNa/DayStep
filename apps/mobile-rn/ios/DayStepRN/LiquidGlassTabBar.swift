@@ -69,8 +69,10 @@ struct LiquidGlassTabBarContent: View {
         .background {
           selectionPillBackground
             .opacity(state.isExpanded ? 0 : 1)
+            .animation(.easeInOut(duration: 0.2), value: state.isExpanded)
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
+        .animation(nil, value: state.isExpanded)
         .onChange(of: state.selectedIndex) { _ in
           withAnimation(.easeOut(duration: 0.15)) {
             pillScale = 1.4
@@ -89,7 +91,7 @@ struct LiquidGlassTabBarContent: View {
     .frame(maxWidth: .infinity)
     .frame(height: state.isExpanded ? nil : 56) // collapsed: 고정 56pt, expanded: 콘텐츠 크기
     .glassEffect(in: RoundedRectangle(cornerRadius: 32))
-    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isExpanded)
+    // withAnimation in setIsExpanded handles this
     .background {
       GeometryReader { geo in
         Color.clear
@@ -97,7 +99,7 @@ struct LiquidGlassTabBarContent: View {
           .onChange(of: geo.size.height) { newH in emitHeight(newH) }
           .onChange(of: state.isExpanded) { _ in
             // 애니메이션 완료 후 높이 재보고
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
               emitHeight(geo.size.height)
             }
           }
@@ -303,7 +305,9 @@ class LiquidGlassTabBarUIView: UIView {
   }
 
   @objc func setIsExpanded(_ value: Bool) {
-    tabState.isExpanded = value
+    withAnimation(.easeInOut(duration: 0.35)) {
+      tabState.isExpanded = value
+    }
   }
 
   @objc func setMenuItems(_ value: NSArray) {
