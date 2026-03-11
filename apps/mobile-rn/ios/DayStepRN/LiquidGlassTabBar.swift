@@ -309,7 +309,7 @@ class LiquidGlassTabBarUIView: UIView {
         self?.hostingController?.view.invalidateIntrinsicContentSize()
       }
       collapseWorkItem = workItem
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: workItem)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: workItem)
     }
   }
 

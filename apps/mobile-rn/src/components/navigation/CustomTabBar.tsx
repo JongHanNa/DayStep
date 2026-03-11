@@ -99,7 +99,7 @@ const MENU_SCREEN_ORDER = [
 
 const TAB_COUNT = 5;
 const COLLAPSED_HEIGHT = 56;
-const TIMING_CONFIG = {duration: 250, easing: Easing.inOut(Easing.ease)};
+const SPRING_CONFIG = {damping: 20, stiffness: 300, mass: 0.8};
 
 // iOS 26+ 네이티브 탭바 확장 높이
 const NATIVE_COLLAPSED = 56;
@@ -131,12 +131,12 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       // 열기: 즉시 마운트 → fade in + 높이 확장
       setShouldRenderPanel(true);
       panelOpacity.value = withTiming(1, {duration: 150, easing: Easing.out(Easing.ease)});
-      tabBarHeight.value = withTiming(expandedHeight, TIMING_CONFIG);
+      tabBarHeight.value = withSpring(expandedHeight, SPRING_CONFIG);
     } else {
-      // 닫기: fade out(120ms) + 높이 축소(250ms) 동시 시작, 높이 완료 후 언마운트
+      // 닫기: fade out(120ms) + 높이 축소(spring) 동시 시작, 높이 완료 후 언마운트
       panelOpacity.value = withTiming(0, {duration: 120, easing: Easing.in(Easing.ease)});
-      tabBarHeight.value = withTiming(COLLAPSED_HEIGHT, TIMING_CONFIG, () => {
-        runOnJS(setShouldRenderPanel)(false);
+      tabBarHeight.value = withSpring(COLLAPSED_HEIGHT, SPRING_CONFIG, (finished) => {
+        if (finished) runOnJS(setShouldRenderPanel)(false);
       });
     }
     // iOS 26+: 네이티브가 자체 애니메이션하므로 여기서 nativeTabBarHeight 건드리지 않음
@@ -285,10 +285,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     };
 
     const handleNativeHeightChange = (event: {nativeEvent: {height: number}}) => {
-      nativeTabBarHeight.value = withTiming(event.nativeEvent.height, {
-        duration: 350,  // SwiftUI easeInOut(0.35) 매칭
-        easing: Easing.inOut(Easing.ease),  // easeOut → easeInOut 매칭
-      });
+      nativeTabBarHeight.value = withSpring(event.nativeEvent.height, SPRING_CONFIG);
     };
 
     return (
