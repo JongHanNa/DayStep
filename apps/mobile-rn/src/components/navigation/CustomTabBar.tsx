@@ -252,7 +252,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       label: MENU_LABELS[screenName] ?? screenName,
       sfSymbol: MENU_SF_SYMBOLS[screenName] ?? 'circle',
       screenName,
-      isActive: screenName === activeMoreScreen,
+      isActive: screenName === activeMoreScreen && state.index === state.routes.findIndex(r => r.name === 'More'),
     }));
 
     const handleNativeTabPress = (event: {nativeEvent: {index: number}}) => {
