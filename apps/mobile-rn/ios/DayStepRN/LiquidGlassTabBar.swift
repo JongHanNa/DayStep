@@ -53,22 +53,23 @@ struct LiquidGlassTabBarContent: View {
   @State private var pillWhite: CGFloat = 0.0
 
   var body: some View {
-    VStack(spacing: 0) {
-      // 패널 콘텐츠 (조건부 — tabRow 위에 쌓임)
+    ZStack(alignment: .bottom) {
+      // 패널 콘텐츠 (조건부 — 탭바 뒤에서 슬라이드업)
       if state.isExpanded {
         VStack(spacing: 0) {
           headerView
           menuGrid
         }
-        .transition(.opacity.combined(with: .move(edge: .bottom)))
+        .padding(.bottom, 50)
+        // transition 제거 — RN clipsToBounds가 시각적 슬라이드 제공
       }
 
-      // 탭바 아이콘 행 (항상 존재, VStack 하단 = 화면 고정)
+      // 탭바 아이콘 행 (항상 존재, ZStack .bottom 정렬 = 위치 불변)
       tabIconRow
         .background {
           selectionPillBackground
             .opacity(state.isExpanded ? 0 : 1)
-            .animation(.easeInOut(duration: 0.2), value: state.isExpanded)
+            // animation 제거 — isExpanded 변경 시 레이아웃 영향 방지
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
         .onChange(of: state.selectedIndex) { _ in
@@ -87,6 +88,7 @@ struct LiquidGlassTabBarContent: View {
         .padding(.bottom, 6)
     }
     .frame(maxWidth: .infinity)
+    .frame(minHeight: 56)
     .glassEffect(in: RoundedRectangle(cornerRadius: 32))
     .background {
       GeometryReader { geo in
@@ -282,8 +284,16 @@ class LiquidGlassTabBarUIView: UIView {
   }
 
   @objc func setIsExpanded(_ value: Bool) {
-    withAnimation(.easeInOut(duration: 0.35)) {
-      tabState.isExpanded = value
+    // withAnimation 제거 — SwiftUI 레이아웃 즉시 변경, 애니메이션 충돌 방지
+    // 시각적 슬라이드 효과는 RN의 clipsToBounds + 높이 애니메이션이 담당
+    tabState.isExpanded = value
+    hostingController?.view.invalidateIntrinsicContentSize()
+
+    // 타겟 높이를 즉시 계산하여 RN에 송출 (chicken-and-egg 해결)
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self, let hc = self.hostingController, self.bounds.width > 0 else { return }
+      let target = hc.sizeThatFits(in: CGSize(width: self.bounds.width, height: .greatestFiniteMagnitude))
+      self.onHeightChange?(["height": target.height])
     }
   }
 
@@ -312,6 +322,7 @@ class LiquidGlassTabBarUIView: UIView {
     guard !hasSetUp, !tabState.tabs.isEmpty else { return }
     hasSetUp = true
     backgroundColor = .clear
+    clipsToBounds = true  // RN 컨테이너가 애니메이션으로 높이 확장 → 점진적 클리핑 해제
 
     guard #available(iOS 26.0, *) else {
       // iOS 25 이하: JS 폴백 사용 (이 뷰는 비어있음)
@@ -344,7 +355,8 @@ class LiquidGlassTabBarUIView: UIView {
     NSLayoutConstraint.activate([
       hc.view.leadingAnchor.constraint(equalTo: leadingAnchor),
       hc.view.trailingAnchor.constraint(equalTo: trailingAnchor),
-      hc.view.topAnchor.constraint(equalTo: topAnchor),
+      // top 앵커 제거 — 호스팅 컨트롤러가 intrinsicContentSize 기반 자유 높이 결정
+      // bottom만 핀 → 확장 시 위로 초과, clipsToBounds가 점진적 클리핑
       hc.view.bottomAnchor.constraint(equalTo: bottomAnchor),
     ])
   }

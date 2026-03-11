@@ -43,3 +43,4 @@ class DayStepWidgetModule: NSObject {
     return false
   }
 }
+

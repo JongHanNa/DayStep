@@ -286,8 +286,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
     const handleNativeHeightChange = (event: {nativeEvent: {height: number}}) => {
       nativeTabBarHeight.value = withTiming(event.nativeEvent.height, {
-        duration: 200,
-        easing: Easing.out(Easing.ease),
+        duration: 350,  // SwiftUI easeInOut(0.35) 매칭
+        easing: Easing.inOut(Easing.ease),  // easeOut → easeInOut 매칭
       });
     };
 
