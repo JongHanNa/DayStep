@@ -7,11 +7,17 @@
  */
 import React, {useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import {Flame} from 'lucide-react-native';
 import type {Note} from '@/stores/noteStore';
 import {LiquidGlassFuelCardNative, isIOS26Plus} from '@/components/native';
+import {springs} from '@/theme/animations';
 
 interface FuelCardProps {
   note: Note | null;
@@ -20,22 +26,34 @@ interface FuelCardProps {
 
 export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [nativeCardHeight, setNativeCardHeight] = useState(200);
+  const animatedHeight = useSharedValue(200);
+
+  const heightStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value,
+    overflow: 'hidden' as const,
+  }));
 
   // iOS 26+: 네이티브 Liquid Glass morph 카드
   if (isIOS26Plus) {
     return (
       <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
-        <LiquidGlassFuelCardNative
-          noteTitle={note?.title ?? ''}
-          noteContent={note?.content ?? ''}
-          hasNote={!!note}
-          isExpanded={isExpanded}
-          onExpand={() => setIsExpanded(true)}
-          onCollapse={() => setIsExpanded(false)}
-          onHeightChange={e => setNativeCardHeight(e.nativeEvent.height)}
-          style={[styles.nativeCard, {height: nativeCardHeight}]}
-        />
+        <Animated.View style={heightStyle}>
+          <LiquidGlassFuelCardNative
+            noteTitle={note?.title ?? ''}
+            noteContent={note?.content ?? ''}
+            hasNote={!!note}
+            isExpanded={isExpanded}
+            onExpand={() => setIsExpanded(true)}
+            onCollapse={() => setIsExpanded(false)}
+            onHeightChange={e => {
+              animatedHeight.value = withSpring(
+                e.nativeEvent.height,
+                springs.nativeGlass,
+              );
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
       </Animated.View>
     );
   }
@@ -87,9 +105,5 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 16,
-  },
-  // iOS 26 네이티브 카드: 높이는 onHeightChange로 동적 설정
-  nativeCard: {
-    width: '100%',
   },
 });

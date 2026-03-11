@@ -352,11 +352,14 @@ function TimePopoverContent({
         const nextHour = new Date(now);
         nextHour.setMinutes(0, 0, 0);
         nextHour.setHours(now.getHours() + 1);
+        // scheduledDate의 날짜로 맞춤
+        const [y, m, d] = form.scheduledDate.split('-').map(Number);
+        nextHour.setFullYear(y, m - 1, d);
         updateField('startTime', nextHour);
         updateField('endTime', addHours(nextHour, 1));
       }
     },
-    [haptic, updateField, form.startTime],
+    [haptic, updateField, form.startTime, form.scheduledDate],
   );
 
   return (

@@ -59,6 +59,13 @@ export const springs = {
     stiffness: 600,
     mass: 0.3,
   } satisfies WithSpringConfig,
+
+  /** 네이티브 Glass 높이 전환 — SwiftUI spring(response:0.4, dampingFraction:0.8) 매칭 */
+  nativeGlass: {
+    damping: 25,
+    stiffness: 247,
+    mass: 1,
+  } satisfies WithSpringConfig,
 } as const;
 
 // ============================================

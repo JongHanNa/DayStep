@@ -142,13 +142,19 @@ export function useTodoForm() {
     (date?: string) => {
       const targetDate = date ?? selectedDate;
       const nextHour = getNextHour();
+      // targetDate의 날짜에 맞춰 startTime/endTime 조정
+      const [year, month, day] = targetDate.split('-').map(Number);
+      const startTime = new Date(nextHour);
+      startTime.setFullYear(year, month - 1, day);
+      const endTime = addHours(startTime, 1);
+
       setMode('create');
       setEditingTodo(null);
       setForm({
         ...DEFAULT_FORM,
         scheduledDate: targetDate,
-        startTime: nextHour,
-        endTime: addHours(nextHour, 1),
+        startTime,
+        endTime,
         projectId: null,
       });
     },
@@ -234,11 +240,11 @@ export function useTodoForm() {
           baseData.start_time = form.startTime.toISOString();
           baseData.end_time = form.endTime?.toISOString() ?? null;
         } else if (form.scheduleType === 'anytime') {
-          const dayStart = new Date(selectedDate + 'T00:00:00');
+          const dayStart = new Date(form.scheduledDate + 'T00:00:00');
           baseData.start_time = dayStart.toISOString();
           baseData.anytime_duration = form.anytimeDuration;
         } else if (form.scheduleType === 'all_day') {
-          const dayStart = new Date(selectedDate + 'T00:00:00');
+          const dayStart = new Date(form.scheduledDate + 'T00:00:00');
           baseData.start_time = dayStart.toISOString();
         }
 

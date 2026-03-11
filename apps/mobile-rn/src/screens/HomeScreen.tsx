@@ -7,7 +7,7 @@ import React, {useCallback, useMemo} from 'react';
 import {Text, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
-import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import Animated, {FadeInDown, FadeIn, LinearTransition} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, SwipeablePages} from '@/components/core';
 import {ProgressRing} from '@/components/home/ProgressRing';
 import {FuelCard} from '@/components/home/FuelCard';
@@ -365,15 +365,24 @@ export default function HomeScreen() {
           </View>
 
           {/* 2. 연락할 사람 */}
-          <View className="mt-6">
+          <Animated.View
+            layout={LinearTransition.springify()
+              .damping(25)
+              .stiffness(247)
+              .mass(1)}
+            className="mt-6">
             <ContactNudge
               recommendations={recommendations}
               enterDelay={200}
             />
-          </View>
+          </Animated.View>
 
           {/* 3. 하루 한 줄 영감 */}
           <Animated.View
+            layout={LinearTransition.springify()
+              .damping(25)
+              .stiffness(247)
+              .mass(1)}
             entering={FadeInDown.delay(300).duration(400)}
             className="mx-4 mt-8 items-center">
             <Sparkles size={24} color="#8B5CF6" />

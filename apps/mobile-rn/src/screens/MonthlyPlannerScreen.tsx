@@ -72,8 +72,8 @@ export default function MonthlyPlannerScreen() {
   );
 
   const handleFABPress = useCallback(() => {
-    formSheetRef.current?.openCreate(format(new Date(), 'yyyy-MM-dd'));
-  }, []);
+    formSheetRef.current?.openCreate(format(currentMonth, 'yyyy-MM-dd'));
+  }, [currentMonth]);
 
   return (
     <ScreenContainer gradient="warmBackground">

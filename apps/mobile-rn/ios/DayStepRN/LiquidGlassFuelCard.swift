@@ -157,8 +157,8 @@ class LiquidGlassFuelCardUIView: UIView {
 
   @objc func setIsExpanded(_ value: Bool) {
     cardState.isExpanded = value
-    // 애니메이션 완료 후 높이 보고 (spring response 0.4 + 여유)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+    // 타겟 높이를 빨리 보고 → RN에서 withSpring으로 애니메이션
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
       self?.emitHeight()
     }
   }
