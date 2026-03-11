@@ -120,17 +120,14 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   }, []);
 
   useEffect(() => {
+    // JS 탭바 높이 (iOS 25-)
     const expandedHeight = COLLAPSED_HEIGHT + panelContentHeight;
-    const nativeExpandedHeight = NATIVE_COLLAPSED + panelContentHeight;
     tabBarHeight.value = withTiming(
       morePanelVisible ? expandedHeight : COLLAPSED_HEIGHT,
       TIMING_CONFIG,
     );
-    nativeTabBarHeight.value = withTiming(
-      morePanelVisible ? nativeExpandedHeight : NATIVE_COLLAPSED,
-      TIMING_CONFIG,
-    );
-  }, [morePanelVisible, panelContentHeight, tabBarHeight, nativeTabBarHeight]);
+    // iOS 26+: 네이티브가 자체 애니메이션하므로 여기서 nativeTabBarHeight 건드리지 않음
+  }, [morePanelVisible, panelContentHeight, tabBarHeight]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     height: tabBarHeight.value,
@@ -271,7 +268,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     };
 
     const handleNativeHeightChange = (event: {nativeEvent: {height: number}}) => {
-      nativeTabBarHeight.value = withTiming(event.nativeEvent.height, TIMING_CONFIG);
+      nativeTabBarHeight.value = event.nativeEvent.height; // 직접 동기화 (네이티브 애니메이션 추종)
     };
 
     return (

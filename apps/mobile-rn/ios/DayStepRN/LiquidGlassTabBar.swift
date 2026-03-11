@@ -1,11 +1,10 @@
 /**
- * LiquidGlassTabBar — Phase 2
- * iOS 26+: SwiftUI glassEffectID + @Namespace 매칭 기하학 모프
- *          축소(탭바) ↔ 확장(패널+탭바) 글래스 모프 전환
+ * LiquidGlassTabBar — Phase 3
+ * iOS 26+: 단일 뷰 구조 — 탭바 아이콘 항상 고정, 패널만 슬라이드업
  * iOS 25-: JS 폴백 (GlassBackground) 사용 — 이 파일의 뷰는 렌더링 안됨
  *
- * 핵심: FuelCard 패턴 — ObservableObject + setupOnce() + @Namespace 유지
- *       → glassEffectID("tabbar") 로 축소/확장 간 자동 모프
+ * 핵심: tabIconRow는 단일 인스턴스로 항상 존재
+ *       패널 콘텐츠가 탭바 뒤에서 .transition(.move(edge: .bottom))으로 슬라이드
  */
 
 import Foundation
@@ -50,22 +49,46 @@ struct LiquidGlassTabBarContent: View {
   var onToggleLabels: ((Bool) -> Void)?
   var onHeightChange: ((CGFloat) -> Void)?
 
-  @Namespace private var morphNamespace
-  @State private var morphScale: CGFloat = 1.0
-  @State private var morphWhite: CGFloat = 0.0
+  @State private var pillScale: CGFloat = 1.0
+  @State private var pillWhite: CGFloat = 0.0
 
   var body: some View {
-    Group {
+    ZStack(alignment: .bottom) {
+      // 패널 콘텐츠 (조건부 — 탭바 뒤에서 슬라이드업)
       if state.isExpanded {
-        expandedView
-          .glassEffect(in: RoundedRectangle(cornerRadius: 32))
-          .glassEffectID("tabbar", in: morphNamespace)
-      } else {
-        collapsedView
-          .glassEffect(in: RoundedRectangle(cornerRadius: 32))
-          .glassEffectID("tabbar", in: morphNamespace)
+        VStack(spacing: 0) {
+          headerView
+          menuGrid
+        }
+        .padding(.bottom, 50) // 탭바 높이만큼 하단 여백
+        .transition(.move(edge: .bottom).combined(with: .opacity))
       }
+
+      // 탭바 아이콘 행 (항상 존재, 고정 — 절대 재생성 안됨)
+      tabIconRow
+        .background {
+          selectionPillBackground
+            .opacity(state.isExpanded ? 0 : 1)
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
+        .onChange(of: state.selectedIndex) { _ in
+          withAnimation(.easeOut(duration: 0.15)) {
+            pillScale = 1.4
+            pillWhite = 0.15
+          }
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
+              pillScale = 1.0
+              pillWhite = 0.0
+            }
+          }
+        }
+        .frame(height: 44)
+        .padding(.bottom, 6)
     }
+    .frame(maxWidth: .infinity)
+    .frame(height: state.isExpanded ? nil : 56) // collapsed: 고정 56pt, expanded: 콘텐츠 크기
+    .glassEffect(in: RoundedRectangle(cornerRadius: 32))
     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.isExpanded)
     .background {
       GeometryReader { geo in
@@ -86,82 +109,46 @@ struct LiquidGlassTabBarContent: View {
     onHeightChange?(h)
   }
 
-  // MARK: - Collapsed View (탭 아이콘만)
-  private var collapsedView: some View {
-    ZStack(alignment: .bottom) {
-      Color.clear
+  // MARK: - Header View (확장 시 상단)
+  private var headerView: some View {
+    HStack {
+      Text("더 보기")
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundColor(Color(red: 0.122, green: 0.161, blue: 0.216))
 
-      tabIconRow
-        .background {
-          GeometryReader { geo in
-            let count = max(state.tabs.count, 1)
-            let tabWidth = geo.size.width / CGFloat(count)
-            RoundedRectangle(cornerRadius: 22)
-              .fill(Color.white.opacity(morphWhite))
-              .glassEffect(in: RoundedRectangle(cornerRadius: 22))
-              .frame(width: tabWidth - 8, height: geo.size.height)
-              .scaleEffect(morphScale)
-              .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 0)
-          }
-        }
-        .animation(.spring(response: 0.35, dampingFraction: 0.75), value: state.selectedIndex)
-        .onChange(of: state.selectedIndex) { _ in
-          withAnimation(.easeOut(duration: 0.15)) {
-            morphScale = 1.4
-            morphWhite = 0.15
-          }
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.5)) {
-              morphScale = 1.0
-              morphWhite = 0.0
-            }
-          }
-        }
-        .frame(height: 44)
-        .padding(.bottom, 6)
+      Spacer()
+
+      HStack(spacing: 6) {
+        Text("이름")
+          .font(.system(size: 13, weight: .medium))
+          .foregroundColor(state.showLabels ? state.primaryColor : Color(red: 0.612, green: 0.639, blue: 0.686))
+
+        Toggle("", isOn: Binding(
+          get: { state.showLabels },
+          set: { newVal in onToggleLabels?(newVal) }
+        ))
+        .toggleStyle(SwitchToggleStyle(tint: state.primaryColor))
+        .scaleEffect(0.75)
+        .frame(width: 40)
+      }
     }
-    .frame(maxWidth: .infinity)
-    .frame(height: 56)
+    .padding(.horizontal, 16)
+    .padding(.top, 14)
+    .padding(.bottom, 8)
   }
 
-  // MARK: - Expanded View (헤더 + 그리드 + 탭 아이콘)
-  private var expandedView: some View {
-    VStack(spacing: 0) {
-      // 헤더: "더 보기" + 이름 토글
-      HStack {
-        Text("더 보기")
-          .font(.system(size: 15, weight: .semibold))
-          .foregroundColor(Color(red: 0.122, green: 0.161, blue: 0.216))
-
-        Spacer()
-
-        HStack(spacing: 6) {
-          Text("이름")
-            .font(.system(size: 13, weight: .medium))
-            .foregroundColor(state.showLabels ? state.primaryColor : Color(red: 0.612, green: 0.639, blue: 0.686))
-
-          Toggle("", isOn: Binding(
-            get: { state.showLabels },
-            set: { newVal in onToggleLabels?(newVal) }
-          ))
-          .toggleStyle(SwitchToggleStyle(tint: state.primaryColor))
-          .scaleEffect(0.75)
-          .frame(width: 40)
-        }
-      }
-      .padding(.horizontal, 16)
-      .padding(.top, 14)
-      .padding(.bottom, 8)
-
-      // 5열 아이콘 그리드
-      menuGrid
-
-      // 하단 탭 아이콘 행
-      tabIconRow
-        .frame(height: 44)
-        .padding(.bottom, 6)
+  // MARK: - Selection Pill Background (collapsed 전용)
+  private var selectionPillBackground: some View {
+    GeometryReader { geo in
+      let count = max(state.tabs.count, 1)
+      let tabWidth = geo.size.width / CGFloat(count)
+      RoundedRectangle(cornerRadius: 22)
+        .fill(Color.white.opacity(pillWhite))
+        .glassEffect(in: RoundedRectangle(cornerRadius: 22))
+        .frame(width: tabWidth - 8, height: geo.size.height)
+        .scaleEffect(pillScale)
+        .offset(x: tabWidth * CGFloat(state.selectedIndex) + 4, y: 0)
     }
-    .frame(maxWidth: .infinity)
   }
 
   // MARK: - Menu Grid (5열 SF Symbol)
