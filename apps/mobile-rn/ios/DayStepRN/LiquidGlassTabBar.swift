@@ -254,6 +254,7 @@ class LiquidGlassTabBarUIView: UIView {
   private let tabState = TabBarState()
   private var hostingController: UIHostingController<AnyView>?
   private var hasSetUp = false
+  private var collapseWorkItem: DispatchWorkItem?
 
   // MARK: Prop Setters (RN 메인 스레드에서 호출)
 
@@ -284,16 +285,31 @@ class LiquidGlassTabBarUIView: UIView {
   }
 
   @objc func setIsExpanded(_ value: Bool) {
-    // withAnimation 제거 — SwiftUI 레이아웃 즉시 변경, 애니메이션 충돌 방지
-    // 시각적 슬라이드 효과는 RN의 clipsToBounds + 높이 애니메이션이 담당
-    tabState.isExpanded = value
-    hostingController?.view.invalidateIntrinsicContentSize()
+    // 기존 축소 예약 취소 (빠른 토글 대응)
+    collapseWorkItem?.cancel()
+    collapseWorkItem = nil
 
-    // 타겟 높이를 즉시 계산하여 RN에 송출 (chicken-and-egg 해결)
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self, let hc = self.hostingController, self.bounds.width > 0 else { return }
-      let target = hc.sizeThatFits(in: CGSize(width: self.bounds.width, height: .greatestFiniteMagnitude))
-      self.onHeightChange?(["height": target.height])
+    if value {
+      // 확장: 즉시 SwiftUI 레이아웃 변경
+      tabState.isExpanded = true
+      hostingController?.view.invalidateIntrinsicContentSize()
+
+      DispatchQueue.main.async { [weak self] in
+        guard let self = self, let hc = self.hostingController, self.bounds.width > 0 else { return }
+        let target = hc.sizeThatFits(in: CGSize(width: self.bounds.width, height: .greatestFiniteMagnitude))
+        self.onHeightChange?(["height": target.height])
+      }
+    } else {
+      // 축소: RN에 축소 높이 즉시 보고 → RN 애니메이션 시작
+      // SwiftUI 콘텐츠는 350ms 후 제거 → 그 동안 clipsToBounds가 점진적 클리핑
+      onHeightChange?(["height": 56])
+
+      let workItem = DispatchWorkItem { [weak self] in
+        self?.tabState.isExpanded = false
+        self?.hostingController?.view.invalidateIntrinsicContentSize()
+      }
+      collapseWorkItem = workItem
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: workItem)
     }
   }
 
