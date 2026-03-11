@@ -18,6 +18,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
+  runOnJS,
   Easing,
 } from 'react-native-reanimated';
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
@@ -109,28 +110,43 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isTimerActive = timerState.isRunning || timerState.isPaused;
   const [morePanelVisible, setMorePanelVisible] = useState(false);
   const [panelContentHeight, setPanelContentHeight] = useState(MORE_PANEL_CONTENT_HEIGHT);
+  const [shouldRenderPanel, setShouldRenderPanel] = useState(false);
 
   // JS 탭바 높이 애니메이션 (iOS 25-)
   const tabBarHeight = useSharedValue(COLLAPSED_HEIGHT);
   // 네이티브 탭바 높이 애니메이션 (iOS 26+)
   const nativeTabBarHeight = useSharedValue(NATIVE_COLLAPSED);
+  // 패널 콘텐츠 opacity (fade in/out)
+  const panelOpacity = useSharedValue(0);
 
   const handlePanelHeightChange = useCallback((height: number) => {
     setPanelContentHeight(height);
   }, []);
 
   useEffect(() => {
-    // JS 탭바 높이 (iOS 25-)
     const expandedHeight = COLLAPSED_HEIGHT + panelContentHeight;
-    tabBarHeight.value = withTiming(
-      morePanelVisible ? expandedHeight : COLLAPSED_HEIGHT,
-      TIMING_CONFIG,
-    );
+
+    if (morePanelVisible) {
+      // 열기: 즉시 마운트 → fade in + 높이 확장
+      setShouldRenderPanel(true);
+      panelOpacity.value = withTiming(1, {duration: 150, easing: Easing.out(Easing.ease)});
+      tabBarHeight.value = withTiming(expandedHeight, TIMING_CONFIG);
+    } else {
+      // 닫기: fade out(120ms) + 높이 축소(250ms) 동시 시작, 높이 완료 후 언마운트
+      panelOpacity.value = withTiming(0, {duration: 120, easing: Easing.in(Easing.ease)});
+      tabBarHeight.value = withTiming(COLLAPSED_HEIGHT, TIMING_CONFIG, () => {
+        runOnJS(setShouldRenderPanel)(false);
+      });
+    }
     // iOS 26+: 네이티브가 자체 애니메이션하므로 여기서 nativeTabBarHeight 건드리지 않음
-  }, [morePanelVisible, panelContentHeight, tabBarHeight]);
+  }, [morePanelVisible, panelContentHeight, tabBarHeight, panelOpacity]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     height: tabBarHeight.value,
+  }));
+
+  const panelAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: panelOpacity.value,
   }));
 
   const animatedNativeStyle = useAnimatedStyle(() => ({
@@ -332,62 +348,64 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
           {/* 상단 하이라이트 — 빛 반사 효과 */}
           <View style={styles.topHighlight} />
 
-          {/* 패널 열림 시: 그리드 콘텐츠 */}
-          {morePanelVisible && (
-            <MorePanelContent
-              onSelectScreen={handleSelectScreen}
-              onClose={handleClosePanel}
-              primaryColor={primaryColor}
-              onHeightChange={handlePanelHeightChange}
-              activeScreenName={activeMoreScreen}
-            />
+          {/* 패널 열림 시: 그리드 콘텐츠 (fade in/out) */}
+          {shouldRenderPanel && (
+            <Animated.View style={panelAnimatedStyle}>
+              <MorePanelContent
+                onSelectScreen={handleSelectScreen}
+                onClose={handleClosePanel}
+                primaryColor={primaryColor}
+                onHeightChange={handlePanelHeightChange}
+                activeScreenName={activeMoreScreen}
+              />
+            </Animated.View>
           )}
 
-          {/* 기존 탭 아이콘 행 */}
+          {/* 기존 탭 아이콘 행 — absolute로 bottom 고정 (슬롯머신 효과 방지) */}
           <View style={styles.tabRow}>
-            {/* 글래스 필 — 활성 탭 위치에 슬라이딩 */}
-            <Animated.View style={[styles.glassPill, glassPillStyle]} />
-            {state.routes.map((route, index) => {
-              let isFocused = state.index === index;
-              if (isHomeShowingMoreScreen) {
-                if (route.name === 'Home') isFocused = false;
-                if (route.name === 'More') isFocused = true;
+          {/* 글래스 필 — 활성 탭 위치에 슬라이딩 */}
+          <Animated.View style={[styles.glassPill, glassPillStyle]} />
+          {state.routes.map((route, index) => {
+            let isFocused = state.index === index;
+            if (isHomeShowingMoreScreen) {
+              if (route.name === 'Home') isFocused = false;
+              if (route.name === 'More') isFocused = true;
+            }
+            const tabInfo = TAB_CONFIG[route.name] ?? {Icon: Home};
+
+            const onPress = () => {
+              // More 탭: 패널 토글
+              if (route.name === 'More') {
+                setMorePanelVisible(prev => !prev);
+                return;
               }
-              const tabInfo = TAB_CONFIG[route.name] ?? {Icon: Home};
 
-              const onPress = () => {
-                // More 탭: 패널 토글
-                if (route.name === 'More') {
-                  setMorePanelVisible(prev => !prev);
-                  return;
-                }
+              // 다른 탭: 패널 닫기 + 정상 내비게이션
+              setMorePanelVisible(false);
 
-                // 다른 탭: 패널 닫기 + 정상 내비게이션
-                setMorePanelVisible(false);
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!isFocused && !event.defaultPrevented) {
+                navigation.navigate(route.name);
+              }
+            };
 
-                const event = navigation.emit({
-                  type: 'tabPress',
-                  target: route.key,
-                  canPreventDefault: true,
-                });
-                if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name);
-                }
-              };
-
-              return (
-                <TabButton
-                  key={route.key}
-                  Icon={tabInfo.Icon}
-                  isFocused={isFocused}
-                  primaryColor={primaryColor}
-                  onPress={onPress}
-                  isTimerActive={route.name === 'Execute' && isTimerActive}
-                  timerProgress={timerState.progress}
-                  tabName={route.name}
-                />
-              );
-            })}
+            return (
+              <TabButton
+                key={route.key}
+                Icon={tabInfo.Icon}
+                isFocused={isFocused}
+                primaryColor={primaryColor}
+                onPress={onPress}
+                isTimerActive={route.name === 'Execute' && isTimerActive}
+                timerProgress={timerState.progress}
+                tabName={route.name}
+              />
+            );
+          })}
           </View>
         </GlassBackground>
       </Animated.View>
@@ -527,6 +545,10 @@ const styles = StyleSheet.create({
     bottom: NATIVE_COLLAPSED,
   },
   tabRow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
