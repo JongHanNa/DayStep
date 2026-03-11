@@ -324,6 +324,9 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   }
 
   // JS 글래스 탭바 (iOS 25- 또는 패널 열림 시)
+  // 클리핑 마스크 패턴: GlassBackground는 고정 크기, 외부 Animated.View가 가시 영역만 제어
+  const expandedHeight = COLLAPSED_HEIGHT + panelContentHeight;
+
   return (
     <>
       {/* 투명 터치 캐처 — 패널 외부 터치로 닫기 (어두운 배경 없음) */}
@@ -340,72 +343,75 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
           {bottom: tabBarBottom},
           animatedContainerStyle,
         ]}>
+        {/* GlassBackground: 항상 expandedHeight 고정, bottom:0 고정 → 리사이즈 없음 */}
         <GlassBackground
           blurType="chromeMaterialLight"
           blurAmount={32}
           overlayColor="rgba(255, 255, 255, 0.55)"
-          style={styles.glassContainer}>
-          {/* 상단 하이라이트 — 빛 반사 효과 */}
-          <View style={styles.topHighlight} />
+          style={[styles.glassContainer, {height: expandedHeight}]}>
+          <View style={styles.glassInner}>
+            {/* 상단 하이라이트 — 빛 반사 효과 */}
+            <View style={styles.topHighlight} />
 
-          {/* 패널 열림 시: 그리드 콘텐츠 (fade in/out) */}
-          {shouldRenderPanel && (
-            <Animated.View style={panelAnimatedStyle}>
-              <MorePanelContent
-                onSelectScreen={handleSelectScreen}
-                onClose={handleClosePanel}
-                primaryColor={primaryColor}
-                onHeightChange={handlePanelHeightChange}
-                activeScreenName={activeMoreScreen}
-              />
-            </Animated.View>
-          )}
+            {/* 패널 열림 시: 그리드 콘텐츠 (fade in/out) */}
+            {shouldRenderPanel && (
+              <Animated.View style={panelAnimatedStyle}>
+                <MorePanelContent
+                  onSelectScreen={handleSelectScreen}
+                  onClose={handleClosePanel}
+                  primaryColor={primaryColor}
+                  onHeightChange={handlePanelHeightChange}
+                  activeScreenName={activeMoreScreen}
+                />
+              </Animated.View>
+            )}
 
-          {/* 기존 탭 아이콘 행 — absolute로 bottom 고정 (슬롯머신 효과 방지) */}
-          <View style={styles.tabRow}>
-          {/* 글래스 필 — 활성 탭 위치에 슬라이딩 */}
-          <Animated.View style={[styles.glassPill, glassPillStyle]} />
-          {state.routes.map((route, index) => {
-            let isFocused = state.index === index;
-            if (isHomeShowingMoreScreen) {
-              if (route.name === 'Home') isFocused = false;
-              if (route.name === 'More') isFocused = true;
-            }
-            const tabInfo = TAB_CONFIG[route.name] ?? {Icon: Home};
+            {/* 탭 아이콘 행 — glassInner가 flex-end이므로 하단 배치, 레이아웃 고정 */}
+            <View style={styles.tabRow}>
+              {/* 글래스 필 — 활성 탭 위치에 슬라이딩 */}
+              <Animated.View style={[styles.glassPill, glassPillStyle]} />
+              {state.routes.map((route, index) => {
+                let isFocused = state.index === index;
+                if (isHomeShowingMoreScreen) {
+                  if (route.name === 'Home') isFocused = false;
+                  if (route.name === 'More') isFocused = true;
+                }
+                const tabInfo = TAB_CONFIG[route.name] ?? {Icon: Home};
 
-            const onPress = () => {
-              // More 탭: 패널 토글
-              if (route.name === 'More') {
-                setMorePanelVisible(prev => !prev);
-                return;
-              }
+                const onPress = () => {
+                  // More 탭: 패널 토글
+                  if (route.name === 'More') {
+                    setMorePanelVisible(prev => !prev);
+                    return;
+                  }
 
-              // 다른 탭: 패널 닫기 + 정상 내비게이션
-              setMorePanelVisible(false);
+                  // 다른 탭: 패널 닫기 + 정상 내비게이션
+                  setMorePanelVisible(false);
 
-              const event = navigation.emit({
-                type: 'tabPress',
-                target: route.key,
-                canPreventDefault: true,
-              });
-              if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name);
-              }
-            };
+                  const event = navigation.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+                  if (!isFocused && !event.defaultPrevented) {
+                    navigation.navigate(route.name);
+                  }
+                };
 
-            return (
-              <TabButton
-                key={route.key}
-                Icon={tabInfo.Icon}
-                isFocused={isFocused}
-                primaryColor={primaryColor}
-                onPress={onPress}
-                isTimerActive={route.name === 'Execute' && isTimerActive}
-                timerProgress={timerState.progress}
-                tabName={route.name}
-              />
-            );
-          })}
+                return (
+                  <TabButton
+                    key={route.key}
+                    Icon={tabInfo.Icon}
+                    isFocused={isFocused}
+                    primaryColor={primaryColor}
+                    onPress={onPress}
+                    isTimerActive={route.name === 'Execute' && isTimerActive}
+                    timerProgress={timerState.progress}
+                    tabName={route.name}
+                  />
+                );
+              })}
+            </View>
           </View>
         </GlassBackground>
       </Animated.View>
@@ -523,10 +529,18 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   glassContainer: {
-    flex: 1,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     borderRadius: 32,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.4)',
+    // height는 inline style로 expandedHeight 전달
+  },
+  glassInner: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   // iOS 26 네이티브 탭바: 부모 Animated.View 전체 채움
   nativeFill: {
@@ -545,10 +559,6 @@ const styles = StyleSheet.create({
     bottom: NATIVE_COLLAPSED,
   },
   tabRow: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
