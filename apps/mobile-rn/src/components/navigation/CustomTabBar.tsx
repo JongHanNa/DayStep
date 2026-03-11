@@ -303,6 +303,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             styles.container,
             {bottom: tabBarBottom},
             animatedNativeStyle,
+            // 네이티브 glassEffect가 자체 깊이감 제공 → RN shadow 불필요
+            {shadowOpacity: 0, elevation: 0},
           ]}>
           {/* 네이티브 글래스 탭바 — isExpanded 시 expandedView 활성화 */}
           <LiquidGlassTabBarNative
