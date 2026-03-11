@@ -9,6 +9,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  type SharedValue,
 } from 'react-native-reanimated';
 import {springs} from '@/theme/animations';
 import {useSettingsStore} from '@/stores/settingsStore';
@@ -35,6 +36,7 @@ interface MorePanelContentProps {
   primaryColor: string;
   onHeightChange?: (height: number) => void;
   activeScreenName?: string;
+  panelProgress?: SharedValue<number>;
 }
 
 interface MenuItem {
@@ -79,6 +81,7 @@ export function MorePanelContent({
   primaryColor,
   onHeightChange,
   activeScreenName,
+  panelProgress,
 }: MorePanelContentProps) {
   const showLabels = useSettingsStore(s => s.morePanelShowLabels);
   const setShowLabels = useSettingsStore(s => s.setMorePanelShowLabels);
@@ -108,6 +111,15 @@ export function MorePanelContent({
     paddingVertical: 6 + toggleProgress.value * 2,
   }));
 
+  // 패널 전체 fade + slide (panelProgress 연동)
+  const panelContentStyle = useAnimatedStyle(() => {
+    const p = panelProgress?.value ?? 1;
+    return {
+      opacity: p,
+      transform: [{translateY: (1 - p) * 8}],
+    };
+  });
+
   // 5열 그리드로 배치
   const rows: MenuItem[][] = [];
   for (let i = 0; i < MENU_ITEMS.length; i += COLUMNS) {
@@ -115,7 +127,7 @@ export function MorePanelContent({
   }
 
   return (
-    <View>
+    <Animated.View style={panelContentStyle}>
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>더 보기</Text>
@@ -176,7 +188,7 @@ export function MorePanelContent({
           </View>
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
