@@ -9,16 +9,16 @@
  * [원동력] 전체 원동력 노트 (선택 삭제)
  * [관심기록] 90일 이상 지난 기록
  */
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import Animated, {
   FadeInDown,
   FadeIn,
@@ -289,7 +289,7 @@ function AccordionChevron({expanded}: {expanded: boolean}) {
   const rotation = useSharedValue(expanded ? 1 : 0);
 
   useEffect(() => {
-    rotation.value = withSpring(expanded ? 1 : 0, springs.snappy);
+    rotation.value = withSpring(expanded ? 1 : 0, springs.smooth);
   }, [expanded, rotation]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -329,7 +329,7 @@ function AccordionGroup({
   // 헤더 하단 borderRadius 스프링 애니메이션
   const bottomRadius = useSharedValue(expanded ? 0 : 14);
   useEffect(() => {
-    bottomRadius.value = withSpring(expanded ? 0 : 14, springs.snappy);
+    bottomRadius.value = withSpring(expanded ? 0 : 14, springs.smooth);
   }, [expanded, bottomRadius]);
   const headerRadiusStyle = useAnimatedStyle(() => ({
     borderBottomLeftRadius: bottomRadius.value,
@@ -339,7 +339,7 @@ function AccordionGroup({
   return (
     <Animated.View
       entering={FadeInDown.delay(groupIndex * 80).duration(400)}
-      layout={LinearTransition.springify().damping(25).stiffness(247).mass(1)}
+      layout={LinearTransition.springify().damping(28).stiffness(200).mass(0.8)}
       style={{marginBottom: 10}}>
       {/* 아코디언 헤더 */}
       <AnimatedPressable
@@ -383,8 +383,8 @@ function AccordionGroup({
       {/* 아코디언 바디 */}
       {expanded && (
         <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
+          entering={FadeIn.duration(250)}
+          exiting={FadeOut.duration(200)}
           style={{
             backgroundColor: 'white',
             borderBottomLeftRadius: 14,
@@ -424,7 +424,7 @@ function AccordionGroup({
 // ────────────────────────────────────────────────
 
 interface SheetProps {
-  visible: boolean;
+  sheetRef: React.RefObject<BottomSheet | null>;
   category: CategoryDef | null;
   items: GenericItem[];
   onClose: () => void;
@@ -435,7 +435,7 @@ interface SheetProps {
 }
 
 function CleanupSheet({
-  visible,
+  sheetRef,
   category,
   items,
   onClose,
@@ -446,12 +446,17 @@ function CleanupSheet({
 }: SheetProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const snapPoints = useMemo(() => ['75%'], []);
 
-  useEffect(() => {
-    if (visible) {
-      setSelected(new Set(items.map(t => t.id)));
-    }
-  }, [visible, items]);
+  // 시트가 열릴 때 전체 선택으로 초기화
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      if (index >= 0 && items.length > 0) {
+        setSelected(new Set(items.map(t => t.id)));
+      }
+    },
+    [items],
+  );
 
   const allSelected = selected.size === items.length && items.length > 0;
 
@@ -504,170 +509,159 @@ function CleanupSheet({
     );
   };
 
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0} />
+    ),
+    [],
+  );
+
   if (!category) return null;
 
   const Icon = CATEGORY_ICON[category.key];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}>
-      <TouchableOpacity
-        style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end'}}
-        activeOpacity={1}
-        onPress={onClose}>
-        <TouchableOpacity
-          activeOpacity={1}
-          style={{
-            backgroundColor: 'white',
-            borderRadius: 24,
-            borderBottomLeftRadius: 0,
-            borderBottomRightRadius: 0,
-            padding: 24,
-            maxHeight: '75%',
-          }}>
-          {/* Handle */}
-          <View
-            style={{
-              width: 40,
-              height: 4,
-              backgroundColor: '#E2E8F0',
-              borderRadius: 99,
-              alignSelf: 'center',
-              marginBottom: 20,
-            }}
-          />
-
-          {/* Title */}
-          <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 8}}>
-            <Icon size={20} color={primaryColor} />
-            <Text style={{fontSize: 18, fontWeight: '700', color: '#0F172A'}}>
-              {category.title}
-            </Text>
-          </View>
-          <Text style={{fontSize: 13, color: '#64748B', marginBottom: 16}}>
-            {items.length}개 · 전체 선택 후 삭제 가능
+    <BottomSheet
+      ref={sheetRef}
+      index={-1}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      backdropComponent={renderBackdrop}
+      handleIndicatorStyle={{backgroundColor: '#D1D5DB'}}
+      onChange={handleSheetChange}
+      onClose={onClose}
+      backgroundStyle={{
+        backgroundColor: 'white',
+        borderRadius: 24,
+      }}>
+      <BottomSheetScrollView
+        contentContainerStyle={{padding: 24, paddingTop: 8}}
+        showsVerticalScrollIndicator={false}>
+        {/* Title */}
+        <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 8}}>
+          <Icon size={20} color={primaryColor} />
+          <Text style={{fontSize: 18, fontWeight: '700', color: '#0F172A'}}>
+            {category.title}
           </Text>
+        </View>
+        <Text style={{fontSize: 13, color: '#64748B', marginBottom: 16}}>
+          {items.length}개 · 전체 선택 후 삭제 가능
+        </Text>
 
-          {/* Select All Row */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingVertical: 10,
-              borderBottomWidth: 1,
-              borderBottomColor: '#F1F5F9',
-              marginBottom: 8,
-            }}>
-            <TouchableOpacity
-              onPress={toggleAll}
-              style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-              <View
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 5,
-                  backgroundColor: allSelected ? primaryColor : 'transparent',
-                  borderWidth: 2,
-                  borderColor: allSelected ? primaryColor : '#CBD5E1',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                {allSelected && (
-                  <Text style={{color: 'white', fontSize: 11, fontWeight: '700'}}>✓</Text>
-                )}
-              </View>
-              <Text style={{fontSize: 13, fontWeight: '600', color: '#475569'}}>
-                전체 선택 ({items.length}개)
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={toggleAll}>
-              <Text style={{fontSize: 13, color: '#94A3B8'}}>
-                {allSelected ? '선택 해제' : '모두 선택'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* List */}
-          <ScrollView style={{maxHeight: 280}} showsVerticalScrollIndicator={false}>
-            {items.map(item => (
-              <TouchableOpacity
-                key={item.id}
-                onPress={() => toggleItem(item.id)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingVertical: 12,
-                  borderBottomWidth: 1,
-                  borderBottomColor: '#F8FAFC',
-                  gap: 12,
-                }}>
-                <View
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 5,
-                    backgroundColor: selected.has(item.id) ? primaryColor : 'transparent',
-                    borderWidth: 2,
-                    borderColor: selected.has(item.id) ? primaryColor : '#CBD5E1',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                  {selected.has(item.id) && (
-                    <Text style={{color: 'white', fontSize: 11, fontWeight: '700'}}>✓</Text>
-                  )}
-                </View>
-                <Text
-                  style={{flex: 1, fontSize: 14, color: '#0F172A'}}
-                  numberOfLines={1}>
-                  {item.title}
-                </Text>
-                {item.subtitle ? (
-                  <Text style={{fontSize: 12, color: '#94A3B8', flexShrink: 0}}>
-                    {item.subtitle}
-                  </Text>
-                ) : null}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* Delete Button */}
+        {/* Select All Row */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: '#F1F5F9',
+            marginBottom: 8,
+          }}>
           <TouchableOpacity
-            onPress={handleDelete}
-            disabled={selected.size === 0 || deleting}
-            style={{
-              marginTop: 16,
-              paddingVertical: 15,
-              borderRadius: 14,
-              backgroundColor: selected.size === 0 ? '#E2E8F0' : primaryColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-              gap: 8,
-            }}>
-            {deleting ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                <Trash2 size={16} color={selected.size === 0 ? '#94A3B8' : 'white'} />
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: '700',
-                    color: selected.size === 0 ? '#94A3B8' : 'white',
-                  }}>
-                  선택된 {selected.size}개 삭제하기
-                </Text>
-              </View>
-            )}
+            onPress={toggleAll}
+            style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            <View
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 5,
+                backgroundColor: allSelected ? primaryColor : 'transparent',
+                borderWidth: 2,
+                borderColor: allSelected ? primaryColor : '#CBD5E1',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              {allSelected && (
+                <Text style={{color: 'white', fontSize: 11, fontWeight: '700'}}>✓</Text>
+              )}
+            </View>
+            <Text style={{fontSize: 13, fontWeight: '600', color: '#475569'}}>
+              전체 선택 ({items.length}개)
+            </Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={toggleAll}>
+            <Text style={{fontSize: 13, color: '#94A3B8'}}>
+              {allSelected ? '선택 해제' : '모두 선택'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* List */}
+        {items.map(item => (
+          <TouchableOpacity
+            key={item.id}
+            onPress={() => toggleItem(item.id)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingVertical: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: '#F8FAFC',
+              gap: 12,
+            }}>
+            <View
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 5,
+                backgroundColor: selected.has(item.id) ? primaryColor : 'transparent',
+                borderWidth: 2,
+                borderColor: selected.has(item.id) ? primaryColor : '#CBD5E1',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+              {selected.has(item.id) && (
+                <Text style={{color: 'white', fontSize: 11, fontWeight: '700'}}>✓</Text>
+              )}
+            </View>
+            <Text
+              style={{flex: 1, fontSize: 14, color: '#0F172A'}}
+              numberOfLines={1}>
+              {item.title}
+            </Text>
+            {item.subtitle ? (
+              <Text style={{fontSize: 12, color: '#94A3B8', flexShrink: 0}}>
+                {item.subtitle}
+              </Text>
+            ) : null}
+          </TouchableOpacity>
+        ))}
+
+        {/* Delete Button */}
+        <TouchableOpacity
+          onPress={handleDelete}
+          disabled={selected.size === 0 || deleting}
+          style={{
+            marginTop: 16,
+            paddingVertical: 15,
+            borderRadius: 14,
+            backgroundColor: selected.size === 0 ? '#E2E8F0' : primaryColor,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'row',
+            gap: 8,
+          }}>
+          {deleting ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <Trash2 size={16} color={selected.size === 0 ? '#94A3B8' : 'white'} />
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: selected.size === 0 ? '#94A3B8' : 'white',
+                }}>
+                선택된 {selected.size}개 삭제하기
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+      </BottomSheetScrollView>
+    </BottomSheet>
   );
 }
 
@@ -712,7 +706,7 @@ export default function CleanupScreen() {
   const [loading, setLoading] = useState(true);
   const [categorized, setCategorized] = useState<CategorizedData>(EMPTY_DATA);
   const [activeCategory, setActiveCategory] = useState<CategoryDef | null>(null);
-  const [sheetVisible, setSheetVisible] = useState(false);
+  const sheetRef = useRef<BottomSheet>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set([0]));
 
   // ── 데이터 로드 ──────────────────────────────
@@ -880,7 +874,7 @@ export default function CleanupScreen() {
   // ── 시트 열기 ─────────────────────────────────
   const openSheet = (cat: CategoryDef) => {
     setActiveCategory(cat);
-    setSheetVisible(true);
+    sheetRef.current?.expand();
   };
 
   // ── 네이티브 아코디언 데이터 ──────────────────
@@ -1023,10 +1017,10 @@ export default function CleanupScreen() {
 
       {/* ── 바텀 시트 ── */}
       <CleanupSheet
-        visible={sheetVisible}
+        sheetRef={sheetRef}
         category={activeCategory}
         items={activeCategory ? categorized[activeCategory.key] : []}
-        onClose={() => setSheetVisible(false)}
+        onClose={() => sheetRef.current?.close()}
         onDelete={activeCategory ? buildDeleteHandler(activeCategory.key) : async () => {}}
         onDeleted={handleDeleted}
         itemLabel={activeCategory ? ITEM_LABEL[activeCategory.key] : '항목'}
