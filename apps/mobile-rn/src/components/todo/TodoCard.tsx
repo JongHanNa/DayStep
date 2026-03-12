@@ -269,8 +269,8 @@ export function TodoCard({
           {/* 다음 일정 시작까지 남은 시간 */}
           {timeStatus.status === 'upcoming' && isNextUpcoming && timeStatusText.secondary && (
             <View style={styles.upcomingSection}>
-              <Clock size={12} color="#6B7280" />
-              <Text style={styles.upcomingText}>{timeStatusText.secondary}</Text>
+              <Clock size={12} color={primaryColor} />
+              <Text style={[styles.upcomingText, {color: primaryColor}]}>{timeStatusText.secondary}  시작할 준비 하세요!</Text>
             </View>
           )}
 
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   remainingText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#6B7280',
     marginTop: 2,
   },
@@ -502,7 +502,6 @@ const styles = StyleSheet.create({
   },
   upcomingText: {
     fontSize: 11,
-    color: '#6B7280',
     fontWeight: '500',
   },
   fuelRow: {
