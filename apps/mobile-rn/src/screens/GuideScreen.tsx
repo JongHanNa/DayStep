@@ -53,6 +53,7 @@ interface StepProps {
 }
 
 function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: StepProps) {
+  const {primaryColor} = useTheme();
   return (
     <AnimatedCard enterDelay={stepNumber * 100}>
       <TouchableOpacity
@@ -60,8 +61,8 @@ function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: 
         className="flex-row items-center justify-between"
         activeOpacity={0.7}>
         <View className="flex-row items-center flex-1">
-          <View className="w-8 h-8 rounded-full bg-blue-100 items-center justify-center mr-3">
-            <Text className="text-blue-600 font-bold text-sm">{stepNumber}</Text>
+          <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{backgroundColor: primaryColor + '20'}}>
+            <Text className="font-bold text-sm" style={{color: primaryColor}}>{stepNumber}</Text>
           </View>
           <View className="flex-row items-center flex-1">
             {icon}
@@ -114,14 +115,14 @@ export default function GuideScreen() {
         <Animated.View
           entering={FadeInDown.delay(50).duration(400)}
           className="px-4 mb-4">
-          <View className="bg-blue-50 rounded-2xl p-4">
+          <View className="rounded-2xl p-4" style={{backgroundColor: primaryColor + '10'}}>
             <View className="flex-row items-center mb-2">
               <Sparkles size={20} color={primaryColor} />
-              <Text className="text-sm font-semibold text-blue-700 ml-2">
+              <Text className="text-sm font-semibold ml-2" style={{color: primaryColor}}>
                 DayStep + Claude Desktop
               </Text>
             </View>
-            <Text className="text-sm text-blue-600 leading-5">
+            <Text className="text-sm leading-5" style={{color: primaryColor}}>
               Claude Desktop에서 DayStep의 할일, 프로젝트, 메모를 직접 관리할 수
               있습니다. MCP(Model Context Protocol)를 통해 연결합니다.
             </Text>
@@ -217,7 +218,7 @@ export default function GuideScreen() {
                 '오늘 해야 할 중요한 일을 정리해줘',
               ].map((prompt, i) => (
                 <View key={i} className="flex-row items-start mb-2">
-                  <Text className="text-blue-500 mr-2 mt-0.5">💬</Text>
+                  <Text className="mr-2 mt-0.5" style={{color: primaryColor}}>💬</Text>
                   <Text className="text-sm text-gray-700 flex-1 italic">
                     "{prompt}"
                   </Text>

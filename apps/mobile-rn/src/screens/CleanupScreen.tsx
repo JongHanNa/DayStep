@@ -583,6 +583,17 @@ const EMPTY_DATA: CategorizedData = {
 export default function CleanupScreen() {
   const user = useAuthStore(s => s.user);
   const {primaryColor} = useTheme();
+  const resolvedCategoryGroups = useMemo(() =>
+    CATEGORY_GROUPS.map(group => ({
+      ...group,
+      categories: group.categories.map(cat =>
+        cat.key === 'allNotes' || cat.key === 'oldInteractions'
+          ? {...cat, color: primaryColor, bgColor: primaryColor + '15'}
+          : cat,
+      ),
+    })),
+    [primaryColor],
+  );
   const {deleteTodo} = useTodoStore();
   const {deleteProject} = useProjectStore();
   const {deleteNote} = useNoteStore();
@@ -893,7 +904,7 @@ export default function CleanupScreen() {
             </Text>
           </View>
         ) : (
-          CATEGORY_GROUPS.map(group => {
+          resolvedCategoryGroups.map(group => {
             const groupDelay = cardDelay;
             cardDelay += group.categories.length * 80;
             return (

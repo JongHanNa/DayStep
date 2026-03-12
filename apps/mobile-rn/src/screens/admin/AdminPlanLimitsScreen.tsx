@@ -173,7 +173,7 @@ export function AdminPlanLimitsScreen({onBack}: Props) {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color={primaryColor} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -211,7 +211,7 @@ export function AdminPlanLimitsScreen({onBack}: Props) {
 
                   {isDirty(entity, tier) && (
                     <TouchableOpacity
-                      style={styles.saveBtn}
+                      style={[styles.saveBtn, {backgroundColor: primaryColor}]}
                       disabled={saving === editKey(entity, tier)}
                       onPress={() => handleSave(entity, tier)}>
                       {saving === editKey(entity, tier) ? (

@@ -75,6 +75,7 @@ function StatusFilterBar({
   selected: ProjectStatus | 'all';
   onSelect: (status: ProjectStatus | 'all') => void;
 }) {
+  const {primaryColor} = useTheme();
   return (
     <ScrollView
       style={{flexGrow: 0}}
@@ -85,9 +86,8 @@ function StatusFilterBar({
         <TouchableOpacity
           key={key}
           onPress={() => onSelect(key)}
-          className={`mr-2 px-4 py-2 rounded-full ${
-            selected === key ? 'bg-blue-500' : 'bg-gray-100'
-          }`}>
+          className="mr-2 px-4 py-2 rounded-full"
+          style={{backgroundColor: selected === key ? primaryColor : '#F3F4F6'}}>
           <Text
             className={`text-sm font-medium ${
               selected === key ? 'text-white' : 'text-gray-600'
@@ -111,6 +111,7 @@ function ProjectCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const {primaryColor} = useTheme();
   const statusInfo = STATUS_LABELS[project.status] ?? STATUS_LABELS.not_started;
 
   return (
@@ -161,9 +162,10 @@ function ProjectCard({
             {project.status === 'not_started' && (
               <TouchableOpacity
                 onPress={() => onStatusChange('in_progress')}
-                className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
-                <Play size={14} color={fixedColors.statusInProgress} />
-                <Text className="text-xs text-blue-600 ml-1">시작</Text>
+                className="flex-row items-center rounded-lg px-3 py-1.5 mr-2"
+                style={{backgroundColor: primaryColor + '10'}}>
+                <Play size={14} color={primaryColor} />
+                <Text className="text-xs ml-1" style={{color: primaryColor}}>시작</Text>
               </TouchableOpacity>
             )}
             {/* in_progress → 시작안함 / 중단 / 완료 */}
@@ -194,9 +196,10 @@ function ProjectCard({
               <>
                 <TouchableOpacity
                   onPress={() => onStatusChange('in_progress')}
-                  className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
-                  <RotateCcw size={14} color={fixedColors.statusInProgress} />
-                  <Text className="text-xs text-blue-600 ml-1">재개</Text>
+                  className="flex-row items-center rounded-lg px-3 py-1.5 mr-2"
+                  style={{backgroundColor: primaryColor + '10'}}>
+                  <RotateCcw size={14} color={primaryColor} />
+                  <Text className="text-xs ml-1" style={{color: primaryColor}}>재개</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => onStatusChange('completed')}
@@ -435,11 +438,11 @@ export default function AIPlanScreen() {
                 <TouchableOpacity
                   key={icon}
                   onPress={() => setFormIcon(icon)}
-                  className={`w-10 h-10 rounded-xl mr-2 mb-2 items-center justify-center ${
-                    formIcon === icon
-                      ? 'bg-blue-100 border border-blue-400'
-                      : 'bg-gray-50'
-                  }`}>
+                  className="w-10 h-10 rounded-xl mr-2 mb-2 items-center justify-center"
+                  style={formIcon === icon
+                    ? {backgroundColor: primaryColor + '20', borderWidth: 1, borderColor: primaryColor + '66'}
+                    : {backgroundColor: '#F9FAFB'}
+                  }>
                   <Text className="text-lg">{icon}</Text>
                 </TouchableOpacity>
               ))}
@@ -547,9 +550,10 @@ export default function AIPlanScreen() {
                         await startProject(user.id, editingProject.id);
                         setEditingProject({...editingProject, status: 'in_progress'});
                       }}
-                      className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
-                      <Play size={14} color={fixedColors.statusInProgress} />
-                      <Text className="text-xs text-blue-600 ml-1">시작하기</Text>
+                      className="flex-row items-center rounded-lg px-3 py-2 mr-2"
+                      style={{backgroundColor: primaryColor + '10'}}>
+                      <Play size={14} color={primaryColor} />
+                      <Text className="text-xs ml-1" style={{color: primaryColor}}>시작하기</Text>
                     </TouchableOpacity>
                   )}
                   {editingProject.status === 'in_progress' && (
@@ -594,9 +598,10 @@ export default function AIPlanScreen() {
                           await resumeProject(user.id, editingProject.id);
                           setEditingProject({...editingProject, status: 'in_progress'});
                         }}
-                        className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
-                        <Play size={14} color={fixedColors.statusInProgress} />
-                        <Text className="text-xs text-blue-600 ml-1">재개</Text>
+                        className="flex-row items-center rounded-lg px-3 py-2 mr-2"
+                      style={{backgroundColor: primaryColor + '10'}}>
+                        <Play size={14} color={primaryColor} />
+                        <Text className="text-xs ml-1" style={{color: primaryColor}}>재개</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={async () => {
@@ -617,9 +622,10 @@ export default function AIPlanScreen() {
                         await resumeProject(user.id, editingProject.id);
                         setEditingProject({...editingProject, status: 'in_progress'});
                       }}
-                      className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
-                      <RotateCcw size={14} color={fixedColors.statusInProgress} />
-                      <Text className="text-xs text-blue-600 ml-1">다시 진행</Text>
+                      className="flex-row items-center rounded-lg px-3 py-2 mr-2"
+                      style={{backgroundColor: primaryColor + '10'}}>
+                      <RotateCcw size={14} color={primaryColor} />
+                      <Text className="text-xs ml-1" style={{color: primaryColor}}>다시 진행</Text>
                     </TouchableOpacity>
                   )}
                 </View>

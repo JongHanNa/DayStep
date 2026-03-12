@@ -28,19 +28,21 @@ import {
 } from '@/stores/aiPlanningStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {useTheme} from '@/theme';
 
 function ChatBubble({message}: {message: ChatMessage}) {
   const isUser = message.role === 'user';
+  const {primaryColor} = useTheme();
 
   return (
     <View className={`px-4 mb-3 ${isUser ? 'items-end' : 'items-start'}`}>
       <View
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser
-            ? 'bg-blue-500 rounded-br-sm'
+            ? 'rounded-br-sm'
             : 'bg-white rounded-bl-sm'
         }`}
-        style={!isUser ? {shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: {width: 0, height: 2}} : undefined}>
+        style={isUser ? {backgroundColor: primaryColor} : {shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: {width: 0, height: 2}}}>
         <Text
           className={`text-sm leading-5 ${
             isUser ? 'text-white' : 'text-gray-800'
@@ -55,6 +57,7 @@ function ChatBubble({message}: {message: ChatMessage}) {
 
 export default function AIChatScreen() {
   const user = useAuthStore(s => s.user);
+  const {primaryColor} = useTheme();
   const {hasActiveSubscription} = useSubscriptionStore();
   const {
     messages,
@@ -171,7 +174,7 @@ export default function AIChatScreen() {
                     }}
                     className="bg-white rounded-xl px-4 py-3 mb-2"
                     style={{shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: {width: 0, height: 2}}}>
-                    <Text className="text-sm text-blue-600">💬 {prompt}</Text>
+                    <Text className="text-sm" style={{color: primaryColor}}>💬 {prompt}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -201,9 +204,8 @@ export default function AIChatScreen() {
             <TouchableOpacity
               onPress={handleSend}
               disabled={!inputText.trim() || isLoading}
-              className={`ml-2 w-10 h-10 rounded-full items-center justify-center ${
-                inputText.trim() && !isLoading ? 'bg-blue-500' : 'bg-gray-200'
-              }`}>
+              className="ml-2 w-10 h-10 rounded-full items-center justify-center"
+              style={{backgroundColor: inputText.trim() && !isLoading ? primaryColor : '#E5E7EB'}}>
               {isLoading ? (
                 <ActivityIndicator size="small" color="#9CA3AF" />
               ) : (

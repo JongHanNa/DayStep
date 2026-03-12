@@ -20,6 +20,7 @@ import {ProScreenGuard} from '@/components/subscription/ProScreenGuard';
 import {INTERACTION_TYPE_LABELS} from '@/types/cherished-people';
 import type {DetailedStats, RelationshipStats, InteractionType} from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
+import {useTheme} from '@/theme';
 
 interface RelationshipStatsModalProps {
   visible: boolean;
@@ -45,6 +46,7 @@ function StatCard({
 
 export function RelationshipStatsModal({visible, onClose}: RelationshipStatsModalProps) {
   const insets = useSafeAreaInsets();
+  const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
   const {getDetailedStats, getRelationshipStats, loadPeople} =
     useCherishedPeopleStore();
@@ -99,7 +101,7 @@ export function RelationshipStatsModal({visible, onClose}: RelationshipStatsModa
                     <StatCard
                       label="소중한 사람"
                       value={relationship?.totalPeople ?? 0}
-                      color="#8B5CF6"
+                      color={primaryColor}
                     />
                   </View>
                   <View style={styles.statsHalf}>
@@ -145,7 +147,7 @@ export function RelationshipStatsModal({visible, onClose}: RelationshipStatsModa
                       return (
                         <View key={type} style={styles.barRow}>
                           <View style={styles.barLabel}>
-                            {IconComp && <IconComp size={14} color="#8B5CF6" />}
+                            {IconComp && <IconComp size={14} color={primaryColor} />}
                             <Text style={styles.barLabelText}>{label?.label}</Text>
                           </View>
                           <View style={styles.barTrack}>

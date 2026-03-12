@@ -37,12 +37,12 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 
 // ============================================
 // Constants
 // ============================================
 
-const VIOLET = '#8B5CF6';
 const QUICK_FOCUS_SECONDS = 20 * 60;
 const RING_SIZE = 280;
 
@@ -57,7 +57,7 @@ function CelebrationOverlay({onDismiss}: {onDismiss: () => void}) {
       exiting={FadeOut.duration(300)}
       style={styles.celebrationOverlay}>
       <View style={styles.celebrationIconWrap}>
-        <Sparkles size={56} color="#F59E0B" />
+        <Sparkles size={56} color={fixedColors.premiumGold} />
       </View>
       <Text style={styles.celebrationTitle}>집중 완료!</Text>
       <Text style={styles.celebrationSubtitle}>정말 잘했어요</Text>
@@ -233,11 +233,8 @@ export default function ExecutionScreen() {
   }, [selectedFocus]);
 
   const activeColor = useMemo(() => {
-    if (hasActiveSession) {
-      return focusMode === 'todo' ? primaryColor : VIOLET;
-    }
-    return selectedFocus?.mode === 'todo' ? primaryColor : VIOLET;
-  }, [hasActiveSession, focusMode, primaryColor, selectedFocus]);
+    return primaryColor;
+  }, [primaryColor]);
 
   // ---- 시작 ----
   const handleStart = useCallback(() => {

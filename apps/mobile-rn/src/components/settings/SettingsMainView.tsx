@@ -91,7 +91,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       <View style={[styles.section, {marginTop: 16}]}>
         <SettingsRow
           icon={CreditCard}
-          iconColor="#6366F1"
+          iconColor={primaryColor}
           title="구독 관리"
           showChevron
           onPress={() => onNavigate('subscription')}
@@ -103,7 +103,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       <View style={styles.section}>
         <SettingsRow
           icon={Palette}
-          iconColor="#9333EA"
+          iconColor={primaryColor}
           title="테마/색상"
           showChevron
           onPress={() => onNavigate('theme')}
@@ -135,7 +135,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           <View style={[styles.section, {marginBottom: 16}]}>
             <SettingsRow
               icon={ShieldCheck}
-              iconColor="#6366F1"
+              iconColor={primaryColor}
               title="플랜 한도 관리"
               subtitle="Free/Pro 엔티티 한도 설정"
               showChevron

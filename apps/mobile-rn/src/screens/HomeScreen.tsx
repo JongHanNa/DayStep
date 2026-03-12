@@ -109,8 +109,7 @@ export default function HomeScreen() {
 
   // ── 그룹 아이템 정의 (Lucide 아이콘 + 설명) ──
 
-  const BLUE_BG = '#EFF6FF';
-  const VIOLET_BG = '#F5F3FF';
+  const PRIMARY_BG = primaryColor + '15';
   const EMERALD_BG = '#ECFDF5';
   const EMERALD_ICON = '#22C55E';
 
@@ -121,7 +120,7 @@ export default function HomeScreen() {
         icon: <Calendar size={20} color={primaryColor} />,
         label: '하루 계획하기',
         description: '오늘 할일을 시간별로 배치',
-        iconBgColor: BLUE_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Planner', {initialPage: 0}),
       },
@@ -130,7 +129,7 @@ export default function HomeScreen() {
         icon: <CalendarRange size={20} color={primaryColor} />,
         label: '월간 계획하기',
         description: '한 달 일정을 한눈에 보기',
-        iconBgColor: BLUE_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('MonthlyPlanner'),
       },
@@ -139,7 +138,7 @@ export default function HomeScreen() {
         icon: <FolderKanban size={20} color={primaryColor} />,
         label: '내 계획 보기',
         description: '프로젝트 목록과 진행 상황 확인',
-        iconBgColor: BLUE_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('AIPlan'),
       },
@@ -148,7 +147,7 @@ export default function HomeScreen() {
         icon: <Sparkles size={20} color={primaryColor} />,
         label: 'AI로 계획하기',
         description: 'AI와 대화하며 할일 계획',
-        iconBgColor: BLUE_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('AIChat'),
       },
@@ -157,7 +156,7 @@ export default function HomeScreen() {
         icon: <Link size={20} color={primaryColor} />,
         label: 'Claude 연결하기',
         description: 'Claude Desktop 연결',
-        iconBgColor: BLUE_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Guide'),
       },
@@ -166,7 +165,7 @@ export default function HomeScreen() {
         icon: <Trash2 size={20} color={primaryColor} />,
         label: '데이터 정리하기',
         description: '할일·프로젝트·원동력 등을 정리해 공간 확보',
-        iconBgColor: BLUE_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Cleanup'),
       },
@@ -181,7 +180,7 @@ export default function HomeScreen() {
         icon: <Lightbulb size={20} color={primaryColor} />,
         label: '원동력 새기기',
         description: '왜 해야 하는지 기록',
-        iconBgColor: VIOLET_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Notes'),
       },
@@ -190,7 +189,7 @@ export default function HomeScreen() {
         icon: <PenLine size={20} color={primaryColor} />,
         label: '관계 기록하기',
         description: '소중한 만남과 대화 기록',
-        iconBgColor: VIOLET_BG,
+        iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Record'),
       },
@@ -254,8 +253,8 @@ export default function HomeScreen() {
                   {totalCount > 0 && (
                     <View className="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
                       <View
-                        className="bg-blue-500 h-full rounded-full"
-                        style={{width: `${Math.round(progress * 100)}%`}}
+                        className="h-full rounded-full"
+                        style={{backgroundColor: primaryColor, width: `${Math.round(progress * 100)}%`}}
                       />
                     </View>
                   )}

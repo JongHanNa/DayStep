@@ -5,7 +5,7 @@
  * 2. 시간지정 없이 미룸 (anytime) — 시간 미정으로 변환
  * 3. 지금 바로 하기 (start_now) — FocusTimer로 이동
  */
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {View, Text, Modal, StyleSheet, Pressable} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
@@ -76,6 +76,14 @@ export function PostponeBottomSheet({
   onConfirm,
 }: PostponeBottomSheetProps) {
   const {primaryColor} = useTheme();
+  const resolvedOptions = useMemo(() =>
+    OPTIONS.map(opt =>
+      opt.action === 'anytime'
+        ? {...opt, color: primaryColor, bgColor: primaryColor + '10', borderColor: primaryColor + '33'}
+        : opt,
+    ),
+    [primaryColor],
+  );
   const [selectedAction, setSelectedAction] =
     useState<PostponeAction>('reschedule');
   const [hour, setHour] = useState(14);
@@ -152,7 +160,7 @@ export function PostponeBottomSheet({
 
           {/* 옵션 목록 */}
           <View style={styles.optionList}>
-            {OPTIONS.map(option => {
+            {resolvedOptions.map(option => {
               const OptionIcon = option.Icon;
               const isSelected = selectedAction === option.action;
               return (
