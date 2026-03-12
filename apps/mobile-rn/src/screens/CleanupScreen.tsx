@@ -1,6 +1,6 @@
 /**
- * CleanupScreen — 데이터 정리
- * 보라 그라디언트 헤더 + 도넛 차트 + 6개 데이터 타입 카드 + 바텀시트 삭제
+ * CleanupScreen — 데이터 정리 (C안: 진행률 요약)
+ * 프로그레스 바 + 아코디언 UI
  *
  * 정리 대상:
  * [할일] 종료일 지난 미완료 / 완료된 할일
@@ -19,8 +19,25 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
-import {ScreenContainer} from '@/components/core';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import {
+  Clock,
+  CheckCircle2,
+  Repeat,
+  FolderCheck,
+  PauseCircle,
+  Lightbulb,
+  Calendar,
+  ChevronRight,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-react-native';
+import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useTodoStore} from '@/stores/todoStore';
 import {useProjectStore} from '@/stores/projectStore';
 import {useNoteStore} from '@/stores/noteStore';
@@ -28,6 +45,8 @@ import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
 import {useTheme} from '@/theme';
+import {hexWithOpacity} from '@/lib/todoUtils';
+import {springs} from '@/theme/animations';
 
 // ────────────────────────────────────────────────
 // Generic Item (모든 카테고리 공통 표시용)
@@ -54,11 +73,8 @@ type CategoryKey =
 
 interface CategoryDef {
   key: CategoryKey;
-  icon: string;
   title: string;
   description: string;
-  color: string;
-  bgColor: string;
 }
 
 interface CategoryGroup {
@@ -66,85 +82,78 @@ interface CategoryGroup {
   categories: CategoryDef[];
 }
 
+// 아이콘 매핑
+const CATEGORY_ICON: Record<CategoryKey, LucideIcon> = {
+  pastDue: Clock,
+  completed: CheckCircle2,
+  pastRecurring: Repeat,
+  completedProjects: FolderCheck,
+  onHoldProjects: PauseCircle,
+  allNotes: Lightbulb,
+  oldInteractions: Calendar,
+};
+
+// 그룹별 명도 (진한것 → 연한것)
+const GROUP_SHADES = [1.0, 0.75, 0.55, 0.40, 0.25];
+
 const CATEGORY_GROUPS: CategoryGroup[] = [
   {
-    groupTitle: '📋 할일',
+    groupTitle: '할일',
     categories: [
       {
         key: 'pastDue',
-        icon: '⏰',
         title: '종료일 지난 미완료 할일',
         description: '기한이 지나도 완료되지 않은 할일이에요.',
-        color: '#DC2626',
-        bgColor: '#FEE2E2',
       },
       {
         key: 'completed',
-        icon: '✅',
         title: '완료된 할일',
         description: '이미 완료된 할일이에요. 기록이 필요 없다면 삭제해도 괜찮아요.',
-        color: '#16A34A',
-        bgColor: '#DCFCE7',
       },
     ],
   },
   {
-    groupTitle: '🔁 습관',
+    groupTitle: '습관',
     categories: [
       {
         key: 'pastRecurring',
-        icon: '🔁',
         title: '반복 종료된 할일',
         description: '반복 종료일이 지난 반복 할일이에요. 이제 울리지 않는 루틴이에요.',
-        color: '#2563EB',
-        bgColor: '#DBEAFE',
       },
     ],
   },
   {
-    groupTitle: '📁 프로젝트',
+    groupTitle: '프로젝트',
     categories: [
       {
         key: 'completedProjects',
-        icon: '🎉',
         title: '완료된 프로젝트',
         description: '완료 상태의 프로젝트예요. 더 이상 필요 없다면 정리할 수 있어요.',
-        color: '#059669',
-        bgColor: '#D1FAE5',
       },
       {
         key: 'onHoldProjects',
-        icon: '⏸️',
         title: '보류 중 프로젝트',
         description: '보류 상태로 멈춰있는 프로젝트예요. 재개하거나 삭제하세요.',
-        color: '#D97706',
-        bgColor: '#FEF3C7',
       },
     ],
   },
   {
-    groupTitle: '💡 원동력',
+    groupTitle: '원동력',
     categories: [
       {
         key: 'allNotes',
-        icon: '💡',
         title: '원동력 노트',
         description: '기록된 원동력 노트 전체 목록이에요. 정리할 항목을 선택하세요.',
-        color: '#7C3AED',
-        bgColor: '#EDE9FE',
       },
     ],
   },
   {
-    groupTitle: '📅 관심기록',
+    groupTitle: '관심기록',
     categories: [
       {
         key: 'oldInteractions',
-        icon: '🗓️',
         title: '90일 이상 지난 기록',
         description: '3개월 이상 된 관심 기록이에요. 오래된 기록을 정리할 수 있어요.',
-        color: '#9333EA',
-        bgColor: '#F3E8FF',
       },
     ],
   },
@@ -155,50 +164,239 @@ const ALL_CATEGORIES: CategoryDef[] = CATEGORY_GROUPS.flatMap(g => g.categories)
 const CATEGORY_MAP = Object.fromEntries(ALL_CATEGORIES.map(c => [c.key, c])) as Record<CategoryKey, CategoryDef>;
 
 // ────────────────────────────────────────────────
-// Donut Chart
+// ProgressHeader — 세그먼트 프로그레스 바 + 범례
 // ────────────────────────────────────────────────
 
-function DonutChart({usedCount, maxCount}: {usedCount: number; maxCount: number}) {
-  const pct = Math.min(100, Math.round((usedCount / maxCount) * 100));
-  const size = 110;
-  const stroke = 14;
+function ProgressHeader({
+  totalCleanable,
+  groupCounts,
+  groupLabels,
+  primaryColor,
+}: {
+  totalCleanable: number;
+  groupCounts: number[];
+  groupLabels: string[];
+  primaryColor: string;
+}) {
+  return (
+    <Animated.View entering={FadeInDown.duration(400)} style={{paddingHorizontal: 4, marginBottom: 20}}>
+      <Text style={{fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 4}}>
+        데이터 정리
+      </Text>
+      <Text style={{fontSize: 13, color: '#64748B', marginBottom: 16}}>
+        {totalCleanable}개 항목을 깔끔하게 정리해보세요
+      </Text>
+
+      {/* 세그먼트 프로그레스 바 */}
+      <View
+        style={{
+          flexDirection: 'row',
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: '#F1F5F9',
+          overflow: 'hidden',
+          marginBottom: 12,
+        }}>
+        {groupCounts.map((count, i) =>
+          count > 0 ? (
+            <View
+              key={i}
+              style={{
+                flex: count,
+                backgroundColor: hexWithOpacity(primaryColor, GROUP_SHADES[i]),
+                marginRight: i < groupCounts.length - 1 ? 1 : 0,
+              }}
+            />
+          ) : null,
+        )}
+      </View>
+
+      {/* 범례 */}
+      <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 12}}>
+        {groupCounts.map((count, i) =>
+          count > 0 ? (
+            <View key={i} style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: hexWithOpacity(primaryColor, GROUP_SHADES[i]),
+                }}
+              />
+              <Text style={{fontSize: 12, color: '#64748B'}}>
+                {groupLabels[i]} {count}
+              </Text>
+            </View>
+          ) : null,
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
+// ────────────────────────────────────────────────
+// CategoryRow — 아코디언 내부 행
+// ────────────────────────────────────────────────
+
+function CategoryRow({
+  categoryKey,
+  title,
+  count,
+  primaryColor,
+  onPress,
+  isLast,
+}: {
+  categoryKey: CategoryKey;
+  title: string;
+  count: number;
+  primaryColor: string;
+  onPress: () => void;
+  isLast: boolean;
+}) {
+  const Icon = CATEGORY_ICON[categoryKey];
 
   return (
-    <View style={{width: size, height: size, alignItems: 'center', justifyContent: 'center'}}>
-      <View
+    <AnimatedPressable
+      scaleValue={0.98}
+      hapticType="light"
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderBottomWidth: isLast ? 0 : 1,
+        borderBottomColor: '#F8FAFC',
+      }}>
+      <Icon size={18} color={primaryColor} style={{marginRight: 10}} />
+      <Text style={{flex: 1, fontSize: 14, color: '#0F172A'}}>{title}</Text>
+      <Text style={{fontSize: 13, color: '#94A3B8', marginRight: 6}}>{count}건</Text>
+      <ChevronRight size={14} color="#CBD5E1" />
+    </AnimatedPressable>
+  );
+}
+
+// ────────────────────────────────────────────────
+// AccordionGroup — 그룹 아코디언
+// ────────────────────────────────────────────────
+
+function AccordionChevron({expanded}: {expanded: boolean}) {
+  const rotation = useSharedValue(expanded ? 1 : 0);
+
+  useEffect(() => {
+    rotation.value = withSpring(expanded ? 1 : 0, springs.snappy);
+  }, [expanded, rotation]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{rotate: `${rotation.value * 90}deg`}],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <ChevronRight size={16} color="#94A3B8" />
+    </Animated.View>
+  );
+}
+
+function AccordionGroup({
+  groupIndex,
+  groupTitle,
+  categories,
+  categorized,
+  primaryColor,
+  expanded,
+  onToggle,
+  onCategoryPress,
+}: {
+  groupIndex: number;
+  groupTitle: string;
+  categories: CategoryDef[];
+  categorized: CategorizedData;
+  primaryColor: string;
+  expanded: boolean;
+  onToggle: () => void;
+  onCategoryPress: (cat: CategoryDef) => void;
+}) {
+  const groupCount = categories.reduce((sum, cat) => sum + categorized[cat.key].length, 0);
+  const shade = GROUP_SHADES[groupIndex] ?? GROUP_SHADES[GROUP_SHADES.length - 1];
+  const dotColor = hexWithOpacity(primaryColor, shade);
+
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(groupIndex * 80).duration(400)}
+      style={{marginBottom: 10}}>
+      {/* 아코디언 헤더 */}
+      <AnimatedPressable
+        scaleValue={0.99}
+        haptic={false}
+        onPress={onToggle}
         style={{
-          position: 'absolute',
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          borderWidth: stroke,
-          borderColor: 'rgba(255,255,255,0.2)',
-        }}
-      />
-      <View
-        style={{
-          position: 'absolute',
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          borderWidth: stroke,
-          borderColor: 'transparent',
-          borderTopColor: 'white',
-          borderRightColor: pct > 25 ? 'white' : 'transparent',
-          borderBottomColor: pct > 50 ? 'white' : 'transparent',
-          borderLeftColor: pct > 75 ? 'white' : 'transparent',
-          transform: [{rotate: '-90deg'}],
-        }}
-      />
-      <View style={{alignItems: 'center'}}>
-        <Text style={{fontSize: 24, fontWeight: '800', color: 'white', lineHeight: 28}}>
-          {pct}%
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: 'white',
+          borderRadius: expanded ? 14 : 14,
+          borderBottomLeftRadius: expanded ? 0 : 14,
+          borderBottomRightRadius: expanded ? 0 : 14,
+          paddingVertical: 14,
+          paddingHorizontal: 16,
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 2},
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          elevation: 2,
+        }}>
+        <View
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: dotColor,
+            marginRight: 10,
+          }}
+        />
+        <Text style={{flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A'}}>
+          {groupTitle}
         </Text>
-        <Text style={{fontSize: 10, color: 'rgba(255,255,255,0.8)', marginTop: 1}}>
-          사용 중
+        <Text style={{fontSize: 13, color: '#94A3B8', marginRight: 8}}>
+          {groupCount}건
         </Text>
-      </View>
-    </View>
+        <AccordionChevron expanded={expanded} />
+      </AnimatedPressable>
+
+      {/* 아코디언 바디 */}
+      {expanded && (
+        <View
+          style={{
+            backgroundColor: 'white',
+            borderBottomLeftRadius: 14,
+            borderBottomRightRadius: 14,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.04,
+            shadowRadius: 8,
+            elevation: 2,
+          }}>
+          {groupCount === 0 ? (
+            <View style={{paddingVertical: 20, alignItems: 'center'}}>
+              <Text style={{fontSize: 13, color: '#94A3B8'}}>정리할 항목이 없어요</Text>
+            </View>
+          ) : (
+            categories.map((cat, i) => (
+              <CategoryRow
+                key={cat.key}
+                categoryKey={cat.key}
+                title={cat.title}
+                count={categorized[cat.key].length}
+                primaryColor={primaryColor}
+                onPress={() => onCategoryPress(cat)}
+                isLast={i === categories.length - 1}
+              />
+            ))
+          )}
+        </View>
+      )}
+    </Animated.View>
   );
 }
 
@@ -213,7 +411,8 @@ interface SheetProps {
   onClose: () => void;
   onDelete: (ids: string[]) => Promise<void>;
   onDeleted: (ids: string[], categoryKey: CategoryKey) => void;
-  itemLabel?: string; // e.g. '할일', '프로젝트', '기록'
+  itemLabel?: string;
+  primaryColor: string;
 }
 
 function CleanupSheet({
@@ -224,6 +423,7 @@ function CleanupSheet({
   onDelete,
   onDeleted,
   itemLabel = '항목',
+  primaryColor,
 }: SheetProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -287,6 +487,8 @@ function CleanupSheet({
 
   if (!category) return null;
 
+  const Icon = CATEGORY_ICON[category.key];
+
   return (
     <Modal
       visible={visible}
@@ -320,9 +522,12 @@ function CleanupSheet({
           />
 
           {/* Title */}
-          <Text style={{fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 4}}>
-            {category.icon} {category.title}
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 8}}>
+            <Icon size={20} color={primaryColor} />
+            <Text style={{fontSize: 18, fontWeight: '700', color: '#0F172A'}}>
+              {category.title}
+            </Text>
+          </View>
           <Text style={{fontSize: 13, color: '#64748B', marginBottom: 16}}>
             {items.length}개 · 전체 선택 후 삭제 가능
           </Text>
@@ -346,9 +551,9 @@ function CleanupSheet({
                   width: 20,
                   height: 20,
                   borderRadius: 5,
-                  backgroundColor: allSelected ? category.color : 'transparent',
+                  backgroundColor: allSelected ? primaryColor : 'transparent',
                   borderWidth: 2,
-                  borderColor: allSelected ? category.color : '#CBD5E1',
+                  borderColor: allSelected ? primaryColor : '#CBD5E1',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
@@ -386,9 +591,9 @@ function CleanupSheet({
                     width: 20,
                     height: 20,
                     borderRadius: 5,
-                    backgroundColor: selected.has(item.id) ? category.color : 'transparent',
+                    backgroundColor: selected.has(item.id) ? primaryColor : 'transparent',
                     borderWidth: 2,
-                    borderColor: selected.has(item.id) ? category.color : '#CBD5E1',
+                    borderColor: selected.has(item.id) ? primaryColor : '#CBD5E1',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
@@ -419,7 +624,7 @@ function CleanupSheet({
               marginTop: 16,
               paddingVertical: 15,
               borderRadius: 14,
-              backgroundColor: selected.size === 0 ? '#E2E8F0' : category.color,
+              backgroundColor: selected.size === 0 ? '#E2E8F0' : primaryColor,
               alignItems: 'center',
               justifyContent: 'center',
               flexDirection: 'row',
@@ -428,125 +633,22 @@ function CleanupSheet({
             {deleting ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '700',
-                  color: selected.size === 0 ? '#94A3B8' : 'white',
-                }}>
-                🗑️ 선택된 {selected.size}개 삭제하기
-              </Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                <Trash2 size={16} color={selected.size === 0 ? '#94A3B8' : 'white'} />
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: selected.size === 0 ? '#94A3B8' : 'white',
+                  }}>
+                  선택된 {selected.size}개 삭제하기
+                </Text>
+              </View>
             )}
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
-  );
-}
-
-// ────────────────────────────────────────────────
-// Category Card
-// ────────────────────────────────────────────────
-
-interface CardProps {
-  category: CategoryDef;
-  count: number;
-  onPress: () => void;
-  enterDelay: number;
-  unit?: string;
-}
-
-function CategoryCard({category, count, onPress, enterDelay, unit = '개'}: CardProps) {
-  return (
-    <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.8}
-        style={{
-          backgroundColor: 'white',
-          borderRadius: 20,
-          padding: 20,
-          marginBottom: 12,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 4},
-          shadowOpacity: 0.06,
-          shadowRadius: 12,
-          elevation: 3,
-        }}>
-        <View style={{flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between'}}>
-          <View
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 14,
-              backgroundColor: category.bgColor,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <Text style={{fontSize: 22}}>{category.icon}</Text>
-          </View>
-          <View style={{alignItems: 'flex-end'}}>
-            <Text
-              style={{
-                fontSize: 36,
-                fontWeight: '800',
-                color: category.color,
-                lineHeight: 40,
-              }}>
-              {count}
-            </Text>
-            <Text style={{fontSize: 12, color: '#94A3B8', fontWeight: '500'}}>{unit}</Text>
-          </View>
-        </View>
-        <Text
-          style={{
-            fontSize: 16,
-            fontWeight: '700',
-            color: '#0F172A',
-            marginTop: 14,
-            marginBottom: 4,
-          }}>
-          {category.title}
-        </Text>
-        <Text style={{fontSize: 13, color: '#64748B', lineHeight: 20}}>
-          {category.description}
-        </Text>
-        <View
-          style={{
-            marginTop: 16,
-            paddingVertical: 10,
-            borderRadius: 10,
-            backgroundColor: category.color,
-            alignItems: 'center',
-          }}>
-          <Text style={{fontSize: 14, fontWeight: '600', color: 'white'}}>
-            정리하기 →
-          </Text>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-}
-
-// ────────────────────────────────────────────────
-// Group Header
-// ────────────────────────────────────────────────
-
-function GroupHeader({title, enterDelay}: {title: string; enterDelay: number}) {
-  const {primaryColor} = useTheme();
-  return (
-    <Animated.Text
-      entering={FadeInDown.delay(enterDelay).duration(400)}
-      style={{
-        fontSize: 13,
-        fontWeight: '700',
-        color: primaryColor,
-        marginBottom: 10,
-        marginTop: 8,
-        marginLeft: 4,
-      }}>
-      {title}
-    </Animated.Text>
   );
 }
 
@@ -583,17 +685,6 @@ const EMPTY_DATA: CategorizedData = {
 export default function CleanupScreen() {
   const user = useAuthStore(s => s.user);
   const {primaryColor} = useTheme();
-  const resolvedCategoryGroups = useMemo(() =>
-    CATEGORY_GROUPS.map(group => ({
-      ...group,
-      categories: group.categories.map(cat =>
-        cat.key === 'allNotes' || cat.key === 'oldInteractions'
-          ? {...cat, color: primaryColor, bgColor: primaryColor + '15'}
-          : cat,
-      ),
-    })),
-    [primaryColor],
-  );
   const {deleteTodo} = useTodoStore();
   const {deleteProject} = useProjectStore();
   const {deleteNote} = useNoteStore();
@@ -603,6 +694,7 @@ export default function CleanupScreen() {
   const [categorized, setCategorized] = useState<CategorizedData>(EMPTY_DATA);
   const [activeCategory, setActiveCategory] = useState<CategoryDef | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set([0]));
 
   // ── 데이터 로드 ──────────────────────────────
   const loadData = useCallback(async () => {
@@ -625,7 +717,6 @@ export default function CleanupScreen() {
         notesRes,
         oldInteractionsRes,
       ] = await Promise.all([
-        // 종료일 지난 미완료 일반 할일
         supabase
           .from('todos')
           .select('id, title, end_time')
@@ -636,7 +727,6 @@ export default function CleanupScreen() {
           .lt('end_time', now)
           .order('end_time', {ascending: true}),
 
-        // 완료된 일반 할일
         supabase
           .from('todos')
           .select('id, title, updated_at')
@@ -645,7 +735,6 @@ export default function CleanupScreen() {
           .eq('completed', true)
           .order('updated_at', {ascending: false}),
 
-        // 반복 종료일 지난 반복 할일
         supabase
           .from('todos')
           .select('id, title, recurrence_end_date')
@@ -655,7 +744,6 @@ export default function CleanupScreen() {
           .lt('recurrence_end_date', today)
           .order('recurrence_end_date', {ascending: true}),
 
-        // 완료된 프로젝트
         supabase
           .from('projects')
           .select('id, title, updated_at')
@@ -663,7 +751,6 @@ export default function CleanupScreen() {
           .eq('status', 'completed')
           .order('updated_at', {ascending: false}),
 
-        // 보류 중 프로젝트
         supabase
           .from('projects')
           .select('id, title, updated_at')
@@ -671,7 +758,6 @@ export default function CleanupScreen() {
           .eq('status', 'on_hold')
           .order('updated_at', {ascending: false}),
 
-        // 원동력 노트 전체
         supabase
           .from('notes')
           .select('id, title, content, created_at')
@@ -679,7 +765,6 @@ export default function CleanupScreen() {
           .eq('note_category', 'fuel')
           .order('created_at', {ascending: false}),
 
-        // 90일 이상 지난 관심기록
         supabase
           .from('care_interactions')
           .select('id, interaction_type, interaction_date, person_id')
@@ -759,16 +844,18 @@ export default function CleanupScreen() {
     [categorized],
   );
 
-  // ── 타입별 집계 ───────────────────────────────
-  const typeSummary = useMemo(
-    () => [
-      {icon: '⏰', label: '할일', count: categorized.pastDue.length + categorized.completed.length},
-      {icon: '🔁', label: '습관', count: categorized.pastRecurring.length},
-      {icon: '📁', label: '프로젝트', count: categorized.completedProjects.length + categorized.onHoldProjects.length},
-      {icon: '💡', label: '원동력', count: categorized.allNotes.length},
-      {icon: '📅', label: '관심기록', count: categorized.oldInteractions.length},
-    ],
+  // ── 그룹별 카운트 + 레이블 ──────────────────
+  const groupCounts = useMemo(
+    () =>
+      CATEGORY_GROUPS.map(g =>
+        g.categories.reduce((sum, cat) => sum + categorized[cat.key].length, 0),
+      ),
     [categorized],
+  );
+
+  const groupLabels = useMemo(
+    () => CATEGORY_GROUPS.map(g => g.groupTitle),
+    [],
   );
 
   // ── 시트 열기 ─────────────────────────────────
@@ -776,6 +863,19 @@ export default function CleanupScreen() {
     setActiveCategory(cat);
     setSheetVisible(true);
   };
+
+  // ── 아코디언 토글 ─────────────────────────────
+  const toggleGroup = useCallback((index: number) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }, []);
 
   // ── 카테고리별 삭제 핸들러 ────────────────────
   const buildDeleteHandler = useCallback(
@@ -820,81 +920,10 @@ export default function CleanupScreen() {
   );
 
   // ─────────────────────────────────────────────
-  let cardDelay = 0;
-
   return (
     <ScreenContainer gradient="warmBackground">
-      {/* ── 보라 그라디언트 헤더 ── */}
-      <View
-        style={{
-          backgroundColor: primaryColor,
-          paddingTop: 52,
-          paddingHorizontal: 20,
-          paddingBottom: 28,
-          borderBottomLeftRadius: 32,
-          borderBottomRightRadius: 32,
-        }}>
-        <Text style={{fontSize: 22, fontWeight: '700', color: 'white', marginBottom: 20}}>
-          데이터 정리 💎
-        </Text>
-
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 16}}>
-          {/* 왼쪽: 큰 숫자 */}
-          <View style={{alignItems: 'center', minWidth: 72}}>
-            <Text style={{fontSize: 52, fontWeight: '800', color: 'white', lineHeight: 60}}>
-              {totalCleanable}
-            </Text>
-            <Text style={{fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2}}>
-              개 정리 가능
-            </Text>
-          </View>
-
-          {/* 구분선 */}
-          <View
-            style={{
-              width: 1,
-              height: 80,
-              backgroundColor: 'rgba(255,255,255,0.25)',
-            }}
-          />
-
-          {/* 오른쪽: 타입별 칩 */}
-          <View style={{flex: 1}}>
-            {totalCleanable > 0 ? (
-              <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
-                {typeSummary
-                  .filter(item => item.count > 0)
-                  .map(item => (
-                    <View
-                      key={item.label}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: 'rgba(255,255,255,0.18)',
-                        borderRadius: 20,
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        gap: 4,
-                      }}>
-                      <Text style={{fontSize: 12}}>{item.icon}</Text>
-                      <Text style={{fontSize: 12, color: 'white', fontWeight: '600'}}>
-                        {item.label} {item.count}
-                      </Text>
-                    </View>
-                  ))}
-              </View>
-            ) : (
-              <Text style={{fontSize: 14, color: 'rgba(255,255,255,0.9)', lineHeight: 22}}>
-                깔끔하게{'\n'}관리되고 있어요 ✨
-              </Text>
-            )}
-          </View>
-        </View>
-      </View>
-
-      {/* ── 카드 목록 ── */}
       <ScrollView
-        contentContainerStyle={{padding: 16, paddingBottom: 100}}
+        contentContainerStyle={{padding: 16, paddingTop: 60, paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={{alignItems: 'center', paddingTop: 60}}>
@@ -903,26 +932,41 @@ export default function CleanupScreen() {
               데이터를 불러오는 중...
             </Text>
           </View>
+        ) : totalCleanable === 0 ? (
+          <View style={{alignItems: 'center', paddingTop: 100}}>
+            <CheckCircle2 size={48} color={primaryColor} />
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#64748B',
+                marginTop: 16,
+              }}>
+              깔끔하게 관리되고 있어요
+            </Text>
+          </View>
         ) : (
-          resolvedCategoryGroups.map(group => {
-            const groupDelay = cardDelay;
-            cardDelay += group.categories.length * 80;
-            return (
-              <View key={group.groupTitle}>
-                <GroupHeader title={group.groupTitle} enterDelay={groupDelay} />
-                {group.categories.map((cat, i) => (
-                  <CategoryCard
-                    key={cat.key}
-                    category={cat}
-                    count={categorized[cat.key].length}
-                    onPress={() => openSheet(cat)}
-                    enterDelay={groupDelay + i * 80}
-                    unit="개"
-                  />
-                ))}
-              </View>
-            );
-          })
+          <>
+            <ProgressHeader
+              totalCleanable={totalCleanable}
+              groupCounts={groupCounts}
+              groupLabels={groupLabels}
+              primaryColor={primaryColor}
+            />
+            {CATEGORY_GROUPS.map((group, i) => (
+              <AccordionGroup
+                key={group.groupTitle}
+                groupIndex={i}
+                groupTitle={group.groupTitle}
+                categories={group.categories}
+                categorized={categorized}
+                primaryColor={primaryColor}
+                expanded={expandedGroups.has(i)}
+                onToggle={() => toggleGroup(i)}
+                onCategoryPress={openSheet}
+              />
+            ))}
+          </>
         )}
       </ScrollView>
 
@@ -935,6 +979,7 @@ export default function CleanupScreen() {
         onDelete={activeCategory ? buildDeleteHandler(activeCategory.key) : async () => {}}
         onDeleted={handleDeleted}
         itemLabel={activeCategory ? ITEM_LABEL[activeCategory.key] : '항목'}
+        primaryColor={primaryColor}
       />
     </ScreenContainer>
   );
