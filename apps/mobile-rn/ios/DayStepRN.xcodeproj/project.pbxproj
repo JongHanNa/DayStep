@@ -29,6 +29,8 @@
 		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
 		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
 		117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */; };
+		C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */; };
+		D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +63,8 @@
 		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
 		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
 		228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMenuBridge.m; path = DayStepRN/LiquidGlassMenuBridge.m; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleanupAccordion.swift; path = DayStepRN/NativeCleanupAccordion.swift; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DayStepRN/Info.plist; sourceTree = "<group>"; };
@@ -156,6 +160,8 @@
 				DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */,
 				FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */,
 				228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */,
+				B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -411,6 +417,8 @@
 				CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */,
 				EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */,
 				117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */,
+				C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */,
+				D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

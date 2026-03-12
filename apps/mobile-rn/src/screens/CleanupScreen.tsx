@@ -41,6 +41,7 @@ import {
   type LucideIcon,
 } from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {NativeCleanupAccordionNative, isIOS26Plus} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useProjectStore} from '@/stores/projectStore';
 import {useNoteStore} from '@/stores/noteStore';
@@ -882,6 +883,23 @@ export default function CleanupScreen() {
     setSheetVisible(true);
   };
 
+  // ── 네이티브 아코디언 데이터 ──────────────────
+  const [nativeHeight, setNativeHeight] = useState(0);
+
+  const accordionDataJSON = useMemo(() => {
+    return JSON.stringify(
+      CATEGORY_GROUPS.map((group, i) => ({
+        groupTitle: group.groupTitle,
+        shade: GROUP_SHADES[i] ?? GROUP_SHADES[GROUP_SHADES.length - 1],
+        categories: group.categories.map(cat => ({
+          key: cat.key,
+          title: cat.title,
+          count: categorized[cat.key].length,
+        })),
+      })),
+    );
+  }, [categorized]);
+
   // ── 아코디언 토글 ─────────────────────────────
   const toggleGroup = useCallback((index: number) => {
     setExpandedGroups(prev => {
@@ -971,19 +989,34 @@ export default function CleanupScreen() {
               groupLabels={groupLabels}
               primaryColor={primaryColor}
             />
-            {CATEGORY_GROUPS.map((group, i) => (
-              <AccordionGroup
-                key={group.groupTitle}
-                groupIndex={i}
-                groupTitle={group.groupTitle}
-                categories={group.categories}
-                categorized={categorized}
+            {isIOS26Plus ? (
+              <NativeCleanupAccordionNative
+                accordionData={accordionDataJSON}
                 primaryColor={primaryColor}
-                expanded={expandedGroups.has(i)}
-                onToggle={() => toggleGroup(i)}
-                onCategoryPress={openSheet}
+                expandedGroups={Array.from(expandedGroups)}
+                onCategoryPress={e => {
+                  const cat = CATEGORY_MAP[e.nativeEvent.categoryKey as CategoryKey];
+                  if (cat) openSheet(cat);
+                }}
+                onGroupToggle={e => toggleGroup(e.nativeEvent.groupIndex)}
+                onHeightChange={e => setNativeHeight(e.nativeEvent.height)}
+                style={nativeHeight > 0 ? {height: nativeHeight} : undefined}
               />
-            ))}
+            ) : (
+              CATEGORY_GROUPS.map((group, i) => (
+                <AccordionGroup
+                  key={group.groupTitle}
+                  groupIndex={i}
+                  groupTitle={group.groupTitle}
+                  categories={group.categories}
+                  categorized={categorized}
+                  primaryColor={primaryColor}
+                  expanded={expandedGroups.has(i)}
+                  onToggle={() => toggleGroup(i)}
+                  onCategoryPress={openSheet}
+                />
+              ))
+            )}
           </>
         )}
       </ScrollView>
