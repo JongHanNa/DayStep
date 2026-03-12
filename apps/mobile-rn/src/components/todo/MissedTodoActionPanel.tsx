@@ -1,23 +1,12 @@
 /**
  * MissedTodoActionPanel
  * 종료 시간이 지난 할일에 대한 4가지 액션 버튼 패널
- * - 완료했음 (초록)
- * - 미뤘음 (주황)
- * - 필요없었음 (회색)
- * - 놓침 (빨강)
+ * - 완료했음 / 미뤘음 / 필요없었음 / 놓침
  */
 import React from 'react';
 import {Text, StyleSheet} from 'react-native';
 import Animated, {FadeIn, FadeOut} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
-import {useTheme} from '@/theme';
-import {
-  CheckCircle2,
-  Pause,
-  MinusCircle,
-  XCircle,
-  Clock,
-} from 'lucide-react-native';
 
 interface MissedTodoActionPanelProps {
   overdueText: string;
@@ -34,7 +23,6 @@ export function MissedTodoActionPanel({
   onSkipNotNeeded,
   onSkipMissed,
 }: MissedTodoActionPanelProps) {
-  const {primaryColor} = useTheme();
   return (
     <Animated.View
       entering={FadeIn.duration(300)}
@@ -42,7 +30,6 @@ export function MissedTodoActionPanel({
       style={styles.container}>
       {/* 종료 시간 X분 지남 뱃지 */}
       <Animated.View style={styles.overdueBadge}>
-        <Clock size={12} color="#DC2626" />
         <Text style={styles.overdueText}>{overdueText}</Text>
       </Animated.View>
 
@@ -55,42 +42,32 @@ export function MissedTodoActionPanel({
           onPress={onComplete}
           hapticType="light"
           scaleValue={0.92}
-          style={[styles.actionBtn, styles.completeBtnBg]}>
-          <CheckCircle2 size={14} color="#16A34A" />
-          <Text style={[styles.actionBtnText, {color: '#16A34A'}]}>
-            완료했음
-          </Text>
+          style={styles.actionBtn}>
+          <Text style={styles.actionBtnText}>완료했음</Text>
         </AnimatedPressable>
 
         <AnimatedPressable
           onPress={onPostpone}
           hapticType="light"
           scaleValue={0.92}
-          style={[styles.actionBtn, styles.postponeBtnBg]}>
-          <Pause size={14} color={primaryColor} />
-          <Text style={[styles.actionBtnText, {color: primaryColor}]}>
-            미뤘음
-          </Text>
+          style={styles.actionBtn}>
+          <Text style={styles.actionBtnText}>미뤘음</Text>
         </AnimatedPressable>
 
         <AnimatedPressable
           onPress={onSkipNotNeeded}
           hapticType="light"
           scaleValue={0.92}
-          style={[styles.actionBtn, styles.skipBtnBg]}>
-          <MinusCircle size={14} color="#6B7280" />
-          <Text style={[styles.actionBtnText, {color: '#6B7280'}]}>
-            필요없었음
-          </Text>
+          style={styles.actionBtn}>
+          <Text style={styles.actionBtnText}>필요없었음</Text>
         </AnimatedPressable>
 
         <AnimatedPressable
           onPress={onSkipMissed}
           hapticType="light"
           scaleValue={0.92}
-          style={[styles.actionBtn, styles.missedBtnBg]}>
-          <XCircle size={14} color="#DC2626" />
-          <Text style={[styles.actionBtnText, {color: '#DC2626'}]}>놓침</Text>
+          style={styles.actionBtn}>
+          <Text style={styles.actionBtnText}>놓침</Text>
         </AnimatedPressable>
       </Animated.View>
     </Animated.View>
@@ -102,12 +79,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#FEE2E2',
+    borderTopColor: '#E5E7EB',
   },
   overdueBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
     marginBottom: 4,
   },
   overdueText: {
@@ -126,27 +102,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
+    backgroundColor: '#F3F4F6',
   },
   actionBtnText: {
     fontSize: 12,
     fontWeight: '600',
-  },
-  completeBtnBg: {
-    backgroundColor: '#F0FDF4',
-  },
-  postponeBtnBg: {
-    backgroundColor: '#FFFBEB',
-  },
-  skipBtnBg: {
-    backgroundColor: '#F9FAFB',
-  },
-  missedBtnBg: {
-    backgroundColor: '#FEF2F2',
+    color: '#6B7280',
   },
 });
