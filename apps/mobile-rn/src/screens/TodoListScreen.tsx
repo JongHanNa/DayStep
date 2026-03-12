@@ -199,6 +199,30 @@ function TodoListScreenInner() {
     [updateTodo],
   );
 
+  // "다음 일정" 계산을 위한 now state (60초마다 갱신)
+  const [nowForUpcoming, setNowForUpcoming] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowForUpcoming(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // 다음 일정 할일 ID: 시간 지정 + 미완료 + start_time > now 중 가장 빠른 것
+  const nextUpcomingId = useMemo(() => {
+    const nowMs = nowForUpcoming;
+    let earliest: {id: string; startMs: number} | null = null;
+    for (const todo of todos) {
+      if (todo.completed || !todo.start_time || todo.schedule_type === 'anytime') continue;
+      if ((todo as any).skip_status) continue;
+      const startMs = new Date(todo.start_time).getTime();
+      if (startMs > nowMs) {
+        if (!earliest || startMs < earliest.startMs) {
+          earliest = {id: todo.id, startMs};
+        }
+      }
+    }
+    return earliest?.id ?? null;
+  }, [todos, nowForUpcoming]);
+
   const sections = useMemo(() => categorizeTodos(todos), [todos]);
   const dateDisplay = format(new Date(selectedDate), 'M월 d일 EEEE', {locale: ko});
   const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
@@ -397,6 +421,7 @@ function TodoListScreenInner() {
                   onDeferComplete={(todo) => handleToggle(todo.id)}
                   onRestoreOriginal={handleRestoreOriginal}
                   linkedFuels={fuelMap[item.id]}
+                  isNextUpcoming={item.id === nextUpcomingId}
                 />
               </DraggableTodoChip>
             )}

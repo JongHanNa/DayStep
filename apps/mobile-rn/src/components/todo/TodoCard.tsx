@@ -44,6 +44,7 @@ interface TodoCardProps {
   onDeferComplete?: (todo: Todo) => void;
   onRestoreOriginal?: (todo: Todo) => void;
   linkedFuels?: LinkedFuel[];
+  isNextUpcoming?: boolean;
 }
 
 export function TodoCard({
@@ -59,6 +60,7 @@ export function TodoCard({
   onDeferComplete,
   onRestoreOriginal,
   linkedFuels,
+  isNextUpcoming,
 }: TodoCardProps) {
   const haptic = useHaptic();
   const {primaryColor} = useTheme();
@@ -101,12 +103,13 @@ export function TodoCard({
     [timeStatus],
   );
 
-  // missed 상태일 때만 60초 간격으로 now 갱신
+  // missed 또는 다음 일정(upcoming) 상태일 때 60초 간격으로 now 갱신
+  const needsTimer = timeStatus.status === 'missed' || (isNextUpcoming && timeStatus.status === 'upcoming');
   useEffect(() => {
-    if (timeStatus.status !== 'missed') return;
+    if (!needsTimer) return;
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
-  }, [timeStatus.status]);
+  }, [needsTimer]);
 
   const isSkipped = !!(todo as any).skip_status;
   const skipReason = (todo as any).skip_status as string | undefined;
@@ -260,6 +263,14 @@ export function TodoCard({
               {timeStatusText.secondary && (
                 <Text style={styles.remainingText}>{timeStatusText.secondary}</Text>
               )}
+            </View>
+          )}
+
+          {/* 다음 일정 시작까지 남은 시간 */}
+          {timeStatus.status === 'upcoming' && isNextUpcoming && timeStatusText.secondary && (
+            <View style={styles.upcomingSection}>
+              <Clock size={12} color="#6B7280" />
+              <Text style={styles.upcomingText}>{timeStatusText.secondary}</Text>
             </View>
           )}
 
@@ -482,6 +493,17 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#6B7280',
     marginTop: 2,
+  },
+  upcomingSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+  },
+  upcomingText: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   fuelRow: {
     marginTop: 6,

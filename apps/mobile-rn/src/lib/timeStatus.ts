@@ -15,6 +15,8 @@ export interface TimeStatusResult {
   progressPercent?: number;
   /** 종료 후 경과 시간 (분) - missed 상태에서만 유효 */
   overdueMinutes?: number;
+  /** 시작까지 남은 시간 (분) - upcoming 상태에서만 유효 */
+  minutesUntilStart?: number;
 }
 
 /** 종료 시간이 없는 할일의 기본 유예 시간 (분) */
@@ -58,7 +60,8 @@ export function getTimeStatus(
 
   // 아직 시작 전
   if (nowMs < startMs) {
-    return {status: 'upcoming'};
+    const minutesUntilStart = Math.floor((startMs - nowMs) / (1000 * 60));
+    return {status: 'upcoming', minutesUntilStart};
   }
 
   // endTime이 없는 경우: 시작 후 10분이 지나면 놓침
@@ -163,6 +166,11 @@ export function getTimeStatusText(result: TimeStatusResult): {
       return {
         primary: `종료 시간 ${formatDuration(result.overdueMinutes ?? 0)} 지남`,
       };
+    case 'upcoming':
+      if (result.minutesUntilStart != null) {
+        return {secondary: `시작까지 ${formatDuration(result.minutesUntilStart)} 남음`};
+      }
+      return {};
     default:
       return {};
   }
