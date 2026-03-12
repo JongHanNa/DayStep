@@ -103,13 +103,14 @@ export function TodoCard({
     [timeStatus],
   );
 
-  // missed 또는 다음 일정(upcoming) 상태일 때 60초 간격으로 now 갱신
-  const needsTimer = timeStatus.status === 'missed' || (isNextUpcoming && timeStatus.status === 'upcoming');
+  // missed, in_progress, 또는 다음 일정(upcoming) 상태일 때 now 갱신
+  const needsTimer = timeStatus.status === 'missed' || (isNextUpcoming && timeStatus.status === 'upcoming') || timeStatus.status === 'in_progress';
   useEffect(() => {
     if (!needsTimer) return;
-    const id = setInterval(() => setNow(Date.now()), 60_000);
+    const interval = timeStatus.status === 'in_progress' ? 1_000 : 60_000;
+    const id = setInterval(() => setNow(Date.now()), interval);
     return () => clearInterval(id);
-  }, [needsTimer]);
+  }, [needsTimer, timeStatus.status]);
 
   const isSkipped = !!(todo as any).skip_status;
   const skipReason = (todo as any).skip_status as string | undefined;
