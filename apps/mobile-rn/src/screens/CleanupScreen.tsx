@@ -21,6 +21,9 @@ import {
 } from 'react-native';
 import Animated, {
   FadeInDown,
+  FadeIn,
+  FadeOut,
+  LinearTransition,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -322,30 +325,42 @@ function AccordionGroup({
   const shade = GROUP_SHADES[groupIndex] ?? GROUP_SHADES[GROUP_SHADES.length - 1];
   const dotColor = hexWithOpacity(primaryColor, shade);
 
+  // 헤더 하단 borderRadius 스프링 애니메이션
+  const bottomRadius = useSharedValue(expanded ? 0 : 14);
+  useEffect(() => {
+    bottomRadius.value = withSpring(expanded ? 0 : 14, springs.snappy);
+  }, [expanded, bottomRadius]);
+  const headerRadiusStyle = useAnimatedStyle(() => ({
+    borderBottomLeftRadius: bottomRadius.value,
+    borderBottomRightRadius: bottomRadius.value,
+  }));
+
   return (
     <Animated.View
       entering={FadeInDown.delay(groupIndex * 80).duration(400)}
+      layout={LinearTransition.springify().damping(25).stiffness(247).mass(1)}
       style={{marginBottom: 10}}>
       {/* 아코디언 헤더 */}
       <AnimatedPressable
         scaleValue={0.99}
         haptic={false}
         onPress={onToggle}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: 'white',
-          borderRadius: expanded ? 14 : 14,
-          borderBottomLeftRadius: expanded ? 0 : 14,
-          borderBottomRightRadius: expanded ? 0 : 14,
-          paddingVertical: 14,
-          paddingHorizontal: 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.04,
-          shadowRadius: 8,
-          elevation: 2,
-        }}>
+        style={[
+          {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: 'white',
+            borderRadius: 14,
+            paddingVertical: 14,
+            paddingHorizontal: 16,
+            shadowColor: '#000',
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.04,
+            shadowRadius: 8,
+            elevation: 2,
+          },
+          headerRadiusStyle,
+        ]}>
         <View
           style={{
             width: 10,
@@ -366,11 +381,14 @@ function AccordionGroup({
 
       {/* 아코디언 바디 */}
       {expanded && (
-        <View
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(150)}
           style={{
             backgroundColor: 'white',
             borderBottomLeftRadius: 14,
             borderBottomRightRadius: 14,
+            overflow: 'hidden',
             shadowColor: '#000',
             shadowOffset: {width: 0, height: 2},
             shadowOpacity: 0.04,
@@ -394,7 +412,7 @@ function AccordionGroup({
               />
             ))
           )}
-        </View>
+        </Animated.View>
       )}
     </Animated.View>
   );
