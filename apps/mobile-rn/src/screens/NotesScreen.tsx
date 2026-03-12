@@ -1,15 +1,16 @@
 /**
- * NotesScreen — 원동력 새기기
- * 감정 기반 동기부여 노트 CRUD + 필터링 + 스트릭/XP
+ * NotesScreen — 원동력 새기기 (타임라인 리디자인)
+ * FlatList → ScrollView, 타임라인 레일 UI
+ * iOS 26+: NativeTimelineAccordion / iOS 25-: TimelineSection
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {FlatList, RefreshControl} from 'react-native';
+import {ScrollView, RefreshControl, View, StyleSheet, Alert} from 'react-native';
 import Animated, {FadeIn} from 'react-native-reanimated';
 import {ScreenContainer} from '@/components/core';
-import {MotivationHeader} from '@/components/motivation/MotivationHeader';
-import {MotivationInlineInput} from '@/components/motivation/MotivationInlineInput';
-import {MotivationFilterBar} from '@/components/motivation/MotivationFilterBar';
-import {FuelNoteCard} from '@/components/motivation/FuelNoteCard';
+import {AnimatedPressable} from '@/components/core';
+import {PinnedBanner} from '@/components/motivation/PinnedBanner';
+import {TimelineSection, type TimelineSectionData} from '@/components/motivation/TimelineSection';
+import {MotivationEmptyState} from '@/components/motivation/MotivationEmptyState';
 import {
   FuelInputBottomSheet,
   type FuelInputBottomSheetRef,
@@ -18,19 +19,45 @@ import {
   FuelDetailBottomSheet,
   type FuelDetailBottomSheetRef,
 } from '@/components/motivation/FuelDetailBottomSheet';
-import {MotivationEmptyState} from '@/components/motivation/MotivationEmptyState';
 import {useNoteStore} from '@/stores/noteStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
-import {
-  calculateStreak,
-  calculateXP,
-  getFilterCounts,
-  isNoteProcessed,
-} from '@/lib/motivationUtils';
-import type {StatusFilter} from '@/lib/motivationUtils';
+import {isIOS26Plus, NativeTimelineAccordionNative} from '@/components/native';
+import {useTheme} from '@/theme';
+import {Plus} from 'lucide-react-native';
 import type {Note, EmotionTag} from '@/stores/noteStore';
+import {
+  isToday,
+  isYesterday,
+  format,
+} from 'date-fns';
+import {ko} from 'date-fns/locale';
+
+/** notes를 날짜별로 그룹핑 */
+function groupNotesByDate(notes: Note[]): TimelineSectionData[] {
+  const groups = new Map<string, Note[]>();
+
+  for (const note of notes) {
+    const d = new Date(note.created_at);
+    const dateKey = format(d, 'yyyy-MM-dd');
+    if (!groups.has(dateKey)) groups.set(dateKey, []);
+    groups.get(dateKey)!.push(note);
+  }
+
+  const sections: TimelineSectionData[] = [];
+  for (const [dateKey, dateNotes] of groups) {
+    const d = new Date(dateKey + 'T00:00:00');
+    let label: string;
+    if (isToday(d)) label = '오늘';
+    else if (isYesterday(d)) label = '어제';
+    else label = format(d, 'M월 d일 (EEE)', {locale: ko});
+
+    sections.push({key: dateKey, label, notes: dateNotes});
+  }
+
+  return sections;
+}
 
 export default function NotesScreen() {
   const {user} = useAuthStore();
@@ -44,14 +71,13 @@ export default function NotesScreen() {
     setBannerPinned,
   } = useNoteStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
+  const {primaryColor} = useTheme();
 
   const inputSheetRef = useRef<FuelInputBottomSheetRef>(null);
   const detailSheetRef = useRef<FuelDetailBottomSheetRef>(null);
 
-  // 로컬 필터 상태
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [emotionFilter, setEmotionFilter] = useState<EmotionTag | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedNoteIds, setExpandedNoteIds] = useState<Set<string>>(new Set());
+  const [nativeHeight, setNativeHeight] = useState(400);
 
   // 초기 로드
   useEffect(() => {
@@ -61,51 +87,39 @@ export default function NotesScreen() {
   }, [user?.id, fetchFuelNotes]);
 
   // 파생 데이터
-  const streak = useMemo(() => calculateStreak(notes), [notes]);
-  const xp = useMemo(() => calculateXP(notes), [notes]);
-  const filterCounts = useMemo(() => getFilterCounts(notes), [notes]);
+  const pinnedNote = useMemo(
+    () => notes.find(n => n.is_banner_pinned) ?? null,
+    [notes],
+  );
 
-  const filteredNotes = useMemo(() => {
-    let result = notes;
+  const timelineSections = useMemo(
+    () => groupNotesByDate(notes),
+    [notes],
+  );
 
-    // 상태 필터
-    if (statusFilter === 'pending') {
-      result = result.filter(n => !isNoteProcessed(n));
-    } else if (statusFilter === 'processed') {
-      result = result.filter(n => isNoteProcessed(n));
-    }
-
-    // 감정 필터
-    if (emotionFilter) {
-      result = result.filter(n => n.emotion_tag === emotionFilter);
-    }
-
-    // 검색
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        n =>
-          n.content.toLowerCase().includes(q) ||
-          (n.title ?? '').toLowerCase().includes(q),
-      );
-    }
-
-    return result;
-  }, [notes, statusFilter, emotionFilter, searchQuery]);
+  const timelineDataJSON = useMemo(
+    () => JSON.stringify(
+      timelineSections.map(s => ({
+        key: s.key,
+        label: s.label,
+        notes: s.notes.map(n => ({
+          id: n.id,
+          title: n.title ?? '',
+          content: n.content,
+          emotion_tag: n.emotion_tag ?? '',
+          is_banner_pinned: n.is_banner_pinned ?? false,
+          created_at: n.created_at,
+          todo_count: n.todos?.length ?? 0,
+        })),
+      })),
+    ),
+    [timelineSections],
+  );
 
   // 핸들러
   const handleRefresh = useCallback(() => {
     if (user?.id) fetchFuelNotes(user.id);
   }, [user?.id, fetchFuelNotes]);
-
-  const handleInlineSubmit = useCallback(
-    async (content: string, emotionTag?: EmotionTag) => {
-      const allowed = await checkLimit('note');
-      if (!allowed) return;
-      createFuelNote({content, emotion_tag: emotionTag});
-    },
-    [createFuelNote, checkLimit],
-  );
 
   const handleSheetSubmit = useCallback(
     async (input: {content: string; title?: string; emotion_tag?: EmotionTag}) => {
@@ -116,7 +130,16 @@ export default function NotesScreen() {
     [createFuelNote, checkLimit],
   );
 
-  const handleNotePress = useCallback(
+  const handleNoteToggle = useCallback((noteId: string) => {
+    setExpandedNoteIds(prev => {
+      const next = new Set(prev);
+      if (next.has(noteId)) next.delete(noteId);
+      else next.add(noteId);
+      return next;
+    });
+  }, []);
+
+  const handleNoteEdit = useCallback(
     (note: Note) => {
       detailSheetRef.current?.open(note);
     },
@@ -139,50 +162,106 @@ export default function NotesScreen() {
 
   const handleDelete = useCallback(
     (noteId: string) => {
-      deleteNote(noteId);
+      Alert.alert('삭제 확인', '이 원동력을 삭제할까요?', [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: () => deleteNote(noteId),
+        },
+      ]);
     },
     [deleteNote],
   );
 
+  // 네이티브 이벤트 핸들러
+  const handleNativeNoteToggle = useCallback(
+    (e: {nativeEvent: {noteId: string}}) => handleNoteToggle(e.nativeEvent.noteId),
+    [handleNoteToggle],
+  );
+
+  const handleNativeNoteEdit = useCallback(
+    (e: {nativeEvent: {noteId: string}}) => {
+      const note = notes.find(n => n.id === e.nativeEvent.noteId);
+      if (note) handleNoteEdit(note);
+    },
+    [notes, handleNoteEdit],
+  );
+
+  const handleNativeNoteLongPress = useCallback(
+    (e: {nativeEvent: {noteId: string; action: string}}) => {
+      const {noteId, action} = e.nativeEvent;
+      if (action === 'pin') {
+        const note = notes.find(n => n.id === noteId);
+        if (note) handlePin(noteId, !note.is_banner_pinned);
+      } else if (action === 'delete') {
+        handleDelete(noteId);
+      }
+    },
+    [notes, handlePin, handleDelete],
+  );
+
+  const handleNativeHeightChange = useCallback(
+    (e: {nativeEvent: {height: number}}) => {
+      setNativeHeight(e.nativeEvent.height);
+    },
+    [],
+  );
+
   return (
     <ScreenContainer gradient="warmBackground">
-      <FlatList
-        data={filteredNotes}
-        keyExtractor={item => item.id}
+      <ScrollView
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
         }
-        ListHeaderComponent={
-          <Animated.View entering={FadeIn.duration(400)}>
-            <MotivationHeader
-              streak={streak}
-              xp={xp}
-              totalNotes={notes.length}
-            />
-            <MotivationInlineInput onSubmit={handleInlineSubmit} />
-            <MotivationFilterBar
-              statusFilter={statusFilter}
-              emotionFilter={emotionFilter}
-              searchQuery={searchQuery}
-              filterCounts={filterCounts}
-              onStatusChange={setStatusFilter}
-              onEmotionChange={setEmotionFilter}
-              onSearchChange={setSearchQuery}
+        contentContainerStyle={styles.scrollContent}>
+
+        {/* 고정 배너 */}
+        {pinnedNote && (
+          <Animated.View entering={FadeIn.duration(300)}>
+            <PinnedBanner
+              note={pinnedNote}
+              primaryColor={primaryColor}
+              onUnpin={(noteId) => handlePin(noteId, false)}
             />
           </Animated.View>
-        }
-        renderItem={({item, index}) => (
-          <FuelNoteCard
-            note={item}
-            index={index}
-            onPress={handleNotePress}
-            onPin={handlePin}
-            onDelete={handleDelete}
+        )}
+
+        {/* 타임라인 */}
+        {notes.length === 0 ? (
+          <MotivationEmptyState />
+        ) : isIOS26Plus && NativeTimelineAccordionNative != null ? (
+          <NativeTimelineAccordionNative
+            timelineData={timelineDataJSON}
+            primaryColor={primaryColor}
+            expandedNoteIds={Array.from(expandedNoteIds)}
+            onNoteToggle={handleNativeNoteToggle}
+            onNoteEdit={handleNativeNoteEdit}
+            onNoteLongPress={handleNativeNoteLongPress}
+            onHeightChange={handleNativeHeightChange}
+            style={{height: nativeHeight}}
+          />
+        ) : (
+          <TimelineSection
+            sections={timelineSections}
+            expandedNoteIds={expandedNoteIds}
+            primaryColor={primaryColor}
+            onNoteToggle={handleNoteToggle}
+            onNoteEdit={handleNoteEdit}
+            onNotePin={handlePin}
+            onNoteDelete={handleDelete}
           />
         )}
-        ListEmptyComponent={<MotivationEmptyState />}
-        contentContainerStyle={{paddingBottom: 120, paddingTop: 12}}
-      />
+      </ScrollView>
+
+      {/* FAB */}
+      <AnimatedPressable
+        onPress={() => inputSheetRef.current?.open()}
+        hapticType="medium"
+        scaleValue={0.9}
+        style={[styles.fab, {backgroundColor: primaryColor}]}>
+        <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
+      </AnimatedPressable>
 
       <FuelInputBottomSheet ref={inputSheetRef} onSubmit={handleSheetSubmit} />
       <FuelDetailBottomSheet
@@ -201,3 +280,25 @@ export default function NotesScreen() {
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 120,
+    paddingTop: 12,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+});

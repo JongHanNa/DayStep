@@ -3,4 +3,5 @@ export {LiquidGlassFuelCardNative} from './LiquidGlassFuelCard';
 export {LiquidGlassBackgroundNative} from './LiquidGlassBackground';
 export {LiquidGlassMenu} from './LiquidGlassMenu';
 export {NativeCleanupAccordionNative} from './NativeCleanupAccordion';
+export {NativeTimelineAccordionNative} from './NativeTimelineAccordion';
 export {isIOS26Plus} from './utils';

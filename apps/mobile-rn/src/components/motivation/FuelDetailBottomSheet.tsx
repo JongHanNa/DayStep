@@ -97,7 +97,7 @@ export const FuelDetailBottomSheet = forwardRef<FuelDetailBottomSheetRef, FuelDe
 
     const renderBackdrop = useCallback(
       (props: any) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.3} />
+        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0} />
       ),
       [],
     );
