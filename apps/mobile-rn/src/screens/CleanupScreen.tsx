@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -21,11 +22,8 @@ import {
 import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import Animated, {
   FadeInDown,
-  FadeIn,
-  FadeOut,
-  LinearTransition,
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
 import {
@@ -36,12 +34,11 @@ import {
   PauseCircle,
   Lightbulb,
   Calendar,
-  ChevronRight,
   Trash2,
   type LucideIcon,
 } from 'lucide-react-native';
-import {ScreenContainer, AnimatedPressable} from '@/components/core';
-import {NativeCleanupAccordionNative, isIOS26Plus} from '@/components/native';
+import {ScreenContainer} from '@/components/core';
+import {NativeCleanupAccordionNative} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useProjectStore} from '@/stores/projectStore';
 import {useNoteStore} from '@/stores/noteStore';
@@ -49,8 +46,8 @@ import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
 import {useTheme} from '@/theme';
-import {hexWithOpacity} from '@/lib/todoUtils';
 import {springs} from '@/theme/animations';
+import {hexWithOpacity} from '@/lib/todoUtils';
 
 // ────────────────────────────────────────────────
 // Generic Item (모든 카테고리 공통 표시용)
@@ -235,186 +232,6 @@ function ProgressHeader({
           ) : null,
         )}
       </View>
-    </Animated.View>
-  );
-}
-
-// ────────────────────────────────────────────────
-// CategoryRow — 아코디언 내부 행
-// ────────────────────────────────────────────────
-
-function CategoryRow({
-  categoryKey,
-  title,
-  count,
-  primaryColor,
-  onPress,
-  isLast,
-}: {
-  categoryKey: CategoryKey;
-  title: string;
-  count: number;
-  primaryColor: string;
-  onPress: () => void;
-  isLast: boolean;
-}) {
-  const Icon = CATEGORY_ICON[categoryKey];
-
-  return (
-    <AnimatedPressable
-      scaleValue={0.98}
-      hapticType="light"
-      onPress={onPress}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderBottomWidth: isLast ? 0 : 1,
-        borderBottomColor: '#F8FAFC',
-      }}>
-      <Icon size={18} color={primaryColor} style={{marginRight: 10}} />
-      <Text style={{flex: 1, fontSize: 14, color: '#0F172A'}}>{title}</Text>
-      <Text style={{fontSize: 13, color: '#94A3B8', marginRight: 6}}>{count}건</Text>
-      <ChevronRight size={14} color="#CBD5E1" />
-    </AnimatedPressable>
-  );
-}
-
-// ────────────────────────────────────────────────
-// AccordionGroup — 그룹 아코디언
-// ────────────────────────────────────────────────
-
-function AccordionChevron({expanded}: {expanded: boolean}) {
-  const rotation = useSharedValue(expanded ? 1 : 0);
-
-  useEffect(() => {
-    rotation.value = withSpring(expanded ? 1 : 0, springs.smooth);
-  }, [expanded, rotation]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{rotate: `${rotation.value * 90}deg`}],
-  }));
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <ChevronRight size={16} color="#94A3B8" />
-    </Animated.View>
-  );
-}
-
-function AccordionGroup({
-  groupIndex,
-  groupTitle,
-  categories,
-  categorized,
-  primaryColor,
-  expanded,
-  onToggle,
-  onCategoryPress,
-}: {
-  groupIndex: number;
-  groupTitle: string;
-  categories: CategoryDef[];
-  categorized: CategorizedData;
-  primaryColor: string;
-  expanded: boolean;
-  onToggle: () => void;
-  onCategoryPress: (cat: CategoryDef) => void;
-}) {
-  const groupCount = categories.reduce((sum, cat) => sum + categorized[cat.key].length, 0);
-  const shade = GROUP_SHADES[groupIndex] ?? GROUP_SHADES[GROUP_SHADES.length - 1];
-  const dotColor = hexWithOpacity(primaryColor, shade);
-
-  // 헤더 하단 borderRadius 스프링 애니메이션
-  const bottomRadius = useSharedValue(expanded ? 0 : 14);
-  useEffect(() => {
-    bottomRadius.value = withSpring(expanded ? 0 : 14, springs.smooth);
-  }, [expanded, bottomRadius]);
-  const headerRadiusStyle = useAnimatedStyle(() => ({
-    borderBottomLeftRadius: bottomRadius.value,
-    borderBottomRightRadius: bottomRadius.value,
-  }));
-
-  return (
-    <Animated.View
-      entering={FadeInDown.delay(groupIndex * 80).duration(400)}
-      layout={LinearTransition.springify().damping(28).stiffness(200).mass(0.8)}
-      style={{marginBottom: 10}}>
-      {/* 아코디언 헤더 */}
-      <AnimatedPressable
-        scaleValue={0.99}
-        haptic={false}
-        onPress={onToggle}
-        style={[
-          {
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: 'white',
-            borderRadius: 14,
-            paddingVertical: 14,
-            paddingHorizontal: 16,
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            elevation: 2,
-          },
-          headerRadiusStyle,
-        ]}>
-        <View
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: dotColor,
-            marginRight: 10,
-          }}
-        />
-        <Text style={{flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A'}}>
-          {groupTitle}
-        </Text>
-        <Text style={{fontSize: 13, color: '#94A3B8', marginRight: 8}}>
-          {groupCount}건
-        </Text>
-        <AccordionChevron expanded={expanded} />
-      </AnimatedPressable>
-
-      {/* 아코디언 바디 */}
-      {expanded && (
-        <Animated.View
-          entering={FadeIn.duration(250)}
-          exiting={FadeOut.duration(200)}
-          style={{
-            backgroundColor: 'white',
-            borderBottomLeftRadius: 14,
-            borderBottomRightRadius: 14,
-            overflow: 'hidden',
-            shadowColor: '#000',
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            elevation: 2,
-          }}>
-          {groupCount === 0 ? (
-            <View style={{paddingVertical: 20, alignItems: 'center'}}>
-              <Text style={{fontSize: 13, color: '#94A3B8'}}>정리할 항목이 없어요</Text>
-            </View>
-          ) : (
-            categories.map((cat, i) => (
-              <CategoryRow
-                key={cat.key}
-                categoryKey={cat.key}
-                title={cat.title}
-                count={categorized[cat.key].length}
-                primaryColor={primaryColor}
-                onPress={() => onCategoryPress(cat)}
-                isLast={i === categories.length - 1}
-              />
-            ))
-          )}
-        </Animated.View>
-      )}
     </Animated.View>
   );
 }
@@ -877,8 +694,12 @@ export default function CleanupScreen() {
     sheetRef.current?.expand();
   };
 
-  // ── 네이티브 아코디언 데이터 ──────────────────
-  const [nativeHeight, setNativeHeight] = useState(0);
+  // ── 네이티브 아코디언 높이 애니메이션 ──────────
+  const animatedHeight = useSharedValue(0);
+  const heightStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value > 0 ? animatedHeight.value : undefined,
+    overflow: 'hidden' as const,
+  }));
 
   const accordionDataJSON = useMemo(() => {
     return JSON.stringify(
@@ -983,7 +804,7 @@ export default function CleanupScreen() {
               groupLabels={groupLabels}
               primaryColor={primaryColor}
             />
-            {isIOS26Plus ? (
+            <Animated.View style={heightStyle}>
               <NativeCleanupAccordionNative
                 accordionData={accordionDataJSON}
                 primaryColor={primaryColor}
@@ -993,24 +814,12 @@ export default function CleanupScreen() {
                   if (cat) openSheet(cat);
                 }}
                 onGroupToggle={e => toggleGroup(e.nativeEvent.groupIndex)}
-                onHeightChange={e => setNativeHeight(e.nativeEvent.height)}
-                style={nativeHeight > 0 ? {height: nativeHeight} : undefined}
+                onHeightChange={e => {
+                  animatedHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
+                }}
+                style={StyleSheet.absoluteFill}
               />
-            ) : (
-              CATEGORY_GROUPS.map((group, i) => (
-                <AccordionGroup
-                  key={group.groupTitle}
-                  groupIndex={i}
-                  groupTitle={group.groupTitle}
-                  categories={group.categories}
-                  categorized={categorized}
-                  primaryColor={primaryColor}
-                  expanded={expandedGroups.has(i)}
-                  onToggle={() => toggleGroup(i)}
-                  onCategoryPress={openSheet}
-                />
-              ))
-            )}
+            </Animated.View>
           </>
         )}
       </ScrollView>

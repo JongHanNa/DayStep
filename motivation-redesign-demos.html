@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원동력 화면 리디자인 데모 시안 3종</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #6366F1;
+    --joy: #E11D48; --joy-bg: #FFF1F2; --joy-border: #FECDD3;
+    --gratitude: #2563EB; --gratitude-bg: #EFF6FF; --gratitude-border: #BFDBFE;
+    --awakening: #EA580C; --awakening-bg: #FFF7ED; --awakening-border: #FED7AA;
+    --determination: #9333EA; --determination-bg: #FAF5FF; --determination-border: #E9D5FF;
+    --gray-50: #F9FAFB; --gray-100: #F3F4F6; --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB; --gray-400: #9CA3AF; --gray-500: #6B7280;
+    --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937; --gray-900: #111827;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0F172A;
+    color: #E2E8F0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+  .subtitle { color: #94A3B8; font-size: 14px; margin-bottom: 24px; text-align: center; }
+
+  /* Tab Navigation */
+  .tab-nav {
+    display: flex;
+    gap: 4px;
+    background: #1E293B;
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #94A3B8;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: #E2E8F0; background: #334155; }
+  .tab-btn.active { background: var(--primary); color: white; }
+
+  /* Layout */
+  .demo-container { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+
+  /* iPhone Frame */
+  .iphone-frame {
+    width: 375px;
+    height: 812px;
+    background: #000;
+    border-radius: 44px;
+    padding: 4px;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 0 0 2px #333;
+  }
+  .iphone-screen {
+    width: 100%;
+    height: 100%;
+    background: #FFFFFF;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .iphone-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 34px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 100;
+  }
+  .status-bar {
+    height: 54px;
+    padding: 14px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-900);
+    flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 4px; align-items: center; }
+
+  /* Annotations Panel */
+  .annotations {
+    max-width: 420px;
+    min-width: 320px;
+    flex: 1;
+  }
+  .annotation-card {
+    background: #1E293B;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border-left: 3px solid;
+  }
+  .annotation-card.problem { border-color: #EF4444; }
+  .annotation-card.solution { border-color: #22C55E; }
+  .annotation-card.native { border-color: #3B82F6; }
+  .annotation-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .annotation-card.problem h3 { color: #FCA5A5; }
+  .annotation-card.solution h3 { color: #86EFAC; }
+  .annotation-card.native h3 { color: #93C5FD; }
+  .annotation-card p, .annotation-card li { font-size: 13px; color: #CBD5E1; line-height: 1.6; }
+  .annotation-card ul { padding-left: 16px; }
+  .annotation-card code { background: #334155; padding: 1px 5px; border-radius: 4px; font-size: 12px; color: #FDE68A; }
+
+  /* Tab Content */
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; }
+
+  /* Scrollable content area */
+  .screen-content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .screen-content::-webkit-scrollbar { display: none; }
+
+  /* ===== SHARED COMPONENTS ===== */
+  .screen-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--gray-900);
+    padding: 8px 20px 12px;
+  }
+
+  /* Bottom Tab Bar */
+  .bottom-tab-bar {
+    height: 83px;
+    background: #FAFAFA;
+    border-top: 0.5px solid var(--gray-200);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: var(--gray-400);
+  }
+  .tab-item.active-tab { color: var(--primary); }
+  .tab-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+
+  /* ===== DESIGN A: Journal First ===== */
+  .a-input-area {
+    background: white;
+    padding: 16px 20px;
+    border-bottom: 0.5px solid var(--gray-100);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .a-emotion-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .a-emotion-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--gray-200);
+    background: white;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .a-emotion-chip.selected {
+    border-color: currentColor;
+    transform: scale(1.05);
+  }
+  .a-emotion-chip .emoji { font-size: 16px; }
+  .a-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--gray-50);
+    border-radius: 14px;
+    padding: 10px 14px;
+    border: 1px solid var(--gray-100);
+  }
+  .a-input-row input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    color: var(--gray-800);
+    outline: none;
+  }
+  .a-input-row input::placeholder { color: var(--gray-400); }
+  .a-send-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .a-send-btn.enabled { background: var(--primary); color: white; }
+  .a-send-btn.disabled { background: var(--gray-200); color: var(--gray-400); }
+
+  .a-search-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+  }
+  .a-search-toggle .label { font-size: 13px; color: var(--gray-400); font-weight: 500; }
+  .a-search-icon {
+    width: 32px; height: 32px;
+    border-radius: 16px;
+    background: var(--gray-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-400);
+    font-size: 14px;
+  }
+  .a-search-expanded {
+    padding: 0 20px 8px;
+    display: none;
+  }
+  .a-search-expanded.show { display: block; }
+  .a-search-bar {
+    background: var(--gray-50);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--gray-100);
+  }
+  .a-search-bar input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--gray-800);
+    outline: none;
+  }
+
+  /* A cards */
+  .a-card {
+    margin: 0 16px 8px;
+    padding: 14px 16px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+  .a-card:active { transform: scale(0.98); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .a-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .a-card-emotion {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .a-card-meta { font-size: 11px; color: var(--gray-400); display: flex; align-items: center; gap: 6px; }
+  .a-card-title { font-size: 15px; font-weight: 600; color: var(--gray-800); margin-bottom: 3px; }
+  .a-card-content { font-size: 14px; color: var(--gray-600); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* A compact stats bar */
+  .a-stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 8px 20px;
+    background: var(--gray-50);
+    border-top: 0.5px solid var(--gray-100);
+    flex-shrink: 0;
+  }
+  .a-stat { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--gray-500); font-weight: 500; }
+  .a-stat .num { font-weight: 700; color: var(--gray-700); }
+
+  /* Context Menu Simulation */
+  .a-context-menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    z-index: 50;
+    min-width: 200px;
+    display: none;
+  }
+  .a-context-menu.show { display: block; animation: contextPop 0.15s ease-out; }
+  @keyframes contextPop { from { transform: translate(-50%, -50%) scale(0.9); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+  .a-context-item {
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--gray-800);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .a-context-item:hover { background: var(--gray-100); }
+  .a-context-item.danger { color: #EF4444; }
+
+  /* ===== DESIGN B: Timeline ===== */
+  .b-banner {
+    margin: 0 16px 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+    border-radius: 16px;
+    position: relative;
+  }
+  .b-banner-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .b-banner-text { font-size: 15px; color: var(--gray-800); font-weight: 500; line-height: 1.5; }
+  .b-banner-pin { position: absolute; top: 14px; right: 14px; font-size: 14px; }
+
+  .b-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px 8px;
+  }
+  .b-section-date { font-size: 14px; font-weight: 700; color: var(--gray-800); }
+  .b-section-line { flex: 1; height: 1px; background: var(--gray-200); }
+  .b-section-count { font-size: 12px; color: var(--gray-400); }
+
+  .b-timeline-item {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    margin-bottom: 2px;
+  }
+  .b-timeline-rail {
+    width: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: 16px;
+  }
+  .b-timeline-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+    flex-shrink: 0;
+  }
+  .b-timeline-line {
+    width: 1.5px;
+    flex: 1;
+    min-height: 12px;
+    background: var(--gray-200);
+  }
+  .b-card {
+    flex: 1;
+    padding: 12px 14px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+  }
+  .b-card:active { transform: scale(0.98); }
+  .b-card-time { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
+  .b-card-text { font-size: 14px; color: var(--gray-700); line-height: 1.5; }
+  .b-card-expanded {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .b-card.open .b-card-expanded { max-height: 200px; }
+  .b-card-detail { padding-top: 10px; margin-top: 10px; border-top: 1px solid var(--gray-100); font-size: 13px; color: var(--gray-500); line-height: 1.5; }
+
+  /* B FAB */
+  .b-fab {
+    position: absolute;
+    bottom: 100px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.4);
+    cursor: pointer;
+    z-index: 20;
+    transition: transform 0.2s;
+  }
+  .b-fab:hover { transform: scale(1.08); }
+  .b-fab:active { transform: scale(0.95); }
+
+  /* B Bottom Sheet (no dim) */
+  .b-sheet {
+    position: absolute;
+    bottom: 83px;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px 20px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 30;
+  }
+  .b-sheet.show { transform: translateY(0); }
+  .b-sheet-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--gray-300);
+    border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+
+  /* ===== DESIGN C: Emotion Board ===== */
+  .c-emotion-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .c-emotion-tabs::-webkit-scrollbar { display: none; }
+  .c-emotion-tab {
+    padding: 8px 16px;
+    border-radius: 22px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid var(--gray-200);
+    background: white;
+    color: var(--gray-500);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .c-emotion-tab.active {
+    color: white;
+    border-color: transparent;
+    transform: scale(1.05);
+  }
+  .c-emotion-tab .count {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+
+  .c-input-area {
+    margin: 0 16px 12px;
+    border-radius: 16px;
+    padding: 14px 16px;
+    transition: all 0.3s;
+    border: 1.5px solid var(--gray-200);
+    background: white;
+  }
+  .c-input-hint { font-size: 13px; color: var(--gray-400); margin-bottom: 8px; }
+  .c-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .c-input-row input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    outline: none;
+  }
+
+  /* C Emotion Group */
+  .c-group {
+    margin: 0 16px 12px;
+  }
+  .c-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: white;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .c-group-header:hover { background: var(--gray-50); }
+  .c-group-header:active { background: var(--gray-100); }
+  .c-group-left { display: flex; align-items: center; gap: 8px; }
+  .c-group-icon { font-size: 18px; }
+  .c-group-label { font-size: 14px; font-weight: 700; }
+  .c-group-count { font-size: 12px; color: var(--gray-400); }
+  .c-group-chevron {
+    font-size: 14px;
+    color: var(--gray-400);
+    transition: transform 0.3s;
+  }
+  .c-group.open .c-group-chevron { transform: rotate(90deg); }
+  .c-group-items {
+    background: white;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .c-group.open .c-group-items { max-height: 600px; }
+  .c-group-item {
+    padding: 12px 14px;
+    border-bottom: 0.5px solid var(--gray-100);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .c-group-item:last-child { border-bottom: none; }
+  .c-group-item:active { background: var(--gray-50); }
+  .c-group-item-time { font-size: 11px; color: var(--gray-400); margin-bottom: 2px; }
+  .c-group-item-text { font-size: 14px; color: var(--gray-700); line-height: 1.4; }
+
+  /* C Mini Chart */
+  .c-chart-area {
+    margin: 0 16px 16px;
+    padding: 16px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .c-chart-title { font-size: 13px; font-weight: 700; color: var(--gray-700); margin-bottom: 12px; }
+  .c-chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 60px; }
+  .c-chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .c-chart-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.5s ease; }
+  .c-chart-label { font-size: 10px; color: var(--gray-400); }
+
+  /* Shared interactive states */
+  .ripple { position: relative; overflow: hidden; }
+
+  /* Responsive */
+  @media (max-width: 850px) {
+    .demo-container { flex-direction: column; align-items: center; }
+    .annotations { max-width: 375px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>원동력 화면 리디자인 데모 시안 3종</h1>
+<p class="subtitle">각 시안을 선택하여 인터랙티브 프로토타입을 확인하세요. 카드를 클릭/롱프레스 해보세요.</p>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('a')">A. 저널 퍼스트</button>
+  <button class="tab-btn" onclick="switchTab('b')">B. 타임라인</button>
+  <button class="tab-btn" onclick="switchTab('c')">C. 감정 보드</button>
+</div>
+
+<!-- ==================== DESIGN A: Journal First ==================== -->
+<div id="tab-a" class="tab-content active">
+  <div class="demo-container">
+    <div class="iphone-frame">
+      <div class="iphone-screen">
+        <div class="iphone-notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1" fill="#111"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="#111"/><rect x="9" y="0" width="3" height="12" rx="1" fill="#111"/><rect x="13" y="4" width="3" height="8" rx="1" fill="#ccc"/></svg>
+            <svg width="16" height="12" viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="3" stroke="#111" stroke-width="1" fill="none"/><rect x="1.5" y="1.5" width="16" height="9" rx="2" fill="#111"/><rect x="23" y="3.5" width="2" height="5" rx="1" fill="#111"/></svg>
+          </div>
+        </div>
+
+        <div class="screen-title">원동력</div>
+
+        <!-- A: Input Area (sticky top) -->
+        <div class="a-input-area">
+          <div class="a-emotion-row" id="a-emotions">
+            <div class="a-emotion-chip" data-emotion="joy" style="--c: var(--joy); --bg: var(--joy-bg); --bc: var(--joy-border)" onclick="selectEmotion('a', this)">
+              <span class="emoji">❤️</span><span class="label">기쁨</span>
+            </div>
+            <div class="a-emotion-chip" data-emotion="gratitude" style="--c: var(--gratitude); --bg: var(--gratitude-bg); --bc: var(--gratitude-border)" onclick="selectEmotion('a', this)">
+              <span class="emoji">🤝</span><span class="label">감사</span>
+            </div>
+            <div class="a-emotion-chip" data-emotion="awakening" style="--c: var(--awakening); --bg: var(--awakening-bg); --bc: var(--awakening-border)" onclick="selectEmotion('a', this)">
+              <span class="emoji">⚡</span><span class="label">각성</span>
+            </div>
+            <div class="a-emotion-chip" data-emotion="determination" style="--c: var(--determination); --bg: var(--determination-bg); --bc: var(--determination-border)" onclick="selectEmotion('a', this)">
+              <span class="emoji">🎯</span><span class="label">결단</span>
+            </div>
+          </div>
+          <div class="a-input-row">
+            <input type="text" placeholder="오늘의 원동력을 적어보세요..." id="a-input" oninput="toggleSend('a')">
+            <button class="a-send-btn disabled" id="a-send">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- A: Search Toggle -->
+        <div class="a-search-toggle">
+          <span class="label">최근 원동력 12개</span>
+          <div class="a-search-icon" onclick="toggleSearch('a')">🔍</div>
+        </div>
+        <div class="a-search-expanded" id="a-search-panel">
+          <div class="a-search-bar">
+            <span style="color: var(--gray-400)">🔍</span>
+            <input type="text" placeholder="검색...">
+          </div>
+        </div>
+
+        <div class="screen-content" id="a-cards-area">
+          <!-- Cards rendered by JS -->
+        </div>
+
+        <!-- A: Compact Stats Bar -->
+        <div class="a-stats-bar">
+          <div class="a-stat">🔥 <span class="num">7</span>연속</div>
+          <div class="a-stat">⭐ <span class="num">Lv.3</span></div>
+          <div class="a-stat">📝 <span class="num">42</span>개</div>
+          <div class="a-stat" style="color: var(--primary);">
+            <span style="font-size: 10px;">120/200 XP</span>
+            <div style="width: 40px; height: 3px; background: var(--gray-200); border-radius: 2px;">
+              <div style="width: 60%; height: 100%; background: var(--primary); border-radius: 2px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Tab Bar -->
+        <div class="bottom-tab-bar">
+          <div class="tab-item"><div class="tab-icon">🏠</div>홈</div>
+          <div class="tab-item"><div class="tab-icon">📋</div>플래너</div>
+          <div class="tab-item"><div class="tab-icon">▶️</div>실행</div>
+          <div class="tab-item active-tab"><div class="tab-icon">💡</div>원동력</div>
+          <div class="tab-item"><div class="tab-icon">⚙️</div>설정</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- A: Annotations -->
+    <div class="annotations">
+      <div class="annotation-card problem">
+        <h3>❌ 현재 문제점</h3>
+        <ul>
+          <li>Header 통계(XP/레벨)가 최상단 → 핵심 행동(입력)까지 스크롤 필요</li>
+          <li><code>borderLeftWidth: 3</code> + 감정뱃지 = 정보 이중 인코딩</li>
+          <li>검색+상태필터+감정필터 3행이 수직 공간 과다 점유</li>
+          <li>인라인 입력이 필터 위 배치 → 스크롤 시 입력 UI 사라짐</li>
+        </ul>
+      </div>
+      <div class="annotation-card solution">
+        <h3>✅ 시안 A 개선점</h3>
+        <ul>
+          <li><strong>입력 영역 최상단 고정</strong> → 스크롤해도 입력 가능 (ADHD 즉시 기록 패턴)</li>
+          <li><strong>감정 → 입력 → 제출</strong> 원스텝 플로우 (현재 감정칩 4곳 중복 → 1곳)</li>
+          <li><strong>통계를 하단 컴팩트 바</strong>로 이동 → 컨텐츠 영역 확보</li>
+          <li><strong>필터 기본 숨김</strong> → 검색 아이콘 토글로 축소 (인지 부하 감소)</li>
+          <li><code>borderLeft</code> 제거 → 감정뱃지 단일 인코딩으로 단순화</li>
+        </ul>
+      </div>
+      <div class="annotation-card native">
+        <h3>📱 네이티브 컨트롤 교체</h3>
+        <ul>
+          <li><code>Alert.alert()</code> → <strong>iOS ContextMenu</strong> (카드 롱프레스 시도해보세요)</li>
+          <li>블러 배경 + 스프링 애니메이션 → iOS 네이티브 컨텍스트 메뉴 시뮬레이션</li>
+          <li><code>{visible && ...}</code> 즉시 토글 → <strong>FadeIn/FadeOut</strong> 트랜지션</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DESIGN B: Timeline ==================== -->
+<div id="tab-b" class="tab-content">
+  <div class="demo-container">
+    <div class="iphone-frame">
+      <div class="iphone-screen">
+        <div class="iphone-notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1" fill="#111"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="#111"/><rect x="9" y="0" width="3" height="12" rx="1" fill="#111"/><rect x="13" y="4" width="3" height="8" rx="1" fill="#ccc"/></svg>
+            <svg width="16" height="12" viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="3" stroke="#111" stroke-width="1" fill="none"/><rect x="1.5" y="1.5" width="16" height="9" rx="2" fill="#111"/><rect x="23" y="3.5" width="2" height="5" rx="1" fill="#111"/></svg>
+          </div>
+        </div>
+
+        <div class="screen-title">원동력</div>
+
+        <div class="screen-content" style="position: relative;">
+          <!-- B: Pinned Banner -->
+          <div class="b-banner">
+            <div class="b-banner-pin">📌</div>
+            <div class="b-banner-label">✨ 오늘의 원동력</div>
+            <div class="b-banner-text">실패해도 괜찮다. 다시 시도하는 내가 대단한 거다.</div>
+          </div>
+
+          <!-- B: Today Section -->
+          <div class="b-section-header">
+            <span class="b-section-date">오늘</span>
+            <div class="b-section-line"></div>
+            <span class="b-section-count">4개</span>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--joy);"></div>
+              <div class="b-timeline-line"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오후 3:24</div>
+              <div class="b-card-text">동료가 내 코드 리뷰를 칭찬해줬다. 작은 인정이 큰 힘이 된다.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">
+                  ❤️ 기쁨 · 📎 할일 2개 연결됨<br>
+                  <span style="color: var(--gray-400); font-size: 12px;">탭하여 닫기</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--awakening);"></div>
+              <div class="b-timeline-line"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오전 11:50</div>
+              <div class="b-card-text">30분만 집중하면 된다. 타이머 켜자.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">⚡ 각성 · 📎 할일 1개 연결됨</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--gratitude);"></div>
+              <div class="b-timeline-line"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오전 9:15</div>
+              <div class="b-card-text">아침에 일어나서 물을 마시는 것부터 성공. 감사한 일상.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">🤝 감사</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--determination);"></div>
+              <div class="b-timeline-line" style="background: transparent;"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오전 7:30</div>
+              <div class="b-card-text">오늘은 운동하러 갈 거다. 약속.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">🎯 결단 · 📎 할일 1개 연결됨</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B: Yesterday Section -->
+          <div class="b-section-header">
+            <span class="b-section-date">어제</span>
+            <div class="b-section-line"></div>
+            <span class="b-section-count">3개</span>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--gratitude);"></div>
+              <div class="b-timeline-line"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오후 10:20</div>
+              <div class="b-card-text">오늘 하루도 무사히. 내일의 나에게 응원을 보낸다.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">🤝 감사</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--joy);"></div>
+              <div class="b-timeline-line"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오후 2:00</div>
+              <div class="b-card-text">맛있는 점심을 먹었다. 이런 소소한 행복이 좋다.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">❤️ 기쁨</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--awakening);"></div>
+              <div class="b-timeline-line" style="background: transparent;"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오전 8:45</div>
+              <div class="b-card-text">뇌는 시작이 어려운 것이지, 하기 시작하면 집중한다.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">⚡ 각성 · 📎 할일 3개 연결됨</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B: 2 days ago Section -->
+          <div class="b-section-header">
+            <span class="b-section-date">3월 11일 화요일</span>
+            <div class="b-section-line"></div>
+            <span class="b-section-count">2개</span>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--determination);"></div>
+              <div class="b-timeline-line"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오후 6:00</div>
+              <div class="b-card-text">내일은 더 나은 하루를 만들겠다.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">🎯 결단</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="b-timeline-item">
+            <div class="b-timeline-rail">
+              <div class="b-timeline-dot" style="background: var(--joy);"></div>
+              <div class="b-timeline-line" style="background: transparent;"></div>
+            </div>
+            <div class="b-card" onclick="toggleBCard(this)">
+              <div class="b-card-time">오전 10:30</div>
+              <div class="b-card-text">산책하다 고양이를 만났다. 5분 함께 했는데 기분이 좋아졌다.</div>
+              <div class="b-card-expanded">
+                <div class="b-card-detail">❤️ 기쁨</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height: 80px;"></div>
+
+          <!-- FAB -->
+          <div class="b-fab" onclick="toggleBSheet()">✏️</div>
+        </div>
+
+        <!-- B: Bottom Sheet (no dim overlay) -->
+        <div class="b-sheet" id="b-sheet">
+          <div class="b-sheet-handle"></div>
+          <div style="font-size: 16px; font-weight: 700; color: var(--gray-800); margin-bottom: 12px;">✨ 원동력 새기기</div>
+          <div class="a-emotion-row" style="margin-bottom: 12px;">
+            <div class="a-emotion-chip" style="--c: var(--joy); --bg: var(--joy-bg);" onclick="selectEmotion('b', this)"><span class="emoji">❤️</span><span class="label">기쁨</span></div>
+            <div class="a-emotion-chip" style="--c: var(--gratitude); --bg: var(--gratitude-bg);" onclick="selectEmotion('b', this)"><span class="emoji">🤝</span><span class="label">감사</span></div>
+            <div class="a-emotion-chip" style="--c: var(--awakening); --bg: var(--awakening-bg);" onclick="selectEmotion('b', this)"><span class="emoji">⚡</span><span class="label">각성</span></div>
+            <div class="a-emotion-chip" style="--c: var(--determination); --bg: var(--determination-bg);" onclick="selectEmotion('b', this)"><span class="emoji">🎯</span><span class="label">결단</span></div>
+          </div>
+          <div style="background: var(--gray-50); border-radius: 12px; padding: 12px;">
+            <input type="text" placeholder="오늘의 원동력을 적어보세요..." style="width: 100%; border: none; background: transparent; font-size: 15px; outline: none; color: var(--gray-800);">
+          </div>
+          <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+            <button style="padding: 10px 24px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">저장</button>
+          </div>
+        </div>
+
+        <!-- Bottom Tab Bar -->
+        <div class="bottom-tab-bar">
+          <div class="tab-item"><div class="tab-icon">🏠</div>홈</div>
+          <div class="tab-item"><div class="tab-icon">📋</div>플래너</div>
+          <div class="tab-item"><div class="tab-icon">▶️</div>실행</div>
+          <div class="tab-item active-tab"><div class="tab-icon">💡</div>원동력</div>
+          <div class="tab-item"><div class="tab-icon">⚙️</div>설정</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- B: Annotations -->
+    <div class="annotations">
+      <div class="annotation-card problem">
+        <h3>❌ 현재 문제점</h3>
+        <ul>
+          <li>모든 카드 동일 크기/형태 → 시각적 계층 부재</li>
+          <li>시간 순서가 불명확 (날짜 정보가 카드 우측 구석에 작게 표시)</li>
+          <li><code>BottomSheetBackdrop opacity={0.3}</code> → iOS 네이티브 시트와 이질적</li>
+          <li>핀 노트가 일반 리스트와 혼재 → 중요 노트 발견 어려움</li>
+        </ul>
+      </div>
+      <div class="annotation-card solution">
+        <h3>✅ 시안 B 개선점</h3>
+        <ul>
+          <li><strong>날짜별 그룹핑</strong> + 타임라인 레일 → 시간 흐름 시각화</li>
+          <li><strong>감정태그를 타임라인 노드 색상</strong>으로 표현 (별도 뱃지 불필요)</li>
+          <li><strong>핀 노트 → "오늘의 원동력" 배너</strong>로 분리 (시각적 계층 생성)</li>
+          <li><strong>카드 탭 → DisclosureGroup 스타일 확장</strong> (카드 클릭해보세요)</li>
+          <li><strong>FAB → 바텀시트</strong> 입력 (딤 없음, 스와이프 dismiss)</li>
+        </ul>
+      </div>
+      <div class="annotation-card native">
+        <h3>📱 네이티브 컨트롤 교체</h3>
+        <ul>
+          <li><code>BottomSheetBackdrop</code> → <strong>딤 없는 네이티브 시트</strong> + 스와이프 dismiss</li>
+          <li>JS 아코디언 → <strong>SwiftUI DisclosureGroup</strong> 스프링 애니메이션</li>
+          <li>기존 카드 확장이 새 화면 전환 → <strong>인라인 확장으로 컨텍스트 유지</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DESIGN C: Emotion Board ==================== -->
+<div id="tab-c" class="tab-content">
+  <div class="demo-container">
+    <div class="iphone-frame">
+      <div class="iphone-screen">
+        <div class="iphone-notch"></div>
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg width="16" height="12" viewBox="0 0 16 12"><rect x="0" y="3" width="3" height="9" rx="1" fill="#111"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="#111"/><rect x="9" y="0" width="3" height="12" rx="1" fill="#111"/><rect x="13" y="4" width="3" height="8" rx="1" fill="#ccc"/></svg>
+            <svg width="16" height="12" viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="3" stroke="#111" stroke-width="1" fill="none"/><rect x="1.5" y="1.5" width="16" height="9" rx="2" fill="#111"/><rect x="23" y="3.5" width="2" height="5" rx="1" fill="#111"/></svg>
+          </div>
+        </div>
+
+        <div class="screen-title">원동력</div>
+
+        <div class="screen-content">
+          <!-- C: Emotion Tabs -->
+          <div class="c-emotion-tabs" id="c-tabs">
+            <div class="c-emotion-tab active" style="background: var(--gray-800); border-color: var(--gray-800); color: white;" onclick="selectCTab(this, 'all')">
+              전체 <span class="count">12</span>
+            </div>
+            <div class="c-emotion-tab" data-emotion="joy" onclick="selectCTab(this, 'joy')">
+              ❤️ 기쁨 <span class="count">4</span>
+            </div>
+            <div class="c-emotion-tab" data-emotion="gratitude" onclick="selectCTab(this, 'gratitude')">
+              🤝 감사 <span class="count">3</span>
+            </div>
+            <div class="c-emotion-tab" data-emotion="awakening" onclick="selectCTab(this, 'awakening')">
+              ⚡ 각성 <span class="count">3</span>
+            </div>
+            <div class="c-emotion-tab" data-emotion="determination" onclick="selectCTab(this, 'determination')">
+              🎯 결단 <span class="count">2</span>
+            </div>
+          </div>
+
+          <!-- C: Input Area (changes color with emotion) -->
+          <div class="c-input-area" id="c-input-area">
+            <div class="c-input-hint" id="c-input-hint">감정을 선택하면 입력 영역이 변합니다</div>
+            <div class="c-input-row">
+              <input type="text" placeholder="원동력을 적어보세요..." id="c-input">
+              <button class="a-send-btn disabled" style="width: 32px; height: 32px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- C: Mini Chart -->
+          <div class="c-chart-area">
+            <div class="c-chart-title">이번 주 감정 분포</div>
+            <div class="c-chart-bars">
+              <div class="c-chart-bar-group">
+                <div class="c-chart-bar" style="height: 45px; background: var(--joy);"></div>
+                <div class="c-chart-label">기쁨</div>
+              </div>
+              <div class="c-chart-bar-group">
+                <div class="c-chart-bar" style="height: 35px; background: var(--gratitude);"></div>
+                <div class="c-chart-label">감사</div>
+              </div>
+              <div class="c-chart-bar-group">
+                <div class="c-chart-bar" style="height: 30px; background: var(--awakening);"></div>
+                <div class="c-chart-label">각성</div>
+              </div>
+              <div class="c-chart-bar-group">
+                <div class="c-chart-bar" style="height: 20px; background: var(--determination);"></div>
+                <div class="c-chart-label">결단</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- C: Emotion Groups (DisclosureGroup style) -->
+          <div class="c-group open" id="c-group-joy">
+            <div class="c-group-header" onclick="toggleCGroup(this.parentElement)">
+              <div class="c-group-left">
+                <span class="c-group-icon">❤️</span>
+                <span class="c-group-label" style="color: var(--joy);">기쁨</span>
+                <span class="c-group-count">4개</span>
+              </div>
+              <span class="c-group-chevron">›</span>
+            </div>
+            <div class="c-group-items">
+              <div class="c-group-item" onclick="this.style.background=this.style.background?'':'var(--joy-bg)'">
+                <div class="c-group-item-time">오늘 오후 3:24</div>
+                <div class="c-group-item-text">동료가 내 코드 리뷰를 칭찬해줬다. 작은 인정이 큰 힘이 된다.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">어제 오후 2:00</div>
+                <div class="c-group-item-text">맛있는 점심을 먹었다. 이런 소소한 행복이 좋다.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">3월 11일 오전 10:30</div>
+                <div class="c-group-item-text">산책하다 고양이를 만났다. 5분 함께 했는데 기분이 좋아졌다.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">3월 10일 오후 5:00</div>
+                <div class="c-group-item-text">좋아하는 노래를 들으며 걸었다. 음악의 힘이란.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-group" id="c-group-gratitude">
+            <div class="c-group-header" onclick="toggleCGroup(this.parentElement)">
+              <div class="c-group-left">
+                <span class="c-group-icon">🤝</span>
+                <span class="c-group-label" style="color: var(--gratitude);">감사</span>
+                <span class="c-group-count">3개</span>
+              </div>
+              <span class="c-group-chevron">›</span>
+            </div>
+            <div class="c-group-items">
+              <div class="c-group-item">
+                <div class="c-group-item-time">오늘 오전 9:15</div>
+                <div class="c-group-item-text">아침에 일어나서 물을 마시는 것부터 성공. 감사한 일상.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">어제 오후 10:20</div>
+                <div class="c-group-item-text">오늘 하루도 무사히. 내일의 나에게 응원을 보낸다.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">3월 10일 오전 8:00</div>
+                <div class="c-group-item-text">부모님 전화를 받았다. 목소리만 들어도 힘이 난다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-group" id="c-group-awakening">
+            <div class="c-group-header" onclick="toggleCGroup(this.parentElement)">
+              <div class="c-group-left">
+                <span class="c-group-icon">⚡</span>
+                <span class="c-group-label" style="color: var(--awakening);">각성</span>
+                <span class="c-group-count">3개</span>
+              </div>
+              <span class="c-group-chevron">›</span>
+            </div>
+            <div class="c-group-items">
+              <div class="c-group-item">
+                <div class="c-group-item-time">오늘 오전 11:50</div>
+                <div class="c-group-item-text">30분만 집중하면 된다. 타이머 켜자.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">어제 오전 8:45</div>
+                <div class="c-group-item-text">뇌는 시작이 어려운 것이지, 하기 시작하면 집중한다.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">3월 10일 오후 1:00</div>
+                <div class="c-group-item-text">지금 안 하면 영원히 안 한다. 그냥 열어보자.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="c-group" id="c-group-determination">
+            <div class="c-group-header" onclick="toggleCGroup(this.parentElement)">
+              <div class="c-group-left">
+                <span class="c-group-icon">🎯</span>
+                <span class="c-group-label" style="color: var(--determination);">결단</span>
+                <span class="c-group-count">2개</span>
+              </div>
+              <span class="c-group-chevron">›</span>
+            </div>
+            <div class="c-group-items">
+              <div class="c-group-item">
+                <div class="c-group-item-time">오늘 오전 7:30</div>
+                <div class="c-group-item-text">오늘은 운동하러 갈 거다. 약속.</div>
+              </div>
+              <div class="c-group-item">
+                <div class="c-group-item-time">3월 11일 오후 6:00</div>
+                <div class="c-group-item-text">내일은 더 나은 하루를 만들겠다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height: 20px;"></div>
+        </div>
+
+        <!-- Bottom Tab Bar -->
+        <div class="bottom-tab-bar">
+          <div class="tab-item"><div class="tab-icon">🏠</div>홈</div>
+          <div class="tab-item"><div class="tab-icon">📋</div>플래너</div>
+          <div class="tab-item"><div class="tab-icon">▶️</div>실행</div>
+          <div class="tab-item active-tab"><div class="tab-icon">💡</div>원동력</div>
+          <div class="tab-item"><div class="tab-icon">⚙️</div>설정</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- C: Annotations -->
+    <div class="annotations">
+      <div class="annotation-card problem">
+        <h3>❌ 현재 문제점</h3>
+        <ul>
+          <li>감정태그 선택이 4곳에서 반복 (인라인/필터/입력시트/상세시트)</li>
+          <li>"미처리/처리됨" 필터 의미 불명확 → 사용자 혼란</li>
+          <li>ADHD 사용자에게 필터/검색 과도 → 인지 부하 증가</li>
+          <li>빈 상태에서 감정태그가 필수 아닌데 노출 → 선택 피로</li>
+        </ul>
+      </div>
+      <div class="annotation-card solution">
+        <h3>✅ 시안 C 개선점</h3>
+        <ul>
+          <li><strong>감정 탭이 필터+분류를 동시 해결</strong> → 별도 필터 불필요</li>
+          <li><strong>감정 먼저 선택 → 입력 UI가 해당 색상으로 변환</strong> (탭 선택해보세요)</li>
+          <li><strong>감정별 미니 차트</strong>로 통계 시각화 (XP/레벨 게이미피케이션 대체)</li>
+          <li><strong>DisclosureGroup 스타일 확장/축소</strong> → 정보 과부하 방지 (그룹 헤더 클릭)</li>
+          <li>검색/상태필터 제거 → <strong>감정 탭 하나로 네비게이션 통합</strong></li>
+        </ul>
+      </div>
+      <div class="annotation-card native">
+        <h3>📱 네이티브 컨트롤 교체</h3>
+        <ul>
+          <li>감정칩 선택 토글 → <strong>UISegmentedControl 스타일</strong> 탭 (스크롤 가능)</li>
+          <li>JS 아코디언 → <strong>SwiftUI List expandable section</strong></li>
+          <li><code>{visible && ...}</code> → <strong>네이티브 스프링 트랜지션</strong></li>
+          <li>감정별 그룹이 자연스러운 분류 역할 → 별도 필터 UI 불필요</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Tab Switching =====
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ===== Design A: Interactions =====
+const aCards = [
+  { emotion: 'joy', emoji: '❤️', label: '기쁨', color: '#E11D48', bg: '#FFF1F2', title: '', text: '동료가 내 코드 리뷰를 칭찬해줬다. 작은 인정이 큰 힘이 된다.', time: '오후 3:24', pin: true, todos: 2 },
+  { emotion: 'awakening', emoji: '⚡', label: '각성', color: '#EA580C', bg: '#FFF7ED', title: '집중 모드', text: '30분만 집중하면 된다. 타이머 켜고 시작하자. 뇌는 일단 시작하면 따라온다.', time: '오전 11:50', pin: false, todos: 1 },
+  { emotion: 'gratitude', emoji: '🤝', label: '감사', color: '#2563EB', bg: '#EFF6FF', title: '', text: '아침에 일어나서 물을 마시는 것부터 성공. 감사한 일상.', time: '오전 9:15', pin: false, todos: 0 },
+  { emotion: 'determination', emoji: '🎯', label: '결단', color: '#9333EA', bg: '#FAF5FF', title: '운동 약속', text: '오늘은 운동하러 갈 거다. 약속.', time: '오전 7:30', pin: false, todos: 1 },
+  { emotion: 'gratitude', emoji: '🤝', label: '감사', color: '#2563EB', bg: '#EFF6FF', title: '', text: '오늘 하루도 무사히. 내일의 나에게 응원을 보낸다.', time: '어제', pin: false, todos: 0 },
+  { emotion: 'joy', emoji: '❤️', label: '기쁨', color: '#E11D48', bg: '#FFF1F2', title: '', text: '맛있는 점심을 먹었다. 이런 소소한 행복이 좋다.', time: '어제', pin: false, todos: 0 },
+  { emotion: 'awakening', emoji: '⚡', label: '각성', color: '#EA580C', bg: '#FFF7ED', title: '', text: '뇌는 시작이 어려운 것이지, 하기 시작하면 집중한다.', time: '어제', pin: false, todos: 3 },
+];
+
+function renderACards() {
+  const container = document.getElementById('a-cards-area');
+  container.innerHTML = aCards.map((c, i) => `
+    <div class="a-card" oncontextmenu="showContextMenu(event, ${i})" ontouchstart="startLongPress(event, ${i})" ontouchend="cancelLongPress()" ontouchmove="cancelLongPress()">
+      <div class="a-card-top">
+        <div class="a-card-emotion" style="background: ${c.bg}; color: ${c.color};">
+          ${c.emoji} ${c.label}
+        </div>
+        <div class="a-card-meta">
+          ${c.pin ? '📌' : ''}
+          ${c.todos > 0 ? `<span>🔗${c.todos}</span>` : ''}
+          <span>${c.time}</span>
+        </div>
+      </div>
+      ${c.title ? `<div class="a-card-title">${c.title}</div>` : ''}
+      <div class="a-card-content">${c.text}</div>
+      <div class="a-context-menu" id="ctx-${i}">
+        <div class="a-context-item" onclick="event.stopPropagation(); hideContextMenu(${i})">📌 ${c.pin ? '핀 해제' : '배너에 고정'}</div>
+        <div class="a-context-item" onclick="event.stopPropagation(); hideContextMenu(${i})">✏️ 편집</div>
+        <div class="a-context-item" onclick="event.stopPropagation(); hideContextMenu(${i})">🔗 할일 연결</div>
+        <div class="a-context-item" onclick="event.stopPropagation(); hideContextMenu(${i})">📋 복사</div>
+        <div class="a-context-item danger" onclick="event.stopPropagation(); hideContextMenu(${i})">🗑️ 삭제</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+let longPressTimer = null;
+function startLongPress(e, idx) {
+  longPressTimer = setTimeout(() => {
+    showContextMenu(e, idx);
+  }, 500);
+}
+function cancelLongPress() {
+  if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+}
+function showContextMenu(e, idx) {
+  e.preventDefault();
+  cancelLongPress();
+  // Hide all others first
+  document.querySelectorAll('.a-context-menu').forEach(m => m.classList.remove('show'));
+  document.getElementById('ctx-' + idx).classList.add('show');
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closeCtx() {
+      hideContextMenu(idx);
+      document.removeEventListener('click', closeCtx);
+    }, { once: true });
+  }, 10);
+}
+function hideContextMenu(idx) {
+  document.getElementById('ctx-' + idx).classList.remove('show');
+}
+
+renderACards();
+
+// Emotion chip selection
+function selectEmotion(design, el) {
+  const parent = el.parentElement;
+  const wasSelected = el.classList.contains('selected');
+  parent.querySelectorAll('.a-emotion-chip').forEach(c => {
+    c.classList.remove('selected');
+    c.style.background = '';
+    c.style.borderColor = '';
+    c.style.color = '';
+  });
+  if (!wasSelected) {
+    el.classList.add('selected');
+    const s = getComputedStyle(el);
+    el.style.background = s.getPropertyValue('--bg');
+    el.style.borderColor = s.getPropertyValue('--c');
+    el.style.color = s.getPropertyValue('--c');
+  }
+}
+
+function toggleSend(design) {
+  const input = document.getElementById(design + '-input');
+  const btn = document.getElementById(design + '-send');
+  if (input.value.trim()) {
+    btn.className = 'a-send-btn enabled';
+  } else {
+    btn.className = 'a-send-btn disabled';
+  }
+}
+
+function toggleSearch(design) {
+  const panel = document.getElementById(design + '-search-panel');
+  panel.classList.toggle('show');
+}
+
+// ===== Design B: Interactions =====
+function toggleBCard(card) {
+  card.classList.toggle('open');
+}
+
+function toggleBSheet() {
+  const sheet = document.getElementById('b-sheet');
+  sheet.classList.toggle('show');
+}
+
+// ===== Design C: Interactions =====
+const emotionColors = {
+  joy: { color: '#E11D48', bg: '#FFF1F2', border: '#FECDD3' },
+  gratitude: { color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
+  awakening: { color: '#EA580C', bg: '#FFF7ED', border: '#FED7AA' },
+  determination: { color: '#9333EA', bg: '#FAF5FF', border: '#E9D5FF' },
+};
+
+function selectCTab(el, emotion) {
+  // Reset all tabs
+  document.querySelectorAll('.c-emotion-tab').forEach(t => {
+    t.classList.remove('active');
+    t.style.background = '';
+    t.style.borderColor = '';
+    t.style.color = '';
+  });
+  el.classList.add('active');
+
+  const inputArea = document.getElementById('c-input-area');
+  const hint = document.getElementById('c-input-hint');
+
+  if (emotion === 'all') {
+    el.style.background = 'var(--gray-800)';
+    el.style.borderColor = 'var(--gray-800)';
+    el.style.color = 'white';
+    inputArea.style.borderColor = 'var(--gray-200)';
+    inputArea.style.background = 'white';
+    hint.textContent = '감정을 선택하면 입력 영역이 변합니다';
+    hint.style.color = 'var(--gray-400)';
+    // Show all groups
+    document.querySelectorAll('.c-group').forEach(g => g.style.display = '');
+  } else {
+    const ec = emotionColors[emotion];
+    el.style.background = ec.color;
+    el.style.borderColor = ec.color;
+    el.style.color = 'white';
+    // Transform input area
+    inputArea.style.borderColor = ec.border;
+    inputArea.style.background = ec.bg;
+    const labels = { joy: '❤️ 기쁨', gratitude: '🤝 감사', awakening: '⚡ 각성', determination: '🎯 결단' };
+    hint.textContent = labels[emotion] + ' 원동력을 기록하세요';
+    hint.style.color = ec.color;
+    // Filter groups
+    document.querySelectorAll('.c-group').forEach(g => {
+      g.style.display = g.id === 'c-group-' + emotion ? '' : 'none';
+    });
+  }
+}
+
+function toggleCGroup(group) {
+  group.classList.toggle('open');
+}
+
+// Close sheet on swipe down (simplified)
+let sheetStartY = 0;
+const bSheet = document.getElementById('b-sheet');
+bSheet.addEventListener('touchstart', e => { sheetStartY = e.touches[0].clientY; });
+bSheet.addEventListener('touchmove', e => {
+  if (e.touches[0].clientY - sheetStartY > 50) {
+    bSheet.classList.remove('show');
+  }
+});
+</script>
+
+</body>
+</html>

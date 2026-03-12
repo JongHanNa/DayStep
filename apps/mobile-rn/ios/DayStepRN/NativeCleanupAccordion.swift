@@ -50,9 +50,24 @@ private func sfSymbolName(for key: String) -> String {
   }
 }
 
-// MARK: - SwiftUI View (iOS 26+)
+// MARK: - Conditional Glass Modifier
 
-@available(iOS 26.0, *)
+extension View {
+  @ViewBuilder
+  func cleanupCardStyle() -> some View {
+    if #available(iOS 26.0, *) {
+      self.glassEffect(in: .rect(cornerRadius: 14))
+    } else {
+      self
+        .background(Color.white)
+        .cornerRadius(14)
+        .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+    }
+  }
+}
+
+// MARK: - SwiftUI View
+
 struct CleanupAccordionContent: View {
   @ObservedObject var state: CleanupAccordionState
 
@@ -142,7 +157,7 @@ struct CleanupAccordionContent: View {
             }
           }
         }
-        .glassEffect(in: .rect(cornerRadius: 14))
+        .cleanupCardStyle()
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isExpanded)
       }
     }
@@ -209,8 +224,6 @@ class NativeCleanupAccordionUIView: UIView {
     guard !hasSetUp else { return }
     hasSetUp = true
     backgroundColor = .clear
-
-    guard #available(iOS 26.0, *) else { return }
 
     let swiftUIView = CleanupAccordionContent(
       state: accordionState,
