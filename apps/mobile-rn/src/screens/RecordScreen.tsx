@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  ActionSheetIOS,
 } from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, AnimatedPressable, GlassBackground} from '@/components/core';
@@ -32,6 +33,7 @@ import {
   AlertTriangle,
 } from 'lucide-react-native';
 import {RelationshipStatsModal} from '@/components/record/RelationshipStatsModal';
+import {NotesTimelineModal} from '@/components/record/NotesTimelineModal';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
@@ -165,6 +167,8 @@ export default function RecordScreen() {
   const [wantToCreateTodo, setWantToCreateTodo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
+  const [timelineVisible, setTimelineVisible] = useState(false);
+  const [timelineInitialTab, setTimelineInitialTab] = useState<'news' | 'gratitude'>('news');
 
   useEffect(() => {
     if (user?.id) {
@@ -532,7 +536,23 @@ export default function RecordScreen() {
         </Text>
 
         <AnimatedPressable
-          onPress={() => {/* 추후 편집/설정 */}}
+          onPress={() => {
+            ActionSheetIOS.showActionSheetWithOptions(
+              {
+                options: ['소식 타임라인', '감사 타임라인', '취소'],
+                cancelButtonIndex: 2,
+              },
+              buttonIndex => {
+                if (buttonIndex === 0) {
+                  setTimelineInitialTab('news');
+                  setTimelineVisible(true);
+                } else if (buttonIndex === 1) {
+                  setTimelineInitialTab('gratitude');
+                  setTimelineVisible(true);
+                }
+              },
+            );
+          }}
           hapticType="light"
           scaleValue={0.9}
           style={recordStyles.glassStatsBtn}>
@@ -790,6 +810,11 @@ export default function RecordScreen() {
       <RelationshipStatsModal
         visible={statsVisible}
         onClose={() => setStatsVisible(false)}
+      />
+      <NotesTimelineModal
+        visible={timelineVisible}
+        onClose={() => setTimelineVisible(false)}
+        initialTab={timelineInitialTab}
       />
     </ScreenContainer>
   );
