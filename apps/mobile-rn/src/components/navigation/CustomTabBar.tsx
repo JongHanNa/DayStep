@@ -65,12 +65,12 @@ const MORE_SCREENS = new Set([
 // iOS 26+ 네이티브 확장 패널용 SF Symbol 매핑
 const MENU_SF_SYMBOLS: Record<string, string> = {
   MoreLanding: 'gearshape',
-  MonthlyPlanner: 'calendar',
+  MonthlyPlanner: 'calendar.badge.clock',
   AIPlan: 'list.clipboard',
   AIChat: 'sparkles',
   Guide: 'message',
   Cleanup: 'trash',
-  Record: 'flame',
+  Record: 'person.2',
   Activity: 'waveform.path.ecg',
 };
 
