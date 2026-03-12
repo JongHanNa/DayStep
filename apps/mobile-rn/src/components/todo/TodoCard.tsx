@@ -2,7 +2,7 @@
  * TodoCard
  * 할일 카드 — 애니메이션 체크박스 + 우선순위 표시 + 종료시간 초과 프롬프트
  */
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View, Text, StyleSheet, Pressable} from 'react-native';
 import Animated, {
   useSharedValue,
@@ -87,16 +87,26 @@ export function TodoCard({
 
   const priorityColor = getPriorityColor(todo.importance, todo.urgency, primaryColor);
 
+  // 실시간 업데이트를 위한 now state
+  const [now, setNow] = useState(() => Date.now());
+
   // 시간 상태 계산
   const timeStatus = useMemo(
-    () => getTimeStatus(todo.start_time, todo.end_time, !!todo.completed),
-    [todo.start_time, todo.end_time, todo.completed],
+    () => getTimeStatus(todo.start_time, todo.end_time, !!todo.completed, new Date(now)),
+    [todo.start_time, todo.end_time, todo.completed, now],
   );
 
   const timeStatusText = useMemo(
     () => getTimeStatusText(timeStatus),
     [timeStatus],
   );
+
+  // missed 상태일 때만 60초 간격으로 now 갱신
+  useEffect(() => {
+    if (timeStatus.status !== 'missed') return;
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, [timeStatus.status]);
 
   const isSkipped = !!(todo as any).skip_status;
   const skipReason = (todo as any).skip_status as string | undefined;
