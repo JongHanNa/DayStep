@@ -11,15 +11,17 @@ import {useTheme} from '@/theme';
 import {Target, AlertTriangle, Clock, Coffee, Plus} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {DroppableZone} from './DroppableZone';
+import {hexWithOpacity} from '@/lib/todoUtils';
 import type {Todo} from '@daystep/shared-core';
 
 interface QuadrantConfig {
   title: string;
   Icon: React.FC<any>;
-  color: string;
-  bgColor: string;
   importance: boolean;
   urgency: boolean;
+  /** 메인컬러 대비 opacity (색상은 런타임에 primaryColor 기반 생성) */
+  colorOpacity: number;
+  bgOpacity: number;
   filter: (todo: Todo) => boolean;
 }
 
@@ -27,8 +29,8 @@ const QUADRANTS: QuadrantConfig[] = [
   {
     title: '중요O 긴급O',
     Icon: AlertTriangle,
-    color: '#DC2626',
-    bgColor: '#FEF2F2',
+    colorOpacity: 1,
+    bgOpacity: 0.1,
     importance: true,
     urgency: true,
     filter: (t: any) => t.importance === true && t.urgency === true,
@@ -36,8 +38,8 @@ const QUADRANTS: QuadrantConfig[] = [
   {
     title: '중요O 긴급X',
     Icon: Target,
-    color: '#2563EB',
-    bgColor: '#EFF6FF',
+    colorOpacity: 0.7,
+    bgOpacity: 0.08,
     importance: true,
     urgency: false,
     filter: (t: any) => t.importance === true && t.urgency === false,
@@ -45,8 +47,8 @@ const QUADRANTS: QuadrantConfig[] = [
   {
     title: '중요X 긴급O',
     Icon: Clock,
-    color: '#F59E0B',
-    bgColor: '#FFFBEB',
+    colorOpacity: 0.5,
+    bgOpacity: 0.05,
     importance: false,
     urgency: true,
     filter: (t: any) => t.importance === false && t.urgency === true,
@@ -54,8 +56,8 @@ const QUADRANTS: QuadrantConfig[] = [
   {
     title: '중요X 긴급X',
     Icon: Coffee,
-    color: '#6B7280',
-    bgColor: '#F9FAFB',
+    colorOpacity: 0,
+    bgOpacity: 0,
     importance: false,
     urgency: false,
     filter: (t: any) => t.importance === false && t.urgency === false,
@@ -107,20 +109,23 @@ export function PriorityMatrixPanel({onAddPress}: PriorityMatrixPanelProps) {
       <View style={styles.grid}>
         {quadrantData.map((q, index) => {
           const QIcon = q.Icon;
+          const isGray = q.colorOpacity === 0;
+          const qColor = isGray ? '#9CA3AF' : hexWithOpacity(primaryColor, q.colorOpacity);
+          const qBgColor = isGray ? '#F9FAFB' : hexWithOpacity(primaryColor, q.bgOpacity);
           return (
             <DroppableZone
               key={index}
               id={`matrix-${index}`}
               type="matrix"
               data={{importance: q.importance, urgency: q.urgency}}
-              highlightColor={q.bgColor}
-              style={[styles.quadrant, {backgroundColor: q.bgColor}]}>
+              highlightColor={qBgColor}
+              style={[styles.quadrant, {backgroundColor: qBgColor}]}>
               <View className="flex-row items-center justify-between mb-2">
                 <View className="flex-row items-center">
-                  <QIcon size={14} color={q.color} />
+                  <QIcon size={14} color={qColor} />
                   <Text
                     className="text-xs font-semibold ml-1"
-                    style={{color: q.color}}>
+                    style={{color: qColor}}>
                     {q.title}
                   </Text>
                 </View>
@@ -129,7 +134,7 @@ export function PriorityMatrixPanel({onAddPress}: PriorityMatrixPanelProps) {
                     onPress={() => onAddPress(q.importance, q.urgency)}
                     hapticType="light"
                     scaleValue={0.85}>
-                    <Plus size={16} color={q.color} />
+                    <Plus size={16} color={qColor} />
                   </AnimatedPressable>
                 )}
               </View>

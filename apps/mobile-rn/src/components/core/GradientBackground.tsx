@@ -47,33 +47,37 @@ export const gradientPresets = {
     colors: ['#FFF7ED', '#FFFBEB', '#FFFFFF'],
     start: {x: 0, y: 0},
     end: {x: 1, y: 1},
+    mainColor: '#D97706',
   },
   /** 차분한 배경 (플래너) */
   calmBackground: {
     colors: ['#F0F9FF', '#F5F3FF', '#FFFFFF'],
     start: {x: 0, y: 0},
     end: {x: 0.5, y: 1},
+    mainColor: '#3B82F6',
   },
   /** 저녁 배경 */
   eveningBackground: {
     colors: ['#EDE9FE', '#FCE7F3', '#FFFFFF'],
     start: {x: 0, y: 0},
     end: {x: 1, y: 1},
+    mainColor: '#8B5CF6',
   },
   /** 실행 모드 */
   executionBackground: {
     colors: ['#FFF7ED', '#FEF3C7', '#FFFFFF'],
     start: {x: 0, y: 0},
     end: {x: 0, y: 1},
+    mainColor: '#EA580C',
   },
 } as const;
 
 /** 배경 프리셋 선택 옵션 (설정 UI용) */
 export const backgroundPresetOptions = [
-{key: 'calmBackground' as const, label: '차분한 블루', description: '하루계획하기 배경', preview: ['#F0F9FF', '#F5F3FF']},
-  {key: 'warmBackground' as const, label: '따뜻한 크림', description: '홈화면 배경', preview: ['#FFF7ED', '#FFFBEB']},
-  {key: 'eveningBackground' as const, label: '저녁 보라', description: '저녁 시간 배경', preview: ['#EDE9FE', '#FCE7F3']},
-  {key: 'executionBackground' as const, label: '실행 오렌지', description: '실행 모드 배경', preview: ['#FFF7ED', '#FEF3C7']},
+{key: 'calmBackground' as const, label: '차분한 블루', description: '하루계획하기 배경', preview: ['#F0F9FF', '#F5F3FF'], mainColor: '#3B82F6'},
+  {key: 'warmBackground' as const, label: '따뜻한 크림', description: '홈화면 배경', preview: ['#FFF7ED', '#FFFBEB'], mainColor: '#D97706'},
+  {key: 'eveningBackground' as const, label: '저녁 보라', description: '저녁 시간 배경', preview: ['#EDE9FE', '#FCE7F3'], mainColor: '#8B5CF6'},
+  {key: 'executionBackground' as const, label: '실행 오렌지', description: '실행 모드 배경', preview: ['#FFF7ED', '#FEF3C7'], mainColor: '#EA580C'},
 ] as const;
 
 const styles = StyleSheet.create({

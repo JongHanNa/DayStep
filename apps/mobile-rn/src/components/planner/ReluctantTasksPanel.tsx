@@ -10,6 +10,7 @@ import {useTheme} from '@/theme';
 import {Shield, CheckCircle2, Plus} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {DroppableZone} from './DroppableZone';
+import {hexWithOpacity} from '@/lib/todoUtils';
 
 interface ReluctantTasksPanelProps {
   onAddPress?: () => void;
@@ -45,7 +46,7 @@ export function ReluctantTasksPanel({onAddPress}: ReluctantTasksPanelProps) {
     <View className="mb-4">
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
-          <Shield size={18} color="#DC2626" />
+          <Shield size={18} color={primaryColor} />
           <Text className="text-base font-semibold text-gray-800 ml-2">
             하기 싫어도 해야 할 일
           </Text>
@@ -63,9 +64,9 @@ export function ReluctantTasksPanel({onAddPress}: ReluctantTasksPanelProps) {
       <DroppableZone
         id="reluctant"
         type="reluctant"
-        highlightColor="rgba(239, 68, 68, 0.08)"
+        highlightColor={hexWithOpacity(primaryColor, 0.08)}
         style={{borderRadius: 16}}>
-        <View className="bg-red-50 rounded-2xl p-4">
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.08)}} className="rounded-2xl p-4">
           {reluctantTodos.length === 0 ? (
             <View className="items-center py-3">
               <Text className="text-sm text-gray-400">
@@ -96,7 +97,7 @@ export function ReluctantTasksPanel({onAddPress}: ReluctantTasksPanelProps) {
               </AnimatedPressable>
             ))
           )}
-          <Text className="text-xs text-red-400 mt-2">
+          <Text className="text-xs mt-2" style={{color: hexWithOpacity(primaryColor, 0.6)}}>
             작은 용기가 큰 성장을 만들어요
           </Text>
         </View>

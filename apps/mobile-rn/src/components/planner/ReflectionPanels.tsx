@@ -9,6 +9,7 @@ import {useAuthStore} from '@/stores/authStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {Gift, Star, Heart} from 'lucide-react-native';
+import {hexWithOpacity} from '@/lib/todoUtils';
 
 interface ReflectionPanelsProps {
   scrollViewRef?: React.RefObject<ScrollView>;
@@ -80,20 +81,20 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
       {/* 보상 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Gift size={18} color="#F59E0B" />
+          <Gift size={18} color={primaryColor} />
           <Text className="text-base font-semibold text-gray-800 ml-2">
             오늘의 보상
           </Text>
         </View>
-        <View className="bg-amber-50 rounded-2xl p-4">
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.08)}} className="rounded-2xl p-4">
           <TextInput
             value={reward}
             onChangeText={setReward}
             onFocus={handleInputFocus}
             onBlur={() => handleSave('reward', reward)}
             placeholder="오늘 하루 수고한 나에게 줄 보상은?"
-            placeholderTextColor="#D1A054"
-            className="text-sm text-amber-900"
+            placeholderTextColor={hexWithOpacity(primaryColor, 0.4)}
+            className="text-sm text-gray-800"
             style={styles.input}
             multiline
           />
@@ -103,15 +104,15 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
       {/* 칭찬 3가지 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Star size={18} color="#8B5CF6" />
+          <Star size={18} color={primaryColor} />
           <Text className="text-base font-semibold text-gray-800 ml-2">
             오늘 칭찬 3가지
           </Text>
         </View>
-        <View className="bg-violet-50 rounded-2xl p-4">
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.06)}} className="rounded-2xl p-4">
           {praises.map((praise, index) => (
             <View key={index} className="flex-row items-center mb-2">
-              <Text className="text-sm text-violet-400 mr-2 w-5">
+              <Text className="text-sm mr-2 w-5" style={{color: hexWithOpacity(primaryColor, 0.5)}}>
                 {index + 1}.
               </Text>
               <TextInput
@@ -120,8 +121,8 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
                 onFocus={handleInputFocus}
                 onBlur={() => handleSave('praises', praises.filter(p => p.trim()))}
                 placeholder={`칭찬 ${index + 1}`}
-                placeholderTextColor="#A78BFA"
-                className="flex-1 text-sm text-violet-900"
+                placeholderTextColor={hexWithOpacity(primaryColor, 0.35)}
+                className="flex-1 text-sm text-gray-800"
                 style={styles.lineInput}
               />
             </View>
@@ -132,15 +133,15 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
       {/* 감사 3가지 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Heart size={18} color="#EC4899" />
+          <Heart size={18} color={primaryColor} />
           <Text className="text-base font-semibold text-gray-800 ml-2">
             오늘 감사 3가지
           </Text>
         </View>
-        <View className="bg-pink-50 rounded-2xl p-4">
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.05)}} className="rounded-2xl p-4">
           {gratitudes.map((gratitude, index) => (
             <View key={index} className="flex-row items-center mb-2">
-              <Text className="text-sm text-pink-400 mr-2 w-5">
+              <Text className="text-sm mr-2 w-5" style={{color: hexWithOpacity(primaryColor, 0.5)}}>
                 {index + 1}.
               </Text>
               <TextInput
@@ -151,8 +152,8 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
                   handleSave('gratitudes', gratitudes.filter(g => g.trim()))
                 }
                 placeholder={`감사 ${index + 1}`}
-                placeholderTextColor="#F9A8D4"
-                className="flex-1 text-sm text-pink-900"
+                placeholderTextColor={hexWithOpacity(primaryColor, 0.35)}
+                className="flex-1 text-sm text-gray-800"
                 style={styles.lineInput}
               />
             </View>

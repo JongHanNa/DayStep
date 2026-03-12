@@ -19,7 +19,7 @@ import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
 import {format} from 'date-fns';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {getPriorityColor} from '@/lib/todoUtils';
+import {getPriorityColor, hexWithOpacity} from '@/lib/todoUtils';
 import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
 import {MissedTodoActionPanel} from './MissedTodoActionPanel';
 import {DeferredTodoActionPanel} from './DeferredTodoActionPanel';
@@ -85,7 +85,7 @@ export function TodoCard({
       (todo.end_time ? ` ~ ${format(new Date(todo.end_time), 'HH:mm')}` : '')
     : null;
 
-  const priorityColor = getPriorityColor(todo.importance, todo.urgency);
+  const priorityColor = getPriorityColor(todo.importance, todo.urgency, primaryColor);
 
   // 시간 상태 계산
   const timeStatus = useMemo(
@@ -140,7 +140,7 @@ export function TodoCard({
           <Animated.View
             style={[
               styles.checkbox,
-              todo.completed && styles.checkboxChecked,
+              todo.completed && {backgroundColor: primaryColor, borderColor: primaryColor},
               isSkipped && skipReason === 'missed' && styles.checkboxMissed,
               isSkipped && skipReason === 'not_needed' && styles.checkboxNotNeeded,
               checkAnimatedStyle,
@@ -248,7 +248,7 @@ export function TodoCard({
                 <View
                   style={[
                     styles.progressBarFill,
-                    {width: `${timeStatus.progressPercent ?? 0}%`},
+                    {width: `${timeStatus.progressPercent ?? 0}%`, backgroundColor: primaryColor},
                   ]}
                 />
               </View>
@@ -270,10 +270,10 @@ export function TodoCard({
                   <Pressable
                     key={fuel.id}
                     onPress={() => setExpandedFuelId(isExpanded ? null : fuel.id)}
-                    style={styles.fuelBadge}>
+                    style={[styles.fuelBadge, {backgroundColor: hexWithOpacity(primaryColor, 0.15)}]}>
                     <Text style={styles.fuelIcon}>⚡</Text>
                     <Text
-                      style={styles.fuelText}
+                      style={[styles.fuelText, {color: primaryColor}]}
                       numberOfLines={isExpanded ? undefined : 1}>
                       {text}
                     </Text>
@@ -385,10 +385,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-  },
+  // checkboxChecked: now uses inline primaryColor styles
   checkboxMissed: {
     backgroundColor: '#FEE2E2',
     borderColor: '#FCA5A5',
@@ -498,7 +495,6 @@ const styles = StyleSheet.create({
   fuelBadge: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(249, 115, 22, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
@@ -509,7 +505,6 @@ const styles = StyleSheet.create({
   },
   fuelText: {
     fontSize: 11,
-    color: '#EA580C',
     flex: 1,
   },
   projectBadge: {

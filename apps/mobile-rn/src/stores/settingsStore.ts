@@ -70,6 +70,19 @@ export const useSettingsStore = create<SettingsState>()(
   ),
 );
 
+/** 배경 프리셋별 메인컬러 매핑 */
+const PRESET_MAIN_COLORS: Record<BackgroundPreset, string> = {
+  calmBackground: '#3B82F6',
+  warmBackground: '#D97706',
+  eveningBackground: '#8B5CF6',
+  executionBackground: '#EA580C',
+};
+
+/** 현재 배경 프리셋에 맞는 메인컬러 반환 */
+export function getMainColorForPreset(preset: BackgroundPreset): string {
+  return PRESET_MAIN_COLORS[preset];
+}
+
 /** DB 저장용 설정 추출 (액션 함수 제외) */
 export function getSettingsForSync() {
   const state = useSettingsStore.getState();

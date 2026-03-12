@@ -39,12 +39,12 @@ import type {LucideIcon} from 'lucide-react-native';
 
 type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime' | 'deferred';
 
-const SECTION_ICONS: Record<TimePeriod, {Icon: LucideIcon; color: string}> = {
-  morning: {Icon: Sunrise, color: '#F59E0B'},
-  afternoon: {Icon: Sun, color: '#F97316'},
-  evening: {Icon: Moon, color: '#8B5CF6'},
-  anytime: {Icon: Infinity, color: '#10B981'},
-  deferred: {Icon: PauseCircle, color: '#A855F7'},
+const SECTION_ICONS: Record<TimePeriod, {Icon: LucideIcon}> = {
+  morning: {Icon: Sunrise},
+  afternoon: {Icon: Sun},
+  evening: {Icon: Moon},
+  anytime: {Icon: Infinity},
+  deferred: {Icon: PauseCircle},
 };
 
 interface TodoSection {
@@ -388,7 +388,7 @@ function TodoListScreenInner() {
               const SectionIcon = iconConfig.Icon;
               return (
                 <View className="flex-row items-center mt-4 mb-2">
-                  <SectionIcon size={16} color={iconConfig.color} strokeWidth={2} />
+                  <SectionIcon size={16} color={primaryColor} strokeWidth={2} />
                   <Text className="text-sm font-semibold text-gray-500 ml-2">
                     {section.title}
                   </Text>

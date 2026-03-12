@@ -25,6 +25,7 @@ import type {SwipeablePagesRef} from '@/components/core/SwipeablePages';
 import {PAGE_WIDTH, PEEK_WIDTH} from '@/components/core/SwipeablePages';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
+import {useTheme} from '@/theme';
 import {Shield} from 'lucide-react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -464,8 +465,9 @@ function DragOverlay({
   width: number;
   height: number;
 }) {
+  const {primaryColor} = useTheme();
   const IconComp = resolveTodoIcon(todo.icon);
-  const priorityColor = getPriorityColor(todo.importance, todo.urgency);
+  const priorityColor = getPriorityColor(todo.importance, todo.urgency, primaryColor);
 
   const animatedStyle = useAnimatedStyle(() => ({
     left: overlayX.value - width / 2,
