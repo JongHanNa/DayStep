@@ -35,18 +35,9 @@ import {useTheme} from '@/theme';
 import {format, addDays, subDays} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
-import {Sunrise, Sun, Moon, Infinity, Inbox, PauseCircle} from 'lucide-react-native';
-import type {LucideIcon} from 'lucide-react-native';
+import {Inbox} from 'lucide-react-native';
 
 type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime' | 'deferred';
-
-const SECTION_ICONS: Record<TimePeriod, {Icon: LucideIcon}> = {
-  morning: {Icon: Sunrise},
-  afternoon: {Icon: Sun},
-  evening: {Icon: Moon},
-  anytime: {Icon: Infinity},
-  deferred: {Icon: PauseCircle},
-};
 
 interface TodoSection {
   title: string;
@@ -380,12 +371,9 @@ function TodoListScreenInner() {
               <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
             }
             renderSectionHeader={({section}) => {
-              const iconConfig = SECTION_ICONS[section.period];
-              const SectionIcon = iconConfig.Icon;
               return (
                 <View className="flex-row items-center mt-4 mb-2">
-                  <SectionIcon size={16} color={primaryColor} strokeWidth={2} />
-                  <Text className="text-sm font-semibold text-gray-500 ml-2">
+                  <Text className="text-sm font-semibold text-gray-500">
                     {section.title}
                   </Text>
                   <Text className="text-xs text-gray-400 ml-2">

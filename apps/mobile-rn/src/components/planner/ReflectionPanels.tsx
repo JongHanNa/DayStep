@@ -8,7 +8,6 @@ import {useReflectionStore} from '@/stores/reflectionStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
-import {Gift, Star, Heart} from 'lucide-react-native';
 import {hexWithOpacity} from '@/lib/todoUtils';
 
 interface ReflectionPanelsProps {
@@ -81,8 +80,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
       {/* 보상 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Gift size={18} color={primaryColor} />
-          <Text className="text-base font-semibold text-gray-800 ml-2">
+          <Text className="text-base font-semibold text-gray-800">
             오늘의 보상
           </Text>
         </View>
@@ -104,8 +102,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
       {/* 칭찬 3가지 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Star size={18} color={primaryColor} />
-          <Text className="text-base font-semibold text-gray-800 ml-2">
+          <Text className="text-base font-semibold text-gray-800">
             오늘 칭찬 3가지
           </Text>
         </View>
@@ -133,8 +130,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
       {/* 감사 3가지 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
-          <Heart size={18} color={primaryColor} />
-          <Text className="text-base font-semibold text-gray-800 ml-2">
+          <Text className="text-base font-semibold text-gray-800">
             오늘 감사 3가지
           </Text>
         </View>

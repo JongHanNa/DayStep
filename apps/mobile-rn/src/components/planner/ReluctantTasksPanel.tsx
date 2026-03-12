@@ -7,7 +7,7 @@ import React, {useMemo, useCallback} from 'react';
 import {View, Text, Alert} from 'react-native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
-import {Shield, CheckCircle2, Plus} from 'lucide-react-native';
+import {CheckCircle2, Plus} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {DroppableZone} from './DroppableZone';
 import {hexWithOpacity} from '@/lib/todoUtils';
@@ -45,12 +45,9 @@ export function ReluctantTasksPanel({onAddPress}: ReluctantTasksPanelProps) {
   return (
     <View className="mb-4">
       <View className="flex-row items-center justify-between mb-3">
-        <View className="flex-row items-center">
-          <Shield size={18} color={primaryColor} />
-          <Text className="text-base font-semibold text-gray-800 ml-2">
-            하기 싫어도 해야 할 일
-          </Text>
-        </View>
+        <Text className="text-base font-semibold text-gray-800">
+          하기 싫어도 해야 할 일
+        </Text>
         {onAddPress && (
           <AnimatedPressable
             onPress={onAddPress}
