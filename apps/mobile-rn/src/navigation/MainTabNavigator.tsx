@@ -26,6 +26,7 @@ import GuideScreen from '../screens/GuideScreen';
 import RecordScreen from '../screens/RecordScreen';
 import ActivityScreen from '../screens/ActivityScreen';
 import CleanupScreen from '../screens/CleanupScreen';
+import SleepRecordScreen from '../screens/SleepRecordScreen';
 
 // Home Stack (메인 + 하위 화면)
 const HomeStack = createNativeStackNavigator();
@@ -45,6 +46,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Record" component={RecordScreen} />
       <HomeStack.Screen name="Activity" component={ActivityScreen} />
       <HomeStack.Screen name="Cleanup" component={CleanupScreen} />
+      <HomeStack.Screen name="SleepRecord" component={SleepRecordScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -68,6 +70,7 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="Record" component={RecordScreen} />
       <MoreStack.Screen name="Activity" component={ActivityScreen} />
       <MoreStack.Screen name="Cleanup" component={CleanupScreen} />
+      <MoreStack.Screen name="SleepRecord" component={SleepRecordScreen} />
     </MoreStack.Navigator>
   );
 }

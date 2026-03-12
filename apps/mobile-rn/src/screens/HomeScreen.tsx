@@ -198,6 +198,15 @@ export default function HomeScreen() {
   const careItems: FeatureItem[] = useMemo(
     () => [
       {
+        id: 'sleep',
+        icon: <Moon size={20} color={primaryColor} />,
+        label: '수면 기록하기',
+        description: '어제 밤은 잘 잤나요?',
+        iconBgColor: PRIMARY_BG,
+        iconColor: primaryColor,
+        onPress: () => navigation.navigate('SleepRecord'),
+      },
+      {
         id: 'activity',
         icon: <BarChart3 size={20} color={primaryColor} />,
         label: '활동 살펴보기',

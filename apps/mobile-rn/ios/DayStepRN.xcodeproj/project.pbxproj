@@ -10,6 +10,7 @@
 		03A711A6634CCE600EF8A599 /* LiquidGlassFuelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */; };
 		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
 		0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */; };
+		117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */; };
 		671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */; };
@@ -21,16 +22,15 @@
 		A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A41F7D8C2F500BD800A4C1D8 /* DayStepWidgetModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */; };
 		A41F7D8D2F500BD800A4C1D8 /* DayStepWidgetModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */; };
-		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
-		CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */; };
-		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
-		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
 		AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */; };
-		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
-		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
-		117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */; };
+		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
 		C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */; };
+		CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */; };
+		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
 		D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */; };
+		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
+		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,17 +59,12 @@
 
 /* Begin PBXFileReference section */
 		079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassBackgroundBridge.m; path = DayStepRN/LiquidGlassBackgroundBridge.m; sourceTree = "<group>"; };
-		BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassButton.swift; path = DayStepRN/LiquidGlassButton.swift; sourceTree = "<group>"; };
-		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
-		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
-		228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMenuBridge.m; path = DayStepRN/LiquidGlassMenuBridge.m; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleanupAccordion.swift; path = DayStepRN/NativeCleanupAccordion.swift; sourceTree = "<group>"; };
-		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DayStepRN/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = DayStepRN/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassFuelCard.swift; path = DayStepRN/LiquidGlassFuelCard.swift; sourceTree = "<group>"; };
+		228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMenuBridge.m; path = DayStepRN/LiquidGlassMenuBridge.m; sourceTree = "<group>"; };
 		2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassTabBarBridge.m; path = DayStepRN/LiquidGlassTabBarBridge.m; sourceTree = "<group>"; };
 		42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassFuelCardBridge.m; path = DayStepRN/LiquidGlassFuelCardBridge.m; sourceTree = "<group>"; };
 		4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassBackgroundView.swift; path = DayStepRN/LiquidGlassBackgroundView.swift; sourceTree = "<group>"; };
@@ -79,6 +74,7 @@
 		7D4E3731DA56DD9E092197C5 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = DayStepRN/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassTabBar.swift; path = DayStepRN/LiquidGlassTabBar.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleanupAccordion.swift; path = DayStepRN/NativeCleanupAccordion.swift; sourceTree = "<group>"; };
 		A41F7D662F483FF800A4C1D8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = DayStepRN.entitlements; path = DayStepRN/DayStepRN.entitlements; sourceTree = "<group>"; };
 		A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepCalendarWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,9 +83,13 @@
 		A41F7D892F500A6D00A4C1D8 /* DayStepCalendarWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DayStepCalendarWidgetExtension.entitlements; sourceTree = "<group>"; };
 		A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = DayStepWidgetModule.m; path = DayStepRN/DayStepWidgetModule.m; sourceTree = "<group>"; };
 		A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepWidgetModule.swift; path = DayStepRN/DayStepWidgetModule.swift; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
+		BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassButton.swift; path = DayStepRN/LiquidGlassButton.swift; sourceTree = "<group>"; };
 		D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Products.storekit; path = DayStepRN/Products.storekit; sourceTree = "<group>"; };
+		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
 		E8A1EDB0D0389AC7DA2DA4C5 /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */

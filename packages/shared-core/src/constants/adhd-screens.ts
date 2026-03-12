@@ -12,6 +12,7 @@ import {
   PenLine,
   MessageCircle,
   Heart,
+  Moon,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,7 +39,8 @@ export type ADHDSubViewId =
   | 'organize'
   | 'record'
   | 'news'
-  | 'gratitude';
+  | 'gratitude'
+  | 'sleepRecord';
 
 export interface ADHDScreenHelp {
   title: string;
@@ -229,6 +231,18 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     icon: BookOpen,
     componentPath: 'screens/guide/GuideScreen',
   },
+  sleepRecord: {
+    id: 'sleepRecord',
+    label: '수면 기록하기',
+    icon: Moon,
+    componentPath: 'screens/SleepRecordScreen',
+    help: {
+      title: '수면 기록하기',
+      difficulty:
+        '시간 감각 왜곡(Time Blindness)과 수면 위생 관리 어려움. 불규칙한 수면 패턴이 ADHD 증상을 악화시킵니다.',
+      help: '매일 취침·기상 시간을 기록하고 월간 패턴을 시각화 → 수면 습관 개선의 첫 걸음!',
+    },
+  },
 };
 
 // ============================================================================
@@ -245,7 +259,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'care',
     title: '일상 돌보기',
-    screenIds: ['gratitude', 'timeline', 'activity'],
+    screenIds: ['gratitude', 'timeline', 'activity', 'sleepRecord'],
   },
   {
     id: 'project',
@@ -371,6 +385,12 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         label: '활동 살펴보기',
         icon: BarChart3,
         isPro: true,
+        routeGroup: 'dashboard',
+      },
+      {
+        id: 'sleepRecord',
+        label: '수면 기록하기',
+        icon: Moon,
         routeGroup: 'dashboard',
       },
     ],
