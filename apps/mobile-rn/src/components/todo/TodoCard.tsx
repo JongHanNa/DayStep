@@ -104,7 +104,7 @@ export function TodoCard({
   );
 
   // missed, in_progress, 또는 다음 일정(upcoming) 상태일 때 now 갱신
-  const needsTimer = timeStatus.status === 'missed' || (isNextUpcoming && timeStatus.status === 'upcoming') || timeStatus.status === 'in_progress';
+  const needsTimer = timeStatus.status === 'missed' || timeStatus.status === 'upcoming' || timeStatus.status === 'in_progress';
   useEffect(() => {
     if (!needsTimer) return;
     const interval = timeStatus.status === 'in_progress' ? 1_000 : 60_000;
