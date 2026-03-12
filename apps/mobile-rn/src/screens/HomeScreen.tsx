@@ -168,7 +168,7 @@ export default function HomeScreen() {
         onPress: () => navigation.navigate('Cleanup'),
       },
     ],
-    [navigation],
+    [navigation, primaryColor],
   );
 
   const thoughtItems: FeatureItem[] = useMemo(
@@ -192,7 +192,7 @@ export default function HomeScreen() {
         onPress: () => navigation.navigate('Record'),
       },
     ],
-    [navigation],
+    [navigation, primaryColor],
   );
 
   const careItems: FeatureItem[] = useMemo(
@@ -208,7 +208,7 @@ export default function HomeScreen() {
         isPro: SCREEN_REGISTRY.activity.isPro,
       },
     ],
-    [navigation],
+    [navigation, primaryColor],
   );
 
   return (
