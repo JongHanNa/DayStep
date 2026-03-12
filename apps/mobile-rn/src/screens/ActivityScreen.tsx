@@ -17,6 +17,7 @@ import {useTheme} from '@/theme';
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 function SimpleBarChart({data, maxValue}: {data: number[]; maxValue: number}) {
+  const {primaryColor} = useTheme();
   return (
     <View className="flex-row items-end justify-between h-32 mt-2">
       {data.map((val, i) => {
@@ -25,8 +26,8 @@ function SimpleBarChart({data, maxValue}: {data: number[]; maxValue: number}) {
           <View key={i} className="items-center flex-1 mx-0.5">
             <Text className="text-xs text-gray-500 mb-1">{val}</Text>
             <View
-              className="w-full rounded-t-md bg-blue-400"
-              style={{height: `${Math.max(height, 4)}%`}}
+              className="w-full rounded-t-md"
+              style={{backgroundColor: primaryColor, height: `${Math.max(height, 4)}%`}}
             />
             <Text className="text-xs text-gray-400 mt-1">{DAY_LABELS[i]}</Text>
           </View>

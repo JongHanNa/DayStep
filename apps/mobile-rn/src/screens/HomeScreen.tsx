@@ -110,8 +110,6 @@ export default function HomeScreen() {
   // ── 그룹 아이템 정의 (Lucide 아이콘 + 설명) ──
 
   const PRIMARY_BG = primaryColor + '15';
-  const EMERALD_BG = '#ECFDF5';
-  const EMERALD_ICON = '#22C55E';
 
   const planItems: FeatureItem[] = useMemo(
     () => [
@@ -201,11 +199,11 @@ export default function HomeScreen() {
     () => [
       {
         id: 'activity',
-        icon: <BarChart3 size={20} color={EMERALD_ICON} />,
+        icon: <BarChart3 size={20} color={primaryColor} />,
         label: '활동 살펴보기',
         description: '활동 패턴과 생산성 분석',
-        iconBgColor: EMERALD_BG,
-        iconColor: EMERALD_ICON,
+        iconBgColor: PRIMARY_BG,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('Activity'),
         isPro: SCREEN_REGISTRY.activity.isPro,
       },
@@ -303,7 +301,7 @@ export default function HomeScreen() {
           {/* 6. 일상 돌보기 (Emerald) */}
           <View className="mt-6">
             <GroupSection
-              dotColor="#22C55E"
+              dotColor={primaryColor}
               title="일상 돌보기"
               items={careItems}
               enterDelay={600}
