@@ -7,7 +7,8 @@
  * - 놓침 (빨강)
  */
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {Text, StyleSheet} from 'react-native';
+import Animated, {FadeIn, FadeOut} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {
@@ -35,18 +36,21 @@ export function MissedTodoActionPanel({
 }: MissedTodoActionPanelProps) {
   const {primaryColor} = useTheme();
   return (
-    <View style={styles.container}>
+    <Animated.View
+      entering={FadeIn.duration(300)}
+      exiting={FadeOut.duration(200)}
+      style={styles.container}>
       {/* 종료 시간 X분 지남 뱃지 */}
-      <View style={styles.overdueBadge}>
+      <Animated.View style={styles.overdueBadge}>
         <Clock size={12} color="#DC2626" />
         <Text style={styles.overdueText}>{overdueText}</Text>
-      </View>
+      </Animated.View>
 
       {/* 어떻게 기록할까요? */}
       <Text style={styles.promptText}>어떻게 기록할까요?</Text>
 
       {/* 4개 액션 버튼 */}
-      <View style={styles.buttonRow}>
+      <Animated.View style={styles.buttonRow}>
         <AnimatedPressable
           onPress={onComplete}
           hapticType="light"
@@ -88,8 +92,8 @@ export function MissedTodoActionPanel({
           <XCircle size={14} color="#DC2626" />
           <Text style={[styles.actionBtnText, {color: '#DC2626'}]}>놓침</Text>
         </AnimatedPressable>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 

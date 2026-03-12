@@ -5,7 +5,8 @@
  * - 원래대로 복원 (독립 할일 삭제 + exclusion 삭제)
  */
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {Text, StyleSheet} from 'react-native';
+import Animated, {FadeIn, FadeOut} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {CheckCircle2, RotateCcw, Clock} from 'lucide-react-native';
@@ -23,17 +24,20 @@ export function DeferredTodoActionPanel({
 }: DeferredTodoActionPanelProps) {
   const {primaryColor} = useTheme();
   return (
-    <View style={styles.container}>
-      <View style={styles.infoBadge}>
+    <Animated.View
+      entering={FadeIn.duration(300)}
+      exiting={FadeOut.duration(200)}
+      style={styles.container}>
+      <Animated.View style={styles.infoBadge}>
         <Clock size={12} color="#D97706" />
         <Text style={styles.infoText}>
           미뤄둔 할일이에요 (원래 {originalTime})
         </Text>
-      </View>
+      </Animated.View>
 
       <Text style={styles.promptText}>어떻게 할까요?</Text>
 
-      <View style={styles.buttonRow}>
+      <Animated.View style={styles.buttonRow}>
         <AnimatedPressable
           onPress={onComplete}
           hapticType="light"
@@ -55,8 +59,8 @@ export function DeferredTodoActionPanel({
             원래대로 복원
           </Text>
         </AnimatedPressable>
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 

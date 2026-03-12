@@ -123,14 +123,8 @@ export function TodoCard({
           todo.completed && styles.containerCompleted,
           isSkipped && styles.containerSkipped,
           isMissed && styles.containerMissed,
+          !todo.completed && priorityColor && {backgroundColor: hexWithOpacity(priorityColor, 0.04)},
         ]}>
-        {/* 우선순위 인디케이터 */}
-        {priorityColor && (
-          <View
-            style={[styles.priorityBar, {backgroundColor: priorityColor}]}
-          />
-        )}
-
         {/* 체크박스 */}
         <AnimatedPressable
           onPress={isSkipped ? () => { haptic.light(); onUnskipTodo?.(todo); } : handleToggle}
@@ -141,6 +135,7 @@ export function TodoCard({
             style={[
               styles.checkbox,
               todo.completed && {backgroundColor: primaryColor, borderColor: primaryColor},
+              !todo.completed && priorityColor && {borderColor: priorityColor, borderWidth: 2.5},
               isSkipped && skipReason === 'missed' && styles.checkboxMissed,
               isSkipped && skipReason === 'not_needed' && styles.checkboxNotNeeded,
               checkAnimatedStyle,
@@ -267,17 +262,18 @@ export function TodoCard({
                   : fuel.title || fuel.content;
                 const isExpanded = expandedFuelId === fuel.id;
                 return (
-                  <Pressable
-                    key={fuel.id}
-                    onPress={() => setExpandedFuelId(isExpanded ? null : fuel.id)}
-                    style={[styles.fuelBadge, {backgroundColor: hexWithOpacity(primaryColor, 0.15)}]}>
-                    <Text style={styles.fuelIcon}>⚡</Text>
-                    <Text
-                      style={[styles.fuelText, {color: primaryColor}]}
-                      numberOfLines={isExpanded ? undefined : 1}>
-                      {text}
-                    </Text>
-                  </Pressable>
+                  <Animated.View key={fuel.id} layout={Layout.springify()}>
+                    <Pressable
+                      onPress={() => setExpandedFuelId(isExpanded ? null : fuel.id)}
+                      style={[styles.fuelBadge, {backgroundColor: hexWithOpacity(primaryColor, 0.15)}]}>
+                      <Text style={styles.fuelIcon}>⚡</Text>
+                      <Text
+                        style={[styles.fuelText, {color: primaryColor}]}
+                        numberOfLines={isExpanded ? undefined : 1}>
+                        {text}
+                      </Text>
+                    </Pressable>
+                  </Animated.View>
                 );
               })}
             </View>
@@ -345,7 +341,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
-    overflow: 'hidden',
   },
   overdueTextOnly: {
     marginTop: 4,
@@ -361,15 +356,6 @@ const styles = StyleSheet.create({
   containerMissed: {
     borderWidth: 1,
     borderColor: '#FEE2E2',
-  },
-  priorityBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
   },
   checkboxArea: {
     padding: 4,

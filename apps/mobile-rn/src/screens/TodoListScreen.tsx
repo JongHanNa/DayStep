@@ -16,6 +16,7 @@ import {
 } from '@/components/todo/TodoFormBottomSheet';
 import {
   PostponeBottomSheet,
+  type PostponeBottomSheetRef,
   type PostponeAction,
 } from '@/components/todo/PostponeBottomSheet';
 import {SwipeablePages, type SwipeablePagesRef} from '@/components/core/SwipeablePages';
@@ -143,9 +144,9 @@ function TodoListScreenInner() {
   const pagesRef = useRef<SwipeablePagesRef>(null);
   const {dragState, setPagesRef, currentPageRef, triggerRemeasure} = useDnd();
 
-  // PostponeBottomSheet 상태
-  const [postponingTodo, setPostponingTodo] = useState<Todo | null>(null);
-  const [showPostponeSheet, setShowPostponeSheet] = useState(false);
+  // PostponeBottomSheet ref
+  const postponeRef = useRef<PostponeBottomSheetRef>(null);
+  const postponingTodoRef = useRef<Todo | null>(null);
 
   useEffect(() => {
     fetchTodosForDate(selectedDate);
@@ -311,38 +312,33 @@ function TodoListScreenInner() {
 
   // postpone 핸들러: 바텀시트 열기
   const handlePostpone = useCallback((todo: Todo) => {
-    setPostponingTodo(todo);
-    setShowPostponeSheet(true);
+    postponingTodoRef.current = todo;
+    postponeRef.current?.open(todo);
   }, []);
 
   // postpone 확인 핸들러
   const handlePostponeConfirm = useCallback(
     async (action: PostponeAction, newTime?: string) => {
-      if (!postponingTodo) return;
+      const target = postponingTodoRef.current;
+      if (!target) return;
 
       if (action === 'start_now') {
-        // FocusTimer로 이동
-        setShowPostponeSheet(false);
-        setPostponingTodo(null);
-
         const isRecurring =
-          postponingTodo.recurrence_pattern &&
-          postponingTodo.recurrence_pattern !== 'none';
+          target.recurrence_pattern &&
+          target.recurrence_pattern !== 'none';
         if (isRecurring) {
-          // 반복 할일: exclusion + 독립 할일 생성 후 FocusTimer
-          await postponeTodo(postponingTodo.id, 'start_now');
+          await postponeTodo(target.id, 'start_now');
         }
-        handleFocusTodo(postponingTodo);
+        postponingTodoRef.current = null;
+        handleFocusTodo(target);
         return;
       }
 
-      await postponeTodo(postponingTodo.id, action, newTime);
-      setShowPostponeSheet(false);
-      setPostponingTodo(null);
-      // 데이터 새로고침
+      await postponeTodo(target.id, action, newTime);
+      postponingTodoRef.current = null;
       fetchTodosForDate(selectedDate);
     },
-    [postponingTodo, postponeTodo, handleFocusTodo, fetchTodosForDate, selectedDate],
+    [postponeTodo, handleFocusTodo, fetchTodosForDate, selectedDate],
   );
 
   return (
@@ -453,12 +449,7 @@ function TodoListScreenInner() {
 
       {/* 미루기 바텀시트 */}
       <PostponeBottomSheet
-        visible={showPostponeSheet}
-        todo={postponingTodo}
-        onClose={() => {
-          setShowPostponeSheet(false);
-          setPostponingTodo(null);
-        }}
+        ref={postponeRef}
         onConfirm={handlePostponeConfirm}
       />
     </ScreenContainer>
