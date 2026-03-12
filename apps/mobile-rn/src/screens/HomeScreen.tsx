@@ -34,6 +34,7 @@ import {
   PenLine,
   BarChart3,
   Trash2,
+  Cpu,
 } from 'lucide-react-native';
 import {SCREEN_REGISTRY} from '@daystep/shared-core/constants';
 import {useTheme} from '@/theme';
@@ -215,6 +216,15 @@ export default function HomeScreen() {
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Activity'),
         isPro: SCREEN_REGISTRY.activity.isPro,
+      },
+      {
+        id: 'adhd-understanding',
+        icon: <Cpu size={20} color={primaryColor} />,
+        label: 'ADHD 이해하기',
+        description: '뇌 과학으로 나를 이해하기',
+        iconBgColor: PRIMARY_BG,
+        iconColor: primaryColor,
+        onPress: () => navigation.navigate('ADHDUnderstanding'),
       },
     ],
     [navigation, primaryColor],

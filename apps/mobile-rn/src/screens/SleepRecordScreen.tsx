@@ -4,8 +4,7 @@
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, ScrollView, StyleSheet, Pressable} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedPressable, AnimatedCard} from '@/components/core';
 import {
   SleepInputBottomSheet,
@@ -74,7 +73,6 @@ function formatHour(hour: number): string {
 // ============================================
 
 export default function SleepRecordScreen() {
-  const navigation = useNavigation<any>();
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
   const sheetRef = useRef<SleepInputBottomSheetRef>(null);
@@ -175,19 +173,6 @@ export default function SleepRecordScreen() {
       <ScrollView
         contentContainerStyle={{paddingBottom: 120}}
         showsVerticalScrollIndicator={false}>
-        {/* 헤더 */}
-        <Animated.View entering={FadeIn.duration(400)} style={styles.header}>
-          <AnimatedPressable
-            onPress={() => navigation.goBack()}
-            scaleValue={0.9}
-            haptic={false}
-            style={styles.backBtn}>
-            <ChevronLeft size={24} color="#374151" />
-          </AnimatedPressable>
-          <Text style={styles.headerTitle}>수면 기록</Text>
-          <View style={{width: 40}} />
-        </Animated.View>
-
         {/* 월 네비게이터 */}
         <Animated.View entering={FadeInDown.delay(100).duration(400)} style={styles.monthNav}>
           <AnimatedPressable onPress={goToPrevMonth} scaleValue={0.9} haptic={false}>
@@ -437,25 +422,6 @@ export default function SleepRecordScreen() {
 // ============================================
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
   monthNav: {
     flexDirection: 'row',
     alignItems: 'center',

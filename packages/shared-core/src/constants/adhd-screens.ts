@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Heart,
   Moon,
+  Brain,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -40,7 +41,8 @@ export type ADHDSubViewId =
   | 'record'
   | 'news'
   | 'gratitude'
-  | 'sleepRecord';
+  | 'sleepRecord'
+  | 'adhdUnderstanding';
 
 export interface ADHDScreenHelp {
   title: string;
@@ -243,6 +245,18 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
       help: '매일 취침·기상 시간을 기록하고 월간 패턴을 시각화 → 수면 습관 개선의 첫 걸음!',
     },
   },
+  adhdUnderstanding: {
+    id: 'adhdUnderstanding',
+    label: 'ADHD 이해하기',
+    icon: Brain,
+    componentPath: 'screens/ADHDUnderstandingScreen',
+    help: {
+      title: 'ADHD 이해하기',
+      difficulty:
+        'ADHD에 대한 이해 부족. 왜 그런지 모르면 자신을 탓하게 됩니다.',
+      help: '뇌 과학 기반으로 ADHD 특성을 이해하고, 자기 이해를 통해 실천 가능한 전략을 찾아보세요!',
+    },
+  },
 };
 
 // ============================================================================
@@ -264,7 +278,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'project',
     title: '계획 세우기',
-    screenIds: ['banner', 'execute', 'organize', 'ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['banner', 'execute', 'organize', 'ai-plan', 'ai-chat', 'guide', 'adhdUnderstanding'],
   },
 ];
 
@@ -291,7 +305,7 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
   {
     id: 'project',
     basePath: '/adhd/project',
-    screenIds: ['ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['ai-plan', 'ai-chat', 'guide', 'adhdUnderstanding'],
   },
 ];
 
@@ -445,6 +459,12 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'guide',
         label: '사용법 배우기',
         icon: BookOpen,
+        routeGroup: 'project',
+      },
+      {
+        id: 'adhdUnderstanding',
+        label: 'ADHD 이해하기',
+        icon: Brain,
         routeGroup: 'project',
       },
     ],
