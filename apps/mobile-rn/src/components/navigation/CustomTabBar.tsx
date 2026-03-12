@@ -492,12 +492,12 @@ function TabButton({
         {isTimerActive ? (
           <MiniTimerRing
             progress={timerProgress}
-            color={isFocused ? primaryColor : '#9CA3AF'}
+            color={isFocused ? primaryColor : '#1A1A2E'}
           />
         ) : (
           <Icon
             size={22}
-            color={isFocused ? primaryColor : '#9CA3AF'}
+            color={isFocused ? primaryColor : '#1A1A2E'}
             strokeWidth={isFocused ? 2.2 : 1.8}
           />
         )}

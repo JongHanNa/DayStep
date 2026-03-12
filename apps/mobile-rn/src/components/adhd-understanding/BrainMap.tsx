@@ -116,7 +116,7 @@ function TopicNode({
         ]}>
         <Icon
           size={24}
-          color={isSelected ? primaryColor : '#6B7280'}
+          color={isSelected ? primaryColor : '#1A1A2E'}
         />
       </View>
       <Text
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   nodeLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#1A1A2E',
     textAlign: 'center',
   },
 });

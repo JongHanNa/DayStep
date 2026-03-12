@@ -153,7 +153,7 @@ struct LiquidGlassTabBarContent: View {
                   .foregroundColor(
                     item.isActive
                       ? state.primaryColor
-                      : Color(red: 0.612, green: 0.639, blue: 0.686)
+                      : Color(red: 0.102, green: 0.102, blue: 0.180)
                   )
                   .frame(height: 24)
 
@@ -163,7 +163,7 @@ struct LiquidGlassTabBarContent: View {
                     .foregroundColor(
                       item.isActive
                         ? state.primaryColor
-                        : Color(red: 0.420, green: 0.451, blue: 0.502)
+                        : Color(red: 0.102, green: 0.102, blue: 0.180)
                     )
                     .lineLimit(1)
                     .transition(.opacity.combined(with: .move(edge: .top)))
@@ -196,7 +196,7 @@ struct LiquidGlassTabBarContent: View {
         let isSelected = index == state.selectedIndex
         let iconColor = isSelected
           ? state.primaryColor
-          : Color(red: 0.612, green: 0.639, blue: 0.686)
+          : Color(red: 0.102, green: 0.102, blue: 0.180)
         let showTimerRing = index == 2 && state.timerProgress >= 0
 
         Button {
