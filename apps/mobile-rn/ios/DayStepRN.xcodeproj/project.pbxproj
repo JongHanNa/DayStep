@@ -25,6 +25,10 @@
 		CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */; };
 		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
+		AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */; };
+		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
+		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
+		117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +57,10 @@
 
 /* Begin PBXFileReference section */
 		079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassBackgroundBridge.m; path = DayStepRN/LiquidGlassBackgroundBridge.m; sourceTree = "<group>"; };
+		BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassButton.swift; path = DayStepRN/LiquidGlassButton.swift; sourceTree = "<group>"; };
+		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
+		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
+		228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMenuBridge.m; path = DayStepRN/LiquidGlassMenuBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DayStepRN/Info.plist; sourceTree = "<group>"; };
@@ -144,6 +152,10 @@
 				42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */,
 				4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */,
 				079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */,
+				BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */,
+				DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */,
+				FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */,
+				228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -395,6 +407,10 @@
 				0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */,
 				671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */,
 				B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */,
+				AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */,
+				CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */,
+				EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */,
+				117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

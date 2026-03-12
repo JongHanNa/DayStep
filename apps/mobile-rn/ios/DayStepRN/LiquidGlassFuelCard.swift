@@ -30,9 +30,7 @@ struct LiquidGlassFuelCardContent: View {
   var onCollapse: (() -> Void)?
 
   var body: some View {
-    // NOTE: GlassEffectContainer는 iOS 26 SDK에서 실제 API명 확인 필요.
-    // glassEffectID matched geometry가 컨테이너 없이도 동작하면 이 래핑 불필요.
-    Group {
+    GlassEffectContainer {
       if state.isExpanded {
         expandedPanel
       } else {
@@ -45,7 +43,9 @@ struct LiquidGlassFuelCardContent: View {
   // MARK: Compact Card
   private var compactCard: some View {
     Button(action: {
-      onExpand?()
+      withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+        onExpand?()
+      }
     }) {
       HStack(spacing: 12) {
         Image(systemName: "flame.fill")
@@ -92,7 +92,9 @@ struct LiquidGlassFuelCardContent: View {
         Spacer()
 
         Button(action: {
-          onCollapse?()
+          withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            onCollapse?()
+          }
         }) {
           Image(systemName: "chevron.up")
             .foregroundColor(Color(hex: "#92400E").opacity(0.6))

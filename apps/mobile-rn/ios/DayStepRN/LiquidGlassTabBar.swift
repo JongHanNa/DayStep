@@ -112,6 +112,18 @@ struct LiquidGlassTabBarContent: View {
 
       Spacer()
 
+      HStack(spacing: 6) {
+        Text("이름")
+          .font(.system(size: 13, weight: .medium))
+          .foregroundColor(Color(red: 0.420, green: 0.451, blue: 0.502))
+        Toggle("", isOn: Binding(
+          get: { state.showLabels },
+          set: { newVal in onToggleLabels?(newVal) }
+        ))
+        .toggleStyle(SwitchToggleStyle(tint: state.primaryColor))
+        .scaleEffect(0.75)
+        .frame(width: 40)
+      }
     }
     .padding(.horizontal, 16)
     .padding(.top, 14)

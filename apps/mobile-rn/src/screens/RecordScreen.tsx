@@ -14,7 +14,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  ActionSheetIOS,
 } from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, AnimatedPressable, GlassBackground} from '@/components/core';
@@ -46,6 +45,7 @@ import {
   type NoteWithPerson,
 } from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
+import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {format, differenceInDays} from 'date-fns';
 
 type Step = 'select-person' | 'write-news' | 'completed';
@@ -535,36 +535,20 @@ export default function RecordScreen() {
           관계 기록
         </Text>
 
-        <AnimatedPressable
-          onPress={() => {
-            ActionSheetIOS.showActionSheetWithOptions(
-              {
-                options: ['소식 타임라인', '감사 타임라인', '취소'],
-                cancelButtonIndex: 2,
-              },
-              buttonIndex => {
-                if (buttonIndex === 0) {
-                  setTimelineInitialTab('news');
-                  setTimelineVisible(true);
-                } else if (buttonIndex === 1) {
-                  setTimelineInitialTab('gratitude');
-                  setTimelineVisible(true);
-                }
-              },
-            );
+        <LiquidGlassMenu
+          systemIconName="ellipsis"
+          iconColor="#6B7280"
+          size={40}
+          menuItems={[
+            {title: '소식 타임라인', key: 'news'},
+            {title: '감사 타임라인', key: 'gratitude'},
+          ]}
+          onSelect={(key) => {
+            setTimelineInitialTab(key as 'news' | 'gratitude');
+            setTimelineVisible(true);
           }}
-          hapticType="light"
-          scaleValue={0.9}
-          style={recordStyles.glassStatsBtn}>
-          <GlassBackground
-            blurAmount={16}
-            overlayColor="rgba(255,255,255,0.55)"
-            style={recordStyles.glassStatsBtnInner}>
-            <View style={recordStyles.glassStatsBtnContent}>
-              <MoreHorizontal size={20} color="#6B7280" />
-            </View>
-          </GlassBackground>
-        </AnimatedPressable>
+          fallbackIcon={<MoreHorizontal size={20} color="#6B7280" />}
+        />
       </Animated.View>
 
       <ScrollView
