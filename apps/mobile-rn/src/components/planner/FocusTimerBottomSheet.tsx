@@ -38,7 +38,7 @@ export const FocusTimerBottomSheet = forwardRef<FocusTimerBottomSheetRef, {}>(
   (_, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['60%', '85%'], []);
-    const {primaryColor} = useTheme();
+    const {primaryColor, colors} = useTheme();
     const haptic = useHaptic();
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -269,7 +269,7 @@ export const FocusTimerBottomSheet = forwardRef<FocusTimerBottomSheetRef, {}>(
                   haptic={false}
                   scaleValue={0.95}
                   style={styles.stopBtn}>
-                  <X size={18} color="#EF4444" strokeWidth={2.5} />
+                  <X size={18} color={colors.error} strokeWidth={2.5} />
                 </AnimatedPressable>
               </View>
             )}

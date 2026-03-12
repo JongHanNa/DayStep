@@ -480,7 +480,6 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3B82F6',
     borderRadius: 2,
   },
   remainingText: {

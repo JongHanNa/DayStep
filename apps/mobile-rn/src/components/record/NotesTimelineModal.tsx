@@ -21,6 +21,7 @@ import {useAuthStore} from '@/stores/authStore';
 import {INTERACTION_TYPE_LABELS} from '@/types/cherished-people';
 import type {NoteWithPerson} from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
+import {useTheme} from '@/theme';
 import {formatDistanceToNow} from 'date-fns';
 import {ko} from 'date-fns/locale';
 
@@ -41,12 +42,13 @@ function PersonFilterChips({
   selectedId: string | null;
   onSelect: (id: string | null) => void;
 }) {
+  const {primaryColor} = useTheme();
   return (
     <View style={styles.chipContainer}>
       <TouchableOpacity
         onPress={() => onSelect(null)}
-        style={[styles.chip, !selectedId && styles.chipActive]}>
-        <Text style={[styles.chipText, !selectedId && styles.chipTextActive]}>
+        style={[styles.chip, !selectedId && {backgroundColor: `${primaryColor}20`}]}>
+        <Text style={[styles.chipText, !selectedId && {color: primaryColor, fontWeight: '600'}]}>
           전체
         </Text>
       </TouchableOpacity>
@@ -56,8 +58,8 @@ function PersonFilterChips({
           <TouchableOpacity
             key={p.id}
             onPress={() => onSelect(isActive ? null : p.id)}
-            style={[styles.chip, isActive && styles.chipActive]}>
-            <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+            style={[styles.chip, isActive && {backgroundColor: `${primaryColor}20`}]}>
+            <Text style={[styles.chipText, isActive && {color: primaryColor, fontWeight: '600'}]}>
               {p.name}
             </Text>
           </TouchableOpacity>
@@ -127,6 +129,7 @@ export function NotesTimelineModal({
   initialTab,
 }: NotesTimelineModalProps) {
   const insets = useSafeAreaInsets();
+  const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
   const {people, loadPeople, getRecentNewsNotes, getGratitudeNotes, deleteInteraction} =
     useCherishedPeopleStore();
@@ -205,7 +208,7 @@ export function NotesTimelineModal({
         <View style={styles.tabRow}>
           <TouchableOpacity
             onPress={() => setTab('news')}
-            style={[styles.tabPill, tab === 'news' && styles.tabPillActive]}>
+            style={[styles.tabPill, tab === 'news' && {backgroundColor: primaryColor}]}>
             <MessageCircle
               size={14}
               color={tab === 'news' ? '#FFFFFF' : '#6B7280'}
@@ -222,7 +225,7 @@ export function NotesTimelineModal({
             onPress={() => setTab('gratitude')}
             style={[
               styles.tabPill,
-              tab === 'gratitude' && styles.tabPillActive,
+              tab === 'gratitude' && {backgroundColor: primaryColor},
             ]}>
             <Heart
               size={14}
@@ -248,7 +251,7 @@ export function NotesTimelineModal({
         {/* 타임라인 리스트 */}
         {loading ? (
           <View style={styles.emptyContainer}>
-            <ActivityIndicator size="large" color="#8B5CF6" />
+            <ActivityIndicator size="large" color={primaryColor} />
           </View>
         ) : (
           <FlatList
@@ -299,9 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     gap: 6,
   },
-  tabPillActive: {
-    backgroundColor: '#8B5CF6',
-  },
+  tabPillActive: {},
   tabText: {
     fontSize: 14,
     fontWeight: '500',
@@ -323,17 +324,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#F3F4F6',
   },
-  chipActive: {
-    backgroundColor: '#EDE9FE',
-  },
+  chipActive: {},
   chipText: {
     fontSize: 12,
     color: '#6B7280',
   },
-  chipTextActive: {
-    color: '#7C3AED',
-    fontWeight: '600',
-  },
+  chipTextActive: {},
   noteCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,

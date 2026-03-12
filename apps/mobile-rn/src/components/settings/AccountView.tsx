@@ -13,7 +13,7 @@ interface AccountViewProps {
 }
 
 export function AccountView({onBack}: AccountViewProps) {
-  const {primaryColor} = useTheme();
+  const {primaryColor, colors} = useTheme();
   const {user, signOut} = useAuthStore();
 
   const handleSignOut = useCallback(() => {
@@ -62,8 +62,8 @@ export function AccountView({onBack}: AccountViewProps) {
         hapticType="medium"
         scaleValue={0.95}
         style={styles.logoutBtn}>
-        <LogOut size={18} color="#EF4444" strokeWidth={2} />
-        <Text style={styles.logoutText}>로그아웃</Text>
+        <LogOut size={18} color={colors.error} strokeWidth={2} />
+        <Text style={[styles.logoutText, {color: colors.error}]}>로그아웃</Text>
       </AnimatedPressable>
     </View>
   );

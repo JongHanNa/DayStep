@@ -8,6 +8,7 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, Modal, StyleSheet, Pressable} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
+import {useTheme} from '@/theme';
 import {
   Clock,
   Cloud,
@@ -74,6 +75,7 @@ export function PostponeBottomSheet({
   onClose,
   onConfirm,
 }: PostponeBottomSheetProps) {
+  const {primaryColor} = useTheme();
   const [selectedAction, setSelectedAction] =
     useState<PostponeAction>('reschedule');
   const [hour, setHour] = useState(14);
@@ -265,7 +267,7 @@ export function PostponeBottomSheet({
             onPress={handleConfirm}
             hapticType="medium"
             scaleValue={0.96}
-            style={styles.confirmBtn}>
+            style={[styles.confirmBtn, {backgroundColor: primaryColor}]}>
             <Text style={styles.confirmBtnText}>확인</Text>
           </AnimatedPressable>
         </Pressable>
@@ -397,7 +399,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   confirmBtn: {
-    backgroundColor: '#3B82F6',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',

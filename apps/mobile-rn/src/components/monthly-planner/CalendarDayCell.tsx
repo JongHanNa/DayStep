@@ -1,5 +1,7 @@
 import React, {useCallback, useState} from 'react';
 import {Text, View, type LayoutChangeEvent} from 'react-native';
+import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -34,9 +36,11 @@ export function CalendarDayCell({
   calendarEvents = [],
   onPress,
 }: CalendarDayCellProps) {
+  const {primaryColor} = useTheme();
   const date = parseISO(dateStr);
   const today = isToday(date);
   const inMonth = isSameMonth(date, currentMonth);
+  const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
   const [maxWithMore, setMaxWithMore] = useState(DEFAULT_MAX);
   const [maxWithout, setMaxWithout] = useState(DEFAULT_MAX);
 
@@ -86,12 +90,20 @@ export function CalendarDayCell({
         <View className="items-center mb-1 pt-1">
           <View
             className="w-6 h-6 rounded-full items-center justify-center"
-            style={today ? {backgroundColor: '#3B82F6'} : undefined}>
+            style={today ? {backgroundColor: primaryColor} : undefined}>
             <Text
               style={{
                 fontSize: 12,
                 fontWeight: today ? '700' : '400',
-                color: today ? '#FFFFFF' : inMonth ? '#1F2937' : '#D1D5DB',
+                color: today
+                  ? '#FFFFFF'
+                  : !inMonth
+                  ? '#D1D5DB'
+                  : dayOfWeek === 0
+                  ? fixedColors.calendarSunday
+                  : dayOfWeek === 6
+                  ? fixedColors.calendarSaturday
+                  : '#1F2937',
               }}>
               {date.getDate()}
             </Text>

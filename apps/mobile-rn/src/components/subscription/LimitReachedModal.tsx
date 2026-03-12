@@ -16,6 +16,7 @@ import {
 import {Crown, Lock} from 'lucide-react-native';
 import {useNavigation} from '@react-navigation/native';
 import {ENTITY_DISPLAY_NAME, type UsageEntityType} from '@/lib/featureFlags';
+import {useTheme} from '@/theme';
 
 interface LimitReachedModalProps {
   visible: boolean;
@@ -33,6 +34,7 @@ export function LimitReachedModal({
   maxCount,
 }: LimitReachedModalProps) {
   const navigation = useNavigation();
+  const {primaryColor} = useTheme();
 
   const entityLabel = entityType ? ENTITY_DISPLAY_NAME[entityType] : '항목';
 
@@ -76,7 +78,7 @@ export function LimitReachedModal({
 
               {/* 버튼 영역 */}
               <TouchableOpacity
-                style={styles.upgradeButton}
+                style={[styles.upgradeButton, {backgroundColor: primaryColor}]}
                 onPress={handleUpgrade}
                 activeOpacity={0.85}
               >
@@ -147,7 +149,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#3B82F6',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 24,

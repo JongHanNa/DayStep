@@ -7,6 +7,7 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
+import {useTheme} from '@/theme';
 import {CheckCircle2, RotateCcw, Clock} from 'lucide-react-native';
 
 interface DeferredTodoActionPanelProps {
@@ -20,6 +21,7 @@ export function DeferredTodoActionPanel({
   onComplete,
   onRestore,
 }: DeferredTodoActionPanelProps) {
+  const {primaryColor} = useTheme();
   return (
     <View style={styles.container}>
       <View style={styles.infoBadge}>
@@ -48,8 +50,8 @@ export function DeferredTodoActionPanel({
           hapticType="light"
           scaleValue={0.92}
           style={[styles.actionBtn, styles.restoreBtnBg]}>
-          <RotateCcw size={14} color="#3B82F6" />
-          <Text style={[styles.actionBtnText, {color: '#3B82F6'}]}>
+          <RotateCcw size={14} color={primaryColor} />
+          <Text style={[styles.actionBtnText, {color: primaryColor}]}>
             원래대로 복원
           </Text>
         </AnimatedPressable>

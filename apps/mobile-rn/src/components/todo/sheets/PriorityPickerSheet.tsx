@@ -7,6 +7,7 @@ import {View, Text, StyleSheet} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {Flag, AlertTriangle, Star, Zap, Minus, AlertCircle} from 'lucide-react-native';
 
@@ -92,10 +93,10 @@ export const PriorityPickerSheet = forwardRef<
             style={[
               styles.btn,
               importance && styles.btnActive,
-              importance && {borderColor: '#F59E0B'},
+              importance && {borderColor: fixedColors.priorityImportance},
             ]}>
             <View style={styles.btnContent}>
-              <Star size={14} color={importance ? '#F59E0B' : '#4B5563'} />
+              <Star size={14} color={importance ? fixedColors.priorityImportance : '#4B5563'} />
               <Text style={styles.btnText}>중요</Text>
             </View>
           </AnimatedPressable>
@@ -108,10 +109,10 @@ export const PriorityPickerSheet = forwardRef<
             style={[
               styles.btn,
               urgency && styles.btnActive,
-              urgency && {borderColor: '#3B82F6'},
+              urgency && {borderColor: fixedColors.priorityUrgency},
             ]}>
             <View style={styles.btnContent}>
-              <Zap size={14} color={urgency ? '#3B82F6' : '#4B5563'} />
+              <Zap size={14} color={urgency ? fixedColors.priorityUrgency : '#4B5563'} />
               <Text style={styles.btnText}>긴급</Text>
             </View>
           </AnimatedPressable>
@@ -124,10 +125,10 @@ export const PriorityPickerSheet = forwardRef<
             style={[
               styles.btn,
               isReluctantMustDo && styles.btnActive,
-              isReluctantMustDo && {borderColor: '#EF4444'},
+              isReluctantMustDo && {borderColor: fixedColors.priorityReluctant},
             ]}>
             <View style={styles.btnContent}>
-              <AlertCircle size={14} color={isReluctantMustDo ? '#EF4444' : '#4B5563'} />
+              <AlertCircle size={14} color={isReluctantMustDo ? fixedColors.priorityReluctant : '#4B5563'} />
               <Text style={styles.btnText}>해야 할 일</Text>
             </View>
           </AnimatedPressable>

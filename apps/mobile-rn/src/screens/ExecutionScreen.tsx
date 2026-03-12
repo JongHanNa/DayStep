@@ -78,9 +78,11 @@ function CelebrationOverlay({onDismiss}: {onDismiss: () => void}) {
 function QuickNotePrompt({
   onSave,
   onSkip,
+  primaryColor,
 }: {
   onSave: (text: string) => void;
   onSkip: () => void;
+  primaryColor: string;
 }) {
   const [text, setText] = useState('');
 
@@ -109,7 +111,7 @@ function QuickNotePrompt({
         <AnimatedPressable
           onPress={() => text.trim() && onSave(text.trim())}
           hapticType="medium"
-          style={[styles.noteSaveBtn, !text.trim() && {opacity: 0.4}]}
+          style={[styles.noteSaveBtn, {backgroundColor: primaryColor}, !text.trim() && {opacity: 0.4}]}
           disabled={!text.trim()}>
           <Text style={styles.noteSaveText}>저장</Text>
         </AnimatedPressable>
@@ -410,7 +412,7 @@ export default function ExecutionScreen() {
 
             {/* 빠른 집중 노트 프롬프트 */}
             {showNotePrompt && (
-              <QuickNotePrompt onSave={handleNoteSave} onSkip={handleNoteSkip} />
+              <QuickNotePrompt onSave={handleNoteSave} onSkip={handleNoteSkip} primaryColor={primaryColor} />
             )}
           </View>
         ) : (
@@ -734,7 +736,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: VIOLET,
     alignItems: 'center',
   },
   noteSaveText: {

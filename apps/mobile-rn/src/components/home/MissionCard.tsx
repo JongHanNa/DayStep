@@ -8,6 +8,7 @@ import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {Target, ArrowRight, CalendarPlus} from 'lucide-react-native';
 import type {Todo} from '@daystep/shared-core';
+import {useTheme} from '@/theme';
 
 interface MissionCardProps {
   todos: Todo[];
@@ -45,6 +46,7 @@ export function MissionCard({
   onNavigateToPlanner,
   enterDelay = 0,
 }: MissionCardProps) {
+  const {primaryColor} = useTheme();
   const mission = useMemo(() => pickTopMission(todos), [todos]);
 
   return (
@@ -63,7 +65,7 @@ export function MissionCard({
           elevation: 3,
         }}>
         <View className="flex-row items-center mb-3">
-          <Target size={20} color="#3B82F6" />
+          <Target size={20} color={primaryColor} />
           <Text className="text-base font-semibold text-gray-800 ml-2">
             오늘의 미션
           </Text>
@@ -85,7 +87,7 @@ export function MissionCard({
               style={{borderRadius: 12}}>
               <View
                 style={{
-                  backgroundColor: '#3B82F6',
+                  backgroundColor: primaryColor,
                   borderRadius: 12,
                   paddingVertical: 12,
                   paddingHorizontal: 16,

@@ -7,6 +7,7 @@ import {View, Text, Switch, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {ChevronRight} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 interface SettingsRowProps {
   icon?: LucideIcon;
@@ -36,8 +37,10 @@ export function SettingsRow({
   onToggle,
   onPress,
   showChevron = false,
-  primaryColor = '#3B82F6',
+  primaryColor: primaryColorProp,
 }: SettingsRowProps) {
+  const {primaryColor: themePrimaryColor} = useTheme();
+  const primaryColor = primaryColorProp ?? themePrimaryColor;
   const content = (
     <View style={styles.container}>
       {Icon && (

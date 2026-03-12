@@ -26,6 +26,7 @@ import {
   Rocket,
 } from 'lucide-react-native';
 import Config from 'react-native-config';
+import {useTheme} from '@/theme';
 
 const SUPABASE_URL = Config.SUPABASE_URL ?? '';
 const MCP_AUTH_URL = `${SUPABASE_URL}/functions/v1/mcp-server/auth/init`;
@@ -81,6 +82,7 @@ function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: 
 }
 
 export default function GuideScreen() {
+  const {primaryColor} = useTheme();
   const [expandedStep, setExpandedStep] = useState<number | null>(1);
   const [copiedConfig, setCopiedConfig] = useState(false);
 
@@ -114,7 +116,7 @@ export default function GuideScreen() {
           className="px-4 mb-4">
           <View className="bg-blue-50 rounded-2xl p-4">
             <View className="flex-row items-center mb-2">
-              <Sparkles size={20} color="#3B82F6" />
+              <Sparkles size={20} color={primaryColor} />
               <Text className="text-sm font-semibold text-blue-700 ml-2">
                 DayStep + Claude Desktop
               </Text>
@@ -131,7 +133,7 @@ export default function GuideScreen() {
           <StepAccordion
             stepNumber={1}
             title="MCP 토큰 발급"
-            icon={<Key size={18} color="#3B82F6" />}
+            icon={<Key size={18} color={primaryColor} />}
             expanded={expandedStep === 1}
             onToggle={() => toggleStep(1)}>
             <Text className="text-sm text-gray-600 mb-4 leading-5">
@@ -140,7 +142,8 @@ export default function GuideScreen() {
             </Text>
             <TouchableOpacity
               onPress={handleOpenAuth}
-              className="bg-blue-500 rounded-xl py-3 px-4 flex-row items-center justify-center">
+              style={{backgroundColor: primaryColor}}
+              className="rounded-xl py-3 px-4 flex-row items-center justify-center">
               <ExternalLink size={16} color="#FFFFFF" />
               <Text className="text-white font-semibold ml-2">
                 토큰 발급 페이지 열기
@@ -154,7 +157,7 @@ export default function GuideScreen() {
           <StepAccordion
             stepNumber={2}
             title="Claude Desktop 설정"
-            icon={<Laptop size={18} color="#3B82F6" />}
+            icon={<Laptop size={18} color={primaryColor} />}
             expanded={expandedStep === 2}
             onToggle={() => toggleStep(2)}>
             <Text className="text-sm text-gray-600 mb-2 leading-5">
@@ -200,7 +203,7 @@ export default function GuideScreen() {
           <StepAccordion
             stepNumber={3}
             title="연결 테스트"
-            icon={<Rocket size={18} color="#3B82F6" />}
+            icon={<Rocket size={18} color={primaryColor} />}
             expanded={expandedStep === 3}
             onToggle={() => toggleStep(3)}>
             <Text className="text-sm text-gray-600 mb-4 leading-5">

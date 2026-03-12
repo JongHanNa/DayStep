@@ -34,6 +34,7 @@ import {AnimatedPressable, Popover} from '@/components/core';
 import {AttributeToolbar, type AnchorRect} from './AttributeToolbar';
 import {InlineIconPicker} from './InlineIconPicker';
 import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {Flag, Star, Zap, AlertCircle, AlertTriangle, Minus} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
@@ -303,10 +304,10 @@ function PriorityPopoverContent({
           style={[
             popStyles.btn,
             importance && popStyles.btnActive,
-            importance && {borderColor: '#F59E0B'},
+            importance && {borderColor: fixedColors.priorityImportance},
           ]}>
           <View style={popStyles.btnContent}>
-            <Star size={13} color={importance ? '#F59E0B' : '#4B5563'} />
+            <Star size={13} color={importance ? fixedColors.priorityImportance : '#4B5563'} />
             <Text style={popStyles.btnText}>중요</Text>
           </View>
         </AnimatedPressable>
@@ -317,10 +318,10 @@ function PriorityPopoverContent({
           style={[
             popStyles.btn,
             urgency && popStyles.btnActive,
-            urgency && {borderColor: '#3B82F6'},
+            urgency && {borderColor: fixedColors.priorityUrgency},
           ]}>
           <View style={popStyles.btnContent}>
-            <Zap size={13} color={urgency ? '#3B82F6' : '#4B5563'} />
+            <Zap size={13} color={urgency ? fixedColors.priorityUrgency : '#4B5563'} />
             <Text style={popStyles.btnText}>긴급</Text>
           </View>
         </AnimatedPressable>
@@ -331,10 +332,10 @@ function PriorityPopoverContent({
           style={[
             popStyles.btn,
             isReluctantMustDo && popStyles.btnActive,
-            isReluctantMustDo && {borderColor: '#EF4444'},
+            isReluctantMustDo && {borderColor: fixedColors.priorityReluctant},
           ]}>
           <View style={popStyles.btnContent}>
-            <AlertCircle size={13} color={isReluctantMustDo ? '#EF4444' : '#4B5563'} />
+            <AlertCircle size={13} color={isReluctantMustDo ? fixedColors.priorityReluctant : '#4B5563'} />
             <Text style={popStyles.btnText}>해야 할 일</Text>
           </View>
         </AnimatedPressable>

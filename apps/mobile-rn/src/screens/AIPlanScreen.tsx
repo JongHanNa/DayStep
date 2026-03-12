@@ -39,6 +39,8 @@ import type {Project, ProjectStatus} from '@/types/project';
 import type {Todo} from '@daystep/shared-core';
 import {PROJECT_COLORS, PROJECT_ICONS} from '@/types/project';
 import {format} from 'date-fns';
+import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 
 function formatTodoDate(todo: Todo): string {
   if (!todo.start_time) {
@@ -60,10 +62,10 @@ const STATUS_FILTERS: {key: ProjectStatus | 'all'; label: string}[] = [
 ];
 
 const STATUS_LABELS: Record<ProjectStatus, {label: string; color: string; bg: string}> = {
-  not_started: {label: '시작안함', color: '#6B7280', bg: '#F3F4F6'},
-  in_progress: {label: '진행중', color: '#3B82F6', bg: '#EFF6FF'},
-  on_hold: {label: '중단', color: '#F59E0B', bg: '#FFFBEB'},
-  completed: {label: '완료', color: '#22C55E', bg: '#F0FDF4'},
+  not_started: {label: '시작안함', color: fixedColors.statusNotStarted, bg: '#F3F4F6'},
+  in_progress: {label: '진행중', color: fixedColors.statusInProgress, bg: '#EFF6FF'},
+  on_hold: {label: '중단', color: fixedColors.statusOnHold, bg: '#FFFBEB'},
+  completed: {label: '완료', color: fixedColors.statusCompleted, bg: '#F0FDF4'},
 };
 
 function StatusFilterBar({
@@ -160,7 +162,7 @@ function ProjectCard({
               <TouchableOpacity
                 onPress={() => onStatusChange('in_progress')}
                 className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
-                <Play size={14} color="#3B82F6" />
+                <Play size={14} color={fixedColors.statusInProgress} />
                 <Text className="text-xs text-blue-600 ml-1">시작</Text>
               </TouchableOpacity>
             )}
@@ -176,13 +178,13 @@ function ProjectCard({
                 <TouchableOpacity
                   onPress={() => onStatusChange('on_hold')}
                   className="flex-row items-center bg-yellow-50 rounded-lg px-3 py-1.5 mr-2">
-                  <Pause size={14} color="#F59E0B" />
+                  <Pause size={14} color={fixedColors.statusOnHold} />
                   <Text className="text-xs text-yellow-600 ml-1">중단</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => onStatusChange('completed')}
                   className="flex-row items-center bg-green-50 rounded-lg px-3 py-1.5 mr-2">
-                  <CheckCircle2 size={14} color="#22C55E" />
+                  <CheckCircle2 size={14} color={fixedColors.statusCompleted} />
                   <Text className="text-xs text-green-600 ml-1">완료</Text>
                 </TouchableOpacity>
               </>
@@ -193,13 +195,13 @@ function ProjectCard({
                 <TouchableOpacity
                   onPress={() => onStatusChange('in_progress')}
                   className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
-                  <RotateCcw size={14} color="#3B82F6" />
+                  <RotateCcw size={14} color={fixedColors.statusInProgress} />
                   <Text className="text-xs text-blue-600 ml-1">재개</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => onStatusChange('completed')}
                   className="flex-row items-center bg-green-50 rounded-lg px-3 py-1.5 mr-2">
-                  <CheckCircle2 size={14} color="#22C55E" />
+                  <CheckCircle2 size={14} color={fixedColors.statusCompleted} />
                   <Text className="text-xs text-green-600 ml-1">완료</Text>
                 </TouchableOpacity>
               </>
@@ -209,7 +211,7 @@ function ProjectCard({
               <TouchableOpacity
                 onPress={() => onStatusChange('in_progress')}
                 className="flex-row items-center bg-blue-50 rounded-lg px-3 py-1.5 mr-2">
-                <RotateCcw size={14} color="#3B82F6" />
+                <RotateCcw size={14} color={fixedColors.statusInProgress} />
                 <Text className="text-xs text-blue-600 ml-1">다시 진행</Text>
               </TouchableOpacity>
             )}
@@ -236,6 +238,7 @@ function ProjectCard({
 
 export default function AIPlanScreen() {
   const user = useAuthStore(s => s.user);
+  const {primaryColor} = useTheme();
   const {
     projects,
     projectTodos,
@@ -545,7 +548,7 @@ export default function AIPlanScreen() {
                         setEditingProject({...editingProject, status: 'in_progress'});
                       }}
                       className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
-                      <Play size={14} color="#3B82F6" />
+                      <Play size={14} color={fixedColors.statusInProgress} />
                       <Text className="text-xs text-blue-600 ml-1">시작하기</Text>
                     </TouchableOpacity>
                   )}
@@ -568,7 +571,7 @@ export default function AIPlanScreen() {
                           setEditingProject({...editingProject, status: 'on_hold'});
                         }}
                         className="flex-row items-center bg-yellow-50 rounded-lg px-3 py-2 mr-2 mb-2">
-                        <Pause size={14} color="#F59E0B" />
+                        <Pause size={14} color={fixedColors.statusOnHold} />
                         <Text className="text-xs text-yellow-600 ml-1">중단</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -578,7 +581,7 @@ export default function AIPlanScreen() {
                           setEditingProject({...editingProject, status: 'completed'});
                         }}
                         className="flex-row items-center bg-green-50 rounded-lg px-3 py-2 mr-2 mb-2">
-                        <CheckCircle2 size={14} color="#22C55E" />
+                        <CheckCircle2 size={14} color={fixedColors.statusCompleted} />
                         <Text className="text-xs text-green-600 ml-1">완료</Text>
                       </TouchableOpacity>
                     </>
@@ -592,7 +595,7 @@ export default function AIPlanScreen() {
                           setEditingProject({...editingProject, status: 'in_progress'});
                         }}
                         className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
-                        <Play size={14} color="#3B82F6" />
+                        <Play size={14} color={fixedColors.statusInProgress} />
                         <Text className="text-xs text-blue-600 ml-1">재개</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -602,7 +605,7 @@ export default function AIPlanScreen() {
                           setEditingProject({...editingProject, status: 'completed'});
                         }}
                         className="flex-row items-center bg-green-50 rounded-lg px-3 py-2 mr-2">
-                        <CheckCircle2 size={14} color="#22C55E" />
+                        <CheckCircle2 size={14} color={fixedColors.statusCompleted} />
                         <Text className="text-xs text-green-600 ml-1">완료</Text>
                       </TouchableOpacity>
                     </>
@@ -615,7 +618,7 @@ export default function AIPlanScreen() {
                         setEditingProject({...editingProject, status: 'in_progress'});
                       }}
                       className="flex-row items-center bg-blue-50 rounded-lg px-3 py-2 mr-2">
-                      <RotateCcw size={14} color="#3B82F6" />
+                      <RotateCcw size={14} color={fixedColors.statusInProgress} />
                       <Text className="text-xs text-blue-600 ml-1">다시 진행</Text>
                     </TouchableOpacity>
                   )}
@@ -625,7 +628,8 @@ export default function AIPlanScreen() {
 
             <TouchableOpacity
               onPress={handleSaveForm}
-              className="bg-blue-500 rounded-xl py-4 items-center">
+              style={{backgroundColor: primaryColor}}
+              className="rounded-xl py-4 items-center">
               <Text className="text-white font-bold text-base">
                 {editingProject ? '수정하기' : '만들기'}
               </Text>
@@ -645,7 +649,8 @@ export default function AIPlanScreen() {
         className="px-4 pt-2 pb-2 flex-row items-center justify-end">
         <TouchableOpacity
           onPress={handleCreate}
-          className="bg-blue-500 rounded-full w-9 h-9 items-center justify-center">
+          style={{backgroundColor: primaryColor}}
+          className="rounded-full w-9 h-9 items-center justify-center">
           <Plus size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </Animated.View>

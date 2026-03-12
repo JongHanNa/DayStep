@@ -9,6 +9,7 @@ import {View, Text, StyleSheet, Pressable} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable, Popover} from '@/components/core';
 import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 import {useHaptic} from '@/hooks/useHaptic';
 import {
   X,
@@ -155,8 +156,8 @@ function CalendarGrid({
             key={d}
             style={[
               calStyles.weekdayText,
-              i === 0 && {color: '#EF4444'},
-              i === 6 && {color: '#3B82F6'},
+              i === 0 && {color: fixedColors.calendarSunday},
+              i === 6 && {color: fixedColors.calendarSaturday},
             ]}>
             {d}
           </Text>
@@ -188,8 +189,8 @@ function CalendarGrid({
                   style={[
                     calStyles.dayText,
                     !inMonth && {color: '#D1D5DB'},
-                    di === 0 && inMonth && {color: '#EF4444'},
-                    di === 6 && inMonth && {color: '#3B82F6'},
+                    di === 0 && inMonth && {color: fixedColors.calendarSunday},
+                    di === 6 && inMonth && {color: fixedColors.calendarSaturday},
                     selected && {color: '#FFFFFF', fontWeight: '700'},
                   ]}>
                   {format(day, 'd')}

@@ -16,6 +16,7 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ArrowLeft, Save} from 'lucide-react-native';
 import {supabase} from '@/lib/supabase';
+import {useTheme} from '@/theme';
 
 interface PlanLimitRow {
   id: string;
@@ -44,6 +45,7 @@ interface Props {
 }
 
 export function AdminPlanLimitsScreen({onBack}: Props) {
+  const {primaryColor} = useTheme();
   const [rows, setRows] = useState<PlanLimitRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [edits, setEdits] = useState<EditMap>({});
@@ -182,7 +184,7 @@ export function AdminPlanLimitsScreen({onBack}: Props) {
               {(['free', 'pro'] as const).map(tier => (
                 <View key={tier} style={styles.tierRow}>
                   <View style={[styles.tierBadge, tier === 'pro' && styles.tierBadgePro]}>
-                    <Text style={[styles.tierBadgeText, tier === 'pro' && styles.tierBadgeTextPro]}>
+                    <Text style={[styles.tierBadgeText, tier === 'pro' && styles.tierBadgeTextPro, tier === 'pro' && {color: primaryColor}]}>
                       {tier === 'free' ? 'Free' : 'Pro'}
                     </Text>
                   </View>

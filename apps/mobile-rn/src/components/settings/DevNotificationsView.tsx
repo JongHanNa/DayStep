@@ -7,6 +7,7 @@ import {View, Text, ScrollView, StyleSheet, ActivityIndicator} from 'react-nativ
 import notifee, {TriggerNotificationWithId, TriggerType} from '@notifee/react-native';
 import {AnimatedPressable} from '@/components/core';
 import {ArrowLeft, RefreshCw, BellOff} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 interface DevNotificationsViewProps {
   onBack: () => void;
@@ -29,6 +30,7 @@ function formatTimestamp(ts: number): string {
 }
 
 export function DevNotificationsView({onBack}: DevNotificationsViewProps) {
+  const {primaryColor} = useTheme();
   const [notifications, setNotifications] = useState<SortedNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,7 +75,7 @@ export function DevNotificationsView({onBack}: DevNotificationsViewProps) {
         <View style={styles.headerCenter}>
           <Text style={styles.title}>알림 스케줄</Text>
           {!loading && (
-            <View style={styles.badge}>
+            <View style={[styles.badge, {backgroundColor: primaryColor}]}>
               <Text style={styles.badgeText}>{notifications.length}</Text>
             </View>
           )}
@@ -90,7 +92,7 @@ export function DevNotificationsView({onBack}: DevNotificationsViewProps) {
       {/* 목록 */}
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#F59E0B" />
+          <ActivityIndicator size="large" color={primaryColor} />
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.center}>

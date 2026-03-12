@@ -1,5 +1,6 @@
 import React from 'react';
 import {Text, View} from 'react-native';
+import {useTheme} from '@/theme';
 import type {MonthTodoSummary} from '@/stores/todoStore';
 
 interface TodoChipProps {
@@ -7,7 +8,8 @@ interface TodoChipProps {
 }
 
 export function TodoChip({todo}: TodoChipProps) {
-  const color = todo.color || '#3B82F6';
+  const {primaryColor} = useTheme();
+  const color = todo.color || primaryColor;
   const bg = `${color}20`;
 
   return (

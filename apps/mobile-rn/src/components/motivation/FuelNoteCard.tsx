@@ -11,6 +11,7 @@ import type {Note} from '@/stores/noteStore';
 import {Pin, Link2} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
+import {useTheme} from '@/theme';
 
 interface FuelNoteCardProps {
   note: Note;
@@ -21,6 +22,7 @@ interface FuelNoteCardProps {
 }
 
 export function FuelNoteCard({note, index, onPress, onPin, onDelete}: FuelNoteCardProps) {
+  const {primaryColor} = useTheme();
   const emotionConfig = note.emotion_tag ? EMOTION_CONFIG[note.emotion_tag] : null;
   const todoCount = note.todos?.length ?? 0;
   const dateStr = format(new Date(note.created_at), 'M/d (EEE)', {locale: ko});
@@ -76,7 +78,7 @@ export function FuelNoteCard({note, index, onPress, onPin, onDelete}: FuelNoteCa
           )}
           <View style={styles.topRight}>
             {note.is_banner_pinned && (
-              <Pin size={14} color="#F59E0B" strokeWidth={2} />
+              <Pin size={14} color={primaryColor} strokeWidth={2} />
             )}
             {todoCount > 0 && (
               <View style={styles.todoCountBadge}>

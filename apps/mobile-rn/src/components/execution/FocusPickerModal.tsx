@@ -30,7 +30,6 @@ import type {Todo} from '@daystep/shared-core';
 // Constants
 // ============================================
 
-const VIOLET = '#8B5CF6';
 const QUICK_FOCUS_SECONDS = 20 * 60;
 const DEFAULT_FOCUS_SECONDS = 25 * 60;
 
@@ -98,7 +97,7 @@ function SegmentControl({
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [primaryColor, VIOLET],
+      [primaryColor, primaryColor],
     ),
   }));
 
@@ -297,7 +296,7 @@ export function FocusPickerModal({visible, onClose, onSelect}: FocusPickerModalP
             disabled={!canConfirm}
             style={[
               styles.confirmBtn,
-              {backgroundColor: mode === 'todo' ? primaryColor : VIOLET},
+              {backgroundColor: primaryColor},
               !canConfirm && {opacity: 0.4},
             ]}>
             <Text style={styles.confirmBtnText}>선택</Text>

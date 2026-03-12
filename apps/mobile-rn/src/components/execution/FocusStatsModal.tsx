@@ -44,7 +44,7 @@ function formatSessionDate(isoString: string): string {
 
 export function FocusStatsModal({visible, onClose}: FocusStatsModalProps) {
   const insets = useSafeAreaInsets();
-  const {primaryColor} = useTheme();
+  const {primaryColor, colors} = useTheme();
   const {stats, sessions} = usePomodoroStore();
 
   // 오늘 집중 시간 계산 (sessions에서 오늘 POMODORO duration 합산)
@@ -167,7 +167,7 @@ export function FocusStatsModal({visible, onClose}: FocusStatsModalProps) {
                         {durationMin}분
                       </Text>
                       {session.interrupted && (
-                        <Text style={styles.sessionInterrupted}>중단</Text>
+                        <Text style={[styles.sessionInterrupted, {color: colors.error}]}>중단</Text>
                       )}
                     </View>
                   </View>
@@ -321,7 +321,6 @@ const styles = StyleSheet.create({
   },
   sessionInterrupted: {
     fontSize: 12,
-    color: '#EF4444',
     fontWeight: '500',
   },
 });

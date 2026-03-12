@@ -12,8 +12,10 @@ import {useNoteStore} from '@/stores/noteStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {Flame, Heart, Sparkles, Phone} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 export function BannerPage() {
+  const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
   const {notes, fetchFuelNotes, getRandomFuelNote} = useNoteStore();
   const {recommendations, loadRecommendations, getRandomRecommendation} =
@@ -136,7 +138,7 @@ export function BannerPage() {
       <Animated.View entering={FadeInDown.delay(400).duration(400)}>
         <AnimatedCard>
           <View className="items-center py-4">
-            <Sparkles size={24} color="#8B5CF6" />
+            <Sparkles size={24} color={primaryColor} />
             <Text className="text-sm text-gray-500 mt-3 text-center leading-5">
               "ADHD가 있어도 일상을 잘 돌볼 수 있어요"{'\n'}
               DayStep이 오늘도 함께할게요.

@@ -53,7 +53,7 @@ export function TodoEditOverlay({
   mode,
   editingTodo,
 }: TodoEditOverlayProps) {
-  const {primaryColor} = useTheme();
+  const {primaryColor, colors} = useTheme();
   const insets = useSafeAreaInsets();
   const titleInputRef = useRef<TextInput>(null);
   const [projectPickerVisible, setProjectPickerVisible] = useState(false);
@@ -158,7 +158,7 @@ export function TodoEditOverlay({
               onPress={handleDeletePress}
               hapticType="light"
               style={styles.deleteBtn}>
-              <Text style={styles.deleteBtnText}>삭제</Text>
+              <Text style={[styles.deleteBtnText, {color: colors.error}]}>삭제</Text>
             </AnimatedPressable>
             <AnimatedPressable
               onPress={handleSavePress}

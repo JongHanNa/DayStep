@@ -5,12 +5,14 @@ import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {Flame} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 export function MotivationEmptyState() {
+  const {primaryColor} = useTheme();
   return (
     <View style={styles.container}>
       <Animated.View entering={FadeInDown.duration(400)} style={styles.inner}>
-        <Flame size={52} color="#F59E0B" strokeWidth={1.5} />
+        <Flame size={52} color={primaryColor} strokeWidth={1.5} />
         <Text style={styles.title}>첫 원동력을 작성해보세요</Text>
         <Text style={styles.description}>
           나를 움직이게 하는 것들을 기록하면{'\n'}

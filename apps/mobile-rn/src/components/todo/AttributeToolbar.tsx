@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
+import {fixedColors} from '@/theme/colors';
 
 // ============================================
 // Types
@@ -97,9 +98,9 @@ function getPriorityChipLabel(form: ToolbarForm): string {
 }
 
 function getPriorityChipStyle(form: ToolbarForm): {bg: string; border: string; text: string} {
-  if (form.importance && form.urgency) return {bg: '#FEF2F2', border: '#EF4444', text: '#DC2626'};
-  if (form.importance) return {bg: '#FFFBEB', border: '#F59E0B', text: '#B45309'};
-  if (form.urgency) return {bg: '#EFF6FF', border: '#3B82F6', text: '#1D4ED8'};
+  if (form.importance && form.urgency) return {bg: '#FEF2F2', border: fixedColors.priorityReluctant, text: '#DC2626'};
+  if (form.importance) return {bg: '#FFFBEB', border: fixedColors.priorityImportance, text: '#B45309'};
+  if (form.urgency) return {bg: '#EFF6FF', border: fixedColors.priorityUrgency, text: '#1D4ED8'};
   return {bg: '#F3F4F6', border: 'transparent', text: '#4B5563'};
 }
 

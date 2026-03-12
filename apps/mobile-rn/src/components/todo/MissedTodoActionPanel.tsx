@@ -9,6 +9,7 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
+import {useTheme} from '@/theme';
 import {
   CheckCircle2,
   Pause,
@@ -32,6 +33,7 @@ export function MissedTodoActionPanel({
   onSkipNotNeeded,
   onSkipMissed,
 }: MissedTodoActionPanelProps) {
+  const {primaryColor} = useTheme();
   return (
     <View style={styles.container}>
       {/* 종료 시간 X분 지남 뱃지 */}
@@ -61,8 +63,8 @@ export function MissedTodoActionPanel({
           hapticType="light"
           scaleValue={0.92}
           style={[styles.actionBtn, styles.postponeBtnBg]}>
-          <Pause size={14} color="#D97706" />
-          <Text style={[styles.actionBtnText, {color: '#D97706'}]}>
+          <Pause size={14} color={primaryColor} />
+          <Text style={[styles.actionBtnText, {color: primaryColor}]}>
             미뤘음
           </Text>
         </AnimatedPressable>

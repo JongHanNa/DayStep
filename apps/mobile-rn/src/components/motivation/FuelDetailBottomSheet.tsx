@@ -37,7 +37,7 @@ export const FuelDetailBottomSheet = forwardRef<FuelDetailBottomSheetRef, FuelDe
   ({onUpdate, onPin, onDelete}, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['60%', '85%'], []);
-    const {primaryColor} = useTheme();
+    const {primaryColor, colors} = useTheme();
     const haptic = useHaptic();
 
     const [note, setNote] = useState<Note | null>(null);
@@ -125,13 +125,13 @@ export const FuelDetailBottomSheet = forwardRef<FuelDetailBottomSheetRef, FuelDe
                   <AnimatedPressable onPress={handlePin} hapticType="light" scaleValue={0.9}>
                     <Pin
                       size={20}
-                      color={note.is_banner_pinned ? '#F59E0B' : '#9CA3AF'}
+                      color={note.is_banner_pinned ? primaryColor : '#9CA3AF'}
                       strokeWidth={2}
-                      fill={note.is_banner_pinned ? '#F59E0B' : 'none'}
+                      fill={note.is_banner_pinned ? primaryColor : 'none'}
                     />
                   </AnimatedPressable>
                   <AnimatedPressable onPress={handleDelete} hapticType="light" scaleValue={0.9}>
-                    <Trash2 size={20} color="#EF4444" strokeWidth={2} />
+                    <Trash2 size={20} color={colors.error} strokeWidth={2} />
                   </AnimatedPressable>
                 </View>
               </View>

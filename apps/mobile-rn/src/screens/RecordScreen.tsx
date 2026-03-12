@@ -46,6 +46,7 @@ import {
 } from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {useTheme} from '@/theme';
 import {format, differenceInDays} from 'date-fns';
 
 type Step = 'select-person' | 'write-news' | 'completed';
@@ -58,9 +59,11 @@ const INTERACTION_TYPES = Object.entries(INTERACTION_TYPE_LABELS) as [
 function InteractionTypeGrid({
   selected,
   onSelect,
+  primaryColor,
 }: {
   selected: InteractionType;
   onSelect: (type: InteractionType) => void;
+  primaryColor: string;
 }) {
   return (
     <View className="flex-row flex-wrap">
@@ -77,7 +80,7 @@ function InteractionTypeGrid({
                 isSelected ? 'bg-violet-100 border border-violet-400' : 'bg-gray-50'
               }`}>
               {IconComp && (
-                <IconComp size={20} color={isSelected ? '#8B5CF6' : '#9CA3AF'} />
+                <IconComp size={20} color={isSelected ? primaryColor : '#9CA3AF'} />
               )}
               <Text
                 className={`text-xs mt-1 ${
@@ -133,6 +136,7 @@ function QuickStatPill({label, value}: {label: string; value: string}) {
 
 export default function RecordScreen() {
   const user = useAuthStore(s => s.user);
+  const {primaryColor} = useTheme();
   const {
     people,
     recommendations,
@@ -323,7 +327,7 @@ export default function RecordScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <Animated.View entering={FadeIn.delay(100).duration(600)}>
             <View className="w-24 h-24 rounded-full bg-violet-100 items-center justify-center mb-6">
-              <Heart size={48} color="#8B5CF6" />
+              <Heart size={48} color={primaryColor} />
             </View>
           </Animated.View>
           <Animated.Text
@@ -339,7 +343,8 @@ export default function RecordScreen() {
           <Animated.View entering={FadeInDown.delay(500).duration(400)}>
             <TouchableOpacity
               onPress={handleRecordAgain}
-              className="bg-violet-500 rounded-xl py-3 px-8 mb-4">
+              style={{backgroundColor: primaryColor}}
+              className="rounded-xl py-3 px-8 mb-4">
               <Text className="text-white font-semibold">또 기록하기</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -381,6 +386,7 @@ export default function RecordScreen() {
               <InteractionTypeGrid
                 selected={interactionType}
                 onSelect={setInteractionType}
+                primaryColor={primaryColor}
               />
             </View>
 
@@ -470,10 +476,9 @@ export default function RecordScreen() {
                 onPress={() => setWantToCreateTodo(!wantToCreateTodo)}
                 className="flex-row items-center">
                 <View
+                  style={wantToCreateTodo ? {backgroundColor: primaryColor, borderColor: primaryColor} : undefined}
                   className={`w-5 h-5 rounded border mr-2 items-center justify-center ${
-                    wantToCreateTodo
-                      ? 'bg-violet-500 border-violet-500'
-                      : 'border-gray-300'
+                    wantToCreateTodo ? '' : 'border-gray-300'
                   }`}>
                   {wantToCreateTodo && <Check size={14} color="#FFFFFF" />}
                 </View>
@@ -497,8 +502,9 @@ export default function RecordScreen() {
               <TouchableOpacity
                 onPress={handleSave}
                 disabled={saving}
-                className={`rounded-xl py-4 items-center ${
-                  saving ? 'bg-gray-300' : 'bg-violet-500'
+                style={saving ? undefined : {backgroundColor: primaryColor}}
+              className={`rounded-xl py-4 items-center ${
+                  saving ? 'bg-gray-300' : ''
                 }`}>
                 <Text className="text-white font-bold text-base">
                   {saving ? '저장 중...' : '기록 저장하기'}
@@ -591,7 +597,7 @@ export default function RecordScreen() {
                   <TouchableOpacity
                     onPress={handleAddNewPerson}
                     className="flex-row items-center">
-                    <Plus size={16} color="#8B5CF6" />
+                    <Plus size={16} color={primaryColor} />
                     <Text className="text-sm text-violet-600 ml-1">새로 추가</Text>
                   </TouchableOpacity>
                 )}
@@ -780,7 +786,7 @@ export default function RecordScreen() {
         }}
         hapticType="light"
         scaleValue={0.9}
-        style={recordStyles.fab}>
+        style={[recordStyles.fab, {backgroundColor: primaryColor, shadowColor: primaryColor}]}>
         <Text style={recordStyles.fabText}>+</Text>
       </AnimatedPressable>
 
@@ -859,10 +865,8 @@ const recordStyles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#8B5CF6',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#8B5CF6',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 8,

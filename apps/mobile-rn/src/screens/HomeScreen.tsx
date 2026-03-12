@@ -36,6 +36,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import {SCREEN_REGISTRY} from '@daystep/shared-core/constants';
+import {useTheme} from '@/theme';
 
 function getGreeting(): {text: string; Icon: React.FC<any>; gradient: string[]} {
   const hour = new Date().getHours();
@@ -75,6 +76,7 @@ const INSPIRATION_QUOTES = [
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+  const {primaryColor} = useTheme();
   const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
   const user = useAuthStore(s => s.user);
   const {notes, fetchFuelNotes, getRandomFuelNote} = useNoteStore();
@@ -108,9 +110,7 @@ export default function HomeScreen() {
   // ── 그룹 아이템 정의 (Lucide 아이콘 + 설명) ──
 
   const BLUE_BG = '#EFF6FF';
-  const BLUE_ICON = '#3B82F6';
   const VIOLET_BG = '#F5F3FF';
-  const VIOLET_ICON = '#8B5CF6';
   const EMERALD_BG = '#ECFDF5';
   const EMERALD_ICON = '#22C55E';
 
@@ -118,56 +118,56 @@ export default function HomeScreen() {
     () => [
       {
         id: 'daily-planner',
-        icon: <Calendar size={20} color={BLUE_ICON} />,
+        icon: <Calendar size={20} color={primaryColor} />,
         label: '하루 계획하기',
         description: '오늘 할일을 시간별로 배치',
         iconBgColor: BLUE_BG,
-        iconColor: BLUE_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('Planner', {initialPage: 0}),
       },
       {
         id: 'monthly-planner',
-        icon: <CalendarRange size={20} color={BLUE_ICON} />,
+        icon: <CalendarRange size={20} color={primaryColor} />,
         label: '월간 계획하기',
         description: '한 달 일정을 한눈에 보기',
         iconBgColor: BLUE_BG,
-        iconColor: BLUE_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('MonthlyPlanner'),
       },
       {
         id: 'ai-plan',
-        icon: <FolderKanban size={20} color={BLUE_ICON} />,
+        icon: <FolderKanban size={20} color={primaryColor} />,
         label: '내 계획 보기',
         description: '프로젝트 목록과 진행 상황 확인',
         iconBgColor: BLUE_BG,
-        iconColor: BLUE_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('AIPlan'),
       },
       {
         id: 'ai-chat',
-        icon: <Sparkles size={20} color={BLUE_ICON} />,
+        icon: <Sparkles size={20} color={primaryColor} />,
         label: 'AI로 계획하기',
         description: 'AI와 대화하며 할일 계획',
         iconBgColor: BLUE_BG,
-        iconColor: BLUE_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('AIChat'),
       },
       {
         id: 'guide',
-        icon: <Link size={20} color={BLUE_ICON} />,
+        icon: <Link size={20} color={primaryColor} />,
         label: 'Claude 연결하기',
         description: 'Claude Desktop 연결',
         iconBgColor: BLUE_BG,
-        iconColor: BLUE_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('Guide'),
       },
       {
         id: 'data-cleanup',
-        icon: <Trash2 size={20} color={BLUE_ICON} />,
+        icon: <Trash2 size={20} color={primaryColor} />,
         label: '데이터 정리하기',
         description: '할일·프로젝트·원동력 등을 정리해 공간 확보',
         iconBgColor: BLUE_BG,
-        iconColor: BLUE_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('Cleanup'),
       },
     ],
@@ -178,20 +178,20 @@ export default function HomeScreen() {
     () => [
       {
         id: 'motivation',
-        icon: <Lightbulb size={20} color={VIOLET_ICON} />,
+        icon: <Lightbulb size={20} color={primaryColor} />,
         label: '원동력 새기기',
         description: '왜 해야 하는지 기록',
         iconBgColor: VIOLET_BG,
-        iconColor: VIOLET_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('Notes'),
       },
       {
         id: 'record',
-        icon: <PenLine size={20} color={VIOLET_ICON} />,
+        icon: <PenLine size={20} color={primaryColor} />,
         label: '관계 기록하기',
         description: '소중한 만남과 대화 기록',
         iconBgColor: VIOLET_BG,
-        iconColor: VIOLET_ICON,
+        iconColor: primaryColor,
         onPress: () => navigation.navigate('Record'),
       },
     ],
@@ -284,7 +284,7 @@ export default function HomeScreen() {
           {/* 4. 계획 세우기 (Blue) */}
           <View className="mt-6">
             <GroupSection
-              dotColor="#3B82F6"
+              dotColor={primaryColor}
               title="계획 세우기"
               items={planItems}
               enterDelay={400}
@@ -294,7 +294,7 @@ export default function HomeScreen() {
           {/* 5. 생각과 기억 (Violet) */}
           <View className="mt-6">
             <GroupSection
-              dotColor="#8B5CF6"
+              dotColor={primaryColor}
               title="생각과 기억"
               items={thoughtItems}
               enterDelay={500}
@@ -315,7 +315,7 @@ export default function HomeScreen() {
           <Animated.View
             entering={FadeInDown.delay(700).duration(400)}
             className="items-center py-8 mt-4">
-            <Sparkles size={20} color="#8B5CF6" />
+            <Sparkles size={20} color={primaryColor} />
             <Text className="text-xs text-gray-400 mt-2 text-center leading-4">
               오늘도 DayStep이 함께할게요
             </Text>
@@ -352,7 +352,7 @@ export default function HomeScreen() {
               .mass(1)}
             entering={FadeInDown.delay(300).duration(400)}
             className="mx-4 mt-8 items-center">
-            <Sparkles size={24} color="#8B5CF6" />
+            <Sparkles size={24} color={primaryColor} />
             <Text className="text-base text-gray-600 mt-3 text-center leading-6 italic">
               "{inspirationQuote}"
             </Text>

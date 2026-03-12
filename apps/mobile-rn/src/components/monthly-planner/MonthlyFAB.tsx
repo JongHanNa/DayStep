@@ -2,19 +2,21 @@ import React from 'react';
 import Animated, {FadeIn} from 'react-native-reanimated';
 import {Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
+import {useTheme} from '@/theme';
 
 interface MonthlyFABProps {
   onPress: () => void;
 }
 
 export function MonthlyFAB({onPress}: MonthlyFABProps) {
+  const {primaryColor} = useTheme();
   return (
     <Animated.View entering={FadeIn.delay(400).duration(300)} style={styles.fabContainer}>
       <AnimatedPressable
         onPress={onPress}
         hapticType="medium"
         scaleValue={0.9}
-        style={styles.fab}>
+        style={[styles.fab, {backgroundColor: primaryColor}]}>
         <Text style={styles.fabText}>+</Text>
       </AnimatedPressable>
     </Animated.View>
@@ -31,7 +33,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#3B82F6',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

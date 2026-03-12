@@ -7,6 +7,7 @@ import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {Crown} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 export interface FeatureItem {
   id: string;
@@ -34,6 +35,7 @@ export function GroupSection({
   numColumns = 2,
   enterDelay = 0,
 }: GroupSectionProps) {
+  const {primaryColor} = useTheme();
   return (
     <Animated.View
       entering={FadeInDown.delay(enterDelay).duration(400)}
@@ -101,11 +103,11 @@ export function GroupSection({
                     paddingHorizontal: 6,
                     paddingVertical: 2,
                   }}>
-                  <Crown size={10} color="#D97706" />
+                  <Crown size={10} color={primaryColor} />
                   <Text
                     style={{
                       fontSize: 9,
-                      color: '#D97706',
+                      color: primaryColor,
                       fontWeight: '600',
                       marginLeft: 2,
                     }}>

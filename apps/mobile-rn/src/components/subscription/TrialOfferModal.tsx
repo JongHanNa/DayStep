@@ -16,6 +16,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {Crown, X, Sparkles} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {requestNotificationPermission} from '@/lib/notifications';
+import {fixedColors} from '@/theme/colors';
 import Config from 'react-native-config';
 
 const TRIAL_DAYS = parseInt(Config.TRIAL_DAYS || '7', 10);
@@ -67,7 +68,7 @@ export function TrialOfferModal({
           {/* 상단 그라디언트 영역 */}
           <View style={styles.heroSection}>
             <View style={styles.crownCircle}>
-              <Crown size={32} color="#F59E0B" strokeWidth={2.5} />
+              <Crown size={32} color={fixedColors.premiumGold} strokeWidth={2.5} />
             </View>
             <Text style={styles.heroTitle}>DayStep Pro</Text>
             <Text style={styles.trialBadgeText}>
@@ -144,7 +145,7 @@ export function TrialOfferModal({
                   setReminderEnabled(false);
                 }
               }}
-              trackColor={{false: '#334155', true: '#F59E0B'}}
+              trackColor={{false: '#334155', true: fixedColors.premiumGold}}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -203,11 +204,11 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#F59E0B',
+    backgroundColor: fixedColors.premiumGold,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#F59E0B',
+    shadowColor: fixedColors.premiumGold,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
   trialBadgeText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#F59E0B',
+    color: fixedColors.premiumGold,
     marginBottom: 4,
   },
   heroSubtitle: {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   priceRowSelected: {
-    borderColor: '#F59E0B',
+    borderColor: fixedColors.premiumGold,
     backgroundColor: 'rgba(245,158,11,0.08)',
   },
   radioRow: {
@@ -264,13 +265,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioActive: {
-    borderColor: '#F59E0B',
+    borderColor: fixedColors.premiumGold,
   },
   radioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#F59E0B',
+    backgroundColor: fixedColors.premiumGold,
   },
   priceLabel: {
     fontSize: 14,
@@ -295,7 +296,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#F59E0B',
+    color: fixedColors.premiumGold,
   },
   detailsLink: {
     alignItems: 'center',
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
   },
   detailsLinkText: {
     fontSize: 14,
-    color: '#F59E0B',
+    color: fixedColors.premiumGold,
   },
   ctaContainer: {
     marginBottom: 16,
@@ -325,7 +326,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#F59E0B',
+    backgroundColor: fixedColors.premiumGold,
     paddingVertical: 14,
     borderRadius: 16,
     shadowColor: '#F97316',

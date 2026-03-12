@@ -124,7 +124,7 @@ export const TodoPickerSheet = forwardRef<TodoPickerSheetRef, TodoPickerSheetPro
               {item.title}
             </Text>
             {item.recurrence_pattern && item.recurrence_pattern !== 'none' && (
-              <Text style={styles.recurrenceBadge}>반복</Text>
+              <Text style={[styles.recurrenceBadge, {color: primaryColor, backgroundColor: `${primaryColor}15`}]}>반복</Text>
             )}
           </View>
           <Check size={18} color={primaryColor} style={{opacity: 0.3}} />
@@ -217,8 +217,6 @@ const styles = StyleSheet.create({
   },
   recurrenceBadge: {
     fontSize: 11,
-    color: '#8B5CF6',
-    backgroundColor: '#F5F3FF',
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: 4,

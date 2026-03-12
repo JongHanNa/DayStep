@@ -25,7 +25,7 @@ interface SettingsMainViewProps {
 }
 
 export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
-  const {primaryColor} = useTheme();
+  const {primaryColor, colors} = useTheme();
   const {user, signOut} = useAuthStore();
   const settings = useSettingsStore();
   const {isConnected, connectGoogleCalendar, disconnectGoogleCalendar} =
@@ -149,7 +149,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       <View style={[styles.section, {marginTop: 16, marginBottom: __DEV__ ? 16 : 40}]}>
         <SettingsRow
           icon={LogOut}
-          iconColor="#EF4444"
+          iconColor={colors.error}
           title="로그아웃"
           onPress={handleSignOut}
         />

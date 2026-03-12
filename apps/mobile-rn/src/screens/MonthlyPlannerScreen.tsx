@@ -22,11 +22,14 @@ import {useCalendarStore} from '@/stores/calendarStore';
 import {format, addMonths, subMonths} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {ChevronLeft, ChevronRight} from 'lucide-react-native';
+import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 export default function MonthlyPlannerScreen() {
   const navigation = useNavigation<any>();
+  const {primaryColor} = useTheme();
   const {monthViewData, monthViewLoading, fetchTodosForMonthView, setSelectedDate} =
     useTodoStore();
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
@@ -104,7 +107,7 @@ export default function MonthlyPlannerScreen() {
               style={{
                 fontSize: 11,
                 fontWeight: '600',
-                color: i === 0 ? '#EF4444' : i === 6 ? '#3B82F6' : '#6B7280',
+                color: i === 0 ? fixedColors.calendarSunday : i === 6 ? fixedColors.calendarSaturday : '#6B7280',
               }}>
               {label}
             </Text>
@@ -116,7 +119,7 @@ export default function MonthlyPlannerScreen() {
       <View style={{flex: 1, paddingBottom: 64 + insets.bottom}}>
         {monthViewLoading || !monthViewData ? (
           <View className="py-20 items-center">
-            <ActivityIndicator size="large" color="#3B82F6" />
+            <ActivityIndicator size="large" color={primaryColor} />
           </View>
         ) : (
           <MonthCalendarGrid

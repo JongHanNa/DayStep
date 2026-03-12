@@ -22,6 +22,7 @@ import {supabase} from '@/lib/supabase';
 import {TrialOfferModal} from '@/components/subscription/TrialOfferModal';
 import {scheduleTrialExpiryReminder} from '@/lib/notifications';
 import Config from 'react-native-config';
+import {useTheme} from '@/theme';
 
 const TRIAL_DAYS = parseInt(Config.TRIAL_DAYS || '7', 10);
 import {SubscriptionView} from '@/components/settings/SubscriptionView';
@@ -205,9 +206,10 @@ function AuthenticatedApp() {
 }
 
 function LoadingScreen() {
+  const {primaryColor} = useTheme();
   return (
     <View className="flex-1 justify-center items-center bg-white">
-      <ActivityIndicator size="large" color="#3B82F6" />
+      <ActivityIndicator size="large" color={primaryColor} />
     </View>
   );
 }

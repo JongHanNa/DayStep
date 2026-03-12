@@ -12,6 +12,7 @@ import {ProScreenGuard} from '@/components/subscription/ProScreenGuard';
 import {format, startOfWeek, endOfWeek, getDay, getHours, isWithinInterval} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Todo} from '@daystep/shared-core';
+import {useTheme} from '@/theme';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -36,8 +37,17 @@ function SimpleBarChart({data, maxValue}: {data: number[]; maxValue: number}) {
 }
 
 function HourlyChart({data}: {data: number[]}) {
+  const {primaryColor} = useTheme();
   const max = Math.max(...data, 1);
   const peakHour = data.indexOf(max);
+
+  // Convert hex to rgba helper
+  function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
 
   return (
     <View>
@@ -50,8 +60,12 @@ function HourlyChart({data}: {data: number[]}) {
               key={hour}
               className={`w-[12.5%] aspect-square p-0.5`}>
               <View
-                className={`flex-1 rounded-sm items-center justify-center ${isPeak ? 'border border-blue-500' : ''}`}
-                style={{backgroundColor: `rgba(59, 130, 246, ${opacity})`}}>
+                className={`flex-1 rounded-sm items-center justify-center`}
+                style={{
+                  backgroundColor: hexToRgba(primaryColor, opacity),
+                  borderWidth: isPeak ? 1 : 0,
+                  borderColor: isPeak ? primaryColor : 'transparent',
+                }}>
                 <Text className="text-[8px] text-gray-600">{hour}</Text>
               </View>
             </View>
@@ -60,8 +74,8 @@ function HourlyChart({data}: {data: number[]}) {
       </View>
       {peakHour >= 0 && data[peakHour] > 0 && (
         <View className="flex-row items-center mt-3">
-          <TrendingUp size={14} color="#3B82F6" />
-          <Text className="text-sm text-blue-600 ml-1 font-medium">
+          <TrendingUp size={14} color={primaryColor} />
+          <Text className="text-sm ml-1 font-medium" style={{color: primaryColor}}>
             가장 생산적인 시간: {peakHour}시 ({data[peakHour]}개 완료)
           </Text>
         </View>
@@ -72,6 +86,7 @@ function HourlyChart({data}: {data: number[]}) {
 
 export default function ActivityScreen() {
   const user = useAuthStore(s => s.user);
+  const {primaryColor} = useTheme();
   const {fetchAllTodos} = useTodoStore();
   const [allTodos, setAllTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,12 +147,12 @@ export default function ActivityScreen() {
         <View className="px-4 mb-4">
           <AnimatedCard enterDelay={100}>
             <View className="flex-row items-center mb-2">
-              <BarChart3 size={20} color="#3B82F6" />
+              <BarChart3 size={20} color={primaryColor} />
               <Text className="text-base font-semibold text-gray-800 ml-2">
                 이번 주 완료
               </Text>
             </View>
-            <Text className="text-4xl font-bold text-blue-600">
+            <Text className="text-4xl font-bold" style={{color: primaryColor}}>
               {weeklyData.completedCount}
               <Text className="text-base font-normal text-gray-500"> 개</Text>
             </Text>
@@ -165,7 +180,7 @@ export default function ActivityScreen() {
         <View className="px-4 mb-4">
           <AnimatedCard enterDelay={300}>
             <View className="flex-row items-center mb-2">
-              <Clock size={18} color="#8B5CF6" />
+              <Clock size={18} color={primaryColor} />
               <Text className="text-base font-semibold text-gray-800 ml-2">
                 시간대별 패턴
               </Text>

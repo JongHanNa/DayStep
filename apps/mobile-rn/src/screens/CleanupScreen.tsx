@@ -27,6 +27,7 @@ import {useNoteStore} from '@/stores/noteStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
+import {useTheme} from '@/theme';
 
 // ────────────────────────────────────────────────
 // Generic Item (모든 카테고리 공통 표시용)
@@ -532,13 +533,14 @@ function CategoryCard({category, count, onPress, enterDelay, unit = '개'}: Card
 // ────────────────────────────────────────────────
 
 function GroupHeader({title, enterDelay}: {title: string; enterDelay: number}) {
+  const {primaryColor} = useTheme();
   return (
     <Animated.Text
       entering={FadeInDown.delay(enterDelay).duration(400)}
       style={{
         fontSize: 13,
         fontWeight: '700',
-        color: '#6D28D9',
+        color: primaryColor,
         marginBottom: 10,
         marginTop: 8,
         marginLeft: 4,
@@ -580,6 +582,7 @@ const EMPTY_DATA: CategorizedData = {
 
 export default function CleanupScreen() {
   const user = useAuthStore(s => s.user);
+  const {primaryColor} = useTheme();
   const {deleteTodo} = useTodoStore();
   const {deleteProject} = useProjectStore();
   const {deleteNote} = useNoteStore();
@@ -813,7 +816,7 @@ export default function CleanupScreen() {
       {/* ── 보라 그라디언트 헤더 ── */}
       <View
         style={{
-          backgroundColor: '#7C3AED',
+          backgroundColor: primaryColor,
           paddingTop: 52,
           paddingHorizontal: 20,
           paddingBottom: 28,
@@ -884,7 +887,7 @@ export default function CleanupScreen() {
         showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={{alignItems: 'center', paddingTop: 60}}>
-            <ActivityIndicator color="#7C3AED" />
+            <ActivityIndicator color={primaryColor} />
             <Text style={{marginTop: 12, color: '#64748B', fontSize: 14}}>
               데이터를 불러오는 중...
             </Text>

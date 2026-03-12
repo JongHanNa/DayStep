@@ -8,6 +8,7 @@ import {View, Text, StyleSheet, Switch} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {ChevronRight} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 interface SummaryRowProps {
   Icon: LucideIcon;
@@ -31,8 +32,10 @@ export function SummaryRow({
   showChevron = true,
   switchValue,
   onSwitchChange,
-  primaryColor = '#3B82F6',
+  primaryColor: primaryColorProp,
 }: SummaryRowProps) {
+  const {primaryColor: themePrimaryColor} = useTheme();
+  const primaryColor = primaryColorProp ?? themePrimaryColor;
   const isSwitch = switchValue !== undefined;
 
   const content = (

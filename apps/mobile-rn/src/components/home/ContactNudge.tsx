@@ -7,6 +7,7 @@ import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {HeartHandshake, Phone} from 'lucide-react-native';
+import {fixedColors} from '@/theme/colors';
 
 interface ContactRecommendation {
   person: {
@@ -24,8 +25,8 @@ interface ContactNudgeProps {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: '#EF4444',
-  medium: '#F59E0B',
+  high: fixedColors.contactUrgencyHigh,
+  medium: fixedColors.contactUrgencyMedium,
   normal: '#22C55E',
 };
 

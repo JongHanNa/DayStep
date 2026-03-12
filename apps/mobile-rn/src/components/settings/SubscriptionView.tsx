@@ -21,6 +21,7 @@ import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import type {Platform as SubPlatform} from '@/stores/subscriptionStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTheme} from '@/theme';
+import {fixedColors} from '@/theme/colors';
 import {useUsageStats} from '@/hooks/useUsageStats';
 import type {UserUsageStats} from '@/hooks/useUsageStats';
 import {
@@ -127,7 +128,7 @@ function formatDate(dateStr: string | null | undefined): string {
 // ─── 메인 컴포넌트 ───────────────────────────────────
 
 export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewProps) {
-  const {primaryColor} = useTheme();
+  const {primaryColor, colors} = useTheme();
   const {user} = useAuthStore();
   const {
     subscriptionInfo,
@@ -226,7 +227,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
   const renderPaywallHero = () => (
     <View style={styles.heroSection}>
       <View style={styles.crownCircle}>
-        <Crown size={32} color="#F59E0B" strokeWidth={2.5} />
+        <Crown size={32} color={fixedColors.premiumGold} strokeWidth={2.5} />
       </View>
       <Text style={styles.heroTitle}>DayStep Pro</Text>
       <Text style={styles.heroSubtitle}>하루 관리의 모든 것, 제한 없이</Text>
@@ -238,7 +239,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
       <View style={styles.usageHeaderRow}>
         <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageHeaderText]}>기능</Text>
         <Text style={[styles.usageCell, styles.usageHeaderText]}>Free</Text>
-        <Text style={[styles.usageCell, styles.usageHeaderText, {color: '#F59E0B'}]}>♛ Pro</Text>
+        <Text style={[styles.usageCell, styles.usageHeaderText, {color: fixedColors.premiumGold}]}>♛ Pro</Text>
       </View>
       {USAGE_FEATURES.map((feat, i) => {
         const current = stats[entityToField[feat.entity]] ?? 0;
@@ -249,14 +250,14 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
           <View key={feat.entity} style={[styles.usageRow, i % 2 === 0 && {backgroundColor: 'rgba(255,255,255,0.03)'}]}>
             <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>{feat.name}</Text>
             <Text style={[styles.usageCell, styles.usageCellValue, isOver && {color: '#F87171'}]}>{current}/{limit}{feat.unit}</Text>
-            <Text style={[styles.usageCell, styles.usageCellPro]}>{proDisplayText}</Text>
+            <Text style={[styles.usageCell, styles.usageCellPro, {color: primaryColor}]}>{proDisplayText}</Text>
           </View>
         );
       })}
       <View style={[styles.usageRow, USAGE_FEATURES.length % 2 === 0 && {backgroundColor: 'rgba(255,255,255,0.03)'}]}>
         <Text style={[styles.usageCell, styles.usageCellFirst, styles.usageCellName]}>통계&인사이트</Text>
         <View style={styles.usageCell}><X size={14} color="#64748B" strokeWidth={2.5} /></View>
-        <View style={styles.usageCell}><Check size={14} color="#60A5FA" strokeWidth={2.5} /></View>
+        <View style={styles.usageCell}><Check size={14} color={primaryColor} strokeWidth={2.5} /></View>
       </View>
     </View>
   );
@@ -265,7 +266,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
     if (offeringsLoading) {
       return (
         <View style={styles.offeringsStatusBox}>
-          <ActivityIndicator size="small" color="#60A5FA" />
+          <ActivityIndicator size="small" color={primaryColor} />
           <Text style={styles.offeringsStatusText}>구독 상품 불러오는 중...</Text>
         </View>
       );
@@ -275,8 +276,8 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
         <View style={styles.offeringsStatusBox}>
           <Text style={styles.offeringsErrorText}>{offeringsError}</Text>
           <AnimatedPressable onPress={loadOfferings} hapticType="light" scaleValue={0.95}>
-            <View style={styles.offeringsRetryBtn}>
-              <Text style={styles.offeringsRetryText}>다시 시도</Text>
+            <View style={[styles.offeringsRetryBtn, {borderColor: primaryColor}]}>
+              <Text style={[styles.offeringsRetryText, {color: primaryColor}]}>다시 시도</Text>
             </View>
           </AnimatedPressable>
         </View>
@@ -285,9 +286,9 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
     return (
     <View style={styles.planSelector}>
       <AnimatedPressable onPress={() => setSelectedPlan('monthly')} hapticType="light" scaleValue={0.97}
-        style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}>
+        style={[styles.planCard, selectedPlan === 'monthly' && [styles.planCardSelected, {borderColor: primaryColor, backgroundColor: primaryColor + '14'}]]}>
         <View style={styles.planRadio}>
-          {selectedPlan === 'monthly' && <View style={styles.planRadioInner} />}
+          {selectedPlan === 'monthly' && <View style={[styles.planRadioInner, {backgroundColor: primaryColor}]} />}
         </View>
         <View style={{flex: 1}}>
           <Text style={styles.planName}>월간</Text>
@@ -295,14 +296,14 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
         </View>
       </AnimatedPressable>
       <AnimatedPressable onPress={() => setSelectedPlan('yearly')} hapticType="light" scaleValue={0.97}
-        style={[styles.planCard, selectedPlan === 'yearly' && styles.planCardSelected]}>
+        style={[styles.planCard, selectedPlan === 'yearly' && [styles.planCardSelected, {borderColor: primaryColor, backgroundColor: primaryColor + '14'}]]}>
         <View style={styles.planRadio}>
-          {selectedPlan === 'yearly' && <View style={styles.planRadioInner} />}
+          {selectedPlan === 'yearly' && <View style={[styles.planRadioInner, {backgroundColor: primaryColor}]} />}
         </View>
         <View style={{flex: 1}}>
           <View style={styles.planNameRow}>
             <Text style={styles.planName}>연간</Text>
-            <View style={styles.popularBadge}><Text style={styles.popularBadgeText}>인기</Text></View>
+            <View style={[styles.popularBadge, {backgroundColor: fixedColors.premiumGold}]}><Text style={styles.popularBadgeText}>인기</Text></View>
           </View>
           <Text style={styles.planPrice}>{annualPkg?.product.priceString ?? '₩44,000'}/년</Text>
           <Text style={styles.planSub}>월 ₩3,667 · 33% 할인</Text>
@@ -316,7 +317,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
     const ctaDisabled = purchasing || offeringsLoading || (!monthlyPkg && !annualPkg);
     return (
     <AnimatedPressable onPress={handlePurchase} hapticType="medium" scaleValue={0.96} disabled={ctaDisabled}>
-      <View style={[styles.ctaBtn, ctaDisabled && {backgroundColor: '#94A3B8'}]}>
+      <View style={[styles.ctaBtn, {backgroundColor: primaryColor}, ctaDisabled && {backgroundColor: '#94A3B8'}]}>
         {purchasing ? (
           <ActivityIndicator size="small" color="#FFFFFF" />
         ) : (
@@ -429,7 +430,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
           {/* ── 트라이얼 배너 ── */}
           {(trialMode || isTrialEligible) && (
             <View style={styles.trialBanner}>
-              <Text style={styles.trialBannerText}>✨ 7일 무료 체험</Text>
+              <Text style={[styles.trialBannerText, {color: fixedColors.premiumGold}]}>✨ 7일 무료 체험</Text>
               <Text style={styles.trialBannerSub}>모든 Pro 기능을 무료로 체험해보세요</Text>
             </View>
           )}
@@ -438,7 +439,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
           <View style={styles.heroSection}>
             {/* 골드 왕관 원형 */}
             <View style={styles.crownCircle}>
-              <Crown size={32} color="#F59E0B" strokeWidth={2.5} />
+              <Crown size={32} color={fixedColors.premiumGold} strokeWidth={2.5} />
             </View>
             <Text style={styles.heroTitle}>DayStep Pro</Text>
             <Text style={styles.heroSubtitle}>
@@ -456,7 +457,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
               <Text style={[styles.usageCell, styles.usageHeaderText]}>
                 Free
               </Text>
-              <Text style={[styles.usageCell, styles.usageHeaderText, {color: '#F59E0B'}]}>
+              <Text style={[styles.usageCell, styles.usageHeaderText, {color: fixedColors.premiumGold}]}>
                 ♛ Pro
               </Text>
             </View>
@@ -509,7 +510,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
                 <X size={14} color="#64748B" strokeWidth={2.5} />
               </View>
               <View style={styles.usageCell}>
-                <Check size={14} color="#60A5FA" strokeWidth={2.5} />
+                <Check size={14} color={primaryColor} strokeWidth={2.5} />
               </View>
             </View>
           </View>
@@ -517,7 +518,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
           {/* ── 플랜 셀렉터 ── */}
           {offeringsLoading ? (
             <View style={styles.offeringsStatusBox}>
-              <ActivityIndicator size="small" color="#60A5FA" />
+              <ActivityIndicator size="small" color={primaryColor} />
               <Text style={styles.offeringsStatusText}>구독 상품 불러오는 중...</Text>
             </View>
           ) : offeringsError && !monthlyPkg && !annualPkg ? (
@@ -538,11 +539,11 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
               scaleValue={0.97}
               style={[
                 styles.planCard,
-                selectedPlan === 'monthly' && styles.planCardSelected,
+                selectedPlan === 'monthly' && [styles.planCardSelected, {borderColor: primaryColor, backgroundColor: primaryColor + '14'}],
               ]}>
               <View style={styles.planRadio}>
                 {selectedPlan === 'monthly' && (
-                  <View style={styles.planRadioInner} />
+                  <View style={[styles.planRadioInner, {backgroundColor: primaryColor}]} />
                 )}
               </View>
               <View style={{flex: 1}}>
@@ -560,11 +561,11 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
               scaleValue={0.97}
               style={[
                 styles.planCard,
-                selectedPlan === 'yearly' && styles.planCardSelected,
+                selectedPlan === 'yearly' && [styles.planCardSelected, {borderColor: primaryColor, backgroundColor: primaryColor + '14'}],
               ]}>
               <View style={styles.planRadio}>
                 {selectedPlan === 'yearly' && (
-                  <View style={styles.planRadioInner} />
+                  <View style={[styles.planRadioInner, {backgroundColor: primaryColor}]} />
                 )}
               </View>
               <View style={{flex: 1}}>
@@ -599,7 +600,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
             hapticType="medium"
             scaleValue={0.96}
             disabled={purchasing || offeringsLoading || (!monthlyPkg && !annualPkg)}>
-            <View style={[styles.ctaBtn, (purchasing || offeringsLoading || (!monthlyPkg && !annualPkg)) && {backgroundColor: '#94A3B8'}]}>
+            <View style={[styles.ctaBtn, {backgroundColor: primaryColor}, (purchasing || offeringsLoading || (!monthlyPkg && !annualPkg)) && {backgroundColor: '#94A3B8'}]}>
               {purchasing ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
@@ -693,7 +694,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
             </View>
           )}
 
-          <Crown size={28} color="#F59E0B" strokeWidth={2} />
+          <Crown size={28} color={fixedColors.premiumGold} strokeWidth={2} />
           <Text style={styles.statusTitle}>DayStep Pro</Text>
 
           {planInfo.price ? (
