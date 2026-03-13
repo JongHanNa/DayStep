@@ -22,9 +22,11 @@
 		A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A41F7D8C2F500BD800A4C1D8 /* DayStepWidgetModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */; };
 		A41F7D8D2F500BD800A4C1D8 /* DayStepWidgetModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */; };
+		A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */; };
 		AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */; };
 		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
 		C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */; };
+		C7D8E9F0A1B2C3D4E5F6A7B8 /* NativeMonthCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */; };
 		CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */; };
 		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
 		D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */; };
@@ -87,8 +89,10 @@
 		A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepWidgetModule.swift; path = DayStepRN/DayStepWidgetModule.swift; sourceTree = "<group>"; };
 		A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeWeekStripCalendarBridge.m; path = DayStepRN/NativeWeekStripCalendarBridge.m; sourceTree = "<group>"; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
+		B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMonthCalendar.swift; path = DayStepRN/NativeMonthCalendar.swift; sourceTree = "<group>"; };
 		BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassButton.swift; path = DayStepRN/LiquidGlassButton.swift; sourceTree = "<group>"; };
 		D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Products.storekit; path = DayStepRN/Products.storekit; sourceTree = "<group>"; };
+		D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMonthCalendarBridge.m; path = DayStepRN/NativeMonthCalendarBridge.m; sourceTree = "<group>"; };
 		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
 		E8A1EDB0D0389AC7DA2DA4C5 /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -168,6 +172,8 @@
 				B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */,
 				F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */,
 				A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */,
+				B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */,
+				D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -427,6 +433,8 @@
 				D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */,
 				E1F2A3B4C5D6E7F8A9B0C1D2 /* NativeWeekStripCalendar.swift in Sources */,
 				F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */,
+				A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */,
+				C7D8E9F0A1B2C3D4E5F6A7B8 /* NativeMonthCalendarBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

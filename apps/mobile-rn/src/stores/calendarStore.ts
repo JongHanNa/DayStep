@@ -67,6 +67,13 @@ export const useCalendarStore = create<CalendarState>()(
       fetchEventsForMonth: async (year: number, month: number) => {
         if (!get().isConnected) return;
 
+        // Google Sign-In 세션 확인 — MMKV에 isConnected가 남아있지만 세션이 없는 경우 방어
+        const currentUser = GoogleSignin.getCurrentUser();
+        if (!currentUser) {
+          set({isConnected: false, monthEvents: {}});
+          return;
+        }
+
         set({loading: true});
         try {
           const tokens = await GoogleSignin.getTokens();
@@ -117,6 +124,9 @@ export const useCalendarStore = create<CalendarState>()(
               set({isConnected: false, monthEvents: {}, loading: false});
             }
           } else if (error.message === 'PERMISSION_DENIED') {
+            set({isConnected: false, monthEvents: {}, loading: false});
+          } else if (error.message?.includes('getTokens')) {
+            // Google 세션 만료/로그아웃
             set({isConnected: false, monthEvents: {}, loading: false});
           } else {
             set({loading: false});
