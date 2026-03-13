@@ -70,10 +70,10 @@ export function CalendarDayCell({
   const totalItems = todos.length + calendarEvents.length;
   const actualMax = totalItems <= maxWithout ? maxWithout : maxWithMore;
 
-  // Todo 먼저, 그 다음 캘린더 이벤트
+  // 캘린더 이벤트 먼저, 그 다음 Todo (하루 계획하기와 동일하게 상단 표시)
   const allItems = [
-    ...todos.map(t => ({type: 'todo' as const, data: t})),
     ...calendarEvents.map(e => ({type: 'event' as const, data: e})),
+    ...todos.map(t => ({type: 'todo' as const, data: t})),
   ];
   const visibleItems = allItems.slice(0, actualMax);
   const extra = totalItems - actualMax;
