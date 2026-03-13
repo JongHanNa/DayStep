@@ -2,7 +2,7 @@
  * SettingsMainView — 메인 설정 목록 (섹션별 그룹핑)
  */
 import React, {useCallback, useEffect, useState} from 'react';
-import {View, Text, ScrollView, Alert, StyleSheet} from 'react-native';
+import {View, Text, ScrollView, Alert, StyleSheet, Image} from 'react-native';
 import {AnimatedCard} from '@/components/core';
 import {SettingsRow} from './SettingsRow';
 import {useSettingsStore} from '@/stores/settingsStore';
@@ -19,6 +19,7 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
+import {useSubscriptionStore} from '@/stores/subscriptionStore';
 
 interface SettingsMainViewProps {
   onNavigate: (view: string) => void;
@@ -30,8 +31,10 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const settings = useSettingsStore();
   const {isConnected, connectGoogleCalendar, disconnectGoogleCalendar} =
     useCalendarStore();
+  const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const [isAdmin, setIsAdmin] = useState(false);
   const isGoogleUser = user?.app_metadata?.provider === 'google';
+  const avatarUrl = user?.user_metadata?.avatar_url;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -78,8 +81,19 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
     <ScrollView contentContainerStyle={styles.container}>
       {/* 계정 정보 카드 */}
       <AnimatedCard enterDelay={0} style={styles.accountCard}>
-        <View style={[styles.avatarCircle, {backgroundColor: primaryColor + '20'}]}>
-          <User size={24} color={primaryColor} strokeWidth={1.5} />
+        <View style={styles.avatarContainer}>
+          {avatarUrl ? (
+            <Image source={{uri: avatarUrl}} style={styles.avatarImage} />
+          ) : (
+            <View style={[styles.avatarCircle, {backgroundColor: primaryColor + '20'}]}>
+              <User size={24} color={primaryColor} strokeWidth={1.5} />
+            </View>
+          )}
+          {hasActiveSubscription && (
+            <View style={styles.crownBadge}>
+              <Text style={styles.crownEmoji}>👑</Text>
+            </View>
+          )}
         </View>
         <View style={styles.accountInfo}>
           <Text style={styles.accountName}>{displayName}</Text>
@@ -187,13 +201,36 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
   },
+  avatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
   avatarCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+  },
+  crownBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FCD34D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crownEmoji: {
+    fontSize: 10,
+    lineHeight: 14,
   },
   accountInfo: {
     flex: 1,
