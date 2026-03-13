@@ -32,6 +32,8 @@ import {useTodoStore} from '@/stores/todoStore';
 import {useProjectStore} from '@/stores/projectStore';
 import {useAuthStore} from '@/stores/authStore';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
+import {useCalendarStore} from '@/stores/calendarStore';
+import {DailyCalendarEventCard} from '@/components/todo/DailyCalendarEventCard';
 import {useTheme} from '@/theme';
 import {format} from 'date-fns';
 import {springs} from '@/theme/animations';
@@ -113,6 +115,7 @@ function TodoListScreenInner() {
   const {primaryColor} = useTheme();
   const {projects, fetchProjects} = useProjectStore();
   const user = useAuthStore(s => s.user);
+  const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
 
   // 프로젝트 맵 생성
   const projectMap = useMemo(() => {
@@ -143,6 +146,20 @@ function TodoListScreenInner() {
   useEffect(() => {
     fetchTodosForDate(selectedDate);
   }, []);
+
+  // selectedDate 변경 시 해당 월 캘린더 이벤트 fetch
+  useEffect(() => {
+    if (isConnected && selectedDate) {
+      const [y, m] = selectedDate.split('-').map(Number);
+      fetchEventsForMonth(y, m);
+    }
+  }, [selectedDate, isConnected, fetchEventsForMonth]);
+
+  // 해당일 캘린더 이벤트
+  const dailyCalendarEvents = useMemo(() => {
+    if (!isConnected) return [];
+    return monthEvents[selectedDate] ?? [];
+  }, [isConnected, monthEvents, selectedDate]);
 
   // 화면 포커스 시 데이터 재조회 (다른 탭 갔다 돌아올 때)
   useFocusRefetch(useCallback(() => {
@@ -373,6 +390,18 @@ function TodoListScreenInner() {
             contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
             stickySectionHeadersEnabled={false}
             scrollEnabled={!dragState.isDragging}
+            ListHeaderComponent={
+              dailyCalendarEvents.length > 0 ? (
+                <View style={{marginTop: 8, marginBottom: 4}}>
+                  <Text className="text-xs font-semibold text-gray-400 mb-1.5">
+                    Google 캘린더
+                  </Text>
+                  {dailyCalendarEvents.map(event => (
+                    <DailyCalendarEventCard key={event.id} event={event} />
+                  ))}
+                </View>
+              ) : null
+            }
             refreshControl={
               <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
             }

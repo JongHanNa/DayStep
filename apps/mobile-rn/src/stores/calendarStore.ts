@@ -33,6 +33,12 @@ export const useCalendarStore = create<CalendarState>()(
 
       connectGoogleCalendar: async () => {
         try {
+          // 현재 Google 세션이 없으면 signIn 먼저 수행
+          const currentUser = GoogleSignin.getCurrentUser();
+          if (!currentUser) {
+            await GoogleSignin.signIn();
+          }
+
           const result = await GoogleSignin.addScopes({
             scopes: [CALENDAR_SCOPE],
           });
@@ -40,10 +46,10 @@ export const useCalendarStore = create<CalendarState>()(
             set({isConnected: true});
             return true;
           }
-          return false;
+          throw new Error('캘린더 권한을 부여받지 못했습니다.');
         } catch (error: any) {
-          console.error('[Calendar] addScopes error:', error);
-          return false;
+          console.error('[Calendar] connectGoogleCalendar error:', error);
+          throw error;
         }
       },
 

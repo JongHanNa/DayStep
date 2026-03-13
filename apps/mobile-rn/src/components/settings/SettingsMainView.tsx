@@ -33,7 +33,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
     useCalendarStore();
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const [isAdmin, setIsAdmin] = useState(false);
-  const isGoogleUser = user?.app_metadata?.provider === 'google';
+  const isGoogleUser = user?.app_metadata?.providers?.includes('google') ?? false;
   const avatarUrl = user?.user_metadata?.avatar_url;
 
   useEffect(() => {
@@ -48,6 +48,8 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       });
   }, [user?.id]);
 
+  const [calendarLoading, setCalendarLoading] = useState(false);
+
   const handleCalendarToggle = useCallback(() => {
     if (isConnected) {
       Alert.alert('Google 캘린더 연결 해제', '캘린더 이벤트가 더 이상 표시되지 않습니다.', [
@@ -59,7 +61,22 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
         },
       ]);
     } else {
-      connectGoogleCalendar();
+      setCalendarLoading(true);
+      connectGoogleCalendar()
+        .catch((error: any) => {
+          // 사용자가 취소한 경우는 무시
+          const isCancelled =
+            error?.code === 'SIGN_IN_CANCELLED' ||
+            error?.code === '-5' ||
+            error?.message?.includes('cancel');
+          if (!isCancelled) {
+            Alert.alert(
+              'Google 캘린더 연결 실패',
+              error?.message || '다시 시도해 주세요.',
+            );
+          }
+        })
+        .finally(() => setCalendarLoading(false));
     }
   }, [isConnected, connectGoogleCalendar, disconnectGoogleCalendar]);
 
@@ -135,7 +152,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
               iconColor="#4285F4"
               title="Google 캘린더"
               subtitle={isConnected ? '연결됨' : '월간 계획에 일정을 표시합니다'}
-              value={isConnected ? '연결됨 ✓' : '연결하기'}
+              value={isConnected ? '연결됨 ✓' : calendarLoading ? '연결 중...' : '연결하기'}
               onPress={handleCalendarToggle}
             />
           </View>
