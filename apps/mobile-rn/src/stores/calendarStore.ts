@@ -6,6 +6,7 @@ import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {zustandMMKVStorage} from '@/lib/mmkv';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
+import Config from 'react-native-config';
 import {
   fetchCalendarEvents,
   type GoogleCalendarEvent,
@@ -33,6 +34,12 @@ export const useCalendarStore = create<CalendarState>()(
 
       connectGoogleCalendar: async () => {
         try {
+          // 방어적 configure — auth.ts 모듈 로드 전이라도 안전하게 동작
+          GoogleSignin.configure({
+            iosClientId: Config.GOOGLE_IOS_CLIENT_ID,
+            webClientId: Config.GOOGLE_WEB_CLIENT_ID,
+          });
+
           // 현재 Google 세션이 없으면 signIn 먼저 수행
           const currentUser = GoogleSignin.getCurrentUser();
           if (!currentUser) {
