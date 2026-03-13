@@ -5,7 +5,8 @@
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Text, View, SectionList, RefreshControl, StyleSheet, Alert} from 'react-native';
-import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import {NativeWeekStripCalendarNative} from '@/components/native';
+import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
@@ -32,8 +33,8 @@ import {useProjectStore} from '@/stores/projectStore';
 import {useAuthStore} from '@/stores/authStore';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useTheme} from '@/theme';
-import {format, addDays, subDays} from 'date-fns';
-import {ko} from 'date-fns/locale';
+import {format} from 'date-fns';
+import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
 import {Inbox} from 'lucide-react-native';
 
@@ -224,22 +225,14 @@ function TodoListScreenInner() {
   }, [todos, nowForUpcoming]);
 
   const sections = useMemo(() => categorizeTodos(todos), [todos]);
-  const dateDisplay = format(new Date(selectedDate), 'M월 d일 EEEE', {locale: ko});
   const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
 
-  const goToPrevDay = useCallback(() => {
-    const prev = format(subDays(new Date(selectedDate), 1), 'yyyy-MM-dd');
-    setSelectedDate(prev);
-  }, [selectedDate, setSelectedDate]);
-
-  const goToNextDay = useCallback(() => {
-    const next = format(addDays(new Date(selectedDate), 1), 'yyyy-MM-dd');
-    setSelectedDate(next);
-  }, [selectedDate, setSelectedDate]);
-
-  const goToToday = useCallback(() => {
-    setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
-  }, [setSelectedDate]);
+  // 주간 스트립 캘린더 높이
+  const calendarHeight = useSharedValue(0);
+  const calendarHeightStyle = useAnimatedStyle(() => ({
+    height: calendarHeight.value > 0 ? calendarHeight.value : undefined,
+    overflow: 'hidden' as const,
+  }));
 
   const handleToggle = useCallback(
     (id: string) => {
@@ -358,28 +351,17 @@ function TodoListScreenInner() {
 
   return (
     <ScreenContainer gradient="calmBackground">
-      {/* 날짜 네비게이터 */}
-      <Animated.View
-        entering={FadeIn.duration(400)}
-        className="flex-row items-center justify-between px-5 pt-4 pb-3">
-        <AnimatedPressable onPress={goToPrevDay} hapticType="selection" className="p-2">
-          <Text className="text-xl text-gray-400">‹</Text>
-        </AnimatedPressable>
-
-        <AnimatedPressable onPress={goToToday} haptic={!isToday}>
-          <View className="items-center">
-            <Text className="text-lg font-bold text-gray-800">{dateDisplay}</Text>
-            {!isToday && (
-              <Text className="text-xs mt-1" style={{color: primaryColor}}>
-                오늘로 돌아가기
-              </Text>
-            )}
-          </View>
-        </AnimatedPressable>
-
-        <AnimatedPressable onPress={goToNextDay} hapticType="selection" className="p-2">
-          <Text className="text-xl text-gray-400">›</Text>
-        </AnimatedPressable>
+      {/* 주간 스트립 캘린더 */}
+      <Animated.View style={calendarHeightStyle}>
+        <NativeWeekStripCalendarNative
+          selectedDate={selectedDate}
+          primaryColor={primaryColor}
+          onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
+          onHeightChange={(e) => {
+            calendarHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
+          }}
+          style={StyleSheet.absoluteFill}
+        />
       </Animated.View>
 
       <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging} onPageChange={handlePageChange}>
