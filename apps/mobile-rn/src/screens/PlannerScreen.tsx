@@ -1,15 +1,17 @@
 /**
  * PlannerScreen — 통합 플래너 화면
- * LiquidGlassMenu로 5개 뷰 전환: 일 / 3일 / 주 / 하루 계획하기 / 월간 계획하기
+ * LiquidGlassMenu로 5개 뷰 전환: 목록 / 월 / 주 / 3일 / 일
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {ScreenContainer} from '@/components/core';
 import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/native';
 import {DailyPlannerView} from '@/components/planner/DailyPlannerView';
 import {MonthlyPlannerView} from '@/components/planner/MonthlyPlannerView';
+import {MonthlyFAB} from '@/components/monthly-planner';
+import {TodoFormBottomSheet, type TodoFormBottomSheetRef} from '@/components/todo/TodoFormBottomSheet';
 import {NativeDayTimeGridNative} from '@/components/native/NativeDayTimeGrid';
 import {NativeMultiDayTimeGridNative} from '@/components/native/NativeMultiDayTimeGrid';
 import {useSettingsStore, type PlannerViewMode} from '@/stores/settingsStore';
@@ -22,11 +24,11 @@ import {format, addDays, subDays} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
 
 const MENU_ITEMS = [
-  {title: '일', key: 'day'},
-  {title: '3일', key: '3day'},
+  {title: '목록', key: 'dailyPlanner'},
+  {title: '월', key: 'monthlyPlanner'},
   {title: '주', key: 'week'},
-  {title: '하루 계획하기', key: 'dailyPlanner'},
-  {title: '월간 계획하기', key: 'monthlyPlanner'},
+  {title: '3일', key: '3day'},
+  {title: '일', key: 'day'},
 ];
 
 const GRADIENT_MAP: Record<PlannerViewMode, 'calmBackground' | 'warmBackground'> = {
@@ -38,6 +40,7 @@ const GRADIENT_MAP: Record<PlannerViewMode, 'calmBackground' | 'warmBackground'>
 };
 
 export default function PlannerScreen() {
+  const formSheetRef = useRef<TodoFormBottomSheetRef>(null);
   const viewMode = useSettingsStore(s => s.plannerViewMode);
   const setPlannerViewMode = useSettingsStore(s => s.setPlannerViewMode);
   const {primaryColor} = useTheme();
@@ -307,6 +310,10 @@ export default function PlannerScreen() {
         style={{flex: 1}}>
         {renderView()}
       </Animated.View>
+      {(viewMode === 'day' || viewMode === '3day' || viewMode === 'week') && (
+        <MonthlyFAB onPress={() => formSheetRef.current?.openCreate(selectedDate)} />
+      )}
+      <TodoFormBottomSheet ref={formSheetRef} />
     </ScreenContainer>
   );
 }
