@@ -22,6 +22,7 @@ interface ContactRecommendation {
 interface ContactNudgeProps {
   recommendations: ContactRecommendation[];
   enterDelay?: number;
+  onContactPress?: (personName: string) => void;
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -33,6 +34,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 export function ContactNudge({
   recommendations,
   enterDelay = 0,
+  onContactPress,
 }: ContactNudgeProps) {
   return (
     <Animated.View
@@ -131,7 +133,7 @@ export function ContactNudge({
                   </View>
                   {/* 안부 전하기 버튼 */}
                   <AnimatedPressable
-                    onPress={() => {}}
+                    onPress={() => onContactPress?.(rec.person.name)}
                     hapticType="light"
                     scaleValue={0.95}
                     style={{

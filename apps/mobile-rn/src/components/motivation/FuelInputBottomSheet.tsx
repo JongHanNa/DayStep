@@ -11,7 +11,7 @@ import React, {
   useState,
 } from 'react';
 import {View, Text, TextInput, StyleSheet, Keyboard} from 'react-native';
-import BottomSheet, {BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
+import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {Sparkles} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -77,8 +77,11 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
         handleIndicatorStyle={{backgroundColor: '#D1D5DB'}}>
-        <BottomSheetView style={styles.container}>
+        <BottomSheetScrollView style={styles.container} keyboardShouldPersistTaps="handled">
           <View style={styles.sheetTitleRow}>
             <Sparkles size={18} color="#1F2937" />
             <Text style={styles.sheetTitle}>원동력 새기기</Text>
@@ -154,7 +157,7 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
               저장하기
             </Text>
           </AnimatedPressable>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheet>
     );
   },
@@ -162,7 +165,6 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
   },
@@ -207,12 +209,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   contentInput: {
-    flex: 1,
     fontSize: 15,
     color: '#1F2937',
     lineHeight: 22,
     paddingVertical: 0,
-    minHeight: 100,
+    minHeight: 120,
   },
   saveBtn: {
     paddingVertical: 14,

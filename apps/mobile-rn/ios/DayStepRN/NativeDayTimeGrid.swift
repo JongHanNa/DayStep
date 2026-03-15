@@ -36,6 +36,36 @@ struct DayGridEventItem: Codable, Identifiable {
   let isAllDay: Bool
 }
 
+// MARK: - Time Utilities (ISO8601 → local timezone)
+
+private enum TimeUtils {
+  static let isoFrac: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f
+  }()
+  static let isoNoFrac: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime]
+    return f
+  }()
+  static let localTime: DateFormatter = {
+    let f = DateFormatter()
+    f.dateFormat = "HH:mm"
+    return f
+  }()
+
+  static func minutesFromISO(_ timeStr: String) -> CGFloat? {
+    guard timeStr.contains("T") else { return nil }
+    if let date = isoFrac.date(from: timeStr) ?? isoNoFrac.date(from: timeStr) {
+      let cal = Calendar.current
+      let comps = cal.dateComponents([.hour, .minute], from: date)
+      return CGFloat((comps.hour ?? 0) * 60 + (comps.minute ?? 0))
+    }
+    return nil
+  }
+}
+
 // MARK: - Observable State
 
 class DayTimeGridState: ObservableObject {
@@ -342,15 +372,9 @@ struct DayTimeGridContent: View {
   }
 
   private func minutesFromTimeString(_ timeStr: String) -> CGFloat {
-    // "2026-03-16T09:00:00+09:00" 또는 "09:00" 형식 처리
-    let components: [String]
-    if timeStr.contains("T") {
-      let timePart = timeStr.components(separatedBy: "T").last ?? "00:00"
-      components = timePart.prefix(5).components(separatedBy: ":")
-    } else {
-      components = timeStr.prefix(5).components(separatedBy: ":")
-    }
-
+    if let mins = TimeUtils.minutesFromISO(timeStr) { return mins }
+    // 폴백: "HH:mm" 형식
+    let components = timeStr.prefix(5).components(separatedBy: ":")
     guard components.count >= 2,
           let hour = Double(components[0]),
           let minute = Double(components[1]) else { return 0 }
@@ -359,8 +383,9 @@ struct DayTimeGridContent: View {
 
   private func formatTimeShort(_ timeStr: String) -> String {
     if timeStr.contains("T") {
-      let timePart = timeStr.components(separatedBy: "T").last ?? "00:00"
-      return String(timePart.prefix(5))
+      if let date = TimeUtils.isoFrac.date(from: timeStr) ?? TimeUtils.isoNoFrac.date(from: timeStr) {
+        return TimeUtils.localTime.string(from: date)
+      }
     }
     return String(timeStr.prefix(5))
   }

@@ -357,6 +357,7 @@ export default function HomeScreen() {
             <ContactNudge
               recommendations={recommendations}
               enterDelay={200}
+              onContactPress={(personName) => navigation.navigate('Record', {personName})}
             />
           </Animated.View>
 

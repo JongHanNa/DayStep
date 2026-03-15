@@ -9,6 +9,37 @@ import Foundation
 import SwiftUI
 import UIKit
 
+// MARK: - Time Utilities (ISO8601 → local timezone)
+// NativeDayTimeGrid.swift에도 동일한 enum 존재 — 별도 파일 분리 가능
+
+private enum MultiDayTimeUtils {
+  static let isoFrac: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f
+  }()
+  static let isoNoFrac: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime]
+    return f
+  }()
+  static let localTime: DateFormatter = {
+    let f = DateFormatter()
+    f.dateFormat = "HH:mm"
+    return f
+  }()
+
+  static func minutesFromISO(_ timeStr: String) -> CGFloat? {
+    guard timeStr.contains("T") else { return nil }
+    if let date = isoFrac.date(from: timeStr) ?? isoNoFrac.date(from: timeStr) {
+      let cal = Calendar.current
+      let comps = cal.dateComponents([.hour, .minute], from: date)
+      return CGFloat((comps.hour ?? 0) * 60 + (comps.minute ?? 0))
+    }
+    return nil
+  }
+}
+
 // MARK: - Observable State
 
 class MultiDayTimeGridState: ObservableObject {
@@ -55,6 +86,26 @@ class MultiDayTimeGridState: ObservableObject {
     }
     return dates
   }
+
+  // offset 기간만큼 이동한 날짜 배열 (스와이프 미리 렌더링용)
+  func dateRangeFor(offset: Int) -> [String] {
+    let calendar = Calendar.current
+    let df = DateFormatter()
+    df.dateFormat = "yyyy-MM-dd"
+
+    guard let center = df.date(from: centerDate),
+          let shifted = calendar.date(byAdding: .day, value: offset * dayCount, to: center)
+    else { return [] }
+
+    let startOffset = -(dayCount / 2)
+    var dates: [String] = []
+    for i in 0..<dayCount {
+      if let date = calendar.date(byAdding: .day, value: startOffset + i, to: shifted) {
+        dates.append(df.string(from: date))
+      }
+    }
+    return dates
+  }
 }
 
 // MARK: - SwiftUI View
@@ -85,41 +136,61 @@ struct MultiDayTimeGridContent: View {
     return df
   }()
 
+  @GestureState private var dragOffset: CGFloat = 0
+
   var body: some View {
-    let dates = state.dateRange()
+    let currentDates = state.dateRange()
+    let prevDates = state.dateRangeFor(offset: -1)
+    let nextDates = state.dateRangeFor(offset: 1)
 
+    GeometryReader { geo in
+      HStack(spacing: 0) {
+        periodView(dates: prevDates, width: geo.size.width)
+        periodView(dates: currentDates, width: geo.size.width)
+        periodView(dates: nextDates, width: geo.size.width)
+      }
+      .offset(x: -geo.size.width + dragOffset)
+      .gesture(
+        DragGesture(minimumDistance: 30)
+          .updating($dragOffset) { value, state, _ in
+            if abs(value.translation.width) > abs(value.translation.height) {
+              state = value.translation.width
+            }
+          }
+          .onEnded { value in
+            let threshold = geo.size.width * 0.3
+            if value.translation.width < -threshold ||
+               value.predictedEndTranslation.width < -geo.size.width * 0.5 {
+              navigatePeriod(1)
+            } else if value.translation.width > threshold ||
+                      value.predictedEndTranslation.width > geo.size.width * 0.5 {
+              navigatePeriod(-1)
+            }
+          }
+      )
+      .animation(.spring(response: 0.35, dampingFraction: 0.86), value: dragOffset)
+    }
+    .clipped()
+    .onAppear { startTimer() }
+  }
+
+  // MARK: - Period View (single page for 3-page swipe)
+
+  private func periodView(dates: [String], width: CGFloat) -> some View {
     VStack(spacing: 0) {
-      // 상단 헤더: 날짜 행
       headerView(dates: dates)
-
-      // 시간 그리드
       ScrollView(.vertical, showsIndicators: true) {
         ZStack(alignment: .topLeading) {
-          // 시간 행 배경 + 컬럼 구분
           timeGridBackground(columnCount: dates.count)
-
-          // 각 컬럼별 할일/이벤트
           ForEach(Array(dates.enumerated()), id: \.offset) { colIndex, dateStr in
             columnBlocks(dateStr: dateStr, colIndex: colIndex, totalColumns: dates.count)
           }
-
-          // 현재 시각 라인
           currentTimeLine
         }
         .frame(height: hourHeight * 24)
       }
     }
-    .gesture(
-      DragGesture(minimumDistance: 30)
-        .onEnded { value in
-          if value.translation.width < -30 {
-            navigatePeriod(1)
-          } else if value.translation.width > 30 {
-            navigatePeriod(-1)
-          }
-        }
-    )
-    .onAppear { startTimer() }
+    .frame(width: width)
   }
 
   // MARK: - Header
@@ -133,7 +204,7 @@ struct MultiDayTimeGridContent: View {
       ForEach(Array(dates.enumerated()), id: \.offset) { _, dateStr in
         let isToday = dateStr == dateFormatter.string(from: Date())
 
-        VStack(spacing: 2) {
+        VStack(spacing: 1) {
           // 요일
           Text(dayOfWeekString(dateStr))
             .font(.system(size: state.dayCount <= 3 ? 12 : 10, weight: .medium))
@@ -149,7 +220,7 @@ struct MultiDayTimeGridContent: View {
             )
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
         .onTapGesture {
           onDateSelect?(dateStr)
         }
@@ -282,14 +353,9 @@ struct MultiDayTimeGridContent: View {
   }
 
   private func minutesFromTimeString(_ timeStr: String) -> CGFloat {
-    let components: [String]
-    if timeStr.contains("T") {
-      let timePart = timeStr.components(separatedBy: "T").last ?? "00:00"
-      components = timePart.prefix(5).components(separatedBy: ":")
-    } else {
-      components = timeStr.prefix(5).components(separatedBy: ":")
-    }
-
+    if let mins = MultiDayTimeUtils.minutesFromISO(timeStr) { return mins }
+    // 폴백: "HH:mm" 형식
+    let components = timeStr.prefix(5).components(separatedBy: ":")
     guard components.count >= 2,
           let hour = Double(components[0]),
           let minute = Double(components[1]) else { return 0 }
@@ -308,13 +374,9 @@ struct MultiDayTimeGridContent: View {
 
   private func navigatePeriod(_ direction: Int) {
     guard let center = dateFormatter.date(from: state.centerDate),
-          let newCenter = calendar.date(byAdding: .day, value: direction, to: center) else { return }
+          let newCenter = calendar.date(byAdding: .day, value: direction * state.dayCount, to: center) else { return }
 
-    let newCenterStr = dateFormatter.string(from: newCenter)
-    withAnimation(.easeInOut(duration: 0.25)) {
-      state.centerDate = newCenterStr
-    }
-
+    state.centerDate = dateFormatter.string(from: newCenter)
     let dates = state.dateRange()
     if let first = dates.first, let last = dates.last {
       onDateRangeChange?(first, last)

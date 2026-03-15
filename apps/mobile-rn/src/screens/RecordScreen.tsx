@@ -3,7 +3,8 @@
  * 3단계 플로우: select-person → write-news → completed
  * Step 1: 사람 중심 카드 + 인라인 소식/감사 프리뷰
  */
-import React, {useState, useCallback, useEffect, useMemo} from 'react';
+import React, {useState, useCallback, useEffect, useMemo, useRef} from 'react';
+import {useRoute} from '@react-navigation/native';
 import {
   Text,
   View,
@@ -135,6 +136,8 @@ function QuickStatPill({label, value}: {label: string; value: string}) {
 }
 
 export default function RecordScreen() {
+  const route = useRoute<any>();
+  const personNameParam = route.params?.personName as string | undefined;
   const user = useAuthStore(s => s.user);
   const {primaryColor} = useTheme();
   const {
@@ -188,6 +191,19 @@ export default function RecordScreen() {
       });
     }
   }, [user?.id]);
+
+  // 안부 버튼에서 넘어온 경우 자동 선택
+  const autoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (personNameParam && people.length > 0 && !autoSelectedRef.current) {
+      const match = people.find(p => p.name === personNameParam);
+      if (match) {
+        autoSelectedRef.current = true;
+        setSelectedPerson(match);
+        setStep('write-news');
+      }
+    }
+  }, [personNameParam, people]);
 
   const filteredPeople = people.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
