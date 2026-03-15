@@ -184,7 +184,7 @@ export const useTodoStore = create<TodoState>()(
             .or(
               [
                 // 시간 지정 할일 (해당 날짜)
-                `and(schedule_type.eq.timed,start_time.gte.${dayStart},start_time.lte.${dayEnd})`,
+                `and(schedule_type.eq.timed,start_time.gte.${dayStart},start_time.lte.${dayEnd},recurrence_pattern.eq.none)`,
                 // 매일 반복 (종료일 필터 포함)
                 `and(recurrence_pattern.eq.daily,start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
                 // 주간 반복 (해당 요일, 종료일 필터 포함)
