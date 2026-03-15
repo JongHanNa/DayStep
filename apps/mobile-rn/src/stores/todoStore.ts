@@ -57,6 +57,7 @@ export interface MonthTodoSummary {
   id: string;
   title: string;
   start_time: string | null;
+  end_time: string | null;
   schedule_type: string;
   recurrence_pattern: string;
   recurrence_days_of_week: number[] | null;
@@ -1016,7 +1017,7 @@ export const useTodoStore = create<TodoState>()(
           // 3개월 범위 쿼리 (전월~익월)
           const {data, error} = await supabase
             .from('todos')
-            .select('id, title, start_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
+            .select('id, title, start_time, end_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
             .eq('user_id', userId)
             .or(
               [

@@ -15,12 +15,14 @@ struct MonthCalTodoItem: Codable, Identifiable {
   let title: String
   let color: String?
   let startTime: String?
+  let endTime: String?
   let scheduleType: String?
   let recurrencePattern: String?
 
   enum CodingKeys: String, CodingKey {
     case id, title, color
     case startTime = "start_time"
+    case endTime = "end_time"
     case scheduleType = "schedule_type"
     case recurrencePattern = "recurrence_pattern"
   }
@@ -31,6 +33,8 @@ struct MonthCalEventItem: Codable, Identifiable {
   let title: String
   let color: String
   let isAllDay: Bool
+  let start: String?
+  let end: String?
 }
 
 // MARK: - Observable State
@@ -343,7 +347,7 @@ struct MonthCalendarContent: View {
 
             Spacer()
 
-            Text(event.isAllDay ? "종일" : "")
+            Text(event.isAllDay ? "종일" : formatEventTime(event))
               .font(.system(size: 12))
               .foregroundColor(Color(hex: "#9CA3AF"))
           }
@@ -370,9 +374,23 @@ struct MonthCalendarContent: View {
 
               // 시간 또는 반복 정보
               if let time = todo.startTime, !time.isEmpty {
-                Text(formatTime(time))
-                  .font(.system(size: 12))
-                  .foregroundColor(Color(hex: "#9CA3AF"))
+                if let endTime = todo.endTime, !endTime.isEmpty {
+                  if isCrossDay(start: time, end: endTime) {
+                    // 크로스데이: 날짜 + 시간
+                    Text("\(formatShortDate(time) ?? "") \(formatTime(time)) - \(formatShortDate(endTime) ?? "") \(formatTime(endTime))")
+                      .font(.system(size: 12))
+                      .foregroundColor(Color(hex: "#9CA3AF"))
+                  } else {
+                    // 같은 날: 시간만
+                    Text("\(formatTime(time)) - \(formatTime(endTime))")
+                      .font(.system(size: 12))
+                      .foregroundColor(Color(hex: "#9CA3AF"))
+                  }
+                } else {
+                  Text(formatTime(time))
+                    .font(.system(size: 12))
+                    .foregroundColor(Color(hex: "#9CA3AF"))
+                }
               } else if let pattern = todo.recurrencePattern, !pattern.isEmpty, pattern != "none" {
                 Image(systemName: "repeat")
                   .font(.system(size: 11))
@@ -412,15 +430,22 @@ struct MonthCalendarContent: View {
   }
 
   private func formatTime(_ timeStr: String) -> String {
-    // ISO format: "2026-03-12T15:00:00+00:00" → "T" 뒤에서 시:분 추출
-    if timeStr.contains("T") {
-      let parts = timeStr.split(separator: "T")
-      if parts.count >= 2 {
-        let timePart = String(String(parts[1]).prefix(5))  // "15:00"
-        return formatHHmm(timePart)
-      }
+    // ISO 문자열을 Date로 파싱 → KST TimeZone 기준 포맷
+    let isoFormatter = ISO8601DateFormatter()
+    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+    let isoFormatterBasic = ISO8601DateFormatter()
+    isoFormatterBasic.formatOptions = [.withInternetDateTime]
+
+    if let date = isoFormatter.date(from: timeStr) ?? isoFormatterBasic.date(from: timeStr) {
+      let df = DateFormatter()
+      df.locale = Locale(identifier: "ko_KR")
+      df.timeZone = TimeZone(identifier: "Asia/Seoul")
+      df.dateFormat = "a h:mm"
+      return df.string(from: date)
     }
-    // "HH:mm:ss" or "HH:mm" 형식
+
+    // fallback: 기존 HH:mm 파싱
     return formatHHmm(timeStr)
   }
 
@@ -432,6 +457,48 @@ struct MonthCalendarContent: View {
     let period = hour < 12 ? "오전" : "오후"
     let h = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour)
     return "\(period) \(h):\(String(format: "%02d", minute))"
+  }
+
+  /// ISO 문자열에서 "M/d" 형식 날짜 추출 (KST 기준)
+  private func formatShortDate(_ isoStr: String) -> String? {
+    let isoFormatter = ISO8601DateFormatter()
+    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let isoFormatterBasic = ISO8601DateFormatter()
+    isoFormatterBasic.formatOptions = [.withInternetDateTime]
+
+    guard let date = isoFormatter.date(from: isoStr) ?? isoFormatterBasic.date(from: isoStr) else { return nil }
+    let df = DateFormatter()
+    df.locale = Locale(identifier: "ko_KR")
+    df.timeZone = TimeZone(identifier: "Asia/Seoul")
+    df.dateFormat = "M/d"
+    return df.string(from: date)
+  }
+
+  /// start_time과 end_time의 날짜가 다른지 판별 (KST 기준)
+  private func isCrossDay(start: String?, end: String?) -> Bool {
+    guard let s = start, let e = end else { return false }
+    let isoFormatter = ISO8601DateFormatter()
+    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    let isoFormatterBasic = ISO8601DateFormatter()
+    isoFormatterBasic.formatOptions = [.withInternetDateTime]
+
+    guard let startDate = isoFormatter.date(from: s) ?? isoFormatterBasic.date(from: s),
+          let endDate = isoFormatter.date(from: e) ?? isoFormatterBasic.date(from: e) else { return false }
+
+    var cal = Calendar(identifier: .gregorian)
+    cal.timeZone = TimeZone(identifier: "Asia/Seoul")!
+    return !cal.isDate(startDate, inSameDayAs: endDate)
+  }
+
+  /// 이벤트 시간 포맷 (시작 - 종료)
+  private func formatEventTime(_ event: MonthCalEventItem) -> String {
+    guard let start = event.start, !start.isEmpty else { return "" }
+    let startFormatted = formatTime(start)
+    if let end = event.end, !end.isEmpty {
+      let endFormatted = formatTime(end)
+      return "\(startFormatted) - \(endFormatted)"
+    }
+    return startFormatted
   }
 
   // MARK: - Month Navigation
