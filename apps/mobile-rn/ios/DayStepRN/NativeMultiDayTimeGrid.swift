@@ -110,11 +110,11 @@ struct MultiDayTimeGridContent: View {
       }
     }
     .gesture(
-      DragGesture(minimumDistance: 50)
+      DragGesture(minimumDistance: 30)
         .onEnded { value in
-          if value.translation.width < -50 {
+          if value.translation.width < -30 {
             navigatePeriod(1)
-          } else if value.translation.width > 50 {
+          } else if value.translation.width > 30 {
             navigatePeriod(-1)
           }
         }
@@ -149,7 +149,7 @@ struct MultiDayTimeGridContent: View {
             )
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+        .padding(.vertical, 4)
         .onTapGesture {
           onDateSelect?(dateStr)
         }
@@ -308,10 +308,12 @@ struct MultiDayTimeGridContent: View {
 
   private func navigatePeriod(_ direction: Int) {
     guard let center = dateFormatter.date(from: state.centerDate),
-          let newCenter = calendar.date(byAdding: .day, value: state.dayCount * direction, to: center) else { return }
+          let newCenter = calendar.date(byAdding: .day, value: direction, to: center) else { return }
 
     let newCenterStr = dateFormatter.string(from: newCenter)
-    state.centerDate = newCenterStr
+    withAnimation(.easeInOut(duration: 0.25)) {
+      state.centerDate = newCenterStr
+    }
 
     let dates = state.dateRange()
     if let first = dates.first, let last = dates.last {

@@ -92,18 +92,8 @@ struct DayTimeGridContent: View {
     return df
   }()
 
-  private let displayDateFormatter: DateFormatter = {
-    let df = DateFormatter()
-    df.dateFormat = "M월 d일 (E)"
-    df.locale = Locale(identifier: "ko_KR")
-    return df
-  }()
-
   var body: some View {
     VStack(spacing: 0) {
-      // 상단 헤더: 날짜 + 네비게이션
-      headerView
-
       // 종일 이벤트 영역
       allDaySection
 
@@ -128,64 +118,6 @@ struct DayTimeGridContent: View {
     .onAppear {
       startTimer()
     }
-  }
-
-  // MARK: - Header
-
-  private var headerView: some View {
-    HStack {
-      // 이전 날짜
-      Button(action: { navigateDay(-1) }) {
-        Image(systemName: "chevron.left")
-          .font(.system(size: 16, weight: .semibold))
-          .foregroundColor(Color(hex: "#6B7280"))
-      }
-
-      Spacer()
-
-      // 날짜 표시
-      VStack(spacing: 2) {
-        Text(displayDateString)
-          .font(.system(size: 17, weight: .bold))
-          .foregroundColor(Color(hex: "#1F2937"))
-      }
-
-      Spacer()
-
-      // 오늘 버튼
-      let todayStr = dateFormatter.string(from: Date())
-      if state.selectedDate != todayStr {
-        Button(action: {
-          onDateSelect?(todayStr)
-        }) {
-          Text("오늘")
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(Color(hex: state.primaryColor))
-        }
-      }
-
-      // 다음 날짜
-      Button(action: { navigateDay(1) }) {
-        Image(systemName: "chevron.right")
-          .font(.system(size: 16, weight: .semibold))
-          .foregroundColor(Color(hex: "#6B7280"))
-      }
-    }
-    .padding(.horizontal, 16)
-    .padding(.vertical, 12)
-  }
-
-  private var displayDateString: String {
-    guard let date = dateFormatter.date(from: state.selectedDate) else {
-      return state.selectedDate
-    }
-    return displayDateFormatter.string(from: date)
-  }
-
-  private func navigateDay(_ offset: Int) {
-    guard let date = dateFormatter.date(from: state.selectedDate),
-          let newDate = calendar.date(byAdding: .day, value: offset, to: date) else { return }
-    onDateSelect?(dateFormatter.string(from: newDate))
   }
 
   // MARK: - All Day Section

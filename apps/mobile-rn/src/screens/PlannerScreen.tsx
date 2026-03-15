@@ -5,9 +5,9 @@
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View, StyleSheet} from 'react-native';
-import Animated, {FadeIn, FadeOut} from 'react-native-reanimated';
+import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {ScreenContainer} from '@/components/core';
-import {LiquidGlassMenu} from '@/components/native';
+import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/native';
 import {DailyPlannerView} from '@/components/planner/DailyPlannerView';
 import {MonthlyPlannerView} from '@/components/planner/MonthlyPlannerView';
 import {NativeDayTimeGridNative} from '@/components/native/NativeDayTimeGrid';
@@ -16,6 +16,7 @@ import {useSettingsStore, type PlannerViewMode} from '@/stores/settingsStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useTheme} from '@/theme';
+import {springs} from '@/theme/animations';
 import {Calendar} from 'lucide-react-native';
 import {format, addDays, subDays} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
@@ -180,6 +181,12 @@ export default function PlannerScreen() {
     [setSelectedDate],
   );
 
+  const calendarHeight = useSharedValue(0);
+  const calendarHeightStyle = useAnimatedStyle(() => ({
+    height: calendarHeight.value > 0 ? calendarHeight.value : undefined,
+    overflow: 'hidden' as const,
+  }));
+
   const gradient = GRADIENT_MAP[viewMode];
 
   const menuOverlay = (
@@ -213,18 +220,33 @@ export default function PlannerScreen() {
         );
       case 'day':
         return (
-          <View style={{flex: 1, position: 'relative'}}>
-            <NativeDayTimeGridNative
-              selectedDate={selectedDate}
-              primaryColor={primaryColor}
-              todoData={dayTodoData}
-              eventData={dayEventData}
-              onDateSelect={handleDayDateSelect}
-              onTodoPress={handleTodoPress}
-              onHeightChange={() => {}}
-              style={{flex: 1}}
-            />
-            {menuOverlay}
+          <View style={{flex: 1}}>
+            <View style={{position: 'relative'}}>
+              <Animated.View style={calendarHeightStyle}>
+                <NativeWeekStripCalendarNative
+                  selectedDate={selectedDate}
+                  primaryColor={primaryColor}
+                  onDateSelect={handleDayDateSelect}
+                  onHeightChange={(e) => {
+                    calendarHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
+                  }}
+                  style={StyleSheet.absoluteFill}
+                />
+              </Animated.View>
+              {menuOverlay}
+            </View>
+            <View style={{flex: 1, position: 'relative'}}>
+              <NativeDayTimeGridNative
+                selectedDate={selectedDate}
+                primaryColor={primaryColor}
+                todoData={dayTodoData}
+                eventData={dayEventData}
+                onDateSelect={handleDayDateSelect}
+                onTodoPress={handleTodoPress}
+                onHeightChange={() => {}}
+                style={{flex: 1}}
+              />
+            </View>
           </View>
         );
       case '3day':
