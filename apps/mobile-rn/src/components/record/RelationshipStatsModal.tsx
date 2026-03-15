@@ -3,13 +3,12 @@
  * BottomSheetModal + BottomSheetScrollView, ref 기반 제어
  */
 import React, {useState, useMemo, useCallback, useRef, forwardRef, useImperativeHandle} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
-import {TrendingUp, Lock} from 'lucide-react-native';
+import {TrendingUp} from 'lucide-react-native';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
-import {useSubscriptionStore} from '@/stores/subscriptionStore';
-import {SCREEN_REGISTRY} from '@daystep/shared-core/constants';
+import {ProScreenGuard} from '@/components/subscription/ProScreenGuard';
 import {INTERACTION_TYPE_LABELS} from '@/types/cherished-people';
 import type {DetailedStats, RelationshipStats, InteractionType} from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
@@ -41,9 +40,6 @@ export const RelationshipStatsModal = forwardRef<RelationshipStatsModalRef>(
   function RelationshipStatsModal(_props, ref) {
     const {primaryColor} = useTheme();
     const bottomSheetRef = useRef<BottomSheetModal>(null);
-    const {hasActiveSubscription} = useSubscriptionStore();
-    const screen = SCREEN_REGISTRY['contact'];
-    const isLocked = screen?.isPro && !hasActiveSubscription;
     const user = useAuthStore(s => s.user);
     const {getDetailedStats, getRelationshipStats, loadPeople} =
       useCherishedPeopleStore();
@@ -98,20 +94,7 @@ export const RelationshipStatsModal = forwardRef<RelationshipStatsModalRef>(
         enableDynamicSizing={false}
         handleIndicatorStyle={styles.handleIndicator}
         onChange={handleSheetChange}>
-        {isLocked ? (
-          <View style={styles.lockedContainer}>
-            <Lock size={48} color="#9CA3AF" />
-            <Text style={styles.lockedTitle}>Pro 기능입니다</Text>
-            <Text style={styles.lockedDesc}>
-              {screen?.label ?? '관계 통계'}은{'\n'}Pro 구독에서 이용할 수 있어요.
-            </Text>
-            <TouchableOpacity
-              onPress={() => bottomSheetRef.current?.dismiss()}
-              style={styles.lockedButton}>
-              <Text style={styles.lockedButtonText}>닫기</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
+        <ProScreenGuard screenId="contact">
           <View style={styles.container}>
             {/* 헤더 */}
             <View style={styles.header}>
@@ -248,7 +231,7 @@ export const RelationshipStatsModal = forwardRef<RelationshipStatsModalRef>(
               )}
             </BottomSheetScrollView>
           </View>
-        )}
+        </ProScreenGuard>
       </BottomSheetModal>
     );
   },
@@ -258,38 +241,6 @@ const styles = StyleSheet.create({
   handleIndicator: {
     backgroundColor: '#D1D5DB',
     width: 36,
-  },
-  lockedContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 80,
-  },
-  lockedTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#374151',
-    marginTop: 16,
-  },
-  lockedDesc: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
-  },
-  lockedButton: {
-    backgroundColor: '#3B82F6',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 24,
-  },
-  lockedButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 15,
   },
   container: {
     flex: 1,

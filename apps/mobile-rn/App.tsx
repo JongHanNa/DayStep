@@ -53,31 +53,31 @@ function App() {
 
   return (
     <GestureHandlerRootView style={{flex: 1}}>
-      <BottomSheetModalProvider>
-        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <ThemeProvider>
-            <NavigationContainer
-              linking={linking}
-              theme={{
-                dark: false,
-                colors: {
-                  primary: '#3B82F6',
-                  background: '#FFF7ED',
-                  card: '#FFFFFF',
-                  text: '#1F2937',
-                  border: '#E5E7EB',
-                  notification: '#EF4444',
-                },
-                fonts: DefaultTheme.fonts,
-              }}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <ThemeProvider>
+          <NavigationContainer
+            linking={linking}
+            theme={{
+              dark: false,
+              colors: {
+                primary: '#3B82F6',
+                background: '#FFF7ED',
+                card: '#FFFFFF',
+                text: '#1F2937',
+                border: '#E5E7EB',
+                notification: '#EF4444',
+              },
+              fonts: DefaultTheme.fonts,
+            }}>
+            <BottomSheetModalProvider>
               <StatusBar
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
               />
               <RootNavigator />
-            </NavigationContainer>
-          </ThemeProvider>
-        </SafeAreaProvider>
-      </BottomSheetModalProvider>
+            </BottomSheetModalProvider>
+          </NavigationContainer>
+        </ThemeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
