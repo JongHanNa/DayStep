@@ -170,7 +170,7 @@ struct MonthCalendarContent: View {
           VStack(spacing: 0) {
             ForEach(weekRows) { week in
               VStack(spacing: 0) {
-                weekRowView(week: week)
+                weekRowView(week: week, rowHeight: rowHeight)
                   .frame(height: rowHeight)
 
                 // 선택된 날짜가 이 주에 속하면 상세 패널 삽입
@@ -200,10 +200,10 @@ struct MonthCalendarContent: View {
 
   // MARK: - Week Row
 
-  private func weekRowView(week: MonthWeekRow) -> some View {
+  private func weekRowView(week: MonthWeekRow, rowHeight: CGFloat) -> some View {
     HStack(spacing: 0) {
       ForEach(week.dates) { cellInfo in
-        dayCellView(cellInfo: cellInfo)
+        dayCellView(cellInfo: cellInfo, rowHeight: rowHeight)
           .frame(maxWidth: .infinity, maxHeight: .infinity)
       }
     }
@@ -212,13 +212,22 @@ struct MonthCalendarContent: View {
 
   // MARK: - Day Cell
 
-  private func dayCellView(cellInfo: DayCellInfo) -> some View {
+  private func dayCellView(cellInfo: DayCellInfo, rowHeight: CGFloat) -> some View {
     let dateStr = cellInfo.id
     let isToday = calendar.isDate(cellInfo.date, inSameDayAs: today)
     let isSelected = state.selectedDate == dateStr
     let todos = state.todoMap[dateStr] ?? []
     let events = state.eventMap[dateStr] ?? []
     let allItems = todos.count + events.count
+
+    // 동적 칩 슬롯 계산: 날짜 영역(28pt) + padding(4+2*2=8pt) = 36pt
+    let chipHeight: CGFloat = 14
+    let availableForChips = rowHeight - 36
+    let maxChips = max(2, Int(availableForChips / chipHeight))
+
+    let eventSlots = min(events.count, maxChips)
+    let todoSlots = min(todos.count, maxChips - eventSlots)
+    let shown = eventSlots + todoSlots
 
     return Button(action: {
       if state.selectedDate == dateStr {
@@ -252,21 +261,19 @@ struct MonthCalendarContent: View {
         }
         .frame(width: 28, height: 28)
 
-        // 칩 영역 — 남은 공간 채움
+        // 칩 영역 — 가용 높이에 맞게 동적 표시
         VStack(spacing: 1) {
-          // 이벤트 칩 (최대 1개)
-          if let event = events.first {
+          // 이벤트 칩
+          ForEach(Array(events.prefix(eventSlots).enumerated()), id: \.element.id) { _, event in
             chipView(title: event.title, color: event.color)
           }
 
-          // todo 칩 (이벤트 유무에 따라 1~2개)
-          let todoSlots = events.isEmpty ? 2 : 1
+          // todo 칩
           ForEach(Array(todos.prefix(todoSlots).enumerated()), id: \.element.id) { _, todo in
             chipView(title: todo.title, color: todo.color ?? state.primaryColor)
           }
 
           // overflow
-          let shown = min(events.isEmpty ? 0 : 1, events.count) + min(todoSlots, todos.count)
           if allItems > shown && shown > 0 {
             Text("+\(allItems - shown)")
               .font(.system(size: 8))

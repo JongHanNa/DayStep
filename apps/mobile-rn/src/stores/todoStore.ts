@@ -183,8 +183,10 @@ export const useTodoStore = create<TodoState>()(
             .eq('user_id', userId)
             .or(
               [
-                // 시간 지정 할일 (해당 날짜)
+                // 시간 지정 할일 (해당 날짜에 시작)
                 `and(schedule_type.eq.timed,start_time.gte.${dayStart},start_time.lte.${dayEnd},recurrence_pattern.eq.none)`,
+                // 크로스데이 할일 (전날 시작했지만 이 날짜까지 걸침)
+                `and(schedule_type.eq.timed,start_time.lt.${dayStart},end_time.gt.${dayStart},recurrence_pattern.eq.none)`,
                 // 매일 반복 (종료일 필터 포함)
                 `and(recurrence_pattern.eq.daily,start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
                 // 주간 반복 (해당 요일, 종료일 필터 포함)
