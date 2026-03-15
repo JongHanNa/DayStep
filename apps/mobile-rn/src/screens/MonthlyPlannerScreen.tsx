@@ -6,7 +6,8 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ScreenContainer} from '@/components/core';
+import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {CalendarRange} from 'lucide-react-native';
 import {
   TodoFormBottomSheet,
   type TodoFormBottomSheetRef,
@@ -84,8 +85,8 @@ export default function MonthlyPlannerScreen() {
 
   return (
     <ScreenContainer gradient="warmBackground">
-      {/* 네이티브 월간 캘린더 */}
-      <View style={{flex: 1, paddingBottom: 64 + insets.bottom}}>
+      {/* 네이티브 월간 캘린더 + 뷰 전환 오버레이 */}
+      <View style={{flex: 1, paddingBottom: 64 + insets.bottom, position: 'relative'}}>
         <NativeMonthCalendarNative
           selectedDate=""
           primaryColor={primaryColor}
@@ -101,6 +102,14 @@ export default function MonthlyPlannerScreen() {
           onHeightChange={() => {}}
           style={{flex: 1}}
         />
+        {/* 헤더 중앙 뷰 전환 아이콘 */}
+        <View style={{position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center', zIndex: 10}} pointerEvents="box-none">
+          <AnimatedPressable
+            onPress={() => navigation.navigate('Planner')}
+            style={{padding: 6}}>
+            <CalendarRange size={22} color={primaryColor} />
+          </AnimatedPressable>
+        </View>
       </View>
 
       {/* FAB */}

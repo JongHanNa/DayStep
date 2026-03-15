@@ -38,7 +38,7 @@ import {useTheme} from '@/theme';
 import {format} from 'date-fns';
 import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
-import {Inbox} from 'lucide-react-native';
+import {Inbox, CalendarDays} from 'lucide-react-native';
 
 type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime' | 'deferred';
 
@@ -368,18 +368,28 @@ function TodoListScreenInner() {
 
   return (
     <ScreenContainer gradient="calmBackground">
-      {/* 주간 스트립 캘린더 */}
-      <Animated.View style={calendarHeightStyle}>
-        <NativeWeekStripCalendarNative
-          selectedDate={selectedDate}
-          primaryColor={primaryColor}
-          onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
-          onHeightChange={(e) => {
-            calendarHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
-          }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
+      {/* 주간 스트립 캘린더 + 뷰 전환 오버레이 */}
+      <View style={{position: 'relative'}}>
+        <Animated.View style={calendarHeightStyle}>
+          <NativeWeekStripCalendarNative
+            selectedDate={selectedDate}
+            primaryColor={primaryColor}
+            onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
+            onHeightChange={(e) => {
+              calendarHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+        {/* 헤더 중앙 뷰 전환 아이콘 */}
+        <View style={{position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center', zIndex: 10}} pointerEvents="box-none">
+          <AnimatedPressable
+            onPress={() => navigation.navigate('Home', {screen: 'MonthlyPlanner'})}
+            style={{padding: 6}}>
+            <CalendarDays size={22} color={primaryColor} />
+          </AnimatedPressable>
+        </View>
+      </View>
 
       <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging} onPageChange={handlePageChange}>
         {/* Page 0: 시간대별 할일 리스트 */}
