@@ -4,7 +4,7 @@
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {View, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {ScreenContainer} from '@/components/core';
 import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/native';
@@ -55,14 +55,16 @@ export default function PlannerScreen() {
     [setPlannerViewMode],
   );
 
-  // 3일/주 뷰 날짜 범위 계산
+  // 3일/주 뷰 날짜 범위 계산 (버퍼 포함 — 네이티브 가로 스크롤용)
   const multiDayRange = useMemo(() => {
     if (viewMode !== '3day' && viewMode !== 'week') return null;
     const dayCount = viewMode === '3day' ? 3 : 7;
+    const bufferDays = 7;
     const center = new Date(selectedDate);
-    const startOffset = Math.floor(dayCount / 2);
+    const startOffset = Math.floor(dayCount / 2) + bufferDays;
+    const endOffset = dayCount - Math.floor(dayCount / 2) - 1 + bufferDays;
     const startDate = format(subDays(center, startOffset), 'yyyy-MM-dd');
-    const endDate = format(addDays(center, dayCount - startOffset - 1), 'yyyy-MM-dd');
+    const endDate = format(addDays(center, endOffset), 'yyyy-MM-dd');
     return {startDate, endDate, dayCount};
   }, [viewMode, selectedDate]);
 
@@ -72,13 +74,17 @@ export default function PlannerScreen() {
     const {startDate, endDate} = multiDayRange;
 
     fetchTodosForDateRange(startDate, endDate).then(result => {
-      setMultiDayTodoMap(result);
+      setMultiDayTodoMap(prev => ({...prev, ...result}));
     });
 
-    // 캘린더 이벤트 fetch
+    // 캘린더 이벤트 fetch (버퍼 범위가 월 경계를 넘을 수 있으므로 양쪽 월 fetch)
     if (isConnected) {
-      const [y, m] = startDate.split('-').map(Number);
-      fetchEventsForMonth(y, m);
+      const [sy, sm] = startDate.split('-').map(Number);
+      const [ey, em] = endDate.split('-').map(Number);
+      fetchEventsForMonth(sy, sm);
+      if (sy !== ey || sm !== em) {
+        fetchEventsForMonth(ey, em);
+      }
     }
   }, [multiDayRange, fetchTodosForDateRange, isConnected, fetchEventsForMonth]);
 
@@ -250,28 +256,25 @@ export default function PlannerScreen() {
           </View>
         );
       case '3day':
-        return (
-          <View style={{flex: 1, position: 'relative'}}>
-            <NativeMultiDayTimeGridNative
-              dayCount={3}
-              centerDate={selectedDate}
-              primaryColor={primaryColor}
-              todoData={multiDayTodoDataJson}
-              eventData={multiDayEventDataJson}
-              onDateSelect={handleDayDateSelect}
-              onTodoPress={handleTodoPress}
-              onDateRangeChange={handleDateRangeChange}
-              onHeightChange={() => {}}
-              style={{flex: 1}}
-            />
-            {menuOverlay}
-          </View>
-        );
       case 'week':
         return (
-          <View style={{flex: 1, position: 'relative'}}>
+          <View style={{flex: 1}}>
+            <View style={styles.multiDayToolbar}>
+              <Text style={styles.monthLabel}>
+                {new Date(selectedDate).getMonth() + 1}월
+              </Text>
+              <LiquidGlassMenu
+                systemIconName="calendar"
+                iconColor={primaryColor}
+                size={36}
+                menuItems={MENU_ITEMS}
+                onSelect={handleMenuSelect}
+                fallbackIcon={<Calendar size={18} color={primaryColor} />}
+              />
+              <View style={styles.toolbarSpacer} />
+            </View>
             <NativeMultiDayTimeGridNative
-              dayCount={7}
+              dayCount={viewMode === '3day' ? 3 : 7}
               centerDate={selectedDate}
               primaryColor={primaryColor}
               todoData={multiDayTodoDataJson}
@@ -282,7 +285,6 @@ export default function PlannerScreen() {
               onHeightChange={() => {}}
               style={{flex: 1}}
             />
-            {menuOverlay}
           </View>
         );
       default:
@@ -317,5 +319,24 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 10,
+  },
+  multiDayToolbar: {
+    flexDirection: 'row',
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  monthLabel: {
+    position: 'absolute',
+    left: 16,
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  toolbarSpacer: {
+    position: 'absolute',
+    right: 16,
+    width: 36,
   },
 });

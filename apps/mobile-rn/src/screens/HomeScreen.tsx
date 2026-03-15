@@ -7,7 +7,15 @@ import React, {useCallback, useMemo} from 'react';
 import {Text, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
-import Animated, {FadeInDown, FadeIn, LinearTransition} from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  LinearTransition,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import {StyleSheet} from 'react-native';
 import {ScreenContainer, AnimatedCard, SwipeablePages} from '@/components/core';
 import {ProgressRing} from '@/components/home/ProgressRing';
 import {FuelCard} from '@/components/home/FuelCard';
@@ -15,6 +23,8 @@ import {MissionCard} from '@/components/home/MissionCard';
 import {GroupSection} from '@/components/home/GroupSection';
 import type {FeatureItem} from '@/components/home/GroupSection';
 import {ContactNudge} from '@/components/home/ContactNudge';
+import {NativeProgressCardNative, isIOS26Plus} from '@/components/native';
+import {springs} from '@/theme/animations';
 import {useTodoStore} from '@/stores/todoStore';
 import {useNoteStore} from '@/stores/noteStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
@@ -27,7 +37,6 @@ import {
   CloudSun,
   Sparkles,
   Calendar,
-  CalendarRange,
   FolderKanban,
   Link,
   Lightbulb,
@@ -102,6 +111,13 @@ export default function HomeScreen() {
 
   const GreetingIcon = greeting.Icon;
 
+  // 네이티브 진행률 카드 높이 애니메이션
+  const progressCardHeight = useSharedValue(120);
+  const progressCardHeightStyle = useAnimatedStyle(() => ({
+    height: progressCardHeight.value,
+    overflow: 'hidden' as const,
+  }));
+
   // 영감 문구 (날짜 기반 고정)
   const inspirationQuote = useMemo(() => {
     const dayIndex = new Date().getDate() % INSPIRATION_QUOTES.length;
@@ -122,15 +138,6 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Planner', {initialPage: 0}),
-      },
-      {
-        id: 'monthly-planner',
-        icon: <CalendarRange size={20} color={primaryColor} />,
-        label: '월간 계획하기',
-        description: '한 달 일정을 한눈에 보기',
-        iconBgColor: PRIMARY_BG,
-        iconColor: primaryColor,
-        onPress: () => navigation.navigate('MonthlyPlanner'),
       },
       {
         id: 'ai-plan',
@@ -256,35 +263,55 @@ export default function HomeScreen() {
 
           {/* 2. 진행률 카드 */}
           <View className="px-4 mt-4">
-            <AnimatedCard enterDelay={200}>
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1 mr-4">
-                  <Text className="text-lg font-semibold text-gray-800 mb-1">
-                    오늘의 진행률
-                  </Text>
-                  <Text className="text-sm text-gray-500">
-                    {totalCount > 0
-                      ? `${completedCount}개 완료 / ${totalCount}개 중`
-                      : '오늘의 할일을 추가해보세요'}
-                  </Text>
-                  {totalCount > 0 && (
-                    <View className="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
-                      <View
-                        className="h-full rounded-full"
-                        style={{backgroundColor: primaryColor, width: `${Math.round(progress * 100)}%`}}
-                      />
-                    </View>
-                  )}
+            {isIOS26Plus ? (
+              <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+                <Animated.View style={progressCardHeightStyle}>
+                  <NativeProgressCardNative
+                    completed={completedCount}
+                    total={totalCount}
+                    progress={progress}
+                    primaryColor={primaryColor}
+                    onHeightChange={e => {
+                      progressCardHeight.value = withSpring(
+                        e.nativeEvent.height,
+                        springs.nativeGlass,
+                      );
+                    }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              </Animated.View>
+            ) : (
+              <AnimatedCard enterDelay={200}>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 mr-4">
+                    <Text className="text-lg font-semibold text-gray-800 mb-1">
+                      오늘의 진행률
+                    </Text>
+                    <Text className="text-sm text-gray-500">
+                      {totalCount > 0
+                        ? `${completedCount}개 완료 / ${totalCount}개 중`
+                        : '오늘의 할일을 추가해보세요'}
+                    </Text>
+                    {totalCount > 0 && (
+                      <View className="mt-3 bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <View
+                          className="h-full rounded-full"
+                          style={{backgroundColor: primaryColor, width: `${Math.round(progress * 100)}%`}}
+                        />
+                      </View>
+                    )}
+                  </View>
+                  <ProgressRing
+                    progress={progress}
+                    size={80}
+                    strokeWidth={6}
+                    completed={completedCount}
+                    total={totalCount}
+                  />
                 </View>
-                <ProgressRing
-                  progress={progress}
-                  size={80}
-                  strokeWidth={6}
-                  completed={completedCount}
-                  total={totalCount}
-                />
-              </View>
-            </AnimatedCard>
+              </AnimatedCard>
+            )}
           </View>
 
           {/* 3. 오늘의 미션 */}

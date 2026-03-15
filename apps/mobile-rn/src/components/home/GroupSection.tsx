@@ -2,12 +2,19 @@
  * GroupSection — 3그룹 공용 섹션 컴포넌트
  * 컬러 도트 + 제목 + 2열 기능 그리드 (웹 스타일: 흰 배경 + Lucide 아이콘 + 제목 + 설명)
  */
-import React from 'react';
-import {View, Text} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import React, {useMemo, useCallback} from 'react';
+import {View, Text, StyleSheet} from 'react-native';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {Crown} from 'lucide-react-native';
 import {useTheme} from '@/theme';
+import {NativeGroupSectionNative, isIOS26Plus} from '@/components/native';
+import {springs} from '@/theme/animations';
 
 export interface FeatureItem {
   id: string;
@@ -28,6 +35,21 @@ interface GroupSectionProps {
   enterDelay?: number;
 }
 
+// SF Symbol 매핑 (네이티브 측과 동일)
+const SF_SYMBOL_MAP: Record<string, string> = {
+  'daily-planner': 'calendar',
+  'monthly-planner': 'calendar.badge.clock',
+  'ai-plan': 'folder',
+  'ai-chat': 'sparkles',
+  guide: 'link',
+  'data-cleanup': 'trash',
+  motivation: 'lightbulb',
+  record: 'pencil.line',
+  sleep: 'moon.fill',
+  activity: 'chart.bar',
+  'adhd-understanding': 'brain.head.profile',
+};
+
 export function GroupSection({
   dotColor,
   title,
@@ -36,6 +58,62 @@ export function GroupSection({
   enterDelay = 0,
 }: GroupSectionProps) {
   const {primaryColor} = useTheme();
+  const animatedHeight = useSharedValue(300);
+
+  const heightStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value,
+    overflow: 'hidden' as const,
+  }));
+
+  // 네이티브용: FeatureItem[] → JSON (onPress 제외, sfSymbol 추가)
+  const sectionDataJson = useMemo(() => {
+    return JSON.stringify(
+      items.map(item => ({
+        id: item.id,
+        label: item.label,
+        description: item.description,
+        sfSymbol: SF_SYMBOL_MAP[item.id] || 'circle',
+        isPro: item.isPro ?? false,
+      })),
+    );
+  }, [items]);
+
+  // 네이티브 onItemPress → id로 매칭하여 item.onPress() 호출
+  const handleItemPress = useCallback(
+    (e: {nativeEvent: {itemId: string}}) => {
+      const item = items.find(i => i.id === e.nativeEvent.itemId);
+      item?.onPress();
+    },
+    [items],
+  );
+
+  // iOS 26+: 네이티브 glass 그리드
+  if (isIOS26Plus) {
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(enterDelay).duration(400)}
+        className="mx-4">
+        <Animated.View style={heightStyle}>
+          <NativeGroupSectionNative
+            sectionData={sectionDataJson}
+            title={title}
+            dotColor={dotColor}
+            primaryColor={primaryColor}
+            onItemPress={handleItemPress}
+            onHeightChange={e => {
+              animatedHeight.value = withSpring(
+                e.nativeEvent.height,
+                springs.nativeGlass,
+              );
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      </Animated.View>
+    );
+  }
+
+  // iOS 25-: 기존 JS 폴백
   return (
     <Animated.View
       entering={FadeInDown.delay(enterDelay).duration(400)}

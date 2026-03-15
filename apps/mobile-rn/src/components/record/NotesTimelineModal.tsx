@@ -1,20 +1,12 @@
 /**
- * NotesTimelineModal — 소식/감사 타임라인 통합 모달
- * pageSheet 스타일, RecordScreen ··· 메뉴에서 진입
+ * NotesTimelineModal — 소식/감사 타임라인 바텀시트
+ * BottomSheetModal + BottomSheetFlatList, ref 기반 제어
  */
-import React, {useEffect, useState, useCallback} from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {X, MessageCircle, Heart, Trash2} from 'lucide-react-native';
+import React, {useEffect, useState, useCallback, useMemo, useRef, forwardRef, useImperativeHandle} from 'react';
+import {View, Text, StyleSheet, Alert, ActivityIndicator} from 'react-native';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetFlatList} from '@gorhom/bottom-sheet';
+import {MessageCircle, Heart, Trash2} from 'lucide-react-native';
+import {AnimatedPressable} from '@/components/core';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
@@ -27,10 +19,9 @@ import {ko} from 'date-fns/locale';
 
 type TabType = 'news' | 'gratitude';
 
-interface NotesTimelineModalProps {
-  visible: boolean;
-  onClose: () => void;
-  initialTab: TabType;
+export interface NotesTimelineModalRef {
+  present: (tab?: TabType) => void;
+  dismiss: () => void;
 }
 
 function PersonFilterChips({
@@ -45,24 +36,28 @@ function PersonFilterChips({
   const {primaryColor} = useTheme();
   return (
     <View style={styles.chipContainer}>
-      <TouchableOpacity
+      <AnimatedPressable
         onPress={() => onSelect(null)}
+        hapticType="light"
+        scaleValue={0.97}
         style={[styles.chip, !selectedId && {backgroundColor: `${primaryColor}20`}]}>
         <Text style={[styles.chipText, !selectedId && {color: primaryColor, fontWeight: '600'}]}>
           전체
         </Text>
-      </TouchableOpacity>
+      </AnimatedPressable>
       {people.map(p => {
         const isActive = selectedId === p.id;
         return (
-          <TouchableOpacity
+          <AnimatedPressable
             key={p.id}
             onPress={() => onSelect(isActive ? null : p.id)}
+            hapticType="light"
+            scaleValue={0.97}
             style={[styles.chip, isActive && {backgroundColor: `${primaryColor}20`}]}>
             <Text style={[styles.chipText, isActive && {color: primaryColor, fontWeight: '600'}]}>
               {p.name}
             </Text>
-          </TouchableOpacity>
+          </AnimatedPressable>
         );
       })}
     </View>
@@ -112,173 +107,196 @@ function NoteCard({
             </View>
           </View>
         </View>
-        <TouchableOpacity
+        <AnimatedPressable
           onPress={handleDelete}
+          hapticType="light"
+          scaleValue={0.9}
           hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
           <Trash2 size={16} color="#D1D5DB" />
-        </TouchableOpacity>
+        </AnimatedPressable>
       </View>
       <Text style={styles.noteContent}>{content}</Text>
     </View>
   );
 }
 
-export function NotesTimelineModal({
-  visible,
-  onClose,
-  initialTab,
-}: NotesTimelineModalProps) {
-  const insets = useSafeAreaInsets();
-  const {primaryColor} = useTheme();
-  const user = useAuthStore(s => s.user);
-  const {people, loadPeople, getRecentNewsNotes, getGratitudeNotes, deleteInteraction} =
-    useCherishedPeopleStore();
+export const NotesTimelineModal = forwardRef<NotesTimelineModalRef>(
+  function NotesTimelineModal(_props, ref) {
+    const {primaryColor} = useTheme();
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
+    const user = useAuthStore(s => s.user);
+    const {people, loadPeople, getRecentNewsNotes, getGratitudeNotes, deleteInteraction} =
+      useCherishedPeopleStore();
 
-  const [tab, setTab] = useState<TabType>(initialTab);
-  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
-  const [notes, setNotes] = useState<NoteWithPerson[]>([]);
-  const [loading, setLoading] = useState(true);
+    const [tab, setTab] = useState<TabType>('news');
+    const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+    const [notes, setNotes] = useState<NoteWithPerson[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  // initialTab이 바뀌면 탭 동기화
-  useEffect(() => {
-    if (visible) {
-      setTab(initialTab);
-      setSelectedPersonId(null);
-    }
-  }, [visible, initialTab]);
+    const snapPoints = useMemo(() => ['90%'], []);
 
-  const fetchNotes = useCallback(async () => {
-    if (!user?.id) return;
-    setLoading(true);
-    const fetcher = tab === 'news' ? getRecentNewsNotes : getGratitudeNotes;
-    const result = await fetcher(user.id, selectedPersonId ?? undefined);
-    setNotes(result);
-    setLoading(false);
-  }, [user?.id, tab, selectedPersonId, getRecentNewsNotes, getGratitudeNotes]);
+    useImperativeHandle(ref, () => ({
+      present: (initialTab?: TabType) => {
+        if (initialTab) setTab(initialTab);
+        setSelectedPersonId(null);
+        bottomSheetRef.current?.present();
+      },
+      dismiss: () => {
+        bottomSheetRef.current?.dismiss();
+      },
+    }));
 
-  useEffect(() => {
-    if (visible && user?.id) {
-      loadPeople(user.id);
-      fetchNotes();
-    }
-  }, [visible, user?.id, fetchNotes]);
-
-  const handleDelete = useCallback(
-    async (interactionId: string) => {
+    const fetchNotes = useCallback(async () => {
       if (!user?.id) return;
-      const success = await deleteInteraction(interactionId, user.id);
-      if (success) {
-        setNotes(prev => prev.filter(n => n.id !== interactionId));
+      setLoading(true);
+      const fetcher = tab === 'news' ? getRecentNewsNotes : getGratitudeNotes;
+      const result = await fetcher(user.id, selectedPersonId ?? undefined);
+      setNotes(result);
+      setLoading(false);
+    }, [user?.id, tab, selectedPersonId, getRecentNewsNotes, getGratitudeNotes]);
+
+    const handleSheetChange = useCallback((index: number) => {
+      if (index === 0 && user?.id) {
+        loadPeople(user.id);
+        fetchNotes();
       }
-    },
-    [user?.id, deleteInteraction],
-  );
+    }, [user?.id, loadPeople, fetchNotes]);
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      {tab === 'news' ? (
-        <MessageCircle size={48} color="#D1D5DB" />
-      ) : (
-        <Heart size={48} color="#D1D5DB" />
-      )}
-      <Text style={styles.emptyText}>
-        아직 {tab === 'news' ? '소식' : '감사'} 기록이 없어요
-      </Text>
-    </View>
-  );
+    // tab이나 person filter 변경 시 재조회
+    useEffect(() => {
+      fetchNotes();
+    }, [fetchNotes]);
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}>
-      <View style={[styles.container, {paddingTop: insets.top || 16}]}>
-        {/* 헤더 */}
-        <View style={styles.header}>
-          <Text style={styles.title}>소식 · 감사</Text>
-          <TouchableOpacity
-            onPress={onClose}
-            hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-            <X size={24} color="#6B7280" />
-          </TouchableOpacity>
-        </View>
+    const handleDelete = useCallback(
+      async (interactionId: string) => {
+        if (!user?.id) return;
+        const success = await deleteInteraction(interactionId, user.id);
+        if (success) {
+          setNotes(prev => prev.filter(n => n.id !== interactionId));
+        }
+      },
+      [user?.id, deleteInteraction],
+    );
 
-        {/* 탭 토글 */}
-        <View style={styles.tabRow}>
-          <TouchableOpacity
-            onPress={() => setTab('news')}
-            style={[styles.tabPill, tab === 'news' && {backgroundColor: primaryColor}]}>
-            <MessageCircle
-              size={14}
-              color={tab === 'news' ? '#FFFFFF' : '#6B7280'}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                tab === 'news' && styles.tabTextActive,
-              ]}>
-              소식
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setTab('gratitude')}
-            style={[
-              styles.tabPill,
-              tab === 'gratitude' && {backgroundColor: primaryColor},
-            ]}>
-            <Heart
-              size={14}
-              color={tab === 'gratitude' ? '#FFFFFF' : '#6B7280'}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                tab === 'gratitude' && styles.tabTextActive,
-              ]}>
-              감사
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 사람별 필터 칩 */}
-        <PersonFilterChips
-          people={people}
-          selectedId={selectedPersonId}
-          onSelect={setSelectedPersonId}
-        />
-
-        {/* 타임라인 리스트 */}
-        {loading ? (
-          <View style={styles.emptyContainer}>
-            <ActivityIndicator size="large" color={primaryColor} />
-          </View>
+    const renderEmpty = () => (
+      <View style={styles.emptyContainer}>
+        {tab === 'news' ? (
+          <MessageCircle size={48} color="#D1D5DB" />
         ) : (
-          <FlatList
-            data={notes}
-            keyExtractor={item => item.id}
-            renderItem={({item}) => (
-              <NoteCard note={item} tab={tab} onDelete={handleDelete} />
-            )}
-            ListEmptyComponent={renderEmpty}
-            contentContainerStyle={{paddingBottom: 40, flexGrow: 1}}
-            showsVerticalScrollIndicator={false}
-          />
+          <Heart size={48} color="#D1D5DB" />
         )}
+        <Text style={styles.emptyText}>
+          아직 {tab === 'news' ? '소식' : '감사'} 기록이 없어요
+        </Text>
       </View>
-    </Modal>
-  );
-}
+    );
+
+    const renderBackdrop = useCallback(
+      (props: any) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          opacity={0.3}
+        />
+      ),
+      [],
+    );
+
+    return (
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        enableDynamicSizing={false}
+        handleIndicatorStyle={styles.handleIndicator}
+        onChange={handleSheetChange}>
+        <View style={styles.container}>
+          {/* 헤더 */}
+          <View style={styles.header}>
+            <Text style={styles.title}>소식 · 감사</Text>
+          </View>
+
+          {/* 탭 토글 */}
+          <View style={styles.tabRow}>
+            <AnimatedPressable
+              onPress={() => setTab('news')}
+              hapticType="light"
+              scaleValue={0.97}
+              style={[styles.tabPill, tab === 'news' && {backgroundColor: primaryColor}]}>
+              <MessageCircle
+                size={14}
+                color={tab === 'news' ? '#FFFFFF' : '#6B7280'}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  tab === 'news' && styles.tabTextActive,
+                ]}>
+                소식
+              </Text>
+            </AnimatedPressable>
+            <AnimatedPressable
+              onPress={() => setTab('gratitude')}
+              hapticType="light"
+              scaleValue={0.97}
+              style={[
+                styles.tabPill,
+                tab === 'gratitude' && {backgroundColor: primaryColor},
+              ]}>
+              <Heart
+                size={14}
+                color={tab === 'gratitude' ? '#FFFFFF' : '#6B7280'}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  tab === 'gratitude' && styles.tabTextActive,
+                ]}>
+                감사
+              </Text>
+            </AnimatedPressable>
+          </View>
+
+          {/* 사람별 필터 칩 */}
+          <PersonFilterChips
+            people={people}
+            selectedId={selectedPersonId}
+            onSelect={setSelectedPersonId}
+          />
+
+          {/* 타임라인 리스트 */}
+          {loading ? (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color={primaryColor} />
+            </View>
+          ) : (
+            <BottomSheetFlatList
+              data={notes}
+              keyExtractor={item => item.id}
+              renderItem={({item}) => (
+                <NoteCard note={item} tab={tab} onDelete={handleDelete} />
+              )}
+              ListEmptyComponent={renderEmpty}
+              contentContainerStyle={{paddingBottom: 40, flexGrow: 1}}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
+      </BottomSheetModal>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
+  handleIndicator: {
+    backgroundColor: '#D1D5DB',
+    width: 36,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
@@ -302,7 +320,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     gap: 6,
   },
-  tabPillActive: {},
   tabText: {
     fontSize: 14,
     fontWeight: '500',
@@ -324,23 +341,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#F3F4F6',
   },
-  chipActive: {},
   chipText: {
     fontSize: 12,
     color: '#6B7280',
   },
-  chipTextActive: {},
   noteCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 8,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
   },
   noteHeader: {
     flexDirection: 'row',
@@ -356,7 +366,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,

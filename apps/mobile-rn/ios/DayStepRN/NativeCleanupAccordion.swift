@@ -50,22 +50,6 @@ private func sfSymbolName(for key: String) -> String {
   }
 }
 
-// MARK: - Conditional Glass Modifier
-
-extension View {
-  @ViewBuilder
-  func cleanupCardStyle() -> some View {
-    if #available(iOS 26.0, *) {
-      self.glassEffect(in: .rect(cornerRadius: 14))
-    } else {
-      self
-        .background(Color.white)
-        .cornerRadius(14)
-        .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
-    }
-  }
-}
-
 // MARK: - SwiftUI View
 
 struct CleanupAccordionContent: View {

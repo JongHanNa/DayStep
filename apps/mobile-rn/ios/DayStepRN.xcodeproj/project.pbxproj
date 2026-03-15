@@ -12,10 +12,15 @@
 		0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */; };
 		117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1F11AF99A05E5B04B2E2585D /* NativeProgressCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */; };
+		2471C3C4D3E00A76861BDF22 /* NativeProgressCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */; };
+		4EA6F8C29F16FFE12737528C /* NativeMissionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */; };
 		63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */; };
 		671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */; };
+		9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */; };
 		A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D662F483FF800A4C1D8 /* StoreKit.framework */; };
 		A41F7D6F2F500A4C00A4C1D8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */; };
 		A41F7D712F500A4C00A4C1D8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */; };
@@ -25,7 +30,9 @@
 		A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */; };
 		AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */; };
 		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
+		C3CAAEF0626409E6D2C3155C /* NativeMissionCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */; };
 		C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */; };
+		C6F8A1669C5EDFADDD08FB8D /* NativeContactNudge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59502988256F1D4368F740C1 /* NativeContactNudge.swift */; };
 		C7D8E9F0A1B2C3D4E5F6A7B8 /* NativeMonthCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */; };
 		CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */; };
 		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
@@ -35,6 +42,7 @@
 		DA7A8B9C0D1E2F3A4B5C6D7E /* NativeMultiDayTimeGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */; };
 		DA8B9C0D1E2F3A4B5C6D7E8F /* NativeMultiDayTimeGridBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */; };
 		E1F2A3B4C5D6E7F8A9B0C1D2 /* NativeWeekStripCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */; };
+		E4762033124F21875BA5CD8A /* NativeGroupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B5E30421766026F915B4B0 /* NativeGroupSection.swift */; };
 		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
 		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
@@ -73,15 +81,21 @@
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = DayStepRN/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassFuelCard.swift; path = DayStepRN/LiquidGlassFuelCard.swift; sourceTree = "<group>"; };
 		228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMenuBridge.m; path = DayStepRN/LiquidGlassMenuBridge.m; sourceTree = "<group>"; };
+		25B5E30421766026F915B4B0 /* NativeGroupSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeGroupSection.swift; path = DayStepRN/NativeGroupSection.swift; sourceTree = "<group>"; };
 		2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassTabBarBridge.m; path = DayStepRN/LiquidGlassTabBarBridge.m; sourceTree = "<group>"; };
 		42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassFuelCardBridge.m; path = DayStepRN/LiquidGlassFuelCardBridge.m; sourceTree = "<group>"; };
 		4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassBackgroundView.swift; path = DayStepRN/LiquidGlassBackgroundView.swift; sourceTree = "<group>"; };
+		59502988256F1D4368F740C1 /* NativeContactNudge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeContactNudge.swift; path = DayStepRN/NativeContactNudge.swift; sourceTree = "<group>"; };
 		735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassUtils.swift; path = DayStepRN/LiquidGlassUtils.swift; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DayStepRN/AppDelegate.swift; sourceTree = "<group>"; };
 		7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DayStepRN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D4E3731DA56DD9E092197C5 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
+		8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeProgressCard.swift; path = DayStepRN/NativeProgressCard.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = DayStepRN/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassTabBar.swift; path = DayStepRN/LiquidGlassTabBar.swift; sourceTree = "<group>"; };
+		8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeMissionCardBridge.m; path = DayStepRN/NativeMissionCardBridge.m; sourceTree = "<group>"; };
+		960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeGroupSectionBridge.m; path = DayStepRN/NativeGroupSectionBridge.m; sourceTree = "<group>"; };
+		9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeContactNudgeBridge.m; path = DayStepRN/NativeContactNudgeBridge.m; sourceTree = "<group>"; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleanupAccordion.swift; path = DayStepRN/NativeCleanupAccordion.swift; sourceTree = "<group>"; };
 		A41F7D662F483FF800A4C1D8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = DayStepRN.entitlements; path = DayStepRN/DayStepRN.entitlements; sourceTree = "<group>"; };
@@ -93,8 +107,10 @@
 		A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepWidgetModule.swift; path = DayStepRN/DayStepWidgetModule.swift; sourceTree = "<group>"; };
 		A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeWeekStripCalendarBridge.m; path = DayStepRN/NativeWeekStripCalendarBridge.m; sourceTree = "<group>"; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
+		B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeMissionCard.swift; path = DayStepRN/NativeMissionCard.swift; sourceTree = "<group>"; };
 		B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMonthCalendar.swift; path = DayStepRN/NativeMonthCalendar.swift; sourceTree = "<group>"; };
 		BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassButton.swift; path = DayStepRN/LiquidGlassButton.swift; sourceTree = "<group>"; };
+		C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeProgressCardBridge.m; path = DayStepRN/NativeProgressCardBridge.m; sourceTree = "<group>"; };
 		D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Products.storekit; path = DayStepRN/Products.storekit; sourceTree = "<group>"; };
 		D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMonthCalendarBridge.m; path = DayStepRN/NativeMonthCalendarBridge.m; sourceTree = "<group>"; };
 		DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeDayTimeGrid.swift; path = DayStepRN/NativeDayTimeGrid.swift; sourceTree = "<group>"; };
@@ -186,6 +202,14 @@
 				DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */,
 				DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */,
 				DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */,
+				8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */,
+				C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */,
+				25B5E30421766026F915B4B0 /* NativeGroupSection.swift */,
+				960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */,
+				B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */,
+				8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */,
+				59502988256F1D4368F740C1 /* NativeContactNudge.swift */,
+				9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -451,6 +475,14 @@
 				DA6F7A8B9C0D1E2F3A4B5C6D /* NativeDayTimeGridBridge.m in Sources */,
 				DA7A8B9C0D1E2F3A4B5C6D7E /* NativeMultiDayTimeGrid.swift in Sources */,
 				DA8B9C0D1E2F3A4B5C6D7E8F /* NativeMultiDayTimeGridBridge.m in Sources */,
+				2471C3C4D3E00A76861BDF22 /* NativeProgressCard.swift in Sources */,
+				1F11AF99A05E5B04B2E2585D /* NativeProgressCardBridge.m in Sources */,
+				E4762033124F21875BA5CD8A /* NativeGroupSection.swift in Sources */,
+				899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */,
+				4EA6F8C29F16FFE12737528C /* NativeMissionCard.swift in Sources */,
+				C3CAAEF0626409E6D2C3155C /* NativeMissionCardBridge.m in Sources */,
+				C6F8A1669C5EDFADDD08FB8D /* NativeContactNudge.swift in Sources */,
+				9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

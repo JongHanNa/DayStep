@@ -3,12 +3,19 @@
  * 가장 중요한 미완료 할일을 하이라이트 + CTA
  */
 import React, {useMemo} from 'react';
-import {View, Text} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import {View, Text, StyleSheet} from 'react-native';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {Target, ArrowRight, CalendarPlus} from 'lucide-react-native';
 import type {Todo} from '@daystep/shared-core';
 import {useTheme} from '@/theme';
+import {NativeMissionCardNative, isIOS26Plus} from '@/components/native';
+import {springs} from '@/theme/animations';
 
 interface MissionCardProps {
   todos: Todo[];
@@ -48,7 +55,48 @@ export function MissionCard({
 }: MissionCardProps) {
   const {primaryColor} = useTheme();
   const mission = useMemo(() => pickTopMission(todos), [todos]);
+  const animatedHeight = useSharedValue(160);
 
+  const heightStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value,
+    overflow: 'hidden' as const,
+  }));
+
+  // 네이티브용 JSON
+  const missionDataJson = useMemo(() => {
+    return JSON.stringify({
+      hasMission: !!mission,
+      missionTitle: mission?.title ?? '',
+      timeRange: mission ? formatTimeRange(mission) : null,
+    });
+  }, [mission]);
+
+  // iOS 26+: 네이티브 glass 미션 카드
+  if (isIOS26Plus) {
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(enterDelay).duration(400)}
+        className="mx-4">
+        <Animated.View style={heightStyle}>
+          <NativeMissionCardNative
+            missionData={missionDataJson}
+            primaryColor={primaryColor}
+            onExecutePress={() => onNavigateToExecute()}
+            onPlannerPress={() => onNavigateToPlanner()}
+            onHeightChange={e => {
+              animatedHeight.value = withSpring(
+                e.nativeEvent.height,
+                springs.nativeGlass,
+              );
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      </Animated.View>
+    );
+  }
+
+  // iOS 25-: 기존 JS 폴백
   return (
     <Animated.View
       entering={FadeInDown.delay(enterDelay).duration(400)}

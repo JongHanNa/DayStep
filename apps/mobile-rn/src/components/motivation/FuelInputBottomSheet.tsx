@@ -10,8 +10,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, Text, TextInput, StyleSheet, Keyboard} from 'react-native';
-import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import {View, Text, StyleSheet, Keyboard} from 'react-native';
+import BottomSheet, {BottomSheetBackdrop, BottomSheetView, BottomSheetTextInput} from '@gorhom/bottom-sheet';
 import {Sparkles} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -81,7 +81,7 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
         handleIndicatorStyle={{backgroundColor: '#D1D5DB'}}>
-        <BottomSheetScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+        <BottomSheetView style={styles.container}>
           <View style={styles.sheetTitleRow}>
             <Sparkles size={18} color="#1F2937" />
             <Text style={styles.sheetTitle}>원동력 새기기</Text>
@@ -119,7 +119,7 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
           </View>
 
           {/* 제목 (선택) */}
-          <TextInput
+          <BottomSheetTextInput
             style={styles.titleInput}
             placeholder="제목 (선택)"
             placeholderTextColor="#9CA3AF"
@@ -129,7 +129,7 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
           />
 
           {/* 내용 */}
-          <TextInput
+          <BottomSheetTextInput
             style={styles.contentInput}
             placeholder="무엇이 나를 움직이게 하나요?"
             placeholderTextColor="#9CA3AF"
@@ -157,7 +157,7 @@ export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInpu
               저장하기
             </Text>
           </AnimatedPressable>
-        </BottomSheetScrollView>
+        </BottomSheetView>
       </BottomSheet>
     );
   },

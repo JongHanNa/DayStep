@@ -1,16 +1,50 @@
 /**
- * NativeMultiDayTimeGrid — 3일/주 뷰 시간 그리드
- * dayCount개 컬럼의 시간 그리드 + 좌우 스와이프
+ * NativeMultiDayTimeGrid — Apple Calendar 스타일 2D 스크롤 그리드
+ * UIKit 4-Quadrant UIScrollView 구현
  *
- * 패턴: ObservableObject + setupOnce() (NativeWeekStripCalendar 참조)
+ * 구조:
+ * ┌──────────────┬──────────────────────────────────┐
+ * │ cornerView   │ headerScrollView (가로, 터치 비활성) │
+ * ├──────────────┼──────────────────────────────────┤
+ * │ timeAxis     │ contentScrollView (2D, 메인 터치)   │
+ * │ ScrollView   │                                  │
+ * │ (세로, 비활성) │                                  │
+ * └──────────────┴──────────────────────────────────┘
+ *
+ * 핵심: scrollViewDidScroll에서 헤더/시간축 동기화, 컬럼 스냅
  */
 
 import Foundation
-import SwiftUI
 import UIKit
 
+// MARK: - UIColor hex extension
+
+private extension UIColor {
+  convenience init?(hex: String) {
+    let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+    var int: UInt64 = 0
+    Scanner(string: hex).scanHexInt64(&int)
+    let a, r, g, b: UInt64
+    switch hex.count {
+    case 3:
+      (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+    case 6:
+      (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+    case 8:
+      (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+    default:
+      return nil
+    }
+    self.init(
+      red: CGFloat(r) / 255,
+      green: CGFloat(g) / 255,
+      blue: CGFloat(b) / 255,
+      alpha: CGFloat(a) / 255
+    )
+  }
+}
+
 // MARK: - Time Utilities (ISO8601 → local timezone)
-// NativeDayTimeGrid.swift에도 동일한 enum 존재 — 별도 파일 분리 가능
 
 private enum MultiDayTimeUtils {
   static let isoFrac: ISO8601DateFormatter = {
@@ -23,11 +57,6 @@ private enum MultiDayTimeUtils {
     f.formatOptions = [.withInternetDateTime]
     return f
   }()
-  static let localTime: DateFormatter = {
-    let f = DateFormatter()
-    f.dateFormat = "HH:mm"
-    return f
-  }()
 
   static func minutesFromISO(_ timeStr: String) -> CGFloat? {
     guard timeStr.contains("T") else { return nil }
@@ -38,18 +67,33 @@ private enum MultiDayTimeUtils {
     }
     return nil
   }
+
+  static func minutesFromTimeString(_ timeStr: String) -> CGFloat {
+    if let mins = minutesFromISO(timeStr) { return mins }
+    let components = timeStr.prefix(5).components(separatedBy: ":")
+    guard components.count >= 2,
+          let hour = Double(components[0]),
+          let minute = Double(components[1]) else { return 0 }
+    return CGFloat(hour * 60 + minute)
+  }
 }
 
-// MARK: - Observable State
+// MARK: - Data State
 
-class MultiDayTimeGridState: ObservableObject {
-  @Published var dayCount: Int = 3
-  @Published var centerDate: String = ""
-  @Published var primaryColor: String = "#6366F1"
-  @Published var todoMap: [String: [DayGridTodoItem]] = [:]
-  @Published var eventMap: [String: [DayGridEventItem]] = [:]
+private class MultiDayTimeGridState {
+  var dayCount: Int = 3
+  var centerDate: String = ""
+  var primaryColor: String = "#6366F1"
+  var todoMap: [String: [DayGridTodoItem]] = [:]
+  var eventMap: [String: [DayGridEventItem]] = [:]
 
   private let decoder = JSONDecoder()
+  private let calendar = Calendar.current
+  private let dateFormatter: DateFormatter = {
+    let df = DateFormatter()
+    df.dateFormat = "yyyy-MM-dd"
+    return df
+  }()
 
   func parseTodoData(_ jsonString: String) {
     guard let data = jsonString.data(using: .utf8) else { return }
@@ -69,66 +113,79 @@ class MultiDayTimeGridState: ObservableObject {
     }
   }
 
-  // 중심 날짜 기준 dayCount개 날짜 배열 반환
-  func dateRange() -> [String] {
-    let calendar = Calendar.current
-    let df = DateFormatter()
-    df.dateFormat = "yyyy-MM-dd"
-
-    guard let center = df.date(from: centerDate) else { return [] }
-
-    let startOffset = -(dayCount / 2)
+  /// 버퍼 포함 전체 날짜 배열
+  func allDatesInRange(buffer: Int) -> [String] {
+    guard let center = dateFormatter.date(from: centerDate) else { return [] }
+    let startOffset = -(dayCount / 2) - buffer
+    let totalDays = dayCount + buffer * 2
     var dates: [String] = []
-    for i in 0..<dayCount {
+    for i in 0..<totalDays {
       if let date = calendar.date(byAdding: .day, value: startOffset + i, to: center) {
-        dates.append(df.string(from: date))
-      }
-    }
-    return dates
-  }
-
-  // offset 기간만큼 이동한 날짜 배열 (스와이프 미리 렌더링용)
-  func dateRangeFor(offset: Int) -> [String] {
-    let calendar = Calendar.current
-    let df = DateFormatter()
-    df.dateFormat = "yyyy-MM-dd"
-
-    guard let center = df.date(from: centerDate),
-          let shifted = calendar.date(byAdding: .day, value: offset * dayCount, to: center)
-    else { return [] }
-
-    let startOffset = -(dayCount / 2)
-    var dates: [String] = []
-    for i in 0..<dayCount {
-      if let date = calendar.date(byAdding: .day, value: startOffset + i, to: shifted) {
-        dates.append(df.string(from: date))
+        dates.append(dateFormatter.string(from: date))
       }
     }
     return dates
   }
 }
 
-// MARK: - SwiftUI View
+// MARK: - Tap Gesture with todoId
 
-@available(iOS 17.0, *)
-struct MultiDayTimeGridContent: View {
-  @ObservedObject var state: MultiDayTimeGridState
-  @State private var currentTime = Date()
+private class TodoTapGesture: UITapGestureRecognizer {
+  var todoId: String = ""
+}
 
-  var onDateSelect: ((String) -> Void)?
-  var onTodoPress: ((String) -> Void)?
-  var onDateRangeChange: ((String, String) -> Void)?
+// MARK: - 4-Quadrant Grid View
 
+class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
+
+  // RCT callbacks
+  @objc var onDateSelect: RCTDirectEventBlock?
+  @objc var onTodoPress: RCTDirectEventBlock?
+  @objc var onDateRangeChange: RCTDirectEventBlock?
+  @objc var onHeightChange: RCTDirectEventBlock?
+
+  private let gridState = MultiDayTimeGridState()
+  private var hasSetUp = false
+
+  // Constants
   private let hourHeight: CGFloat = 50
   private let timeColumnWidth: CGFloat = 40
-  private let calendar = Calendar.current
+  private let headerHeight: CGFloat = 44
+  private let bufferDays: Int = 7
 
+  // 4-Quadrant scroll views
+  private let cornerView = UIView()
+  private let headerScrollView = UIScrollView()
+  private let timeAxisScrollView = UIScrollView()
+  private let contentScrollView = UIScrollView()
+
+  // Content containers
+  private let headerContentView = UIView()
+  private let timeAxisContentView = UIView()
+  private let gridContentView = UIView()
+
+  // Grid layer
+  private let gridLinesLayer = CAShapeLayer()
+
+  // Current time
+  private var currentTimeView: UIView?
+  private var currentTimeTimer: Timer?
+
+  // Layout tracking
+  private var allDates: [String] = []
+  private var columnWidth: CGFloat = 0
+  private var needsInitialScroll = false
+  private var isUpdatingScroll = false
+  private var lastLayoutWidth: CGFloat = 0
+  private var lastLayoutCenterDate: String = ""
+  private var lastLayoutDayCount: Int = 0
+
+  // Date formatters
   private let dateFormatter: DateFormatter = {
     let df = DateFormatter()
     df.dateFormat = "yyyy-MM-dd"
     return df
   }()
-
   private let dayOfWeekFormatter: DateFormatter = {
     let df = DateFormatter()
     df.locale = Locale(identifier: "ko_KR")
@@ -136,202 +193,454 @@ struct MultiDayTimeGridContent: View {
     return df
   }()
 
-  @GestureState private var dragOffset: CGFloat = 0
+  // MARK: - Prop Setters
 
-  var body: some View {
-    let currentDates = state.dateRange()
-    let prevDates = state.dateRangeFor(offset: -1)
-    let nextDates = state.dateRangeFor(offset: 1)
+  @objc func setDayCount(_ value: NSNumber) {
+    let newVal = value.intValue
+    guard newVal != gridState.dayCount else { return }
+    gridState.dayCount = newVal
+    requestRebuild()
+  }
 
-    GeometryReader { geo in
-      HStack(spacing: 0) {
-        periodView(dates: prevDates, width: geo.size.width)
-        periodView(dates: currentDates, width: geo.size.width)
-        periodView(dates: nextDates, width: geo.size.width)
-      }
-      .offset(x: -geo.size.width + dragOffset)
-      .gesture(
-        DragGesture(minimumDistance: 30)
-          .updating($dragOffset) { value, state, _ in
-            if abs(value.translation.width) > abs(value.translation.height) {
-              state = value.translation.width
-            }
-          }
-          .onEnded { value in
-            let threshold = geo.size.width * 0.3
-            if value.translation.width < -threshold ||
-               value.predictedEndTranslation.width < -geo.size.width * 0.5 {
-              navigatePeriod(1)
-            } else if value.translation.width > threshold ||
-                      value.predictedEndTranslation.width > geo.size.width * 0.5 {
-              navigatePeriod(-1)
-            }
-          }
+  @objc func setCenterDate(_ value: NSString) {
+    let newDate = value as String
+    let changed = gridState.centerDate != newDate
+    gridState.centerDate = newDate
+    if !hasSetUp {
+      setupOnce()
+    } else if changed {
+      requestRebuild()
+    }
+  }
+
+  @objc func setPrimaryColor(_ value: NSString) {
+    gridState.primaryColor = value as String
+    if hasSetUp { requestRebuild() }
+  }
+
+  @objc func setTodoData(_ value: NSString) {
+    gridState.parseTodoData(value as String)
+    if hasSetUp && bounds.width > 0 {
+      layoutBlocks()
+      layoutCurrentTimeLine()
+    }
+  }
+
+  @objc func setEventData(_ value: NSString) {
+    gridState.parseEventData(value as String)
+    if hasSetUp && bounds.width > 0 {
+      layoutBlocks()
+      layoutCurrentTimeLine()
+    }
+  }
+
+  // MARK: - Setup
+
+  private func setupOnce() {
+    guard !hasSetUp, !gridState.centerDate.isEmpty else { return }
+    hasSetUp = true
+    backgroundColor = .clear
+
+    // Corner view (top-left fixed area)
+    cornerView.backgroundColor = UIColor(hex: "#F9FAFB")
+    addSubview(cornerView)
+
+    // Header scroll view (horizontal only, synced to content)
+    // isScrollEnabled=false: 스크롤은 contentScrollView에 동기화, 탭만 허용
+    headerScrollView.backgroundColor = UIColor(hex: "#F9FAFB")
+    headerScrollView.showsHorizontalScrollIndicator = false
+    headerScrollView.showsVerticalScrollIndicator = false
+    headerScrollView.isScrollEnabled = false
+    headerScrollView.addSubview(headerContentView)
+    addSubview(headerScrollView)
+
+    // Time axis scroll view (vertical only, synced to content)
+    timeAxisScrollView.backgroundColor = .clear
+    timeAxisScrollView.showsHorizontalScrollIndicator = false
+    timeAxisScrollView.showsVerticalScrollIndicator = false
+    timeAxisScrollView.isUserInteractionEnabled = false
+    timeAxisScrollView.addSubview(timeAxisContentView)
+    addSubview(timeAxisScrollView)
+
+    // Content scroll view (2D, main interaction)
+    contentScrollView.backgroundColor = .white
+    contentScrollView.showsHorizontalScrollIndicator = false
+    contentScrollView.showsVerticalScrollIndicator = true
+    contentScrollView.decelerationRate = .fast
+    contentScrollView.delegate = self
+    contentScrollView.addSubview(gridContentView)
+    addSubview(contentScrollView)
+
+    // Grid lines layer
+    gridLinesLayer.fillColor = nil
+    gridLinesLayer.strokeColor = UIColor(hex: "#E5E7EB")?.cgColor
+    gridLinesLayer.lineWidth = 0.5
+    gridContentView.layer.addSublayer(gridLinesLayer)
+
+    // Auto Layout
+    cornerView.translatesAutoresizingMaskIntoConstraints = false
+    headerScrollView.translatesAutoresizingMaskIntoConstraints = false
+    timeAxisScrollView.translatesAutoresizingMaskIntoConstraints = false
+    contentScrollView.translatesAutoresizingMaskIntoConstraints = false
+
+    NSLayoutConstraint.activate([
+      cornerView.topAnchor.constraint(equalTo: topAnchor),
+      cornerView.leadingAnchor.constraint(equalTo: leadingAnchor),
+      cornerView.widthAnchor.constraint(equalToConstant: timeColumnWidth),
+      cornerView.heightAnchor.constraint(equalToConstant: headerHeight),
+
+      headerScrollView.topAnchor.constraint(equalTo: topAnchor),
+      headerScrollView.leadingAnchor.constraint(equalTo: cornerView.trailingAnchor),
+      headerScrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+      headerScrollView.heightAnchor.constraint(equalToConstant: headerHeight),
+
+      timeAxisScrollView.topAnchor.constraint(equalTo: cornerView.bottomAnchor),
+      timeAxisScrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
+      timeAxisScrollView.widthAnchor.constraint(equalToConstant: timeColumnWidth),
+      timeAxisScrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+
+      contentScrollView.topAnchor.constraint(equalTo: headerScrollView.bottomAnchor),
+      contentScrollView.leadingAnchor.constraint(equalTo: timeAxisScrollView.trailingAnchor),
+      contentScrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+      contentScrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+    ])
+
+    needsInitialScroll = true
+    startCurrentTimeTimer()
+  }
+
+  // MARK: - Layout
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    guard hasSetUp, bounds.width > 0 else { return }
+
+    let needsRebuild = bounds.width != lastLayoutWidth
+      || gridState.dayCount != lastLayoutDayCount
+      || gridState.centerDate != lastLayoutCenterDate
+      || needsInitialScroll
+
+    if needsRebuild {
+      lastLayoutWidth = bounds.width
+      lastLayoutDayCount = gridState.dayCount
+      lastLayoutCenterDate = gridState.centerDate
+      rebuildGrid()
+    }
+  }
+
+  private func requestRebuild() {
+    needsInitialScroll = true
+    setNeedsLayout()
+  }
+
+  private func rebuildGrid() {
+    let contentWidth = bounds.width - timeColumnWidth
+    guard contentWidth > 0, gridState.dayCount > 0 else { return }
+
+    columnWidth = contentWidth / CGFloat(gridState.dayCount)
+    allDates = gridState.allDatesInRange(buffer: bufferDays)
+
+    let totalContentWidth = columnWidth * CGFloat(allDates.count)
+    let totalContentHeight = hourHeight * 24
+
+    // Set content sizes
+    headerContentView.frame = CGRect(x: 0, y: 0, width: totalContentWidth, height: headerHeight)
+    headerScrollView.contentSize = CGSize(width: totalContentWidth, height: headerHeight)
+
+    timeAxisContentView.frame = CGRect(x: 0, y: 0, width: timeColumnWidth, height: totalContentHeight)
+    timeAxisScrollView.contentSize = CGSize(width: timeColumnWidth, height: totalContentHeight)
+
+    gridContentView.frame = CGRect(x: 0, y: 0, width: totalContentWidth, height: totalContentHeight)
+    contentScrollView.contentSize = CGSize(width: totalContentWidth, height: totalContentHeight)
+
+    layoutGridLines()
+    layoutHeaders()
+    layoutTimeAxis()
+    layoutBlocks()
+    layoutCurrentTimeLine()
+
+    if needsInitialScroll {
+      needsInitialScroll = false
+      let initialX = CGFloat(bufferDays) * columnWidth
+      contentScrollView.setContentOffset(
+        CGPoint(x: initialX, y: contentScrollView.contentOffset.y),
+        animated: false
       )
-      .animation(.spring(response: 0.35, dampingFraction: 0.86), value: dragOffset)
+      headerScrollView.contentOffset.x = initialX
     }
-    .clipped()
-    .onAppear { startTimer() }
+
+    onHeightChange?(["height": bounds.height])
   }
 
-  // MARK: - Period View (single page for 3-page swipe)
+  // MARK: - Grid Lines
 
-  private func periodView(dates: [String], width: CGFloat) -> some View {
-    VStack(spacing: 0) {
-      headerView(dates: dates)
-      ScrollView(.vertical, showsIndicators: true) {
-        ZStack(alignment: .topLeading) {
-          timeGridBackground(columnCount: dates.count)
-          ForEach(Array(dates.enumerated()), id: \.offset) { colIndex, dateStr in
-            columnBlocks(dateStr: dateStr, colIndex: colIndex, totalColumns: dates.count)
-          }
-          currentTimeLine
-        }
-        .frame(height: hourHeight * 24)
+  private func layoutGridLines() {
+    let totalWidth = CGFloat(allDates.count) * columnWidth
+    let totalHeight = hourHeight * 24
+    let path = UIBezierPath()
+
+    // Horizontal hour lines
+    for hour in 0...24 {
+      let y = CGFloat(hour) * hourHeight
+      path.move(to: CGPoint(x: 0, y: y))
+      path.addLine(to: CGPoint(x: totalWidth, y: y))
+    }
+
+    // Vertical column separators
+    for col in 0...allDates.count {
+      let x = CGFloat(col) * columnWidth
+      path.move(to: CGPoint(x: x, y: 0))
+      path.addLine(to: CGPoint(x: x, y: totalHeight))
+    }
+
+    gridLinesLayer.path = path.cgPath
+    gridLinesLayer.frame = gridContentView.bounds
+  }
+
+  // MARK: - Headers
+
+  private func layoutHeaders() {
+    headerContentView.subviews.forEach { $0.removeFromSuperview() }
+    headerContentView.layer.sublayers?.removeAll(where: { $0 is CALayer && $0 !== headerContentView.layer })
+
+    let todayStr = dateFormatter.string(from: Date())
+    let primaryUIColor = UIColor(hex: gridState.primaryColor) ?? .systemIndigo
+
+    for (index, dateStr) in allDates.enumerated() {
+      let x = CGFloat(index) * columnWidth
+      let isToday = dateStr == todayStr
+
+      let container = UIView(frame: CGRect(x: x, y: 0, width: columnWidth, height: headerHeight))
+
+      // Day of week label
+      let dowLabel = UILabel()
+      dowLabel.text = dayOfWeekString(dateStr)
+      dowLabel.font = .systemFont(ofSize: gridState.dayCount <= 3 ? 12 : 10, weight: .medium)
+      dowLabel.textColor = isToday ? primaryUIColor : UIColor(hex: "#9CA3AF")
+      dowLabel.textAlignment = .center
+      dowLabel.frame = CGRect(x: 0, y: 4, width: columnWidth, height: 14)
+      container.addSubview(dowLabel)
+
+      // Day number label
+      let numSize: CGFloat = gridState.dayCount <= 3 ? 28 : 22
+      let fontSize: CGFloat = gridState.dayCount <= 3 ? 16 : 13
+      let numLabel = UILabel()
+      numLabel.text = dayNumberString(dateStr)
+      numLabel.font = .systemFont(ofSize: fontSize, weight: isToday ? .bold : .regular)
+      numLabel.textColor = isToday ? .white : UIColor(hex: "#374151")
+      numLabel.textAlignment = .center
+      numLabel.frame = CGRect(x: (columnWidth - numSize) / 2, y: 20, width: numSize, height: numSize)
+
+      if isToday {
+        numLabel.backgroundColor = primaryUIColor
+        numLabel.layer.cornerRadius = numSize / 2
+        numLabel.clipsToBounds = true
       }
+      container.addSubview(numLabel)
+
+      // Tap gesture for date selection
+      container.tag = index
+      let tap = UITapGestureRecognizer(target: self, action: #selector(headerTapped(_:)))
+      container.addGestureRecognizer(tap)
+      container.isUserInteractionEnabled = true
+
+      headerContentView.addSubview(container)
     }
-    .frame(width: width)
+
+    // Bottom border
+    let border = CALayer()
+    border.frame = CGRect(x: 0, y: headerHeight - 0.5, width: headerContentView.frame.width, height: 0.5)
+    border.backgroundColor = UIColor(hex: "#E5E7EB")?.cgColor
+    headerContentView.layer.addSublayer(border)
   }
 
-  // MARK: - Header
-
-  private func headerView(dates: [String]) -> some View {
-    HStack(spacing: 0) {
-      // 시간 컬럼 빈 공간
-      Color.clear
-        .frame(width: timeColumnWidth)
-
-      ForEach(Array(dates.enumerated()), id: \.offset) { _, dateStr in
-        let isToday = dateStr == dateFormatter.string(from: Date())
-
-        VStack(spacing: 1) {
-          // 요일
-          Text(dayOfWeekString(dateStr))
-            .font(.system(size: state.dayCount <= 3 ? 12 : 10, weight: .medium))
-            .foregroundColor(isToday ? Color(hex: state.primaryColor) : Color(hex: "#9CA3AF"))
-
-          // 일자
-          Text(dayNumberString(dateStr))
-            .font(.system(size: state.dayCount <= 3 ? 16 : 13, weight: isToday ? .bold : .regular))
-            .foregroundColor(isToday ? .white : Color(hex: "#374151"))
-            .frame(width: state.dayCount <= 3 ? 28 : 22, height: state.dayCount <= 3 ? 28 : 22)
-            .background(
-              isToday ? Circle().fill(Color(hex: state.primaryColor)) : nil
-            )
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 2)
-        .onTapGesture {
-          onDateSelect?(dateStr)
-        }
-      }
-    }
-    .background(Color(hex: "#F9FAFB"))
+  @objc private func headerTapped(_ gesture: UITapGestureRecognizer) {
+    guard let index = gesture.view?.tag, index >= 0, index < allDates.count else { return }
+    onDateSelect?(["date": allDates[index]])
   }
 
-  // MARK: - Time Grid Background
+  // MARK: - Time Axis
 
-  private func timeGridBackground(columnCount: Int) -> some View {
-    VStack(spacing: 0) {
-      ForEach(0..<24, id: \.self) { hour in
-        HStack(alignment: .top, spacing: 0) {
-          Text(String(format: "%02d", hour))
-            .font(.system(size: 10, weight: .regular, design: .monospaced))
-            .foregroundColor(Color(hex: "#9CA3AF"))
-            .frame(width: timeColumnWidth, alignment: .trailing)
-            .padding(.trailing, 4)
-            .offset(y: -5)
+  private func layoutTimeAxis() {
+    timeAxisContentView.subviews.forEach { $0.removeFromSuperview() }
 
-          VStack(spacing: 0) {
-            Divider().background(Color(hex: "#E5E7EB"))
-            Spacer()
-          }
-        }
-        .frame(height: hourHeight)
-      }
+    for hour in 0..<24 {
+      let y = CGFloat(hour) * hourHeight
+      let label = UILabel()
+      label.text = String(format: "%02d", hour)
+      label.font = .monospacedSystemFont(ofSize: 10, weight: .regular)
+      label.textColor = UIColor(hex: "#9CA3AF")
+      label.textAlignment = .right
+      label.frame = CGRect(x: 0, y: y - 5, width: timeColumnWidth - 4, height: 14)
+      timeAxisContentView.addSubview(label)
     }
   }
 
-  // MARK: - Column Blocks
+  // MARK: - Blocks (Todos + Events)
 
-  private func columnBlocks(dateStr: String, colIndex: Int, totalColumns: Int) -> some View {
-    let todos = state.todoMap[dateStr] ?? []
-    let events = state.eventMap[dateStr] ?? []
-    let columnWidth = (UIScreen.main.bounds.width - timeColumnWidth) / CGFloat(totalColumns)
-    let xOffset = timeColumnWidth + columnWidth * CGFloat(colIndex)
+  private func layoutBlocks() {
+    // Remove existing block views (keep gridLinesLayer on the layer)
+    gridContentView.subviews.forEach { $0.removeFromSuperview() }
+    currentTimeView = nil
 
-    return ZStack(alignment: .topLeading) {
-      // 할일 블록
-      ForEach(todos.filter { $0.startTime != nil }) { todo in
+    guard columnWidth > 0 else { return }
+
+    for (index, dateStr) in allDates.enumerated() {
+      let x = CGFloat(index) * columnWidth
+      let todos = gridState.todoMap[dateStr] ?? []
+      let events = gridState.eventMap[dateStr] ?? []
+
+      // Todo blocks
+      for todo in todos where todo.startTime != nil {
         let pos = blockPosition(startTime: todo.startTime, endTime: todo.endTime)
-
-        Button(action: { onTodoPress?(todo.id) }) {
-          VStack(alignment: .leading, spacing: 0) {
-            Text(todo.title)
-              .font(.system(size: totalColumns <= 3 ? 10 : 8, weight: .medium))
-              .foregroundColor(todo.completed ? Color(hex: "#9CA3AF") : Color(hex: "#1F2937"))
-              .strikethrough(todo.completed)
-              .lineLimit(totalColumns <= 3 ? 2 : 1)
-          }
-          .padding(2)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .background(Color(hex: todo.projectColor).opacity(todo.completed ? 0.05 : 0.15))
-          .cornerRadius(3)
-          .overlay(
-            RoundedRectangle(cornerRadius: 3)
-              .stroke(Color(hex: todo.projectColor).opacity(0.3), lineWidth: 0.5)
-          )
-        }
-        .buttonStyle(.plain)
-        .frame(width: columnWidth - 4, height: max(pos.height, 18))
-        .offset(x: xOffset + 2, y: pos.topOffset)
+        let h = max(pos.height, 18)
+        let blockView = makeTodoBlock(todo: todo, width: columnWidth - 4, height: h)
+        blockView.frame = CGRect(x: x + 2, y: pos.topOffset, width: columnWidth - 4, height: h)
+        gridContentView.addSubview(blockView)
       }
 
-      // 이벤트 블록
-      ForEach(events.filter { !$0.isAllDay && $0.start != nil }) { event in
+      // Event blocks
+      for event in events where !event.isAllDay && event.start != nil {
         let pos = blockPosition(startTime: event.start, endTime: event.end)
-
-        VStack(alignment: .leading, spacing: 0) {
-          Text(event.title)
-            .font(.system(size: totalColumns <= 3 ? 10 : 8, weight: .medium))
-            .foregroundColor(Color(hex: "#1F2937"))
-            .lineLimit(totalColumns <= 3 ? 2 : 1)
-        }
-        .padding(2)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: event.color).opacity(0.15))
-        .cornerRadius(3)
-        .frame(width: columnWidth - 4, height: max(pos.height, 18))
-        .offset(x: xOffset + 2, y: pos.topOffset)
+        let h = max(pos.height, 18)
+        let blockView = makeEventBlock(event: event, width: columnWidth - 4, height: h)
+        blockView.frame = CGRect(x: x + 2, y: pos.topOffset, width: columnWidth - 4, height: h)
+        gridContentView.addSubview(blockView)
       }
     }
+  }
+
+  private func makeTodoBlock(todo: DayGridTodoItem, width: CGFloat, height: CGFloat) -> UIView {
+    let view = UIView()
+    let bgColor = UIColor(hex: todo.projectColor) ?? .systemIndigo
+    view.backgroundColor = bgColor.withAlphaComponent(todo.completed ? 0.05 : 0.15)
+    view.layer.cornerRadius = 3
+    view.layer.borderColor = bgColor.withAlphaComponent(0.3).cgColor
+    view.layer.borderWidth = 0.5
+    view.clipsToBounds = true
+
+    let label = UILabel()
+    let fontSize: CGFloat = gridState.dayCount <= 3 ? 10 : 8
+    if todo.completed {
+      let attr = NSAttributedString(string: todo.title, attributes: [
+        .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+        .font: UIFont.systemFont(ofSize: fontSize, weight: .medium),
+        .foregroundColor: UIColor(hex: "#9CA3AF") ?? UIColor.gray,
+      ])
+      label.attributedText = attr
+    } else {
+      label.text = todo.title
+      label.font = .systemFont(ofSize: fontSize, weight: .medium)
+      label.textColor = UIColor(hex: "#1F2937")
+    }
+    label.numberOfLines = gridState.dayCount <= 3 ? 2 : 1
+    label.frame = CGRect(x: 2, y: 1, width: width - 4, height: height - 2)
+    view.addSubview(label)
+
+    // Tap gesture
+    let tap = TodoTapGesture(target: self, action: #selector(todoTapped(_:)))
+    tap.todoId = todo.id
+    view.addGestureRecognizer(tap)
+    view.isUserInteractionEnabled = true
+
+    return view
+  }
+
+  private func makeEventBlock(event: DayGridEventItem, width: CGFloat, height: CGFloat) -> UIView {
+    let view = UIView()
+    let bgColor = UIColor(hex: event.color) ?? .systemBlue
+    view.backgroundColor = bgColor.withAlphaComponent(0.15)
+    view.layer.cornerRadius = 3
+    view.clipsToBounds = true
+
+    let label = UILabel()
+    label.text = event.title
+    label.font = .systemFont(ofSize: gridState.dayCount <= 3 ? 10 : 8, weight: .medium)
+    label.textColor = UIColor(hex: "#1F2937")
+    label.numberOfLines = gridState.dayCount <= 3 ? 2 : 1
+    label.frame = CGRect(x: 2, y: 1, width: width - 4, height: height - 2)
+    view.addSubview(label)
+
+    return view
+  }
+
+  @objc private func todoTapped(_ gesture: TodoTapGesture) {
+    onTodoPress?(["todoId": gesture.todoId])
   }
 
   // MARK: - Current Time Line
 
-  private var currentTimeLine: some View {
+  private func layoutCurrentTimeLine() {
+    currentTimeView?.removeFromSuperview()
+    currentTimeView = nil
+
     let todayStr = dateFormatter.string(from: Date())
-    let dates = state.dateRange()
-    let isVisible = dates.contains(todayStr)
+    guard let todayIndex = allDates.firstIndex(of: todayStr) else { return }
 
-    return Group {
-      if isVisible {
-        let components = calendar.dateComponents([.hour, .minute], from: currentTime)
-        let minutes = CGFloat(components.hour ?? 0) * 60 + CGFloat(components.minute ?? 0)
-        let topOffset = minutes / 60.0 * hourHeight
+    let cal = Calendar.current
+    let comps = cal.dateComponents([.hour, .minute], from: Date())
+    let minutes = CGFloat(comps.hour ?? 0) * 60 + CGFloat(comps.minute ?? 0)
+    let y = minutes / 60.0 * hourHeight
 
-        HStack(spacing: 0) {
-          Color.clear.frame(width: timeColumnWidth - 4)
-          Circle()
-            .fill(Color.red)
-            .frame(width: 6, height: 6)
-          Rectangle()
-            .fill(Color.red)
-            .frame(height: 1)
-        }
-        .offset(y: topOffset - 3)
-      }
-    }
+    let x = CGFloat(todayIndex) * columnWidth
+
+    let container = UIView(frame: CGRect(x: x - 3, y: y - 3, width: columnWidth + 6, height: 7))
+    container.isUserInteractionEnabled = false
+
+    // Red circle
+    let circle = UIView(frame: CGRect(x: 0, y: 0.5, width: 6, height: 6))
+    circle.backgroundColor = .red
+    circle.layer.cornerRadius = 3
+    container.addSubview(circle)
+
+    // Red line
+    let line = UIView(frame: CGRect(x: 3, y: 2.5, width: columnWidth, height: 1))
+    line.backgroundColor = .red
+    container.addSubview(line)
+
+    gridContentView.addSubview(container)
+    currentTimeView = container
+  }
+
+  // MARK: - UIScrollViewDelegate
+
+  func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    guard scrollView === contentScrollView, !isUpdatingScroll else { return }
+    isUpdatingScroll = true
+    headerScrollView.contentOffset.x = scrollView.contentOffset.x
+    timeAxisScrollView.contentOffset.y = scrollView.contentOffset.y
+    isUpdatingScroll = false
+  }
+
+  func scrollViewWillEndDragging(
+    _ scrollView: UIScrollView,
+    withVelocity velocity: CGPoint,
+    targetContentOffset: UnsafeMutablePointer<CGPoint>
+  ) {
+    guard scrollView === contentScrollView, columnWidth > 0 else { return }
+    let nearestCol = round(targetContentOffset.pointee.x / columnWidth)
+    targetContentOffset.pointee.x = nearestCol * columnWidth
+  }
+
+  func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+    guard scrollView === contentScrollView else { return }
+    reportVisibleRange()
+  }
+
+  func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+    guard scrollView === contentScrollView, !decelerate else { return }
+    reportVisibleRange()
+  }
+
+  private func reportVisibleRange() {
+    guard columnWidth > 0 else { return }
+    let firstVisibleCol = Int(round(contentScrollView.contentOffset.x / columnWidth))
+    let lastVisibleCol = firstVisibleCol + gridState.dayCount - 1
+
+    guard firstVisibleCol >= 0, lastVisibleCol < allDates.count else { return }
+    let startDate = allDates[firstVisibleCol]
+    let endDate = allDates[lastVisibleCol]
+    onDateRangeChange?(["startDate": startDate, "endDate": endDate])
   }
 
   // MARK: - Helpers
@@ -339,10 +648,10 @@ struct MultiDayTimeGridContent: View {
   private func blockPosition(startTime: String?, endTime: String?) -> (topOffset: CGFloat, height: CGFloat) {
     guard let startStr = startTime else { return (0, 18) }
 
-    let startMinutes = minutesFromTimeString(startStr)
+    let startMinutes = MultiDayTimeUtils.minutesFromTimeString(startStr)
     let endMinutes: CGFloat
     if let endStr = endTime {
-      endMinutes = minutesFromTimeString(endStr)
+      endMinutes = MultiDayTimeUtils.minutesFromTimeString(endStr)
     } else {
       endMinutes = startMinutes + 30
     }
@@ -352,16 +661,6 @@ struct MultiDayTimeGridContent: View {
     return (topOffset, height)
   }
 
-  private func minutesFromTimeString(_ timeStr: String) -> CGFloat {
-    if let mins = MultiDayTimeUtils.minutesFromISO(timeStr) { return mins }
-    // 폴백: "HH:mm" 형식
-    let components = timeStr.prefix(5).components(separatedBy: ":")
-    guard components.count >= 2,
-          let hour = Double(components[0]),
-          let minute = Double(components[1]) else { return 0 }
-    return CGFloat(hour * 60 + minute)
-  }
-
   private func dayOfWeekString(_ dateStr: String) -> String {
     guard let date = dateFormatter.date(from: dateStr) else { return "" }
     return dayOfWeekFormatter.string(from: date)
@@ -369,105 +668,20 @@ struct MultiDayTimeGridContent: View {
 
   private func dayNumberString(_ dateStr: String) -> String {
     guard let date = dateFormatter.date(from: dateStr) else { return "" }
-    return "\(calendar.component(.day, from: date))"
+    return "\(Calendar.current.component(.day, from: date))"
   }
 
-  private func navigatePeriod(_ direction: Int) {
-    guard let center = dateFormatter.date(from: state.centerDate),
-          let newCenter = calendar.date(byAdding: .day, value: direction * state.dayCount, to: center) else { return }
-
-    state.centerDate = dateFormatter.string(from: newCenter)
-    let dates = state.dateRange()
-    if let first = dates.first, let last = dates.last {
-      onDateRangeChange?(first, last)
-    }
-  }
-
-  private func startTimer() {
-    Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+  private func startCurrentTimeTimer() {
+    currentTimeTimer?.invalidate()
+    currentTimeTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
       DispatchQueue.main.async {
-        currentTime = Date()
+        self?.layoutCurrentTimeLine()
       }
     }
   }
-}
 
-// MARK: - UIView Wrapper
-
-class NativeMultiDayTimeGridUIView: UIView {
-
-  @objc var onDateSelect: RCTDirectEventBlock?
-  @objc var onTodoPress: RCTDirectEventBlock?
-  @objc var onDateRangeChange: RCTDirectEventBlock?
-  @objc var onHeightChange: RCTDirectEventBlock?
-
-  private let gridState = MultiDayTimeGridState()
-  private var hostingController: UIHostingController<AnyView>?
-  private var hasSetUp = false
-
-  // MARK: Prop Setters
-
-  @objc func setDayCount(_ value: NSNumber) {
-    gridState.dayCount = value.intValue
-  }
-
-  @objc func setCenterDate(_ value: NSString) {
-    gridState.centerDate = value as String
-    setupOnce()
-  }
-
-  @objc func setPrimaryColor(_ value: NSString) {
-    gridState.primaryColor = value as String
-  }
-
-  @objc func setTodoData(_ value: NSString) {
-    gridState.parseTodoData(value as String)
-  }
-
-  @objc func setEventData(_ value: NSString) {
-    gridState.parseEventData(value as String)
-  }
-
-  // MARK: - Setup Once
-
-  private func setupOnce() {
-    guard !hasSetUp else { return }
-    hasSetUp = true
-    backgroundColor = .clear
-
-    if #available(iOS 17.0, *) {
-      let swiftUIView = MultiDayTimeGridContent(
-        state: gridState,
-        onDateSelect: { [weak self] dateString in
-          self?.onDateSelect?(["date": dateString])
-        },
-        onTodoPress: { [weak self] todoId in
-          self?.onTodoPress?(["todoId": todoId])
-        },
-        onDateRangeChange: { [weak self] startDate, endDate in
-          self?.onDateRangeChange?(["startDate": startDate, "endDate": endDate])
-        }
-      )
-
-      let hc = UIHostingController(rootView: AnyView(swiftUIView))
-      hc.view.backgroundColor = .clear
-      hostingController = hc
-
-      addSubview(hc.view)
-      hc.view.translatesAutoresizingMaskIntoConstraints = false
-      NSLayoutConstraint.activate([
-        hc.view.leadingAnchor.constraint(equalTo: leadingAnchor),
-        hc.view.trailingAnchor.constraint(equalTo: trailingAnchor),
-        hc.view.topAnchor.constraint(equalTo: topAnchor),
-        hc.view.bottomAnchor.constraint(equalTo: bottomAnchor),
-      ])
-
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-        guard let self = self, let hc = self.hostingController, self.bounds.width > 0 else { return }
-        let size = hc.sizeThatFits(in: CGSize(width: self.bounds.width, height: .greatestFiniteMagnitude))
-        self.onHeightChange?(["height": size.height])
-      }
-    }
+  deinit {
+    currentTimeTimer?.invalidate()
   }
 }
 

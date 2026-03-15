@@ -2,12 +2,19 @@
  * ContactNudge — 연락 추천 리스트
  * 전체 추천 목록을 세로 리스트로 표시 (웹 ContactRecommendationScroll 참고)
  */
-import React from 'react';
-import {View, Text} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import React, {useMemo} from 'react';
+import {View, Text, StyleSheet} from 'react-native';
+import Animated, {
+  FadeInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {HeartHandshake, Phone} from 'lucide-react-native';
 import {fixedColors} from '@/theme/colors';
+import {NativeContactNudgeNative, isIOS26Plus} from '@/components/native';
+import {springs} from '@/theme/animations';
 
 interface ContactRecommendation {
   person: {
@@ -36,6 +43,52 @@ export function ContactNudge({
   enterDelay = 0,
   onContactPress,
 }: ContactNudgeProps) {
+  const animatedHeight = useSharedValue(200);
+
+  const heightStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value,
+    overflow: 'hidden' as const,
+  }));
+
+  // 네이티브용 JSON
+  const contactsDataJson = useMemo(() => {
+    return JSON.stringify(
+      recommendations.map(rec => ({
+        person: {
+          name: rec.person.name,
+          nickname: rec.person.nickname ?? null,
+          relationships: rec.person.relationships ?? [],
+        },
+        daysSinceContact: rec.daysSinceContact,
+        priority: rec.priority,
+      })),
+    );
+  }, [recommendations]);
+
+  // iOS 26+: 네이티브 glass 연락 추천 리스트
+  if (isIOS26Plus) {
+    return (
+      <Animated.View
+        entering={FadeInDown.delay(enterDelay).duration(400)}
+        className="mx-4">
+        <Animated.View style={heightStyle}>
+          <NativeContactNudgeNative
+            contactsData={contactsDataJson}
+            onContactPress={e => onContactPress?.(e.nativeEvent.personName)}
+            onHeightChange={e => {
+              animatedHeight.value = withSpring(
+                e.nativeEvent.height,
+                springs.nativeGlass,
+              );
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+      </Animated.View>
+    );
+  }
+
+  // iOS 25-: 기존 JS 폴백
   return (
     <Animated.View
       entering={FadeInDown.delay(enterDelay).duration(400)}

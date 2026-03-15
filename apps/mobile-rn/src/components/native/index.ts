@@ -8,4 +8,8 @@ export {NativeWeekStripCalendarNative} from './NativeWeekStripCalendar';
 export {NativeMonthCalendarNative} from './NativeMonthCalendar';
 export {NativeDayTimeGridNative} from './NativeDayTimeGrid';
 export {NativeMultiDayTimeGridNative} from './NativeMultiDayTimeGrid';
+export {NativeProgressCardNative} from './NativeProgressCard';
+export {NativeGroupSectionNative} from './NativeGroupSection';
+export {NativeMissionCardNative} from './NativeMissionCard';
+export {NativeContactNudgeNative} from './NativeContactNudge';
 export {isIOS26Plus} from './utils';

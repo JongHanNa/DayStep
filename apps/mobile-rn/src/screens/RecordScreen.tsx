@@ -9,14 +9,21 @@ import {
   Text,
   View,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
 } from 'react-native';
-import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeIn,
+  FadeOut,
+  LinearTransition,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, AnimatedPressable, GlassBackground} from '@/components/core';
 import {
   ChevronLeft,
@@ -30,10 +37,14 @@ import {
   Clock,
   MoreHorizontal,
   MessageCircle,
-  AlertTriangle,
 } from 'lucide-react-native';
+import {BottomSheetModal} from '@gorhom/bottom-sheet';
 import {RelationshipStatsModal} from '@/components/record/RelationshipStatsModal';
+import type {RelationshipStatsModalRef} from '@/components/record/RelationshipStatsModal';
 import {NotesTimelineModal} from '@/components/record/NotesTimelineModal';
+import type {NotesTimelineModalRef} from '@/components/record/NotesTimelineModal';
+import {AddPersonBottomSheet} from '@/components/record/AddPersonBottomSheet';
+import type {AddPersonBottomSheetRef} from '@/components/record/AddPersonBottomSheet';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
@@ -46,8 +57,10 @@ import {
   type NoteWithPerson,
 } from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
+import {hexWithOpacity} from '@/lib/todoUtils';
 import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {useTheme} from '@/theme';
+import {springs} from '@/theme/animations';
 import {format, differenceInDays} from 'date-fns';
 
 type Step = 'select-person' | 'write-news' | 'completed';
@@ -72,25 +85,36 @@ function InteractionTypeGrid({
         const isSelected = type === selected;
         const IconComp = resolveTodoIcon(icon);
         return (
-          <TouchableOpacity
+          <AnimatedPressable
             key={type}
             onPress={() => onSelect(type)}
+            hapticType="light"
+            scaleValue={0.97}
             className={`w-[33%] p-1`}>
             <View
-              className={`items-center py-3 rounded-xl ${
-                isSelected ? 'bg-violet-100 border border-violet-400' : 'bg-gray-50'
-              }`}>
+              className="items-center py-3 rounded-xl"
+              style={{
+                backgroundColor: isSelected
+                  ? hexWithOpacity(primaryColor, 0.1)
+                  : '#F9FAFB',
+                borderWidth: isSelected ? 1 : 0,
+                borderColor: isSelected
+                  ? hexWithOpacity(primaryColor, 0.3)
+                  : 'transparent',
+              }}>
               {IconComp && (
                 <IconComp size={20} color={isSelected ? primaryColor : '#9CA3AF'} />
               )}
               <Text
-                className={`text-xs mt-1 ${
-                  isSelected ? 'text-violet-700 font-medium' : 'text-gray-500'
-                }`}>
+                className="text-xs mt-1"
+                style={{
+                  color: isSelected ? primaryColor : '#6B7280',
+                  fontWeight: isSelected ? '500' : '400',
+                }}>
                 {label}
               </Text>
             </View>
-          </TouchableOpacity>
+          </AnimatedPressable>
         );
       })}
     </View>
@@ -101,7 +125,11 @@ function InteractionTypeGrid({
 function NotePreview({notes}: {notes: NoteWithPerson[]}) {
   if (notes.length === 0) return null;
   return (
-    <View className="mt-2 pl-11">
+    <Animated.View
+      entering={FadeIn.duration(250)}
+      exiting={FadeOut.duration(200)}
+      layout={LinearTransition.springify().damping(25).stiffness(247).mass(1)}
+      className="mt-2 pl-11">
       {notes.map(note => {
         const isNews = !!note.recent_news;
         const content = note.recent_news || note.gratitude_note || '';
@@ -121,17 +149,122 @@ function NotePreview({notes}: {notes: NoteWithPerson[]}) {
           </View>
         );
       })}
-    </View>
+    </Animated.View>
   );
 }
 
-/** 퀵 스탯 pill */
-function QuickStatPill({label, value}: {label: string; value: string}) {
+/** 접힌 필드 그룹 (부탁·메모) */
+function CollapsibleFields({
+  requestFromThem,
+  setRequestFromThem,
+  requestToThem,
+  setRequestToThem,
+  meetingNote,
+  setMeetingNote,
+  primaryColor,
+}: {
+  requestFromThem: string;
+  setRequestFromThem: (v: string) => void;
+  requestToThem: string;
+  setRequestToThem: (v: string) => void;
+  meetingNote: string;
+  setMeetingNote: (v: string) => void;
+  primaryColor: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const contentHeight = useRef(0);
+  const animHeight = useSharedValue(0);
+
+  const animStyle = useAnimatedStyle(() => ({
+    height: animHeight.value,
+    overflow: 'hidden',
+  }));
+
+  const toggleExpanded = useCallback(() => {
+    if (expanded) {
+      animHeight.value = withSpring(0, springs.nativeGlass);
+    } else {
+      animHeight.value = withSpring(contentHeight.current, springs.nativeGlass);
+    }
+    setExpanded(!expanded);
+  }, [expanded, animHeight]);
+
   return (
-    <View className="bg-white/70 rounded-full px-4 py-2 mr-2">
-      <Text className="text-xs text-gray-500">{label}</Text>
-      <Text className="text-sm font-semibold text-gray-800">{value}</Text>
-    </View>
+    <>
+      <View className="px-4 mb-2">
+        <AnimatedPressable
+          onPress={toggleExpanded}
+          hapticType="light"
+          scaleValue={0.98}
+          className="flex-row items-center py-2">
+          <Plus size={14} color={primaryColor} style={expanded ? {transform: [{rotate: '45deg'}]} : undefined} />
+          <Text className="text-sm ml-1.5" style={{color: primaryColor}}>
+            {expanded ? '접기' : '부탁·메모 추가'}
+          </Text>
+        </AnimatedPressable>
+      </View>
+
+      <Animated.View style={animStyle}>
+        <View
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h > 0) {
+              contentHeight.current = h;
+              if (expanded) {
+                animHeight.value = withSpring(h, springs.nativeGlass);
+              }
+            }
+          }}>
+          {/* 받은 부탁 */}
+          <View className="px-4 mb-4">
+            <Text className="text-sm font-medium text-gray-700 mb-2">
+              받은 부탁
+            </Text>
+            <TextInput
+              value={requestFromThem}
+              onChangeText={setRequestFromThem}
+              placeholder="부탁받은 것이 있으면 적어주세요"
+              placeholderTextColor="#9CA3AF"
+              multiline
+              className="bg-white rounded-xl p-4 text-sm text-gray-800 min-h-[60px]"
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* 한 부탁 */}
+          <View className="px-4 mb-4">
+            <Text className="text-sm font-medium text-gray-700 mb-2">
+              한 부탁
+            </Text>
+            <TextInput
+              value={requestToThem}
+              onChangeText={setRequestToThem}
+              placeholder="부탁한 것이 있으면 적어주세요"
+              placeholderTextColor="#9CA3AF"
+              multiline
+              className="bg-white rounded-xl p-4 text-sm text-gray-800 min-h-[60px]"
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* 회의 내용 */}
+          <View className="px-4 mb-4">
+            <Text className="text-sm font-medium text-gray-700 mb-2">
+              회의/대화 메모
+            </Text>
+            <TextInput
+              value={meetingNote}
+              onChangeText={setMeetingNote}
+              placeholder="기억하고 싶은 대화 내용"
+              placeholderTextColor="#9CA3AF"
+              multiline
+              className="bg-white rounded-xl p-4 text-sm text-gray-800 min-h-[60px]"
+              textAlignVertical="top"
+            />
+          </View>
+        </View>
+      </Animated.View>
+    </>
   );
 }
 
@@ -153,6 +286,11 @@ export default function RecordScreen() {
   } = useCherishedPeopleStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
 
+  // Bottom sheet refs
+  const addPersonSheetRef = useRef<AddPersonBottomSheetRef>(null);
+  const statsSheetRef = useRef<RelationshipStatsModalRef>(null);
+  const timelineSheetRef = useRef<NotesTimelineModalRef>(null);
+
   const [step, setStep] = useState<Step>('select-person');
   const [selectedPerson, setSelectedPerson] = useState<CherishedPerson | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -173,9 +311,6 @@ export default function RecordScreen() {
   const [todoTitle, setTodoTitle] = useState('');
   const [wantToCreateTodo, setWantToCreateTodo] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [statsVisible, setStatsVisible] = useState(false);
-  const [timelineVisible, setTimelineVisible] = useState(false);
-  const [timelineInitialTab, setTimelineInitialTab] = useState<'news' | 'gratitude'>('news');
 
   useEffect(() => {
     if (user?.id) {
@@ -229,34 +364,10 @@ export default function RecordScreen() {
     setStep('write-news');
   }, []);
 
-  const handleAddNewPerson = useCallback(async () => {
-    if (!user?.id || !searchQuery.trim()) return;
-
-    const doAddPerson = async (name: string) => {
-      const allowed = await checkLimit('cherished_people');
-      if (!allowed) return;
-      const person = await addPerson(user.id, {name: name.trim()});
-      if (person) {
-        setSelectedPerson(person);
-        setStep('write-news');
-      }
-    };
-
-    Alert.prompt
-      ? Alert.prompt(
-          '새 사람 추가',
-          '이름을 입력하세요',
-          async (name: string) => {
-            if (name.trim()) await doAddPerson(name);
-          },
-          'plain-text',
-          searchQuery,
-        )
-      : Alert.alert('새 사람 추가', `"${searchQuery}" 님을 추가할까요?`, [
-          {text: '취소', style: 'cancel'},
-          {text: '추가', onPress: () => doAddPerson(searchQuery)},
-        ]);
-  }, [user?.id, searchQuery, addPerson, checkLimit]);
+  const handlePersonAdded = useCallback((person: CherishedPerson) => {
+    setSelectedPerson(person);
+    setStep('write-news');
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (!user?.id || !selectedPerson) return;
@@ -342,7 +453,9 @@ export default function RecordScreen() {
       <ScreenContainer gradient="warmBackground">
         <View className="flex-1 items-center justify-center px-8">
           <Animated.View entering={FadeIn.delay(100).duration(600)}>
-            <View className="w-24 h-24 rounded-full bg-violet-100 items-center justify-center mb-6">
+            <View
+              className="w-24 h-24 rounded-full items-center justify-center mb-6"
+              style={{backgroundColor: hexWithOpacity(primaryColor, 0.1)}}>
               <Heart size={48} color={primaryColor} />
             </View>
           </Animated.View>
@@ -357,12 +470,14 @@ export default function RecordScreen() {
             {selectedPerson?.name}님과의 소중한 기록이 저장되었어요.
           </Animated.Text>
           <Animated.View entering={FadeInDown.delay(500).duration(400)}>
-            <TouchableOpacity
+            <AnimatedPressable
               onPress={handleRecordAgain}
+              hapticType="light"
+              scaleValue={0.97}
               style={{backgroundColor: primaryColor}}
               className="rounded-xl py-3 px-8 mb-4">
               <Text className="text-white font-semibold">또 기록하기</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           </Animated.View>
         </View>
       </ScreenContainer>
@@ -383,15 +498,17 @@ export default function RecordScreen() {
             <Animated.View
               entering={FadeInDown.duration(400)}
               className="px-4 pt-2 pb-4 flex-row items-center">
-              <TouchableOpacity
+              <AnimatedPressable
                 onPress={() => setStep('select-person')}
+                hapticType="light"
+                scaleValue={0.97}
                 className="flex-row items-center"
                 hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
                 <ChevronLeft size={24} color="#374151" />
                 <Text className="text-lg font-bold text-gray-800 ml-1">
                   {selectedPerson?.name}님 기록
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             </Animated.View>
 
             {/* 관심 표현 방식 */}
@@ -406,7 +523,7 @@ export default function RecordScreen() {
               />
             </View>
 
-            {/* 들은 소식 */}
+            {/* 들은 소식 (기본 노출) */}
             <View className="px-4 mb-4">
               <Text className="text-sm font-medium text-gray-700 mb-2">
                 들은 소식
@@ -422,7 +539,7 @@ export default function RecordScreen() {
               />
             </View>
 
-            {/* 감사했던 점 */}
+            {/* 감사했던 점 (기본 노출) */}
             <View className="px-4 mb-4">
               <Text className="text-sm font-medium text-gray-700 mb-2">
                 감사했던 점
@@ -438,58 +555,23 @@ export default function RecordScreen() {
               />
             </View>
 
-            {/* 받은 부탁 */}
-            <View className="px-4 mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                받은 부탁
-              </Text>
-              <TextInput
-                value={requestFromThem}
-                onChangeText={setRequestFromThem}
-                placeholder="부탁받은 것이 있으면 적어주세요"
-                placeholderTextColor="#9CA3AF"
-                multiline
-                className="bg-white rounded-xl p-4 text-sm text-gray-800 min-h-[60px]"
-                textAlignVertical="top"
-              />
-            </View>
-
-            {/* 한 부탁 */}
-            <View className="px-4 mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                한 부탁
-              </Text>
-              <TextInput
-                value={requestToThem}
-                onChangeText={setRequestToThem}
-                placeholder="부탁한 것이 있으면 적어주세요"
-                placeholderTextColor="#9CA3AF"
-                multiline
-                className="bg-white rounded-xl p-4 text-sm text-gray-800 min-h-[60px]"
-                textAlignVertical="top"
-              />
-            </View>
-
-            {/* 회의 내용 */}
-            <View className="px-4 mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                회의/대화 메모
-              </Text>
-              <TextInput
-                value={meetingNote}
-                onChangeText={setMeetingNote}
-                placeholder="기억하고 싶은 대화 내용"
-                placeholderTextColor="#9CA3AF"
-                multiline
-                className="bg-white rounded-xl p-4 text-sm text-gray-800 min-h-[60px]"
-                textAlignVertical="top"
-              />
-            </View>
+            {/* 접힌 그룹: 받은 부탁 + 한 부탁 + 회의 메모 */}
+            <CollapsibleFields
+              requestFromThem={requestFromThem}
+              setRequestFromThem={setRequestFromThem}
+              requestToThem={requestToThem}
+              setRequestToThem={setRequestToThem}
+              meetingNote={meetingNote}
+              setMeetingNote={setMeetingNote}
+              primaryColor={primaryColor}
+            />
 
             {/* 할일 연동 */}
             <View className="px-4 mb-6">
-              <TouchableOpacity
+              <AnimatedPressable
                 onPress={() => setWantToCreateTodo(!wantToCreateTodo)}
+                hapticType="light"
+                scaleValue={0.98}
                 className="flex-row items-center">
                 <View
                   style={wantToCreateTodo ? {backgroundColor: primaryColor, borderColor: primaryColor} : undefined}
@@ -501,31 +583,35 @@ export default function RecordScreen() {
                 <Text className="text-sm text-gray-700">
                   해드리고 싶은 것을 할일로 추가
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
               {wantToCreateTodo && (
-                <TextInput
-                  value={todoTitle}
-                  onChangeText={setTodoTitle}
-                  placeholder="할일 제목"
-                  placeholderTextColor="#9CA3AF"
-                  className="bg-white rounded-xl p-4 text-sm text-gray-800 mt-2"
-                />
+                <Animated.View entering={FadeInDown.duration(300)}>
+                  <TextInput
+                    value={todoTitle}
+                    onChangeText={setTodoTitle}
+                    placeholder="할일 제목"
+                    placeholderTextColor="#9CA3AF"
+                    className="bg-white rounded-xl p-4 text-sm text-gray-800 mt-2"
+                  />
+                </Animated.View>
               )}
             </View>
 
             {/* 저장 버튼 */}
             <View className="px-4">
-              <TouchableOpacity
+              <AnimatedPressable
                 onPress={handleSave}
                 disabled={saving}
+                hapticType="medium"
+                scaleValue={0.97}
                 style={saving ? undefined : {backgroundColor: primaryColor}}
-              className={`rounded-xl py-4 items-center ${
+                className={`rounded-xl py-4 items-center ${
                   saving ? 'bg-gray-300' : ''
                 }`}>
                 <Text className="text-white font-bold text-base">
                   {saving ? '저장 중...' : '기록 저장하기'}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -539,7 +625,7 @@ export default function RecordScreen() {
       {/* 상단 헤더: 통계 버튼 + 타이틀 + 더보기 */}
       <Animated.View entering={FadeIn.duration(300)} style={recordStyles.headerRow}>
         <AnimatedPressable
-          onPress={() => setStatsVisible(true)}
+          onPress={() => statsSheetRef.current?.present()}
           hapticType="light"
           scaleValue={0.9}
           style={recordStyles.glassStatsBtn}>
@@ -553,9 +639,14 @@ export default function RecordScreen() {
           </GlassBackground>
         </AnimatedPressable>
 
-        <Text className="text-lg font-bold text-gray-800 flex-1 text-center">
-          관계 기록
-        </Text>
+        <View className="flex-1 items-center">
+          <Text className="text-lg font-bold text-gray-800">
+            관계 기록
+          </Text>
+          <Text className="text-xs text-gray-400">
+            {stats.totalPeople}명의 소중한 분
+          </Text>
+        </View>
 
         <LiquidGlassMenu
           systemIconName="ellipsis"
@@ -566,8 +657,7 @@ export default function RecordScreen() {
             {title: '감사 타임라인', key: 'gratitude'},
           ]}
           onSelect={(key) => {
-            setTimelineInitialTab(key as 'news' | 'gratitude');
-            setTimelineVisible(true);
+            timelineSheetRef.current?.present(key as 'news' | 'gratitude');
           }}
           fallbackIcon={<MoreHorizontal size={20} color="#6B7280" />}
         />
@@ -577,18 +667,8 @@ export default function RecordScreen() {
         contentContainerStyle={{paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
 
-        {/* 퀵 스탯 바 */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 8}}>
-          <QuickStatPill label="소중한 분" value={`${stats.totalPeople}명`} />
-          <QuickStatPill label="총 기록" value={`${stats.thisMonthCount}건`} />
-          <QuickStatPill label="관심 필요" value={`${stats.needsAttention}명`} />
-        </ScrollView>
-
         {/* 검색 */}
-        <View className="px-4 mb-4">
+        <View className="px-4 mb-4 mt-2">
           <View className="flex-row items-center bg-white rounded-xl px-4 py-3">
             <Search size={18} color="#9CA3AF" />
             <TextInput
@@ -605,23 +685,15 @@ export default function RecordScreen() {
         {searchQuery ? (
           <View className="px-4 mb-4">
             <AnimatedCard enterDelay={100}>
-              <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-sm font-semibold text-gray-700">
-                  검색 결과 ({filteredPeople.length})
-                </Text>
-                {searchQuery.trim() && filteredPeople.length === 0 && (
-                  <TouchableOpacity
-                    onPress={handleAddNewPerson}
-                    className="flex-row items-center">
-                    <Plus size={16} color={primaryColor} />
-                    <Text className="text-sm text-violet-600 ml-1">새로 추가</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
+              <Text className="text-sm font-semibold text-gray-700 mb-3">
+                검색 결과 ({filteredPeople.length})
+              </Text>
               {filteredPeople.map(person => (
-                <TouchableOpacity
+                <AnimatedPressable
                   key={person.id}
                   onPress={() => handleSelectPerson(person)}
+                  hapticType="light"
+                  scaleValue={0.97}
                   className="flex-row items-center py-3 border-b border-gray-50">
                   <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-3">
                     <Text className="text-gray-600 font-bold text-sm">
@@ -640,8 +712,25 @@ export default function RecordScreen() {
                     color="#9CA3AF"
                     style={{transform: [{rotate: '180deg'}]}}
                   />
-                </TouchableOpacity>
+                </AnimatedPressable>
               ))}
+              {/* 항상 "새로 추가" 행 표시 */}
+              {searchQuery.trim().length > 0 && (
+                <AnimatedPressable
+                  onPress={() => addPersonSheetRef.current?.open(searchQuery)}
+                  hapticType="light"
+                  scaleValue={0.97}
+                  className="flex-row items-center py-3">
+                  <View
+                    className="w-8 h-8 rounded-full items-center justify-center mr-3"
+                    style={{backgroundColor: hexWithOpacity(primaryColor, 0.1)}}>
+                    <Plus size={16} color={primaryColor} />
+                  </View>
+                  <Text className="text-sm" style={{color: primaryColor}}>
+                    "{searchQuery}" 님 새로 추가
+                  </Text>
+                </AnimatedPressable>
+              )}
             </AnimatedCard>
           </View>
         ) : (
@@ -650,21 +739,22 @@ export default function RecordScreen() {
             {attentionPeople.length > 0 && (
               <View className="px-4 mb-4">
                 <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-                  <View className="flex-row items-center mb-3">
-                    <AlertTriangle size={16} color="#F59E0B" />
-                    <Text className="text-sm font-semibold text-gray-700 ml-1.5">
-                      관심이 필요해요
-                    </Text>
-                  </View>
+                  <Text className="text-sm font-semibold text-gray-700 mb-3">
+                    관심이 필요해요
+                  </Text>
                   {attentionPeople.map(rec => {
                     const person = rec.person;
                     const personNotes = notesPerPerson.get(person.id) ?? [];
                     return (
-                      <TouchableOpacity
+                      <AnimatedPressable
                         key={person.id}
                         onPress={() => handleSelectPerson(person)}
-                        activeOpacity={0.7}
-                        style={recordStyles.attentionCard}>
+                        hapticType="light"
+                        scaleValue={0.97}
+                        style={[
+                          recordStyles.activityCard,
+                          {backgroundColor: hexWithOpacity(primaryColor, 0.06)},
+                        ]}>
                         <View className="flex-row items-center">
                           <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center mr-3">
                             <Text className="text-amber-600 font-bold text-sm">
@@ -672,16 +762,9 @@ export default function RecordScreen() {
                             </Text>
                           </View>
                           <View className="flex-1">
-                            <View className="flex-row items-center">
-                              <Text className="text-sm font-medium text-gray-800">
-                                {person.name}
-                              </Text>
-                              <View className="bg-amber-100 rounded-full px-2 py-0.5 ml-2">
-                                <Text className="text-[10px] text-amber-700 font-medium">
-                                  관심 필요
-                                </Text>
-                              </View>
-                            </View>
+                            <Text className="text-sm font-medium text-gray-800">
+                              {person.name}
+                            </Text>
                             <Text className="text-xs text-gray-400 mt-0.5">
                               {rec.daysSinceContact >= 999
                                 ? '아직 기록 없음'
@@ -696,7 +779,7 @@ export default function RecordScreen() {
                         </View>
                         {/* 인라인 소식/감사 프리뷰 */}
                         <NotePreview notes={personNotes} />
-                      </TouchableOpacity>
+                      </AnimatedPressable>
                     );
                   })}
                 </Animated.View>
@@ -726,9 +809,10 @@ export default function RecordScreen() {
 
                   return (
                     <View key={person.id} style={recordStyles.activityCard}>
-                      <TouchableOpacity
+                      <AnimatedPressable
                         onPress={() => handleSelectPerson(person)}
-                        activeOpacity={0.7}
+                        hapticType="light"
+                        scaleValue={0.97}
                         className="flex-row items-center">
                         <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
                           <Text className="text-gray-600 font-bold text-sm">
@@ -757,12 +841,14 @@ export default function RecordScreen() {
                           color="#9CA3AF"
                           style={{transform: [{rotate: '180deg'}]}}
                         />
-                      </TouchableOpacity>
+                      </AnimatedPressable>
 
                       {/* 확장 토글 (기록이 있을 때만) */}
                       {personNotes.length > 0 && (
-                        <TouchableOpacity
+                        <AnimatedPressable
                           onPress={() => setExpandedPersonId(isExpanded ? null : person.id)}
+                          hapticType="light"
+                          scaleValue={0.98}
                           className="flex-row items-center justify-center mt-1 py-1">
                           <Text className="text-[10px] text-gray-400 mr-1">
                             {isExpanded ? '접기' : `최근 기록 ${personNotes.length}건`}
@@ -772,7 +858,7 @@ export default function RecordScreen() {
                           ) : (
                             <ChevronDown size={12} color="#9CA3AF" />
                           )}
-                        </TouchableOpacity>
+                        </AnimatedPressable>
                       )}
 
                       {/* 확장된 인라인 프리뷰 */}
@@ -788,22 +874,11 @@ export default function RecordScreen() {
 
       {/* FAB: 새 사람 추가 */}
       <AnimatedPressable
-        onPress={() => {
-          Alert.prompt
-            ? Alert.prompt('새 사람 추가', '이름을 입력하세요', async (name: string) => {
-                if (name.trim() && user?.id) {
-                  const allowed = await checkLimit('cherished_people');
-                  if (!allowed) return;
-                  const person = await addPerson(user.id, {name: name.trim()});
-                  if (person) handleSelectPerson(person);
-                }
-              })
-            : Alert.alert('새 사람 추가', '이 기능은 iOS에서만 지원됩니다');
-        }}
+        onPress={() => addPersonSheetRef.current?.open()}
         hapticType="light"
         scaleValue={0.9}
         style={[recordStyles.fab, {backgroundColor: primaryColor, shadowColor: primaryColor}]}>
-        <Text style={recordStyles.fabText}>+</Text>
+        <Plus size={24} color="#FFFFFF" />
       </AnimatedPressable>
 
       <LimitReachedModal
@@ -813,15 +888,14 @@ export default function RecordScreen() {
         currentCount={currentCount}
         maxCount={maxCount}
       />
-      <RelationshipStatsModal
-        visible={statsVisible}
-        onClose={() => setStatsVisible(false)}
+      <AddPersonBottomSheet
+        ref={addPersonSheetRef}
+        onPersonAdded={handlePersonAdded}
+        addPerson={addPerson}
+        userId={user?.id}
       />
-      <NotesTimelineModal
-        visible={timelineVisible}
-        onClose={() => setTimelineVisible(false)}
-        initialTab={timelineInitialTab}
-      />
+      <RelationshipStatsModal ref={statsSheetRef} />
+      <NotesTimelineModal ref={timelineSheetRef} />
     </ScreenContainer>
   );
 }
@@ -850,29 +924,11 @@ const recordStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  attentionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#F59E0B',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
-  },
   activityCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
   },
   fab: {
     position: 'absolute',
@@ -887,11 +943,5 @@ const recordStyles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-  },
-  fabText: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '300',
-    lineHeight: 32,
   },
 });
