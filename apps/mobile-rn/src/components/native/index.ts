@@ -6,4 +6,6 @@ export {NativeCleanupAccordionNative} from './NativeCleanupAccordion';
 export {NativeTimelineAccordionNative} from './NativeTimelineAccordion';
 export {NativeWeekStripCalendarNative} from './NativeWeekStripCalendar';
 export {NativeMonthCalendarNative} from './NativeMonthCalendar';
+export {NativeDayTimeGridNative} from './NativeDayTimeGrid';
+export {NativeMultiDayTimeGridNative} from './NativeMultiDayTimeGrid';
 export {isIOS26Plus} from './utils';

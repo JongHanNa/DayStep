@@ -5,21 +5,22 @@
  *
  * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 더 보기
  */
-import React from 'react';
+import React, {useEffect} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {useNavigation} from '@react-navigation/native';
 import {CustomTabBar} from '@/components/navigation/CustomTabBar';
+import {useSettingsStore} from '@/stores/settingsStore';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
-import TodoListScreen from '../screens/TodoListScreen';
+import PlannerScreen from '../screens/PlannerScreen';
 import ExecutionScreen from '../screens/ExecutionScreen';
 import NotesScreen from '../screens/NotesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
 // Home Stack / More Stack 공유 화면
-import MonthlyPlannerScreen from '../screens/MonthlyPlannerScreen';
 import AIPlanScreen from '../screens/AIPlanScreen';
 import AIChatScreen from '../screens/AIChatScreen';
 import GuideScreen from '../screens/GuideScreen';
@@ -28,6 +29,19 @@ import ActivityScreen from '../screens/ActivityScreen';
 import CleanupScreen from '../screens/CleanupScreen';
 import SleepRecordScreen from '../screens/SleepRecordScreen';
 import ADHDUnderstandingScreen from '../screens/ADHDUnderstandingScreen';
+
+/** MonthlyPlanner 리다이렉트: Planner 탭으로 이동 + viewMode='monthlyPlanner' */
+function MonthlyPlannerRedirect() {
+  const navigation = useNavigation<any>();
+  const setPlannerViewMode = useSettingsStore(s => s.setPlannerViewMode);
+
+  useEffect(() => {
+    setPlannerViewMode('monthlyPlanner');
+    navigation.navigate('Planner');
+  }, [navigation, setPlannerViewMode]);
+
+  return null;
+}
 
 // Home Stack (메인 + 하위 화면)
 const HomeStack = createNativeStackNavigator();
@@ -40,7 +54,7 @@ function HomeStackNavigator() {
         animation: 'fade',
       }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-      <HomeStack.Screen name="MonthlyPlanner" component={MonthlyPlannerScreen} />
+      <HomeStack.Screen name="MonthlyPlanner" component={MonthlyPlannerRedirect} />
       <HomeStack.Screen name="AIPlan" component={AIPlanScreen} />
       <HomeStack.Screen name="AIChat" component={AIChatScreen} />
       <HomeStack.Screen name="Guide" component={GuideScreen} />
@@ -65,7 +79,7 @@ function MoreStackNavigator() {
       }}>
       <MoreStack.Screen name="MoreLanding" component={SettingsScreen} />
       <MoreStack.Screen name="Settings" component={SettingsScreen} />
-      <MoreStack.Screen name="MonthlyPlanner" component={MonthlyPlannerScreen} />
+      <MoreStack.Screen name="MonthlyPlanner" component={MonthlyPlannerRedirect} />
       <MoreStack.Screen name="AIPlan" component={AIPlanScreen} />
       <MoreStack.Screen name="AIChat" component={AIChatScreen} />
       <MoreStack.Screen name="Guide" component={GuideScreen} />
@@ -87,7 +101,7 @@ export default function MainTabNavigator() {
         tabBar={props => <CustomTabBar {...props} />}
         screenOptions={{headerShown: false}}>
         <Tab.Screen name="Home" component={HomeStackNavigator} />
-        <Tab.Screen name="Planner" component={TodoListScreen} />
+        <Tab.Screen name="Planner" component={PlannerScreen} />
         <Tab.Screen name="Execute" component={ExecutionScreen} />
         <Tab.Screen name="Notes" component={NotesScreen} />
         <Tab.Screen name="More" component={MoreStackNavigator} />

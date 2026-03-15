@@ -91,6 +91,7 @@ interface TodoState {
 
   // 액션
   fetchTodosForDate: (date: string) => Promise<void>;
+  fetchTodosForDateRange: (startDate: string, endDate: string) => Promise<Record<string, Todo[]>>;
   fetchTodosForMonthView: (year: number, month: number) => Promise<void>;
   fetchFuelsForTodos: (todoIds: string[]) => Promise<void>;
   fetchAllTodos: (userId: string, days?: number) => Promise<Todo[]>;
@@ -304,6 +305,71 @@ export const useTodoStore = create<TodoState>()(
           set({error: err.message ?? 'Failed to fetch todos'});
         } finally {
           set({loading: false});
+        }
+      },
+
+      fetchTodosForDateRange: async (startDate: string, endDate: string) => {
+        try {
+          const userId = await getCurrentUserId();
+          if (!userId) return {};
+
+          const rangeStart = startOfDay(new Date(startDate)).toISOString();
+          const rangeEnd = endOfDay(new Date(endDate)).toISOString();
+
+          const {data, error} = await supabase
+            .from('todos')
+            .select('id, title, start_time, end_time, completed, color, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date')
+            .eq('user_id', userId)
+            .or(
+              [
+                `and(schedule_type.eq.timed,start_time.gte.${rangeStart},start_time.lte.${rangeEnd},recurrence_pattern.eq.none)`,
+                `and(schedule_type.eq.anytime,start_time.gte.${rangeStart},start_time.lte.${rangeEnd})`,
+                `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${startDate}))`,
+                `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${startDate}))`,
+              ].join(','),
+            );
+
+          if (error) throw error;
+
+          const todos = (data ?? []) as Todo[];
+          const result: Record<string, Todo[]> = {};
+
+          // 범위 내 각 날짜별 할일 매핑
+          const days = eachDayOfInterval({
+            start: new Date(startDate),
+            end: new Date(endDate),
+          });
+
+          for (const day of days) {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const dayOfWeek = getDay(day);
+
+            result[dateStr] = todos.filter(todo => {
+              if (todo.recurrence_pattern === 'daily') {
+                if (!todo.start_time) return false;
+                const todoStartDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (todoStartDate > dateStr) return false;
+                if ((todo as any).recurrence_end_date && (todo as any).recurrence_end_date <= dateStr) return false;
+                return true;
+              }
+              if (todo.recurrence_pattern === 'weekly') {
+                if (!todo.start_time) return false;
+                const todoStartDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (todoStartDate > dateStr) return false;
+                if ((todo as any).recurrence_end_date && (todo as any).recurrence_end_date <= dateStr) return false;
+                return (todo as any).recurrence_days_of_week?.includes(dayOfWeek) ?? false;
+              }
+              if (todo.start_time) {
+                return format(parseISO(todo.start_time), 'yyyy-MM-dd') === dateStr;
+              }
+              return false;
+            });
+          }
+
+          return result;
+        } catch (err) {
+          console.error('[TodoStore] fetchTodosForDateRange error:', err);
+          return {};
         }
       },
 

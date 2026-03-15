@@ -9,6 +9,8 @@ import type {ColorTheme} from '@/theme/colors';
 
 export type BackgroundPreset = 'warmBackground' | 'calmBackground' | 'eveningBackground' | 'executionBackground';
 
+export type PlannerViewMode = 'day' | '3day' | 'week' | 'dailyPlanner' | 'monthlyPlanner';
+
 interface SettingsState {
   // 표시 설정
   colorTheme: ColorTheme;
@@ -23,6 +25,9 @@ interface SettingsState {
   // 배경 설정
   backgroundPreset: BackgroundPreset;
 
+  // Planner 뷰 모드
+  plannerViewMode: PlannerViewMode;
+
   // More 패널
   morePanelShowLabels: boolean;
 
@@ -35,6 +40,7 @@ interface SettingsState {
   setShowFuelBadges: (show: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setBackgroundPreset: (preset: BackgroundPreset) => void;
+  setPlannerViewMode: (mode: PlannerViewMode) => void;
   setMorePanelShowLabels: (show: boolean) => void;
   loadFromDB: (settings: Record<string, any>) => void;
 }
@@ -47,6 +53,7 @@ export const useSettingsStore = create<SettingsState>()(
       showFuelBadges: true,
       notificationsEnabled: true,
       backgroundPreset: 'calmBackground',
+      plannerViewMode: 'dailyPlanner',
       morePanelShowLabels: true,
       _lastSyncedAt: null,
 
@@ -55,6 +62,7 @@ export const useSettingsStore = create<SettingsState>()(
       setShowFuelBadges: (show) => set({showFuelBadges: show}),
       setNotificationsEnabled: (enabled) => set({notificationsEnabled: enabled}),
       setBackgroundPreset: (preset) => set({backgroundPreset: preset}),
+      setPlannerViewMode: (mode) => set({plannerViewMode: mode}),
       setMorePanelShowLabels: (show) => set({morePanelShowLabels: show}),
       loadFromDB: (settings) =>
         set((state) => ({
@@ -92,6 +100,7 @@ export function getSettingsForSync() {
     showFuelBadges: state.showFuelBadges,
     notificationsEnabled: state.notificationsEnabled,
     backgroundPreset: state.backgroundPreset,
+    plannerViewMode: state.plannerViewMode,
     morePanelShowLabels: state.morePanelShowLabels,
     _lastSyncedAt: state._lastSyncedAt,
   };

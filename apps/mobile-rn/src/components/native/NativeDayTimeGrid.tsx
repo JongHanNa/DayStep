@@ -1,0 +1,27 @@
+/**
+ * NativeDayTimeGrid — 일 뷰 시간 그리드 TS 래퍼
+ *
+ * requireNativeComponent는 모듈 레벨에서 1회만 호출
+ */
+import React from 'react';
+import {requireNativeComponent, type ViewStyle} from 'react-native';
+
+interface NativeDayTimeGridProps {
+  selectedDate: string;
+  primaryColor: string;
+  todoData: string;
+  eventData: string;
+  onDateSelect: (e: {nativeEvent: {date: string}}) => void;
+  onTodoPress: (e: {nativeEvent: {todoId: string}}) => void;
+  onHeightChange: (e: {nativeEvent: {height: number}}) => void;
+  style?: ViewStyle;
+}
+
+const NativeDayTimeGridView =
+  requireNativeComponent<NativeDayTimeGridProps>('NativeDayTimeGrid');
+
+export function NativeDayTimeGridNative(
+  props: NativeDayTimeGridProps,
+): React.ReactElement {
+  return <NativeDayTimeGridView {...props} />;
+}

@@ -30,6 +30,10 @@
 		CBA1480E67A7A4CAC86FA87D /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C8BF094D5F06D89E1D07E74 /* libPods-DayStepRN.a */; };
 		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
 		D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */; };
+		DA5E6F7A8B9C0D1E2F3A4B5C /* NativeDayTimeGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */; };
+		DA6F7A8B9C0D1E2F3A4B5C6D /* NativeDayTimeGridBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */; };
+		DA7A8B9C0D1E2F3A4B5C6D7E /* NativeMultiDayTimeGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */; };
+		DA8B9C0D1E2F3A4B5C6D7E8F /* NativeMultiDayTimeGridBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */; };
 		E1F2A3B4C5D6E7F8A9B0C1D2 /* NativeWeekStripCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */; };
 		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
@@ -93,6 +97,10 @@
 		BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassButton.swift; path = DayStepRN/LiquidGlassButton.swift; sourceTree = "<group>"; };
 		D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Products.storekit; path = DayStepRN/Products.storekit; sourceTree = "<group>"; };
 		D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMonthCalendarBridge.m; path = DayStepRN/NativeMonthCalendarBridge.m; sourceTree = "<group>"; };
+		DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeDayTimeGrid.swift; path = DayStepRN/NativeDayTimeGrid.swift; sourceTree = "<group>"; };
+		DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeDayTimeGridBridge.m; path = DayStepRN/NativeDayTimeGridBridge.m; sourceTree = "<group>"; };
+		DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMultiDayTimeGrid.swift; path = DayStepRN/NativeMultiDayTimeGrid.swift; sourceTree = "<group>"; };
+		DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMultiDayTimeGridBridge.m; path = DayStepRN/NativeMultiDayTimeGridBridge.m; sourceTree = "<group>"; };
 		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
 		E8A1EDB0D0389AC7DA2DA4C5 /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -174,6 +182,10 @@
 				A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */,
 				B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */,
 				D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */,
+				DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */,
+				DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */,
+				DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */,
+				DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -435,6 +447,10 @@
 				F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */,
 				A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */,
 				C7D8E9F0A1B2C3D4E5F6A7B8 /* NativeMonthCalendarBridge.m in Sources */,
+				DA5E6F7A8B9C0D1E2F3A4B5C /* NativeDayTimeGrid.swift in Sources */,
+				DA6F7A8B9C0D1E2F3A4B5C6D /* NativeDayTimeGridBridge.m in Sources */,
+				DA7A8B9C0D1E2F3A4B5C6D7E /* NativeMultiDayTimeGrid.swift in Sources */,
+				DA8B9C0D1E2F3A4B5C6D7E8F /* NativeMultiDayTimeGridBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
