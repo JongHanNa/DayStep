@@ -10,6 +10,7 @@ import {ThemeProvider} from './src/theme/ThemeProvider';
 import RootNavigator from './src/navigation/RootNavigator';
 import {setupNotificationChannel} from './src/lib/notifications';
 import {reloadWidgetTimelines} from './src/lib/widgetBridge';
+import {useSleepStore} from './src/stores/sleepStore';
 
 const linking = {
   prefixes: ['daystep://'],
@@ -31,6 +32,11 @@ const linking = {
 function App() {
   useEffect(() => {
     setupNotificationChannel();
+  }, []);
+
+  // 앱 시작 시 수면 세션 복구 (강제 종료/권한 해제 감지)
+  useEffect(() => {
+    useSleepStore.getState().recoverSession();
   }, []);
 
   // 포그라운드 이벤트 핸들러 등록 → iOS UNUserNotificationCenterDelegate가 배너+소리 표시

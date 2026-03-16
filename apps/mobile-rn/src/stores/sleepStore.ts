@@ -7,7 +7,7 @@ import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage} from '@/lib/mmkv';
 import {format, startOfMonth, endOfMonth, differenceInMinutes, subDays, addDays} from 'date-fns';
-import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield} from '@/lib/screenTimeManager';
+import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield, getAuthorizationStatus} from '@/lib/screenTimeManager';
 
 // ============================================
 // Types
@@ -389,19 +389,42 @@ export const useSleepStore = create<SleepStoreState>()(
 
       /** 앱 재시작 시 크래시 복구 */
       recoverSession: async () => {
-        const {sessionState, upsertRecord} = get();
+        const {sessionState, screenTimeLinkEnabled, upsertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
         const now = new Date();
+        const startedAt = new Date(sessionState.startedAt);
         const expectedWake = sessionState.expectedWakeTime
           ? new Date(sessionState.expectedWakeTime)
           : null;
+        const isPastWakeTime = expectedWake && now > expectedWake;
 
-        // 예상 기상 시간이 지났으면 자동 완료
-        if (expectedWake && now > expectedWake) {
-          const startedAt = new Date(sessionState.startedAt);
+        // --- 스크린타임 연동 활성 시 강화된 복구 로직 ---
+        if (screenTimeLinkEnabled) {
+          const authStatus = await getAuthorizationStatus();
+          const permissionRevoked = authStatus !== 'approved';
+
+          if (permissionRevoked || !isPastWakeTime) {
+            // 권한 해제 또는 기상시간 미경과 (= 앱 강제 종료) → 포기 처리
+            await clearShield();
+            const recordDate = format(now, 'yyyy-MM-dd');
+            try {
+              await upsertRecord({
+                date: recordDate,
+                sleep_time: startedAt.toISOString(),
+                wake_time: now.toISOString(),
+                mood: 'poor',
+              });
+            } catch {
+              // 에러 시 세션은 리셋하되 기록은 무시
+            }
+            set({sessionState: {...DEFAULT_SESSION}});
+            return;
+          }
+
+          // 기상시간 경과 + 권한 유지 → 정상 수면 성공
+          await clearShield();
           const recordDate = format(expectedWake, 'yyyy-MM-dd');
-
           try {
             await upsertRecord({
               date: recordDate,
@@ -412,7 +435,23 @@ export const useSleepStore = create<SleepStoreState>()(
           } catch {
             // 에러 시 세션은 리셋하되 기록은 무시
           }
+          set({sessionState: {...DEFAULT_SESSION}});
+          return;
+        }
 
+        // --- 스크린타임 미연동: 기존 로직 유지 ---
+        if (isPastWakeTime && expectedWake) {
+          const recordDate = format(expectedWake, 'yyyy-MM-dd');
+          try {
+            await upsertRecord({
+              date: recordDate,
+              sleep_time: startedAt.toISOString(),
+              wake_time: expectedWake.toISOString(),
+              mood: 'good',
+            });
+          } catch {
+            // 에러 시 세션은 리셋하되 기록은 무시
+          }
           set({sessionState: {...DEFAULT_SESSION}});
         }
         // 아직 진행 중이면 세션 유지 (SleepSessionScreen으로 복귀)
