@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DayStep 청소/정리 화면 — UI/UX 디자인 시안</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --primary: #3B82F6;
+    --primary-10: rgba(59, 130, 246, 0.10);
+    --primary-15: rgba(59, 130, 246, 0.15);
+    --primary-20: rgba(59, 130, 246, 0.20);
+    --primary-50: rgba(59, 130, 246, 0.50);
+    --success: #22C55E;
+    --error: #DC2626;
+    --bg-warm-1: #FFF7ED;
+    --bg-warm-2: #FFFBEB;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', 'Inter', -apple-system, sans-serif;
+    background: #0F172A;
+    color: var(--gray-900);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Page Layout ── */
+  .page-header {
+    text-align: center;
+    padding: 48px 24px 16px;
+    color: white;
+  }
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #60A5FA, #A78BFA);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: #94A3B8;
+    line-height: 1.6;
+  }
+
+  /* ── Tab Selector ── */
+  .tab-bar {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 24px;
+    margin-bottom: 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(12px);
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    color: #94A3B8;
+    background: rgba(255,255,255,0.05);
+  }
+  .tab-btn:hover { background: rgba(255,255,255,0.1); }
+  .tab-btn.active {
+    background: var(--primary);
+    color: white;
+  }
+  .tab-label {
+    display: block;
+    font-size: 11px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  /* ── Demo Container ── */
+  .demo-container {
+    display: none;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .demo-container.active { display: block; }
+
+  .demo-layout {
+    display: flex;
+    gap: 48px;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 900px) {
+    .demo-layout { flex-direction: column; align-items: center; }
+  }
+
+  /* ── Phone Frame ── */
+  .phone-wrap {
+    flex-shrink: 0;
+    position: sticky;
+    top: 80px;
+  }
+  .phone-frame {
+    width: 375px;
+    height: 812px;
+    border-radius: 44px;
+    border: 4px solid #334155;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(180deg, var(--bg-warm-1) 0%, var(--bg-warm-2) 40%, #FFFFFF 100%);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1);
+  }
+  .phone-notch {
+    width: 126px;
+    height: 34px;
+    background: #1F2937;
+    border-radius: 0 0 20px 20px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+  .phone-content {
+    height: calc(100% - 34px - 80px);
+    overflow-y: auto;
+    padding: 8px 16px 16px;
+    scrollbar-width: none;
+  }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* ── Tab Bar (bottom) ── */
+  .phone-tab-bar {
+    height: 80px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(20px);
+    border-top: 0.5px solid var(--gray-200);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 8px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+  .tab-item {
+    text-align: center;
+    font-size: 10px;
+    color: var(--gray-400);
+  }
+  .tab-item.active-tab { color: var(--primary); }
+  .tab-icon { font-size: 20px; margin-bottom: 2px; }
+
+  /* ── Description Panel ── */
+  .desc-panel {
+    flex: 1;
+    color: #CBD5E1;
+    min-width: 0;
+  }
+  .desc-panel h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 6px;
+  }
+  .desc-subtitle {
+    font-size: 13px;
+    color: #64748B;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .desc-section {
+    margin-bottom: 24px;
+  }
+  .desc-section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #93C5FD;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .desc-section ul {
+    list-style: none;
+    padding: 0;
+  }
+  .desc-section li {
+    font-size: 13px;
+    line-height: 1.7;
+    padding-left: 16px;
+    position: relative;
+    color: #94A3B8;
+  }
+  .desc-section li::before {
+    content: "·";
+    position: absolute;
+    left: 4px;
+    color: var(--primary);
+    font-weight: bold;
+  }
+  .native-tag {
+    display: inline-block;
+    background: rgba(139, 92, 246, 0.2);
+    color: #C4B5FD;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .impl-tag {
+    display: inline-block;
+    background: rgba(34, 197, 94, 0.15);
+    color: #86EFAC;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    margin-left: 4px;
+  }
+
+  /* ══════════════════════════════════════════
+     COMMON PHONE UI ELEMENTS
+     ══════════════════════════════════════════ */
+
+  .screen-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+  }
+  .screen-subtitle {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 16px;
+  }
+
+  /* Section card */
+  .section-card {
+    background: rgba(255,255,255,0.85);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+  .section-badge {
+    font-size: 11px;
+    color: var(--primary);
+    background: var(--primary-10);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+
+  /* Checklist item */
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--gray-100);
+  }
+  .check-item:last-child { border-bottom: none; }
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--gray-300);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .checkbox.checked {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .checkbox.checked::after {
+    content: "✓";
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .check-label {
+    font-size: 14px;
+    color: var(--gray-700);
+    flex: 1;
+  }
+  .check-label.done {
+    text-decoration: line-through;
+    color: var(--gray-400);
+  }
+  .check-time {
+    font-size: 11px;
+    color: var(--gray-400);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 6px;
+    background: var(--gray-100);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+    transition: width 0.3s;
+  }
+
+  /* Chip / Tag */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid transparent;
+  }
+  .chip-outline {
+    border-color: var(--gray-200);
+    color: var(--gray-600);
+    background: white;
+  }
+  .chip-outline.selected {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-10);
+  }
+  .chip-filled {
+    background: var(--primary-10);
+    color: var(--primary);
+  }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 96px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.35);
+    cursor: pointer;
+  }
+  .fab-icon { color: white; font-size: 24px; font-weight: 300; }
+
+  /* ══════════════════════════════════════════
+     DESIGN A: 오늘의 청소 — 마이크로태스크
+     ══════════════════════════════════════════ */
+
+  .energy-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .energy-btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    border-radius: var(--radius-md);
+    background: rgba(255,255,255,0.6);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .energy-btn.selected {
+    border-color: var(--primary);
+    background: var(--primary-10);
+  }
+  .energy-emoji { font-size: 20px; display: block; margin-bottom: 4px; }
+  .energy-label { font-size: 11px; color: var(--gray-600); font-weight: 500; }
+
+  .focus-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 24px 20px;
+    text-align: center;
+    margin-bottom: 16px;
+    border: 1.5px solid var(--primary-15);
+  }
+  .focus-zone {
+    font-size: 12px;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+  .focus-task {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+  }
+  .focus-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary-10);
+    padding: 8px 20px;
+    border-radius: 999px;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .timer-ring-mini {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid var(--primary);
+    border-top-color: transparent;
+    border-radius: 50%;
+  }
+
+  .queue-label {
+    font-size: 12px;
+    color: var(--gray-500);
+    font-weight: 500;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.7);
+    border-radius: var(--radius-md);
+    margin-bottom: 6px;
+  }
+  .queue-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    flex-shrink: 0;
+  }
+  .queue-text {
+    font-size: 14px;
+    color: var(--gray-700);
+    flex: 1;
+  }
+  .queue-time-est {
+    font-size: 11px;
+    color: var(--gray-400);
+  }
+
+  .streak-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.7);
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+  }
+  .streak-fire { font-size: 22px; }
+  .streak-info { flex: 1; }
+  .streak-count { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+  .streak-sub { font-size: 11px; color: var(--gray-500); }
+
+  /* ══════════════════════════════════════════
+     DESIGN B: 구역별 순환 청소
+     ══════════════════════════════════════════ */
+
+  .week-strip {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .week-strip::-webkit-scrollbar { display: none; }
+  .day-cell {
+    flex: 1;
+    min-width: 44px;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .day-cell.today {
+    background: var(--primary);
+  }
+  .day-cell.today .day-name,
+  .day-cell.today .day-date { color: white; }
+  .day-cell.done-day { background: rgba(34,197,94,0.1); }
+  .day-name { font-size: 11px; color: var(--gray-400); font-weight: 500; margin-bottom: 2px; }
+  .day-date { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+  .day-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    margin: 3px auto 0;
+  }
+  .day-dot.completed { background: var(--success); }
+  .day-dot.pending { background: var(--gray-300); }
+
+  .zone-hero {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 20px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary);
+  }
+  /* Note: borderLeft used intentionally here to indicate "today's zone" —
+     this is the ONE place where a left accent is justified (today-highlight, not every card) */
+  .zone-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 2px;
+  }
+  .zone-desc {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+  }
+  .zone-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .zone-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--gray-100);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .zone-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #60A5FA);
+    border-radius: 999px;
+  }
+  .zone-progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    white-space: nowrap;
+  }
+
+  .zone-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .zone-tabs::-webkit-scrollbar { display: none; }
+  .zone-tab {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--gray-500);
+    background: rgba(255,255,255,0.6);
+  }
+  .zone-tab.active {
+    color: var(--primary);
+    background: var(--primary-10);
+    font-weight: 600;
+  }
+
+  .monthly-banner {
+    background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(245,158,11,0.05));
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .monthly-icon { font-size: 18px; }
+  .monthly-info { flex: 1; }
+  .monthly-title { font-size: 13px; font-weight: 600; color: #92400E; }
+  .monthly-desc { font-size: 11px; color: #B45309; }
+  .monthly-action {
+    font-size: 12px;
+    color: #D97706;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ══════════════════════════════════════════
+     DESIGN C: 청소 허브 — 공간 + 디지털 통합
+     ══════════════════════════════════════════ */
+
+  .hub-summary {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .hub-stat {
+    flex: 1;
+    background: rgba(255,255,255,0.8);
+    border-radius: var(--radius-md);
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .hub-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gray-800);
+  }
+  .hub-stat-label {
+    font-size: 11px;
+    color: var(--gray-500);
+    margin-top: 2px;
+  }
+
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0 8px;
+  }
+  .category-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    background: var(--primary-10);
+  }
+  .category-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-800);
+    flex: 1;
+  }
+  .category-count {
+    font-size: 12px;
+    color: var(--gray-400);
+  }
+  .category-chevron {
+    font-size: 12px;
+    color: var(--gray-400);
+    transition: transform 0.2s;
+  }
+  .category-chevron.open { transform: rotate(90deg); }
+
+  .digital-card {
+    background: linear-gradient(135deg, rgba(59,130,246,0.05), rgba(139,92,246,0.05));
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .digital-card .section-title {
+    color: var(--primary);
+  }
+
+  .freq-indicator {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .freq-daily { background: rgba(34,197,94,0.1); color: #16A34A; }
+  .freq-weekly { background: rgba(59,130,246,0.1); color: #2563EB; }
+  .freq-monthly { background: rgba(245,158,11,0.1); color: #D97706; }
+  .freq-seasonal { background: rgba(139,92,246,0.1); color: #7C3AED; }
+
+  .quick-start-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: var(--primary);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 12px;
+  }
+
+  .overdue-banner {
+    background: rgba(220,38,38,0.06);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .overdue-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--error);
+    flex-shrink: 0;
+  }
+  .overdue-text {
+    font-size: 13px;
+    color: #991B1B;
+    flex: 1;
+  }
+  .overdue-action {
+    font-size: 12px;
+    color: var(--error);
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* ══════════════════════════════════════════
+     Research Section
+     ══════════════════════════════════════════ */
+  .research-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    color: #CBD5E1;
+  }
+  .research-section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #1E293B;
+  }
+  .research-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #93C5FD;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+  .research-section p, .research-section li {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #94A3B8;
+  }
+  .research-section ul { padding-left: 20px; }
+  .research-section li { margin-bottom: 4px; }
+
+  .freq-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 13px;
+  }
+  .freq-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.05);
+    color: #93C5FD;
+    font-weight: 600;
+    border-bottom: 1px solid #1E293B;
+  }
+  .freq-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: #94A3B8;
+    vertical-align: top;
+  }
+
+  .highlight-box {
+    background: rgba(59,130,246,0.08);
+    border-left: 3px solid var(--primary);
+    padding: 14px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 14px;
+    color: #93C5FD;
+    line-height: 1.7;
+  }
+  .warning-box {
+    background: rgba(245,158,11,0.08);
+    border-left: 3px solid #F59E0B;
+    padding: 14px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 14px;
+    color: #FCD34D;
+    line-height: 1.7;
+  }
+
+  /* native annotation on phone */
+  .native-anno {
+    position: relative;
+  }
+  .native-anno::after {
+    content: attr(data-native);
+    position: absolute;
+    right: -4px;
+    top: -6px;
+    font-size: 9px;
+    background: rgba(139,92,246,0.85);
+    color: white;
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 5;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>청소/정리 화면 — UI/UX 디자인 시안</h1>
+  <p>DayStep 일상 돌보기 그룹 · 성인 ADHD 행동설계 기반 · 3가지 접근</p>
+</div>
+
+<!-- Tab Selector -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showTab(0)">
+    시안 A
+    <span class="tab-label">오늘의 청소</span>
+  </button>
+  <button class="tab-btn" onclick="showTab(1)">
+    시안 B
+    <span class="tab-label">구역별 순환</span>
+  </button>
+  <button class="tab-btn" onclick="showTab(2)">
+    시안 C
+    <span class="tab-label">청소 허브</span>
+  </button>
+  <button class="tab-btn" onclick="showTab(3)">
+    주기 분석
+    <span class="tab-label">ADHD 전문 관점</span>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════
+     DESIGN A: 오늘의 청소 — 마이크로태스크
+     ═══════════════════════════════════════ -->
+<div class="demo-container active" id="tab-0">
+  <div class="demo-layout">
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+
+          <div class="screen-title">청소/정리</div>
+          <div class="screen-subtitle">오늘 컨디션에 맞는 청소를 해볼까요?</div>
+
+          <!-- Energy Selector -->
+          <div class="energy-selector native-anno" data-native="iOS: UISegmentedControl 또는 LiquidGlassMenu">
+            <div class="energy-btn selected">
+              <span class="energy-emoji">😊</span>
+              <span class="energy-label">괜찮음</span>
+            </div>
+            <div class="energy-btn">
+              <span class="energy-emoji">😐</span>
+              <span class="energy-label">보통</span>
+            </div>
+            <div class="energy-btn">
+              <span class="energy-emoji">😫</span>
+              <span class="energy-label">힘듦</span>
+            </div>
+          </div>
+
+          <!-- Streak -->
+          <div class="streak-bar">
+            <span class="streak-fire">🔥</span>
+            <div class="streak-info">
+              <div class="streak-count">3일 연속 청소!</div>
+              <div class="streak-sub">이번 주 목표까지 2일 남음</div>
+            </div>
+          </div>
+
+          <!-- Focus Card -->
+          <div class="focus-card">
+            <div class="focus-zone">주방 · 오늘의 구역</div>
+            <div class="focus-task">조리대 닦기</div>
+            <div class="focus-timer native-anno" data-native="TimerRing 컴포넌트 재사용">
+              <div class="timer-ring-mini"></div>
+              5분 시작하기
+            </div>
+          </div>
+
+          <!-- Queue -->
+          <div class="queue-label">다음 할 일 (에너지: 괜찮음)</div>
+          <div class="queue-item">
+            <div class="queue-num">2</div>
+            <div class="queue-text">싱크대 설거지통 비우기</div>
+            <div class="queue-time-est">3분</div>
+          </div>
+          <div class="queue-item">
+            <div class="queue-num">3</div>
+            <div class="queue-text">바닥 물건 제자리에 놓기</div>
+            <div class="queue-time-est">5분</div>
+          </div>
+          <div class="queue-item" style="opacity: 0.5;">
+            <div class="queue-num">4</div>
+            <div class="queue-text">가스레인지 닦기</div>
+            <div class="queue-time-est">5분</div>
+          </div>
+
+          <div style="height: 16px;"></div>
+
+          <!-- Today Summary -->
+          <div class="section-card">
+            <div class="section-header">
+              <span class="section-title">오늘 완료</span>
+              <span class="section-badge">2/5</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 40%;"></div>
+            </div>
+            <div style="height: 12px;"></div>
+            <div class="check-item">
+              <div class="checkbox checked"></div>
+              <span class="check-label done">침대 정리하기</span>
+              <span class="check-time">2분</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox checked"></div>
+              <span class="check-label done">세면대 물기 닦기</span>
+              <span class="check-time">1분</span>
+            </div>
+          </div>
+
+        </div>
+        <div class="phone-tab-bar">
+          <div class="tab-item active-tab"><div class="tab-icon">⌂</div>홈</div>
+          <div class="tab-item"><div class="tab-icon">☰</div>계획</div>
+          <div class="tab-item"><div class="tab-icon">▶</div>집중</div>
+          <div class="tab-item"><div class="tab-icon">♡</div>노트</div>
+          <div class="tab-item"><div class="tab-icon">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc-panel">
+      <h2>시안 A: 오늘의 청소</h2>
+      <p class="desc-subtitle">에너지 레벨 적응형 마이크로태스크 — "한 번에 하나, 5분만"</p>
+
+      <div class="desc-section">
+        <h3>🧠 행동설계 핵심</h3>
+        <ul>
+          <li><strong>에너지 적응형</strong>: 컨디션에 따라 태스크 수와 난이도 자동 조절 (힘듦=1-2개 초간단, 괜찮음=3-5개)</li>
+          <li><strong>한 번에 하나</strong>: 포커스 카드에 현재 태스크만 크게 표시 → 선택 마비 제거</li>
+          <li><strong>5분 규칙</strong>: 착수 저항 우회. 타이머와 연동해 "일단 시작" 강조</li>
+          <li><strong>스트릭 보상</strong>: 연속일 표시로 도파민 자극, 끊어져도 비판단적 리셋</li>
+          <li><strong>완료 큐</strong>: 나머지 태스크는 작게 — 전체 목록에 압도되지 않음</li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>📱 네이티브 컨트롤</h3>
+        <ul>
+          <li><strong>에너지 선택기</strong>: <code>UISegmentedControl</code> 또는 iOS 26+ <code>LiquidGlassMenu</code> <span class="native-tag">NATIVE</span></li>
+          <li><strong>타이머</strong>: 기존 <code>TimerRing</code> 컴포넌트 재사용 (ExecutionScreen 패턴) <span class="impl-tag">REUSE</span></li>
+          <li><strong>체크박스 애니메이션</strong>: <code>withSequence(0.8 → 1.2 → 1)</code> 스프링 (TodoCard 패턴) <span class="impl-tag">REUSE</span></li>
+          <li><strong>포커스 카드 전환</strong>: <code>entering={ZoomIn}</code> + <code>exiting={FadeOut}</code> Reanimated <span class="native-tag">REANIMATED</span></li>
+          <li><strong>큐 리스트</strong>: <code>SectionList</code> with <code>Layout.springify()</code> <span class="impl-tag">REUSE</span></li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>🏗 정보구조</h3>
+        <ul>
+          <li>헤더: 화면 제목 + 설명</li>
+          <li>에너지 선택기 (3단계)</li>
+          <li>스트릭 바 (연속 기록)</li>
+          <li>포커스 카드 (현재 1개 태스크 + 5분 타이머)</li>
+          <li>대기열 (다음 태스크 2-3개, 흐리게)</li>
+          <li>오늘 완료 섹션 (접히는 리스트)</li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>🔄 태스크 플로우</h3>
+        <ul>
+          <li>화면 진입 → 에너지 선택 → 오늘 추천 태스크 자동 생성</li>
+          <li>포커스 카드 "시작하기" → 5분 타이머 실행 (ExecutionScreen과 동일 UX)</li>
+          <li>완료 체크 → 축하 햅틱 + 다음 태스크 자동 승격</li>
+          <li>스킵 가능 → 큐 다음으로 이동 (비판단적)</li>
+          <li>모든 태스크 완료 → 축하 화면 + 스트릭 업데이트</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     DESIGN B: 구역별 순환 청소
+     ═══════════════════════════════════════ -->
+<div class="demo-container" id="tab-1">
+  <div class="demo-layout">
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+
+          <div class="screen-title">청소/정리</div>
+          <div class="screen-subtitle">요일별 구역 순환 · 매일 한 구역씩</div>
+
+          <!-- Week Strip -->
+          <div class="week-strip native-anno" data-native="NativeWeekStripCalendar 재사용">
+            <div class="day-cell done-day">
+              <div class="day-name">월</div>
+              <div class="day-date">10</div>
+              <div class="day-dot completed"></div>
+            </div>
+            <div class="day-cell done-day">
+              <div class="day-name">화</div>
+              <div class="day-date">11</div>
+              <div class="day-dot completed"></div>
+            </div>
+            <div class="day-cell done-day">
+              <div class="day-name">수</div>
+              <div class="day-date">12</div>
+              <div class="day-dot completed"></div>
+            </div>
+            <div class="day-cell today">
+              <div class="day-name">목</div>
+              <div class="day-date">13</div>
+              <div class="day-dot pending"></div>
+            </div>
+            <div class="day-cell">
+              <div class="day-name">금</div>
+              <div class="day-date">14</div>
+            </div>
+            <div class="day-cell">
+              <div class="day-name">토</div>
+              <div class="day-date">15</div>
+            </div>
+            <div class="day-cell">
+              <div class="day-name">일</div>
+              <div class="day-date">16</div>
+              <div style="font-size: 10px; color: var(--gray-400); margin-top: 2px;">자유</div>
+            </div>
+          </div>
+
+          <!-- Zone Hero -->
+          <div class="zone-hero">
+            <div class="zone-name">🍳 목요일 = 주방</div>
+            <div class="zone-desc">예상 소요 15분 · 7개 항목</div>
+            <div class="zone-progress-row">
+              <div class="zone-progress-bar">
+                <div class="zone-progress-fill" style="width: 28%;"></div>
+              </div>
+              <div class="zone-progress-text">2/7</div>
+            </div>
+          </div>
+
+          <!-- Zone Tabs -->
+          <div class="zone-tabs native-anno" data-native="iOS: ScrollView + LiquidGlass segmented">
+            <div class="zone-tab active">빠른 청소</div>
+            <div class="zone-tab">꼼꼼 청소</div>
+            <div class="zone-tab">정리/비우기</div>
+          </div>
+
+          <!-- Checklist -->
+          <div class="section-card">
+            <div class="check-item">
+              <div class="checkbox checked"></div>
+              <span class="check-label done">조리대 닦기</span>
+              <span class="check-time">3분</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox checked"></div>
+              <span class="check-label done">싱크대 정리</span>
+              <span class="check-time">3분</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">가스레인지 닦기</span>
+              <span class="check-time">5분</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">바닥 물건 치우기</span>
+              <span class="check-time">3분</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">쓰레기통 비우기</span>
+              <span class="check-time">2분</span>
+            </div>
+          </div>
+
+          <!-- Monthly Task Banner -->
+          <div class="monthly-banner">
+            <span class="monthly-icon">📅</span>
+            <div class="monthly-info">
+              <div class="monthly-title">이번 달 딥클리닝</div>
+              <div class="monthly-desc">냉장고 내부 정리 · 기한: 3/31</div>
+            </div>
+            <span class="monthly-action">보기 ›</span>
+          </div>
+
+          <!-- Week Summary -->
+          <div class="section-card">
+            <div class="section-header">
+              <span class="section-title">이번 주 구역 현황</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; width: 80px; color: var(--gray-600);">월 · 침실</span>
+                <div style="flex: 1; height: 6px; background: var(--gray-100); border-radius: 999px;">
+                  <div style="width: 100%; height: 100%; background: var(--success); border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 11px; color: var(--success);">완료</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; width: 80px; color: var(--gray-600);">화 · 거실</span>
+                <div style="flex: 1; height: 6px; background: var(--gray-100); border-radius: 999px;">
+                  <div style="width: 100%; height: 100%; background: var(--success); border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 11px; color: var(--success);">완료</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; width: 80px; color: var(--gray-600);">수 · 욕실</span>
+                <div style="flex: 1; height: 6px; background: var(--gray-100); border-radius: 999px;">
+                  <div style="width: 80%; height: 100%; background: var(--success); border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 11px; color: var(--success);">80%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; width: 80px; color: var(--primary); font-weight: 600;">목 · 주방</span>
+                <div style="flex: 1; height: 6px; background: var(--gray-100); border-radius: 999px;">
+                  <div style="width: 28%; height: 100%; background: var(--primary); border-radius: 999px;"></div>
+                </div>
+                <span style="font-size: 11px; color: var(--primary);">진행중</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; width: 80px; color: var(--gray-400);">금 · 현관</span>
+                <div style="flex: 1; height: 6px; background: var(--gray-100); border-radius: 999px;"></div>
+                <span style="font-size: 11px; color: var(--gray-400);">—</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; width: 80px; color: var(--gray-400);">토 · 세탁</span>
+                <div style="flex: 1; height: 6px; background: var(--gray-100); border-radius: 999px;"></div>
+                <span style="font-size: 11px; color: var(--gray-400);">—</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="phone-tab-bar">
+          <div class="tab-item active-tab"><div class="tab-icon">⌂</div>홈</div>
+          <div class="tab-item"><div class="tab-icon">☰</div>계획</div>
+          <div class="tab-item"><div class="tab-icon">▶</div>집중</div>
+          <div class="tab-item"><div class="tab-icon">♡</div>노트</div>
+          <div class="tab-item"><div class="tab-icon">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc-panel">
+      <h2>시안 B: 구역별 순환 청소</h2>
+      <p class="desc-subtitle">요일별 구역 배정 — "월=침실, 화=거실, 수=욕실..." 예측 가능한 루틴</p>
+
+      <div class="desc-section">
+        <h3>🧠 행동설계 핵심</h3>
+        <ul>
+          <li><strong>예측 가능성</strong>: 요일-구역 고정 매핑 → "오늘 뭐 청소하지?" 결정 제거</li>
+          <li><strong>시각적 완료감</strong>: 방별 청소 → 눈에 보이는 변화가 도파민 보상과 직결</li>
+          <li><strong>부분 완료 허용</strong>: 28% 완료도 기록됨 → 올오어낫싱 사고 방지</li>
+          <li><strong>일요일 자유</strong>: 쉬거나 밀린 구역 보충 → 유연성 확보</li>
+          <li><strong>월간 서페이싱</strong>: 딥클리닝은 월 1개씩 자동 배너로 상기</li>
+          <li><strong>3단계 난이도</strong>: 빠른 청소/꼼꼼 청소/정리비우기 → 에너지에 맞게 선택</li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>📱 네이티브 컨트롤</h3>
+        <ul>
+          <li><strong>주간 캘린더</strong>: 기존 <code>NativeWeekStripCalendar</code> 재사용 <span class="impl-tag">REUSE</span></li>
+          <li><strong>난이도 탭</strong>: iOS 26+ <code>LiquidGlass</code> segmented / <code>ScrollView</code> 폴백 <span class="native-tag">NATIVE</span></li>
+          <li><strong>체크리스트</strong>: <code>SectionList</code> with <code>Layout.springify()</code> <span class="impl-tag">REUSE</span></li>
+          <li><strong>구역 설정 시트</strong>: <code>@gorhom/bottom-sheet</code> (구역-요일 매핑 편집) <span class="native-tag">BOTTOM SHEET</span></li>
+          <li><strong>월간 딥클리닝 상세</strong>: 네비게이션 push (스택) <span class="impl-tag">NAVIGATION</span></li>
+          <li><strong>주간 현황 차트</strong>: 네이티브 프로그레스 → <code>NativeProgressCard</code> 패턴 <span class="impl-tag">REUSE</span></li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>🏗 정보구조</h3>
+        <ul>
+          <li>헤더: 화면 제목 + 설명</li>
+          <li>주간 캘린더 스트립 (완료 상태 도트)</li>
+          <li>오늘의 구역 히어로 카드 (이름 + 진행률)</li>
+          <li>난이도 탭 (빠른/꼼꼼/정리)</li>
+          <li>체크리스트 (해당 난이도 항목들)</li>
+          <li>월간 딥클리닝 배너 (필요시)</li>
+          <li>이번 주 구역 현황 요약</li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>🔄 태스크 플로우</h3>
+        <ul>
+          <li>화면 진입 → 오늘 요일의 구역 자동 표시</li>
+          <li>난이도 탭 선택 → 해당 구역의 항목 필터링</li>
+          <li>체크 완료 → 구역 진행률 실시간 업데이트</li>
+          <li>다른 요일 클릭 → 해당 구역으로 전환 (밀린 것 처리 가능)</li>
+          <li>구역 100% → 축하 애니메이션 + 주간 현황 업데이트</li>
+          <li>FAB → 커스텀 항목 추가 (bottom sheet)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     DESIGN C: 청소 허브 — 공간 + 디지털 통합
+     ═══════════════════════════════════════ -->
+<div class="demo-container" id="tab-2">
+  <div class="demo-layout">
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+
+          <div class="screen-title">청소/정리</div>
+          <div class="screen-subtitle">공간 청소 + 디지털 정리 + 물건 관리</div>
+
+          <!-- Quick Start -->
+          <button class="quick-start-btn native-anno" data-native="AnimatedPressable + 햅틱">
+            ▶ 5분 랜덤 청소 시작
+          </button>
+
+          <!-- Summary Stats -->
+          <div class="hub-summary">
+            <div class="hub-stat">
+              <div class="hub-stat-value" style="color: var(--primary);">73%</div>
+              <div class="hub-stat-label">이번 주</div>
+            </div>
+            <div class="hub-stat">
+              <div class="hub-stat-value">12</div>
+              <div class="hub-stat-label">완료 항목</div>
+            </div>
+            <div class="hub-stat">
+              <div class="hub-stat-value" style="color: var(--error);">3</div>
+              <div class="hub-stat-label">밀린 항목</div>
+            </div>
+          </div>
+
+          <!-- Overdue Banner -->
+          <div class="overdue-banner">
+            <div class="overdue-dot"></div>
+            <span class="overdue-text">밀린 청소 3개 (욕실 배수구, 냉장고...)</span>
+            <span class="overdue-action">처리 ›</span>
+          </div>
+
+          <!-- Tabs: 공간 / 디지털 / 물건 -->
+          <div class="zone-tabs native-anno" data-native="iOS: LiquidGlassMenu 3-segment">
+            <div class="zone-tab active">공간 청소</div>
+            <div class="zone-tab">디지털 정리</div>
+            <div class="zone-tab">물건 관리</div>
+          </div>
+
+          <!-- Space Cleaning — Categories -->
+          <div class="category-header" style="cursor: pointer;">
+            <div class="category-icon">🍳</div>
+            <div class="category-name">주방</div>
+            <div class="category-count">3/8</div>
+            <div class="category-chevron open">›</div>
+          </div>
+
+          <div class="section-card" style="margin-top: 0;">
+            <div class="check-item">
+              <div class="checkbox checked"></div>
+              <span class="check-label done">조리대 닦기</span>
+              <span class="freq-indicator freq-daily">매일</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox checked"></div>
+              <span class="check-label done">설거지</span>
+              <span class="freq-indicator freq-daily">매일</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox checked"></div>
+              <span class="check-label done">쓰레기통 비우기</span>
+              <span class="freq-indicator freq-daily">매일</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">가스레인지 닦기</span>
+              <span class="freq-indicator freq-weekly">주간</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">바닥 청소기</span>
+              <span class="freq-indicator freq-weekly">주간</span>
+            </div>
+          </div>
+
+          <div class="category-header" style="cursor: pointer;">
+            <div class="category-icon">🛁</div>
+            <div class="category-name">욕실</div>
+            <div class="category-count">1/5</div>
+            <div class="category-chevron">›</div>
+          </div>
+
+          <div class="category-header" style="cursor: pointer;">
+            <div class="category-icon">🛋</div>
+            <div class="category-name">거실</div>
+            <div class="category-count">2/4</div>
+            <div class="category-chevron">›</div>
+          </div>
+
+          <div class="category-header" style="cursor: pointer;">
+            <div class="category-icon">🛏</div>
+            <div class="category-name">침실</div>
+            <div class="category-count">3/3</div>
+            <div class="category-chevron">›</div>
+          </div>
+
+          <div style="height: 8px;"></div>
+
+          <!-- Digital Section Preview -->
+          <div class="digital-card">
+            <div class="section-header">
+              <span class="section-title">디지털 정리 미리보기</span>
+              <span class="section-badge">월간</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">이메일 정리 (스팸/광고 삭제)</span>
+            </div>
+            <div class="check-item">
+              <div class="checkbox"></div>
+              <span class="check-label">스마트폰 사진 백업</span>
+            </div>
+            <div style="font-size: 12px; color: var(--primary); text-align: center; padding: 8px 0; cursor: pointer;">
+              전체 보기 (12개 항목) ›
+            </div>
+          </div>
+
+        </div>
+
+        <!-- FAB -->
+        <div class="fab native-anno" data-native="AnimatedPressable + 햅틱 + BottomSheet">
+          <span class="fab-icon">+</span>
+        </div>
+
+        <div class="phone-tab-bar">
+          <div class="tab-item active-tab"><div class="tab-icon">⌂</div>홈</div>
+          <div class="tab-item"><div class="tab-icon">☰</div>계획</div>
+          <div class="tab-item"><div class="tab-icon">▶</div>집중</div>
+          <div class="tab-item"><div class="tab-icon">♡</div>노트</div>
+          <div class="tab-item"><div class="tab-icon">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc-panel">
+      <h2>시안 C: 청소 허브</h2>
+      <p class="desc-subtitle">공간 청소 + 디지털 정리 + 물건 관리 — PDF 템플릿 3페이지를 하나로 통합</p>
+
+      <div class="desc-section">
+        <h3>🧠 행동설계 핵심</h3>
+        <ul>
+          <li><strong>5분 랜덤 시작</strong>: 최상단 CTA → "뭐부터 할지" 결정 제거, 앱이 골라줌</li>
+          <li><strong>밀린 항목 서페이싱</strong>: 붉은 배너로 놓친 것 부드럽게 상기 (비판단적 톤)</li>
+          <li><strong>3탭 통합</strong>: PDF 템플릿의 공간 청소/디지털 정리/물건 관리를 탭으로 분리</li>
+          <li><strong>주기 뱃지</strong>: 매일/주간/월간/계절 주기 시각화 → 우선순위 직관적 파악</li>
+          <li><strong>확장/축소 카테고리</strong>: 한 방만 펼쳐서 집중 → 전체 목록 압도감 방지</li>
+          <li><strong>부분 완료 추적</strong>: 상단 요약에서 전체 진행률 확인 (73%도 좋은 거예요)</li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>📱 네이티브 컨트롤</h3>
+        <ul>
+          <li><strong>3탭 세그먼트</strong>: <code>LiquidGlassMenu</code> (iOS 26+) / <code>UISegmentedControl</code> 폴백 <span class="native-tag">NATIVE</span></li>
+          <li><strong>카테고리 확장/축소</strong>: SwiftUI <code>DisclosureGroup</code> 기반 네이티브 아코디언 <span class="native-tag">NATIVE</span></li>
+          <li><strong>FAB → 항목 추가</strong>: <code>@gorhom/bottom-sheet</code> (방 선택 + 항목 입력 + 주기 선택) <span class="native-tag">BOTTOM SHEET</span></li>
+          <li><strong>밀린 항목 목록</strong>: 네비게이션 push 또는 bottom-sheet <span class="native-tag">NAVIGATION</span></li>
+          <li><strong>5분 랜덤 시작</strong>: <code>AnimatedPressable</code> + 햅틱 + ExecutionScreen 타이머 연동 <span class="impl-tag">REUSE</span></li>
+          <li><strong>체크박스</strong>: <code>withSequence</code> 스프링 바운스 (TodoCard 패턴) <span class="impl-tag">REUSE</span></li>
+          <li><strong>긴 누르기 메뉴</strong>: <code>LiquidGlassMenu</code> — 항목별 수정/삭제/주기변경 <span class="native-tag">NATIVE</span></li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>🏗 정보구조</h3>
+        <ul>
+          <li>헤더: 화면 제목 + 설명</li>
+          <li>"5분 랜덤 청소" CTA 버튼</li>
+          <li>요약 통계 (주간 진행률 / 완료 수 / 밀린 수)</li>
+          <li>밀린 항목 배너 (있을 때만)</li>
+          <li>3탭: 공간 청소 | 디지털 정리 | 물건 관리</li>
+          <li>[공간 청소 탭] 방별 아코디언 → 체크리스트 + 주기 뱃지</li>
+          <li>[디지털 정리 탭] 기기별 아코디언 (이메일/PC/태블릿/스마트폰)</li>
+          <li>[물건 관리 탭] 방별 아코디언 (분기별 → 월간 분산)</li>
+          <li>FAB: 커스텀 항목 추가</li>
+        </ul>
+      </div>
+
+      <div class="desc-section">
+        <h3>🔄 태스크 플로우</h3>
+        <ul>
+          <li>화면 진입 → 오늘 해야 할 주기 항목 자동 표시 (매일 항목 + 해당 요일 주간 항목)</li>
+          <li>"5분 랜덤" → 미완료 항목 중 랜덤 선택 → 타이머 시작</li>
+          <li>방 카테고리 탭 → 확장 → 체크리스트 수행</li>
+          <li>탭 전환 → 디지털 정리 / 물건 관리 체크리스트</li>
+          <li>FAB → 방 선택 + 항목 입력 + 주기 선택 (bottom sheet)</li>
+          <li>밀린 항목 배너 → 밀린 목록 화면 → 처리/스킵/리스케줄</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     Research: 청소 주기 분석
+     ═══════════════════════════════════════ -->
+<div class="demo-container" id="tab-3">
+  <div class="research-section">
+    <h2>청소 주기 분석 — 일반 vs ADHD 전문 관점</h2>
+
+    <h3>1. 일반적인 청소 주기</h3>
+    <table class="freq-table">
+      <thead>
+        <tr><th>주기</th><th>항목</th><th>소요 시간</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>매일</strong><br>(5-15분)</td>
+          <td>침대 정리, 설거지, 조리대 닦기, 간단 정리정돈, 쓰레기 처리</td>
+          <td>항목당 1-3분</td>
+        </tr>
+        <tr>
+          <td><strong>주간</strong><br>(각 15-30분)</td>
+          <td>바닥 청소(청소기+물걸레), 화장실 전체, 먼지 제거, 침구 교체, 주방 깊은 청소</td>
+          <td>구역당 15-30분</td>
+        </tr>
+        <tr>
+          <td><strong>월간</strong><br>(각 20-40분)</td>
+          <td>가전 내부, 창문, 수납 정리, 조명/천장, 배수구, 냉장고 내부</td>
+          <td>항목당 20-40분</td>
+        </tr>
+        <tr>
+          <td><strong>계절/분기별</strong></td>
+          <td>대청소, 커튼 세탁, 카펫 딥클리닝, 에어컨 필터, 계절 옷 교체, 창고 정리</td>
+          <td>반나절~하루</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>2. 분기별 관리가 ADHD에 부적합한 이유</h3>
+    <div class="warning-box">
+      <strong>PDF 템플릿의 "분기별 체크" 구조는 ADHD에 치명적입니다:</strong><br><br>
+      1. <strong>시간 맹(Time Blindness)</strong>: "3개월 후"를 실감 못 함 → 영원히 미뤄짐<br>
+      2. <strong>누적 = 압도감</strong>: 3개월 동안 쌓인 양을 보면 시작 자체를 포기<br>
+      3. <strong>실행 기능 과부하</strong>: "어디서부터?" 결정 자체가 에너지 소모<br>
+      4. <strong>도파민 부족</strong>: 보상 주기가 너무 김 → 동기부여 불가
+    </div>
+
+    <h3>3. ADHD 전문가 권장 주기</h3>
+    <div class="highlight-box">
+      <strong>ADHD 최적 주기 = "매일 5분 + 주간 구역 순환 + 월간 1개 딥클리닝"</strong><br><br>
+      분기별 항목은 <strong>월간으로 쪼개서 분산 배치</strong>하는 것이 핵심입니다.
+    </div>
+
+    <table class="freq-table">
+      <thead>
+        <tr><th>주기</th><th>ADHD 맞춤 방식</th><th>근거</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>매일 5-15분</strong><br>(최적)</td>
+          <td>마이크로태스크 2-3개 (조리대, 침대, 설거지 중 선택)<br>에너지 레벨에 따라 1-5개 적응</td>
+          <td>착수 저항 최소화, 습관 형성<br>KC Davis "5 Things" 메서드</td>
+        </tr>
+        <tr>
+          <td><strong>주간 (요일별)</strong><br>(매우 적합)</td>
+          <td>월=침실, 화=거실, 수=욕실, 목=주방, 금=현관, 토=세탁<br>일=자유(쉬거나 보충)</td>
+          <td>결정 제거, 예측 가능한 루틴<br>시각적 완료감 = 도파민 보상</td>
+        </tr>
+        <tr>
+          <td><strong>월간 1-2개</strong><br>(알림 필수)</td>
+          <td>분기별 대청소를 월간으로 분산<br>월 첫째 주/셋째 주에 1개씩 배치</td>
+          <td>분기별 → 월간 쪼개기로 압도감 해소<br>캘린더 알림 필수</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>4. ADHD 행동설계 원칙 (앱 적용)</h3>
+
+    <table class="freq-table">
+      <thead>
+        <tr><th>ADHD 어려움</th><th>행동설계 대응</th><th>앱 구현</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>작업 착수 장애</td>
+          <td>5분 규칙 + "일단 시작" 프레이밍</td>
+          <td>5분 타이머 CTA, 랜덤 시작 버튼</td>
+        </tr>
+        <tr>
+          <td>선택 마비</td>
+          <td>앱이 다음 할 일 선택</td>
+          <td>포커스 카드 (한 번에 1개만)</td>
+        </tr>
+        <tr>
+          <td>압도감</td>
+          <td>태스크 청킹 + 부분 표시</td>
+          <td>아코디언, 한 구역만 펼침</td>
+        </tr>
+        <tr>
+          <td>시간 맹</td>
+          <td>시각적 타이머 + 소요 시간 표시</td>
+          <td>TimeTimer 방식 원형 타이머</td>
+        </tr>
+        <tr>
+          <td>보상 부족</td>
+          <td>즉각적 피드백 + 스트릭</td>
+          <td>체크 시 햅틱 + 스트릭 바</td>
+        </tr>
+        <tr>
+          <td>완벽주의 → 회피</td>
+          <td>"Done > Perfect" 톤</td>
+          <td>부분 완료도 기록, 비판단적 UI</td>
+        </tr>
+        <tr>
+          <td>루틴 무너짐</td>
+          <td>리셋 용이한 체크리스트</td>
+          <td>밀린 항목 "스킵" 옵션, 재시작 쉬움</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>5. 방별 vs 작업유형별 — 어떤 게 좋은가?</h3>
+    <div class="highlight-box">
+      <strong>ADHD에는 "방별"이 더 적합합니다</strong><br><br>
+      <strong>이유</strong>: 방 하나를 청소하면 눈에 보이는 변화가 즉각적 → 도파민 보상으로 직결됩니다.
+      "먼지 닦기"를 집 전체에서 하면 어디서 끝인지 불분명하고, 성취감이 분산됩니다.<br><br>
+      <strong>최적 하이브리드</strong>: 기본 구조는 방별, 각 방 안에서 작업유형별(빠른/꼼꼼/정리) 세분화
+    </div>
+
+    <h3>6. 디지인 시안별 장단점 비교</h3>
+    <table class="freq-table">
+      <thead>
+        <tr><th>측면</th><th>시안 A (마이크로태스크)</th><th>시안 B (구역 순환)</th><th>시안 C (통합 허브)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>착수 용이성</strong></td>
+          <td>★★★★★ 최고<br>에너지 맞춤 + 1개만 보여줌</td>
+          <td>★★★★☆<br>오늘 구역 고정으로 결정 부담 적음</td>
+          <td>★★★★☆<br>5분 랜덤 버튼이 진입 장벽 낮춤</td>
+        </tr>
+        <tr>
+          <td><strong>루틴 형성</strong></td>
+          <td>★★★☆☆<br>에너지 의존적, 루틴보다 그날그날</td>
+          <td>★★★★★ 최고<br>요일=구역 고정 → 습관화 최적</td>
+          <td>★★★★☆<br>주기 뱃지로 패턴 인식 도움</td>
+        </tr>
+        <tr>
+          <td><strong>포괄성</strong></td>
+          <td>★★★☆☆<br>공간 청소만, 디지털/물건 미포함</td>
+          <td>★★★☆☆<br>공간 청소 + 월간 딥클리닝</td>
+          <td>★★★★★ 최고<br>PDF 3페이지 모두 통합</td>
+        </tr>
+        <tr>
+          <td><strong>ADHD 친화도</strong></td>
+          <td>★★★★★ 최고<br>에너지 적응, 5분 규칙, 스트릭</td>
+          <td>★★★★☆<br>예측 가능성, 부분 완료</td>
+          <td>★★★★☆<br>정보 많지만 아코디언으로 관리</td>
+        </tr>
+        <tr>
+          <td><strong>구현 난이도</strong></td>
+          <td>★★★☆☆ 중간<br>추천 알고리즘 필요</td>
+          <td>★★☆☆☆ 쉬움<br>기존 컴포넌트 재사용 많음</td>
+          <td>★★★★☆ 높음<br>3탭 + 다중 카테고리 + 주기 관리</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="highlight-box">
+      <strong>추천 조합</strong>: 시안 A(마이크로태스크)의 에너지 선택기 + 5분 타이머를 시안 B(구역 순환)의 구조에 통합하는 것이 가장 효과적입니다. 시안 C의 디지털 정리/물건 관리는 별도 탭이나 하위 화면으로 분리하는 것이 인지 부하를 줄입니다.
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showTab(index) {
+  document.querySelectorAll('.demo-container').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === index);
+  });
+}
+</script>
+
+</body>
+</html>
