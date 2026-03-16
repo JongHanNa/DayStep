@@ -67,6 +67,7 @@ interface CleaningStoreState {
   getTodayZone: () => CleaningZone | undefined;
   getAllTasks: () => CleaningTask[];
   getFilteredTasks: () => CleaningTask[];
+  getOrderedTasks: () => {dailyRoutine: CleaningTask[]; zoneFocus: CleaningTask[]};
   getStreak: () => number;
   getCategoryCompletionCount: (category: string, date?: string) => {completed: number; total: number};
 }
@@ -188,12 +189,12 @@ export const useCleaningStore = create<CleaningStoreState>()(
         const dayOfWeek = new Date().getDay();
         const todayZone = zones.find(z => z.dayOfWeek === dayOfWeek);
 
-        if (todayZone) {
-          return tasks.filter(
-            t => t.tab !== 'space' || t.frequency === 'daily' || t.zoneId === todayZone.id,
-          );
-        }
-        return tasks;
+        return tasks.filter(t => {
+          if (t.tab !== 'space') return true;
+          if (t.frequency === 'daily') return true;
+          if (todayZone && t.zoneId === todayZone.id) return true;
+          return false;
+        });
       },
 
       getFilteredTasks: () => {
@@ -202,6 +203,28 @@ export const useCleaningStore = create<CleaningStoreState>()(
         const allTasks = get().getAllTasks();
 
         return allTasks.filter(t => t.energyCost <= config.maxEnergyCost);
+      },
+
+      getOrderedTasks: () => {
+        const {tasks, zones, energyLevel} = get();
+        const dayOfWeek = new Date().getDay();
+        const todayZone = zones.find(z => z.dayOfWeek === dayOfWeek);
+        const config = ENERGY_CONFIG[energyLevel];
+
+        const dailyRoutine = tasks.filter(
+          t => t.tab === 'space' && t.frequency === 'daily' && t.energyCost <= config.maxEnergyCost,
+        );
+        const zoneFocus = todayZone
+          ? tasks.filter(
+              t =>
+                t.tab === 'space' &&
+                t.frequency !== 'daily' &&
+                t.zoneId === todayZone.id &&
+                t.energyCost <= config.maxEnergyCost,
+            )
+          : [];
+
+        return {dailyRoutine, zoneFocus};
       },
 
       getStreak: () => calculateStreak(get().completions),

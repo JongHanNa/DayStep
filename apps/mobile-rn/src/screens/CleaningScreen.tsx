@@ -1,6 +1,7 @@
 /**
  * CleaningScreen — 청소/정리 메인 화면
  * 에너지 적응형 마이크로태스크 + 요일별 구역 순환
+ * 2계층: 매일 할 일 (daily) + 오늘의 구역 (zone-specific)
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, ScrollView, Modal} from 'react-native';
@@ -11,6 +12,7 @@ import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {EnergySelector} from '@/components/cleaning/EnergySelector';
 import {FocusCard} from '@/components/cleaning/FocusCard';
 import {TaskQueue} from '@/components/cleaning/TaskQueue';
+import type {TaskQueueSection} from '@/components/cleaning/TaskQueue';
 import {StreakBar} from '@/components/cleaning/StreakBar';
 import {CategoryAccordion} from '@/components/cleaning/CategoryAccordion';
 import {useCleaningStore} from '@/stores/cleaningStore';
@@ -56,6 +58,7 @@ export default function CleaningScreen() {
     getTodayZone,
     getAllTasks,
     getFilteredTasks,
+    getOrderedTasks,
     getStreak,
     getCategoryCompletionCount,
   } = useCleaningStore();
@@ -76,36 +79,99 @@ export default function CleaningScreen() {
   const todayZone = getTodayZone();
   const allTasks = getAllTasks();
   const filteredTasks = getFilteredTasks();
+  const {dailyRoutine, zoneFocus} = getOrderedTasks();
   const streak = getStreak();
 
   // 에너지 기반 표시 제한
   const config = ENERGY_CONFIG[energyLevel];
+
+  // 2계층 순서: dailyRoutine → zoneFocus (daily 먼저 = 쉬운 것부터, ADHD 모멘텀)
   const visibleTasks = useMemo(() => {
-    const uncompleted = filteredTasks.filter(t => !isTaskCompleted(t.id));
+    const combined = [...dailyRoutine, ...zoneFocus];
+    const uncompleted = combined.filter(t => !isTaskCompleted(t.id));
+    return uncompleted.slice(0, config.maxTasks);
+  }, [dailyRoutine, zoneFocus, config.maxTasks, isTaskCompleted]);
+
+  // digital/belongings 탭 태스크 (기존 로직 유지)
+  const nonSpaceTasks = useMemo(() => {
+    const uncompleted = filteredTasks.filter(
+      t => t.tab !== 'space' && !isTaskCompleted(t.id),
+    );
     return uncompleted.slice(0, config.maxTasks);
   }, [filteredTasks, config.maxTasks, isTaskCompleted]);
+
+  // space 탭이면 2계층 visibleTasks, 아니면 nonSpaceTasks
+  const activeTasks = activeTab === 'space' ? visibleTasks : nonSpaceTasks;
 
   // 포커스 태스크
   const focusTask = useMemo(() => {
     if (focusTaskId) {
-      return filteredTasks.find(t => t.id === focusTaskId);
+      return [...dailyRoutine, ...zoneFocus, ...filteredTasks].find(t => t.id === focusTaskId);
     }
-    // 미완료 태스크 중 첫 번째
-    return visibleTasks[0] ?? null;
-  }, [focusTaskId, filteredTasks, visibleTasks]);
+    return activeTasks[0] ?? null;
+  }, [focusTaskId, dailyRoutine, zoneFocus, filteredTasks, activeTasks]);
 
-  // 큐 태스크 (포커스 제외)
-  const queueTasks = useMemo(() => {
+  // 현재 포커스 태스크가 어느 섹션에 속하는지
+  const focusSectionLabel = useMemo(() => {
+    if (!focusTask || activeTab !== 'space') return null;
+    if (dailyRoutine.some(t => t.id === focusTask.id)) return '매일 할 일';
+    if (zoneFocus.some(t => t.id === focusTask.id))
+      return todayZone ? `오늘의 구역: ${todayZone.name}` : null;
+    return null;
+  }, [focusTask, activeTab, dailyRoutine, zoneFocus, todayZone]);
+
+  // 큐 태스크 (포커스 제외), 섹션 분리
+  const queueSections = useMemo((): TaskQueueSection[] => {
     if (!focusTask) return [];
-    return visibleTasks.filter(t => t.id !== focusTask.id);
-  }, [focusTask, visibleTasks]);
+    const remaining = activeTasks.filter(t => t.id !== focusTask.id);
 
-  // 카테고리 그룹핑 (에너지 필터 없이 전체 기준)
+    if (activeTab !== 'space') {
+      return [{title: '', tasks: remaining}];
+    }
+
+    const dailyQueue = remaining.filter(t => dailyRoutine.some(d => d.id === t.id));
+    const zoneQueue = remaining.filter(t => zoneFocus.some(z => z.id === t.id));
+
+    const sections: TaskQueueSection[] = [];
+    if (dailyQueue.length > 0) sections.push({title: '매일 할 일', tasks: dailyQueue});
+    if (zoneQueue.length > 0)
+      sections.push({
+        title: todayZone ? `오늘의 구역: ${todayZone.name}` : '오늘의 구역',
+        tasks: zoneQueue,
+      });
+    return sections;
+  }, [focusTask, activeTasks, activeTab, dailyRoutine, zoneFocus, todayZone]);
+
+  // 카테고리 그룹핑 (모달용 — space 탭은 2그룹으로 분리)
   const categories = useMemo(() => {
     const tabTasks = allTasks.filter(t => t.tab === activeTab);
     const catSet = new Set(tabTasks.map(t => t.category));
     return Array.from(catSet);
   }, [allTasks, activeTab]);
+
+  // space 탭 모달용: dailyRoutine / zoneFocus 카테고리 분리
+  const spaceSections = useMemo(() => {
+    if (activeTab !== 'space') return null;
+    const dailyTasks = allTasks.filter(t => t.tab === 'space' && t.frequency === 'daily');
+    const dailyCats = Array.from(new Set(dailyTasks.map(t => t.category)));
+
+    const todayZoneObj = getTodayZone();
+    const zoneTasks = todayZoneObj
+      ? allTasks.filter(
+          t => t.tab === 'space' && t.frequency !== 'daily' && t.zoneId === todayZoneObj.id,
+        )
+      : [];
+    const zoneCats = Array.from(new Set(zoneTasks.map(t => t.category)));
+
+    return {
+      daily: {title: '매일 할 일', categories: dailyCats, tasks: dailyTasks},
+      zone: {
+        title: todayZoneObj ? `오늘의 구역: ${todayZoneObj.name}` : '오늘의 구역',
+        categories: zoneCats,
+        tasks: zoneTasks,
+      },
+    };
+  }, [activeTab, allTasks, getTodayZone]);
 
   const handleStartTimer = useCallback(() => {
     if (!focusTask) return;
@@ -116,14 +182,13 @@ export default function CleaningScreen() {
   const handleSkip = useCallback(() => {
     resetTimer();
     if (focusTask) {
-      // 다음 미완료 태스크로 이동
-      const nextUncompleted = visibleTasks.find(
+      const nextUncompleted = activeTasks.find(
         t => t.id !== focusTask.id && !isTaskCompleted(t.id),
       );
       setFocusTask(nextUncompleted?.id ?? null);
     }
     haptic.selection();
-  }, [focusTask, visibleTasks, isTaskCompleted, resetTimer, setFocusTask, haptic]);
+  }, [focusTask, activeTasks, isTaskCompleted, resetTimer, setFocusTask, haptic]);
 
   return (
     <ScreenContainer gradient="warmBackground">
@@ -175,6 +240,18 @@ export default function CleaningScreen() {
         {/* 포커스 카드 */}
         {focusTask && (
           <View style={{paddingHorizontal: 16, marginBottom: 8}}>
+            {/* 섹션 라벨 */}
+            {focusSectionLabel && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: '#6B7280',
+                  marginBottom: 6,
+                }}>
+                {focusSectionLabel}
+              </Text>
+            )}
             <FocusCard
               task={focusTask}
               timerSeconds={timerSeconds}
@@ -190,9 +267,9 @@ export default function CleaningScreen() {
         )}
 
         {/* 다음 큐 */}
-        {queueTasks.length > 0 && (
+        {queueSections.length > 0 && (
           <View style={{paddingHorizontal: 20, marginBottom: 8}}>
-            <TaskQueue tasks={queueTasks} onSelectTask={setFocusTask} />
+            <TaskQueue sections={queueSections} onSelectTask={setFocusTask} />
           </View>
         )}
 
@@ -268,27 +345,102 @@ export default function CleaningScreen() {
             })}
           </View>
 
-          {/* 카테고리 아코디언 (읽기 전용) */}
+          {/* 카테고리 아코디언 */}
           <ScrollView
             contentContainerStyle={{paddingBottom: 40}}
             showsVerticalScrollIndicator={false}>
             <View style={{paddingHorizontal: 12}}>
-              {categories.map((category, index) => {
-                const catTasks = allTasks.filter(t => t.tab === activeTab && t.category === category);
-                const {completed, total} = getCategoryCompletionCount(category);
-                return (
-                  <CategoryAccordion
-                    key={category}
-                    category={category}
-                    tasks={catTasks}
-                    completedCount={completed}
-                    totalCount={total}
-                    isTaskCompleted={isTaskCompleted}
-                    defaultOpen={index === 0}
-                    enterDelay={index * 50}
-                  />
-                );
-              })}
+              {activeTab === 'space' && spaceSections ? (
+                <>
+                  {/* 매일 할 일 섹션 */}
+                  {spaceSections.daily.tasks.length > 0 && (
+                    <View style={{marginBottom: 8}}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '700',
+                          color: '#374151',
+                          paddingHorizontal: 4,
+                          paddingVertical: 10,
+                        }}>
+                        {spaceSections.daily.title}
+                      </Text>
+                      {spaceSections.daily.categories.map((category, index) => {
+                        const catTasks = spaceSections.daily.tasks.filter(
+                          t => t.category === category,
+                        );
+                        const {completed, total} = getCategoryCompletionCount(category);
+                        return (
+                          <CategoryAccordion
+                            key={`daily-${category}`}
+                            category={category}
+                            tasks={catTasks}
+                            completedCount={completed}
+                            totalCount={total}
+                            isTaskCompleted={isTaskCompleted}
+                            defaultOpen={index === 0}
+                            enterDelay={index * 50}
+                          />
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* 오늘의 구역 섹션 */}
+                  {spaceSections.zone.tasks.length > 0 && (
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '700',
+                          color: '#374151',
+                          paddingHorizontal: 4,
+                          paddingVertical: 10,
+                        }}>
+                        {spaceSections.zone.title}
+                      </Text>
+                      {spaceSections.zone.categories.map((category, index) => {
+                        const catTasks = spaceSections.zone.tasks.filter(
+                          t => t.category === category,
+                        );
+                        const {completed, total} = getCategoryCompletionCount(category);
+                        return (
+                          <CategoryAccordion
+                            key={`zone-${category}`}
+                            category={category}
+                            tasks={catTasks}
+                            completedCount={completed}
+                            totalCount={total}
+                            isTaskCompleted={isTaskCompleted}
+                            defaultOpen={index === 0}
+                            enterDelay={index * 50}
+                          />
+                        );
+                      })}
+                    </View>
+                  )}
+                </>
+              ) : (
+                // digital / belongings 탭: 기존 로직
+                categories.map((category, index) => {
+                  const catTasks = allTasks.filter(
+                    t => t.tab === activeTab && t.category === category,
+                  );
+                  const {completed, total} = getCategoryCompletionCount(category);
+                  return (
+                    <CategoryAccordion
+                      key={category}
+                      category={category}
+                      tasks={catTasks}
+                      completedCount={completed}
+                      totalCount={total}
+                      isTaskCompleted={isTaskCompleted}
+                      defaultOpen={index === 0}
+                      enterDelay={index * 50}
+                    />
+                  );
+                })
+              )}
             </View>
           </ScrollView>
         </View>
