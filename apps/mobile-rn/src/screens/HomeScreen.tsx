@@ -207,11 +207,11 @@ export default function HomeScreen() {
       {
         id: 'sleep',
         icon: <Moon size={20} color={primaryColor} />,
-        label: '수면 기록하기',
-        description: '어제 밤은 잘 잤나요?',
+        label: '수면 정원',
+        description: '수면 세션으로 나무를 키워요',
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
-        onPress: () => navigation.navigate('SleepRecord'),
+        onPress: () => navigation.navigate('SleepGarden'),
       },
       {
         id: 'adhd-understanding',

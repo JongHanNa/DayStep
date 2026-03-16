@@ -9,7 +9,7 @@ import {AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTheme} from '@/theme';
 import {shadows} from '@/theme/tokens';
-import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS} from '@/constants/cleaning-data';
+import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS, FREQUENCY_LABELS, FREQUENCY_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface FocusCardProps {
@@ -69,6 +69,22 @@ export function FocusCard({
               color: TAB_COLORS[task.tab],
             }}>
             {TAB_LABELS[task.tab]}
+          </Text>
+        </View>
+        <View
+          style={{
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            borderRadius: 8,
+            backgroundColor: FREQUENCY_COLORS[task.frequency] + '15',
+          }}>
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: '600',
+              color: FREQUENCY_COLORS[task.frequency],
+            }}>
+            {FREQUENCY_LABELS[task.frequency]}
           </Text>
         </View>
         <View

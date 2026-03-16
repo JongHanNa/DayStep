@@ -79,58 +79,47 @@ export default function CleaningScreen() {
   const todayZone = getTodayZone();
   const allTasks = getAllTasks();
   const filteredTasks = getFilteredTasks();
-  const {dailyRoutine, zoneFocus} = getOrderedTasks();
+  const {dailyRoutine, zoneFocus, digitalTasks, belongingsTasks} = getOrderedTasks();
   const streak = getStreak();
 
   // 에너지 기반 표시 제한
   const config = ENERGY_CONFIG[energyLevel];
 
-  // 2계층 순서: dailyRoutine → zoneFocus (daily 먼저 = 쉬운 것부터, ADHD 모멘텀)
-  const visibleTasks = useMemo(() => {
-    const combined = [...dailyRoutine, ...zoneFocus];
+  // 전체 탭 통합: dailyRoutine → zoneFocus → digital → belongings (탭 필터링 없음)
+  const activeTasks = useMemo(() => {
+    const combined = [...dailyRoutine, ...zoneFocus, ...digitalTasks, ...belongingsTasks];
     const uncompleted = combined.filter(t => !isTaskCompleted(t.id));
     return uncompleted.slice(0, config.maxTasks);
-  }, [dailyRoutine, zoneFocus, config.maxTasks, isTaskCompleted]);
-
-  // digital/belongings 탭 태스크 (기존 로직 유지)
-  const nonSpaceTasks = useMemo(() => {
-    const uncompleted = filteredTasks.filter(
-      t => t.tab !== 'space' && !isTaskCompleted(t.id),
-    );
-    return uncompleted.slice(0, config.maxTasks);
-  }, [filteredTasks, config.maxTasks, isTaskCompleted]);
-
-  // space 탭이면 2계층 visibleTasks, 아니면 nonSpaceTasks
-  const activeTasks = activeTab === 'space' ? visibleTasks : nonSpaceTasks;
+  }, [dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, config.maxTasks, isTaskCompleted]);
 
   // 포커스 태스크
   const focusTask = useMemo(() => {
     if (focusTaskId) {
-      return [...dailyRoutine, ...zoneFocus, ...filteredTasks].find(t => t.id === focusTaskId);
+      return [...dailyRoutine, ...zoneFocus, ...digitalTasks, ...belongingsTasks].find(t => t.id === focusTaskId);
     }
     return activeTasks[0] ?? null;
-  }, [focusTaskId, dailyRoutine, zoneFocus, filteredTasks, activeTasks]);
+  }, [focusTaskId, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, activeTasks]);
 
   // 현재 포커스 태스크가 어느 섹션에 속하는지
   const focusSectionLabel = useMemo(() => {
-    if (!focusTask || activeTab !== 'space') return null;
+    if (!focusTask) return null;
     if (dailyRoutine.some(t => t.id === focusTask.id)) return '매일 할 일';
     if (zoneFocus.some(t => t.id === focusTask.id))
       return todayZone ? `오늘의 구역: ${todayZone.name}` : null;
+    if (digitalTasks.some(t => t.id === focusTask.id)) return '디지털 정리';
+    if (belongingsTasks.some(t => t.id === focusTask.id)) return '물건 관리';
     return null;
-  }, [focusTask, activeTab, dailyRoutine, zoneFocus, todayZone]);
+  }, [focusTask, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todayZone]);
 
-  // 큐 태스크 (포커스 제외), 섹션 분리
+  // 큐 태스크 (포커스 제외), 섹션 분리 — 전체 탭 통합
   const queueSections = useMemo((): TaskQueueSection[] => {
     if (!focusTask) return [];
     const remaining = activeTasks.filter(t => t.id !== focusTask.id);
 
-    if (activeTab !== 'space') {
-      return [{title: '', tasks: remaining}];
-    }
-
     const dailyQueue = remaining.filter(t => dailyRoutine.some(d => d.id === t.id));
     const zoneQueue = remaining.filter(t => zoneFocus.some(z => z.id === t.id));
+    const digitalQueue = remaining.filter(t => digitalTasks.some(d => d.id === t.id));
+    const belongingsQueue = remaining.filter(t => belongingsTasks.some(b => b.id === t.id));
 
     const sections: TaskQueueSection[] = [];
     if (dailyQueue.length > 0) sections.push({title: '매일 할 일', tasks: dailyQueue});
@@ -139,8 +128,10 @@ export default function CleaningScreen() {
         title: todayZone ? `오늘의 구역: ${todayZone.name}` : '오늘의 구역',
         tasks: zoneQueue,
       });
+    if (digitalQueue.length > 0) sections.push({title: '디지털 정리', tasks: digitalQueue});
+    if (belongingsQueue.length > 0) sections.push({title: '물건 관리', tasks: belongingsQueue});
     return sections;
-  }, [focusTask, activeTasks, activeTab, dailyRoutine, zoneFocus, todayZone]);
+  }, [focusTask, activeTasks, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todayZone]);
 
   // 카테고리 그룹핑 (모달용 — space 탭은 2그룹으로 분리)
   const categories = useMemo(() => {

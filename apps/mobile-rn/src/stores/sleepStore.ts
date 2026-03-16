@@ -1,12 +1,12 @@
 /**
  * Sleep Record Store (Zustand + MMKV)
- * 수면 기록 CRUD + 월간 통계
+ * 수면 기록 CRUD + 월간 통계 + 수면 세션 (정원 게이미피케이션)
  */
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage} from '@/lib/mmkv';
-import {format, startOfMonth, endOfMonth, differenceInMinutes} from 'date-fns';
+import {format, startOfMonth, endOfMonth, differenceInMinutes, subDays, addDays} from 'date-fns';
 
 // ============================================
 // Types
@@ -48,13 +48,45 @@ interface MonthStats {
   recordedDays: number;
 }
 
+// --- 수면 세션 & 정원 타입 ---
+
+export type SleepSessionStatus = 'idle' | 'running' | 'completed';
+
+export interface SleepSessionState {
+  status: SleepSessionStatus;
+  startedAt: string | null; // ISO timestamp
+  expectedWakeTime: string | null; // ISO timestamp
+  goalDurationMinutes: number;
+}
+
+export type GardenDayStatus = 'healthy' | 'wilted' | 'empty' | 'today';
+
+export interface GardenDay {
+  date: string; // yyyy-MM-dd
+  status: GardenDayStatus;
+  durationMinutes?: number;
+}
+
+const DEFAULT_SESSION: SleepSessionState = {
+  status: 'idle',
+  startedAt: null,
+  expectedWakeTime: null,
+  goalDurationMinutes: 0,
+};
+
 interface SleepStoreState {
   records: Record<string, SleepRecord>; // key: date (yyyy-MM-dd)
   selectedDate: string;
   isLoading: boolean;
   error: string | null;
 
-  // Actions
+  // 수면 정원 설정
+  sleepGoalTime: string; // HH:mm (기본 23:30)
+  wakeGoalTime: string; // HH:mm (기본 07:00)
+  screenTimeLinkEnabled: boolean;
+  sessionState: SleepSessionState;
+
+  // Actions (기존)
   fetchMonthRecords: (year: number, month: number) => Promise<void>;
   upsertRecord: (input: SleepRecordInput) => Promise<void>;
   deleteRecord: (date: string) => Promise<void>;
@@ -62,6 +94,32 @@ interface SleepStoreState {
   getMonthStats: (year: number, month: number) => MonthStats;
   getRecordForDate: (date: string) => SleepRecord | undefined;
   clearError: () => void;
+
+  // Actions (수면 정원)
+  setSleepGoalTime: (time: string) => void;
+  setWakeGoalTime: (time: string) => void;
+  setScreenTimeLinkEnabled: (v: boolean) => void;
+  getGoalDurationMinutes: () => number;
+  startSleepSession: () => void;
+  completeSleepSession: () => Promise<void>;
+  abandonSleepSession: () => Promise<void>;
+  recoverSession: () => Promise<void>;
+  getGardenData: () => GardenDay[];
+  getStreak: () => number;
+}
+
+// ============================================
+// Helpers
+// ============================================
+
+/** 취침~기상 목표 시간 계산 (자정 넘김 핸들링) */
+function calcGoalMinutes(sleepTime: string, wakeTime: string): number {
+  const [sh, sm] = sleepTime.split(':').map(Number);
+  const [wh, wm] = wakeTime.split(':').map(Number);
+  let sleepMins = sh * 60 + sm;
+  let wakeMins = wh * 60 + wm;
+  if (wakeMins <= sleepMins) wakeMins += 24 * 60; // 자정 넘김
+  return wakeMins - sleepMins;
 }
 
 // ============================================
@@ -75,6 +133,16 @@ export const useSleepStore = create<SleepStoreState>()(
       selectedDate: format(new Date(), 'yyyy-MM-dd'),
       isLoading: false,
       error: null,
+
+      // 수면 정원 기본값
+      sleepGoalTime: '23:30',
+      wakeGoalTime: '07:00',
+      screenTimeLinkEnabled: false,
+      sessionState: {...DEFAULT_SESSION},
+
+      // ============================================
+      // 기존 Actions
+      // ============================================
 
       fetchMonthRecords: async (year, month) => {
         set({isLoading: true, error: null});
@@ -231,6 +299,162 @@ export const useSleepStore = create<SleepStoreState>()(
       },
 
       clearError: () => set({error: null}),
+
+      // ============================================
+      // 수면 정원 Actions
+      // ============================================
+
+      setSleepGoalTime: (time) => set({sleepGoalTime: time}),
+      setWakeGoalTime: (time) => set({wakeGoalTime: time}),
+      setScreenTimeLinkEnabled: (v) => set({screenTimeLinkEnabled: v}),
+
+      getGoalDurationMinutes: () => {
+        const {sleepGoalTime, wakeGoalTime} = get();
+        return calcGoalMinutes(sleepGoalTime, wakeGoalTime);
+      },
+
+      startSleepSession: () => {
+        const {sleepGoalTime, wakeGoalTime} = get();
+        const goalDuration = calcGoalMinutes(sleepGoalTime, wakeGoalTime);
+        const now = new Date();
+        const expected = new Date(now.getTime() + goalDuration * 60 * 1000);
+
+        set({
+          sessionState: {
+            status: 'running',
+            startedAt: now.toISOString(),
+            expectedWakeTime: expected.toISOString(),
+            goalDurationMinutes: goalDuration,
+          },
+        });
+      },
+
+      completeSleepSession: async () => {
+        const {sessionState, upsertRecord} = get();
+        if (sessionState.status !== 'running' || !sessionState.startedAt) return;
+
+        const now = new Date();
+        const startedAt = new Date(sessionState.startedAt);
+        // 기상일 = 오늘 날짜 (기상 시점 기준 기록)
+        const recordDate = format(now, 'yyyy-MM-dd');
+
+        try {
+          await upsertRecord({
+            date: recordDate,
+            sleep_time: startedAt.toISOString(),
+            wake_time: now.toISOString(),
+            mood: 'good',
+          });
+        } catch {
+          // upsertRecord 내부에서 에러 처리됨
+        }
+
+        set({sessionState: {...DEFAULT_SESSION}});
+      },
+
+      abandonSleepSession: async () => {
+        const {sessionState, upsertRecord} = get();
+        if (sessionState.status !== 'running' || !sessionState.startedAt) return;
+
+        const now = new Date();
+        const startedAt = new Date(sessionState.startedAt);
+        const recordDate = format(now, 'yyyy-MM-dd');
+
+        try {
+          await upsertRecord({
+            date: recordDate,
+            sleep_time: startedAt.toISOString(),
+            wake_time: now.toISOString(),
+            mood: 'poor',
+          });
+        } catch {
+          // upsertRecord 내부에서 에러 처리됨
+        }
+
+        set({sessionState: {...DEFAULT_SESSION}});
+      },
+
+      /** 앱 재시작 시 크래시 복구 */
+      recoverSession: async () => {
+        const {sessionState, upsertRecord} = get();
+        if (sessionState.status !== 'running' || !sessionState.startedAt) return;
+
+        const now = new Date();
+        const expectedWake = sessionState.expectedWakeTime
+          ? new Date(sessionState.expectedWakeTime)
+          : null;
+
+        // 예상 기상 시간이 지났으면 자동 완료
+        if (expectedWake && now > expectedWake) {
+          const startedAt = new Date(sessionState.startedAt);
+          const recordDate = format(expectedWake, 'yyyy-MM-dd');
+
+          try {
+            await upsertRecord({
+              date: recordDate,
+              sleep_time: startedAt.toISOString(),
+              wake_time: expectedWake.toISOString(),
+              mood: 'good',
+            });
+          } catch {
+            // 에러 시 세션은 리셋하되 기록은 무시
+          }
+
+          set({sessionState: {...DEFAULT_SESSION}});
+        }
+        // 아직 진행 중이면 세션 유지 (SleepSessionScreen으로 복귀)
+      },
+
+      getGardenData: () => {
+        const {records, sleepGoalTime, wakeGoalTime} = get();
+        const goalMinutes = calcGoalMinutes(sleepGoalTime, wakeGoalTime);
+        const threshold = goalMinutes * 0.8; // 80% 달성 기준
+        const today = format(new Date(), 'yyyy-MM-dd');
+        const days: GardenDay[] = [];
+
+        for (let i = 29; i >= 0; i--) {
+          const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+          const record = records[date];
+
+          if (date === today) {
+            days.push({
+              date,
+              status: 'today',
+              durationMinutes: record?.duration_minutes,
+            });
+          } else if (record) {
+            days.push({
+              date,
+              status: record.duration_minutes >= threshold ? 'healthy' : 'wilted',
+              durationMinutes: record.duration_minutes,
+            });
+          } else {
+            days.push({date, status: 'empty'});
+          }
+        }
+
+        return days;
+      },
+
+      getStreak: () => {
+        const {records, sleepGoalTime, wakeGoalTime} = get();
+        const goalMinutes = calcGoalMinutes(sleepGoalTime, wakeGoalTime);
+        const threshold = goalMinutes * 0.8;
+        let streak = 0;
+
+        // 어제부터 역순으로 연속 성공일 카운트
+        for (let i = 1; i <= 365; i++) {
+          const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+          const record = records[date];
+          if (record && record.duration_minutes >= threshold) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+
+        return streak;
+      },
     }),
     {
       name: 'sleep-store',
@@ -238,6 +462,10 @@ export const useSleepStore = create<SleepStoreState>()(
       partialize: (state) => ({
         records: state.records,
         selectedDate: state.selectedDate,
+        sleepGoalTime: state.sleepGoalTime,
+        wakeGoalTime: state.wakeGoalTime,
+        screenTimeLinkEnabled: state.screenTimeLinkEnabled,
+        sessionState: state.sessionState,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {

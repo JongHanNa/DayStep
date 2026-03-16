@@ -5,7 +5,7 @@ import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
-import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS} from '@/constants/cleaning-data';
+import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS, FREQUENCY_LABELS, FREQUENCY_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 export interface TaskQueueSection {
@@ -71,6 +71,22 @@ export function TaskQueue({sections, onSelectTask}: TaskQueueProps) {
                       color: TAB_COLORS[task.tab],
                     }}>
                     {TAB_LABELS[task.tab]}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: 4,
+                    paddingVertical: 1,
+                    borderRadius: 4,
+                    backgroundColor: FREQUENCY_COLORS[task.frequency] + '15',
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 9,
+                      fontWeight: '600',
+                      color: FREQUENCY_COLORS[task.frequency],
+                    }}>
+                    {FREQUENCY_LABELS[task.frequency]}
                   </Text>
                 </View>
                 <View

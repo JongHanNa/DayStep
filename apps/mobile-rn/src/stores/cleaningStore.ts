@@ -67,7 +67,7 @@ interface CleaningStoreState {
   getTodayZone: () => CleaningZone | undefined;
   getAllTasks: () => CleaningTask[];
   getFilteredTasks: () => CleaningTask[];
-  getOrderedTasks: () => {dailyRoutine: CleaningTask[]; zoneFocus: CleaningTask[]};
+  getOrderedTasks: () => {dailyRoutine: CleaningTask[]; zoneFocus: CleaningTask[]; digitalTasks: CleaningTask[]; belongingsTasks: CleaningTask[]};
   getStreak: () => number;
   getCategoryCompletionCount: (category: string, date?: string) => {completed: number; total: number};
 }
@@ -224,7 +224,14 @@ export const useCleaningStore = create<CleaningStoreState>()(
             )
           : [];
 
-        return {dailyRoutine, zoneFocus};
+        const digitalTasks = tasks.filter(
+          t => t.tab === 'digital' && t.energyCost <= config.maxEnergyCost,
+        );
+        const belongingsTasks = tasks.filter(
+          t => t.tab === 'belongings' && t.energyCost <= config.maxEnergyCost,
+        );
+
+        return {dailyRoutine, zoneFocus, digitalTasks, belongingsTasks};
       },
 
       getStreak: () => calculateStreak(get().completions),
