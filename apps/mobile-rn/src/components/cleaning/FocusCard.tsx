@@ -53,24 +53,40 @@ export function FocusCard({
           alignItems: 'center',
         },
       ]}>
-      {/* 탭 뱃지 */}
-      <View
-        style={{
-          paddingHorizontal: 8,
-          paddingVertical: 2,
-          borderRadius: 8,
-          backgroundColor: TAB_COLORS[task.tab] + '15',
-          alignSelf: 'center',
-          marginBottom: 6,
-        }}>
-        <Text
+      {/* 탭 뱃지 + 카테고리 뱃지 */}
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginBottom: 6}}>
+        <View
           style={{
-            fontSize: 10,
-            fontWeight: '600',
-            color: TAB_COLORS[task.tab],
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            borderRadius: 8,
+            backgroundColor: TAB_COLORS[task.tab] + '15',
           }}>
-          {TAB_LABELS[task.tab]}
-        </Text>
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: '600',
+              color: TAB_COLORS[task.tab],
+            }}>
+            {TAB_LABELS[task.tab]}
+          </Text>
+        </View>
+        <View
+          style={{
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            borderRadius: 8,
+            backgroundColor: '#F3F4F6',
+          }}>
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: '600',
+              color: '#6B7280',
+            }}>
+            {task.category}
+          </Text>
+        </View>
       </View>
 
       {/* 태스크 제목 */}
