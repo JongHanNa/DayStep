@@ -132,7 +132,7 @@ struct WeekStripContent: View {
       }
       .padding(.horizontal, 20)
       .padding(.top, 12)
-      .padding(.bottom, 8)
+      .padding(.bottom, 16)
 
       // 하단: 주간 스크롤
       ScrollView(.horizontal, showsIndicators: false) {

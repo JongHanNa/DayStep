@@ -141,7 +141,7 @@ struct MonthCalendarContent: View {
     }
     .padding(.horizontal, 20)
     .padding(.top, 12)
-    .padding(.bottom, 8)
+    .padding(.bottom, 16)
   }
 
   // MARK: - Weekday Header

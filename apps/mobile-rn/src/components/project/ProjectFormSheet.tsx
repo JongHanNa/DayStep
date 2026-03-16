@@ -1,5 +1,6 @@
 /**
  * ProjectFormSheet — BottomSheetModal 프로젝트 생성/편집 폼
+ * 시안 C: 미리보기 카드 + 외관 서브뷰 구조
  * ref 패턴: openCreate(), openEdit(project), close()
  */
 import React, {
@@ -11,7 +12,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Keyboard} from 'react-native';
+import {View, Text, StyleSheet, Keyboard} from 'react-native';
+import Animated, {
+  SlideInRight,
+  SlideOutLeft,
+  SlideInLeft,
+  SlideOutRight,
+} from 'react-native-reanimated';
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
@@ -20,12 +27,20 @@ import {
 } from '@gorhom/bottom-sheet';
 import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {AnimatedPressable} from '@/components/core';
+import {SummaryRow} from '@/components/todo/SummaryRow';
+import {InlineIconPicker} from '@/components/todo/InlineIconPicker';
 import {LinkedTodosSection} from './LinkedTodosSection';
+import {PreviewCard} from './PreviewCard';
 import {STATUS_LABELS, getStatusMenuItems} from './constants';
-import {ActivitySquare, RefreshCw} from 'lucide-react-native';
+import {resolveTodoIcon} from '@/lib/iconMap';
+import {
+  Palette,
+  ChevronLeft,
+  ActivitySquare,
+  RefreshCw,
+} from 'lucide-react-native';
 import {useTheme} from '@/theme';
 import {PROJECT_COLORS, PROJECT_ICONS} from '@/types/project';
-import {ICON_CATEGORIES} from '@/lib/iconMap';
 import type {Project, ProjectStatus} from '@/types/project';
 import type {Todo} from '@daystep/shared-core';
 
@@ -49,6 +64,95 @@ interface ProjectFormSheetProps {
   unlinkTodoFromProject: (userId: string, todoId: string) => Promise<boolean>;
 }
 
+/* ── 인라인 서브컴포넌트 ── */
+
+function AppearanceSuffix({icon, color}: {icon: string; color: string}) {
+  const IconComp = resolveTodoIcon(icon);
+  return (
+    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+      {IconComp && <IconComp size={16} color="#6B7280" />}
+      <View
+        style={{
+          width: 12,
+          height: 12,
+          borderRadius: 6,
+          backgroundColor: color,
+        }}
+      />
+    </View>
+  );
+}
+
+function StatusRow({
+  project,
+  statusMenuItems,
+  onStatusChange,
+}: {
+  project: Project;
+  statusMenuItems: Array<{title: string; key: string}>;
+  onStatusChange: (status: ProjectStatus) => void;
+}) {
+  return (
+    <View style={statusRowStyles.row}>
+      <ActivitySquare size={20} color="#6B7280" style={{marginRight: 12}} />
+      <Text style={statusRowStyles.label}>상태</Text>
+      <View style={statusRowStyles.trailing}>
+        <View
+          style={[
+            statusRowStyles.badge,
+            {backgroundColor: STATUS_LABELS[project.status]?.bg},
+          ]}>
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '500',
+              color: STATUS_LABELS[project.status]?.color,
+            }}>
+            {STATUS_LABELS[project.status]?.label}
+          </Text>
+        </View>
+        <LiquidGlassMenu
+          systemIconName="arrow.triangle.2.circlepath"
+          iconColor="#9CA3AF"
+          size={32}
+          menuItems={statusMenuItems}
+          onSelect={key => onStatusChange(key as ProjectStatus)}
+          fallbackIcon={<RefreshCw size={16} color="#9CA3AF" />}
+        />
+      </View>
+    </View>
+  );
+}
+
+const statusRowStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#F3F4F6',
+  },
+  label: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1F2937',
+  },
+  trailing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  badge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+});
+
+/* ── 메인 컴포넌트 ── */
+
 export const ProjectFormSheet = forwardRef<
   ProjectFormSheetRef,
   ProjectFormSheetProps
@@ -68,6 +172,10 @@ export const ProjectFormSheet = forwardRef<
   const [linkedTodos, setLinkedTodos] = useState<Todo[]>([]);
   const [loadingTodos, setLoadingTodos] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [currentView, setCurrentView] = useState<'main' | 'appearance'>(
+    'main',
+  );
+  const isFirstRender = useRef(true);
 
   useImperativeHandle(ref, () => ({
     openCreate: () => {
@@ -78,6 +186,8 @@ export const ProjectFormSheet = forwardRef<
       setFormIcon(PROJECT_ICONS[0]);
       setLinkedTodos([]);
       setSaving(false);
+      setCurrentView('main');
+      isFirstRender.current = true;
       bottomSheetRef.current?.present();
     },
     openEdit: (project: Project) => {
@@ -87,6 +197,8 @@ export const ProjectFormSheet = forwardRef<
       setFormColor(project.color ?? PROJECT_COLORS[0]);
       setFormIcon(project.icon ?? PROJECT_ICONS[0]);
       setSaving(false);
+      setCurrentView('main');
+      isFirstRender.current = true;
       bottomSheetRef.current?.present();
     },
     close: () => {
@@ -146,6 +258,25 @@ export const ProjectFormSheet = forwardRef<
     [editingProject?.status],
   );
 
+  const handleSheetChange = useCallback((index: number) => {
+    if (index === -1) setCurrentView('main');
+  }, []);
+
+  const goToAppearance = useCallback(() => {
+    Keyboard.dismiss();
+    isFirstRender.current = false;
+    setCurrentView('appearance');
+  }, []);
+
+  const goToMain = useCallback(() => {
+    isFirstRender.current = false;
+    setCurrentView('main');
+  }, []);
+
+  const handleIconChange = useCallback((icon: string) => {
+    if (icon) setFormIcon(icon);
+  }, []);
+
   const renderBackdrop = useCallback(
     (props: any) => (
       <BottomSheetBackdrop
@@ -166,133 +297,168 @@ export const ProjectFormSheet = forwardRef<
       enableDynamicSizing={false}
       handleIndicatorStyle={styles.handleIndicator}
       keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore">
+      keyboardBlurBehavior="restore"
+      onChange={handleSheetChange}>
       <BottomSheetScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
-        <Text style={styles.sheetTitle}>
-          {editingProject ? '프로젝트 수정' : '새 프로젝트'}
-        </Text>
+        {/* ── 메인뷰 ── */}
+        {currentView === 'main' && (
+          <Animated.View
+            entering={
+              isFirstRender.current
+                ? undefined
+                : SlideInLeft.duration(250)
+            }
+            exiting={SlideOutLeft.duration(200)}>
+            <Text style={styles.sheetTitle}>
+              {editingProject ? '프로젝트 수정' : '새 프로젝트'}
+            </Text>
 
-        {/* 제목 */}
-        <Text style={styles.label}>제목</Text>
-        <BottomSheetTextInput
-          value={formTitle}
-          onChangeText={setFormTitle}
-          placeholder="프로젝트 제목"
-          placeholderTextColor="#9CA3AF"
-          style={styles.input}
-        />
-
-        {/* 설명 */}
-        <Text style={styles.label}>설명</Text>
-        <BottomSheetTextInput
-          value={formDesc}
-          onChangeText={setFormDesc}
-          placeholder="프로젝트 설명 (선택)"
-          placeholderTextColor="#9CA3AF"
-          multiline
-          style={[styles.input, styles.inputMultiline]}
-          textAlignVertical="top"
-        />
-
-        {/* 색상 */}
-        <Text style={styles.label}>색상</Text>
-        <View style={styles.paletteRow}>
-          {PROJECT_COLORS.map(color => (
-            <TouchableOpacity
-              key={color}
-              onPress={() => setFormColor(color)}
-              style={[
-                styles.colorCircle,
-                {backgroundColor: color},
-                formColor === color && styles.colorCircleSelected,
-              ]}
+            <PreviewCard
+              title={formTitle}
+              description={formDesc}
+              color={formColor}
+              icon={formIcon}
             />
-          ))}
-        </View>
 
-        {/* 아이콘 */}
-        <Text style={styles.label}>아이콘</Text>
-        {ICON_CATEGORIES.map(category => (
-          <View key={category.label} style={{marginBottom: 12}}>
-            <Text style={styles.categoryLabel}>{category.label}</Text>
-            <View style={styles.paletteRow}>
-              {category.icons.map(({key, Icon}) => (
-                <TouchableOpacity
-                  key={key}
-                  onPress={() => setFormIcon(key)}
+            {/* 제목 */}
+            <Text style={styles.label}>제목</Text>
+            <BottomSheetTextInput
+              value={formTitle}
+              onChangeText={setFormTitle}
+              placeholder="프로젝트 제목"
+              placeholderTextColor="#9CA3AF"
+              style={styles.input}
+            />
+
+            {/* 설명 */}
+            <Text style={styles.label}>설명</Text>
+            <BottomSheetTextInput
+              value={formDesc}
+              onChangeText={setFormDesc}
+              placeholder="프로젝트 설명 (선택)"
+              placeholderTextColor="#9CA3AF"
+              multiline
+              style={[styles.input, styles.inputMultiline]}
+              textAlignVertical="top"
+            />
+
+            {/* 그룹카드: 외관 + 상태 + 연결된 할일 */}
+            <View style={styles.groupCard}>
+              <SummaryRow
+                Icon={Palette}
+                label="외관"
+                suffixContent={
+                  <AppearanceSuffix icon={formIcon} color={formColor} />
+                }
+                onPress={goToAppearance}
+              />
+
+              {editingProject && statusMenuItems.length > 0 && (
+                <StatusRow
+                  project={editingProject}
+                  statusMenuItems={statusMenuItems}
+                  onStatusChange={handleSheetStatusChange}
+                />
+              )}
+
+              {editingProject && (
+                <LinkedTodosSection
+                  todos={linkedTodos}
+                  loading={loadingTodos}
+                  onUnlink={handleUnlink}
+                />
+              )}
+            </View>
+
+            {/* 저장 버튼 */}
+            <AnimatedPressable
+              onPress={handleSave}
+              hapticType="medium"
+              scaleValue={0.96}
+              style={[
+                styles.saveBtn,
+                {
+                  backgroundColor: formTitle.trim()
+                    ? primaryColor
+                    : '#D1D5DB',
+                },
+              ]}>
+              <Text style={styles.saveBtnText}>
+                {saving
+                  ? '저장 중...'
+                  : editingProject
+                    ? '수정하기'
+                    : '만들기'}
+              </Text>
+            </AnimatedPressable>
+          </Animated.View>
+        )}
+
+        {/* ── 외관 서브뷰 ── */}
+        {currentView === 'appearance' && (
+          <Animated.View
+            entering={SlideInRight.duration(250)}
+            exiting={SlideOutRight.duration(200)}>
+            {/* 서브뷰 헤더 */}
+            <View style={styles.subviewHeader}>
+              <AnimatedPressable
+                onPress={goToMain}
+                hapticType="selection"
+                scaleValue={0.9}
+                style={styles.backBtn}>
+                <ChevronLeft size={20} color="#6B7280" />
+              </AnimatedPressable>
+              <Text style={styles.sheetTitle}>외관 설정</Text>
+            </View>
+
+            <PreviewCard
+              title={formTitle}
+              description={formDesc}
+              color={formColor}
+              icon={formIcon}
+            />
+
+            {/* 색상 */}
+            <Text style={styles.label}>색상</Text>
+            <View style={styles.colorGrid}>
+              {PROJECT_COLORS.map(color => (
+                <AnimatedPressable
+                  key={color}
+                  onPress={() => setFormColor(color)}
+                  hapticType="selection"
+                  scaleValue={0.9}
                   style={[
-                    styles.iconBox,
-                    formIcon === key && {
-                      backgroundColor: primaryColor + '20',
-                      borderWidth: 1,
-                      borderColor: primaryColor + '66',
+                    styles.colorCircle,
+                    {backgroundColor: color},
+                    formColor === color && {
+                      borderWidth: 2.5,
+                      borderColor: '#1F2937',
                     },
-                  ]}>
-                  <Icon
-                    size={20}
-                    color={formIcon === key ? primaryColor : '#6B7280'}
-                  />
-                </TouchableOpacity>
+                  ]}
+                />
               ))}
             </View>
-          </View>
-        ))}
 
-        {/* 연결된 할일 (편집 모드) */}
-        {editingProject && (
-          <LinkedTodosSection
-            todos={linkedTodos}
-            loading={loadingTodos}
-            onUnlink={handleUnlink}
-          />
-        )}
-
-        {/* 상태 변경 (편집 모드) */}
-        {editingProject && statusMenuItems.length > 0 && (
-          <View style={styles.statusSection}>
-            <View style={styles.statusHeader}>
-              <ActivitySquare size={18} color="#6B7280" />
-              <Text style={styles.statusLabel}>상태</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  {backgroundColor: STATUS_LABELS[editingProject.status]?.bg},
-                ]}>
-                <Text
-                  style={[
-                    styles.statusBadgeText,
-                    {color: STATUS_LABELS[editingProject.status]?.color},
-                  ]}>
-                  {STATUS_LABELS[editingProject.status]?.label}
-                </Text>
-              </View>
-            </View>
-            <LiquidGlassMenu
-              systemIconName="arrow.triangle.2.circlepath"
-              iconColor="#6B7280"
-              size={36}
-              menuItems={statusMenuItems}
-              onSelect={(key) => handleSheetStatusChange(key as ProjectStatus)}
-              fallbackIcon={<RefreshCw size={16} color="#6B7280" />}
+            {/* 아이콘 */}
+            <Text style={styles.label}>아이콘</Text>
+            <InlineIconPicker
+              selectedIcon={formIcon}
+              onIconChange={handleIconChange}
+              popover
             />
-          </View>
-        )}
 
-        {/* 저장 버튼 */}
-        <AnimatedPressable
-          onPress={handleSave}
-          hapticType="medium"
-          scaleValue={0.96}
-          style={[
-            styles.saveBtn,
-            {backgroundColor: formTitle.trim() ? primaryColor : '#D1D5DB'},
-          ]}>
-          <Text style={styles.saveBtnText}>
-            {saving ? '저장 중...' : editingProject ? '수정하기' : '만들기'}
-          </Text>
-        </AnimatedPressable>
+            {/* 완료 버튼 */}
+            <AnimatedPressable
+              onPress={goToMain}
+              hapticType="medium"
+              scaleValue={0.96}
+              style={[styles.saveBtn, {backgroundColor: primaryColor}]}>
+              <Text style={styles.saveBtnText}>완료</Text>
+            </AnimatedPressable>
+          </Animated.View>
+        )}
       </BottomSheetScrollView>
     </BottomSheetModal>
   );
@@ -331,66 +497,32 @@ const styles = StyleSheet.create({
   inputMultiline: {
     minHeight: 80,
   },
-  paletteRow: {
+  groupCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    paddingHorizontal: 4,
+    marginBottom: 16,
+  },
+  subviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backBtn: {
+    padding: 4,
+    marginRight: 8,
+  },
+  colorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 20,
+    justifyContent: 'center',
   },
   colorCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  colorCircleSelected: {
-    borderWidth: 2,
-    borderColor: '#1F2937',
-  },
-  categoryLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#9CA3AF',
-    marginBottom: 6,
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    marginRight: 8,
-    marginBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F9FAFB',
-  },
-  statusSection: {
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingTop: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginLeft: 8,
-  },
-  statusBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginLeft: 8,
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
   },
   saveBtn: {
     paddingVertical: 16,

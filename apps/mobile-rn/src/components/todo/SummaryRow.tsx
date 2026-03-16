@@ -15,6 +15,8 @@ interface SummaryRowProps {
   iconColor?: string;
   label: string;
   suffix?: string;
+  /** 커스텀 trailing 콘텐츠 (suffix 대신 렌더링) */
+  suffixContent?: React.ReactNode;
   onPress?: () => void;
   showChevron?: boolean;
   /** Switch 모드: onPress 대신 Switch 표시 */
@@ -28,6 +30,7 @@ export function SummaryRow({
   iconColor = '#6B7280',
   label,
   suffix,
+  suffixContent,
   onPress,
   showChevron = true,
   switchValue,
@@ -45,7 +48,7 @@ export function SummaryRow({
         {label}
       </Text>
       <View style={styles.trailing}>
-        {suffix && <Text style={styles.suffix}>{suffix}</Text>}
+        {suffixContent ? suffixContent : suffix ? <Text style={styles.suffix}>{suffix}</Text> : null}
         {isSwitch ? (
           <Switch
             value={switchValue}
