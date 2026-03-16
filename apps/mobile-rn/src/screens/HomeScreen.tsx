@@ -43,6 +43,7 @@ import {
   PenLine,
   Trash2,
   Cpu,
+  SprayCan,
 } from 'lucide-react-native';
 import {useTheme} from '@/theme';
 
@@ -220,6 +221,15 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('ADHDUnderstanding'),
+      },
+      {
+        id: 'cleaning',
+        icon: <SprayCan size={20} color={primaryColor} />,
+        label: '청소/정리하기',
+        description: '오늘의 구역 마이크로 청소',
+        iconBgColor: PRIMARY_BG,
+        iconColor: primaryColor,
+        onPress: () => navigation.navigate('Cleaning'),
       },
     ],
     [navigation, primaryColor],
