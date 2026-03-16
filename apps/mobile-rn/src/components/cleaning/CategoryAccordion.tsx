@@ -22,7 +22,7 @@ interface CategoryAccordionProps {
   completedCount: number;
   totalCount: number;
   isTaskCompleted: (taskId: string) => boolean;
-  onToggleTask: (taskId: string) => void;
+  onToggleTask?: (taskId: string) => void;
   defaultOpen?: boolean;
   enterDelay?: number;
 }
@@ -82,7 +82,7 @@ export function CategoryAccordion({
               key={task.id}
               task={task}
               isCompleted={isTaskCompleted(task.id)}
-              onToggle={() => onToggleTask(task.id)}
+              onToggle={onToggleTask ? () => onToggleTask(task.id) : undefined}
             />
           ))}
         </View>

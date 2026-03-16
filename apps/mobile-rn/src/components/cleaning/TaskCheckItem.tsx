@@ -21,7 +21,7 @@ import type {CleaningTask} from '@/constants/cleaning-data';
 interface TaskCheckItemProps {
   task: CleaningTask;
   isCompleted: boolean;
-  onToggle: () => void;
+  onToggle?: () => void;
 }
 
 export function TaskCheckItem({task, isCompleted, onToggle}: TaskCheckItemProps) {
@@ -34,6 +34,7 @@ export function TaskCheckItem({task, isCompleted, onToggle}: TaskCheckItemProps)
   }));
 
   const handleToggle = () => {
+    if (!onToggle) return;
     checkScale.value = withSequence(
       withSpring(0.8, springs.snappy),
       withSpring(1.2, springs.bouncy),
@@ -46,7 +47,8 @@ export function TaskCheckItem({task, isCompleted, onToggle}: TaskCheckItemProps)
   return (
     <AnimatedPressable
       hapticType="light"
-      onPress={handleToggle}
+      onPress={onToggle ? handleToggle : undefined}
+      disabled={!onToggle}
       style={{
         flexDirection: 'row',
         alignItems: 'center',

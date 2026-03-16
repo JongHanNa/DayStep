@@ -2,11 +2,11 @@
  * CleaningScreen — 청소/정리 메인 화면
  * 에너지 적응형 마이크로태스크 + 요일별 구역 순환
  */
-import React, {useCallback, useEffect, useMemo, useRef} from 'react';
-import {View, Text, ScrollView} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {View, Text, ScrollView, Modal} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {Settings, ArrowLeft, SprayCan} from 'lucide-react-native';
+import {Settings, List, SprayCan, X} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {EnergySelector} from '@/components/cleaning/EnergySelector';
 import {FocusCard} from '@/components/cleaning/FocusCard';
@@ -34,6 +34,7 @@ export default function CleaningScreen() {
   const haptic = useHaptic();
   const settingsRef = useRef<ZoneSettingsSheetRef>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [taskListModalVisible, setTaskListModalVisible] = useState(false);
 
   const {
     energyLevel,
@@ -45,7 +46,6 @@ export default function CleaningScreen() {
     setEnergyLevel,
     setActiveTab,
     setFocusTask,
-    toggleTaskCompletion,
     isTaskCompleted,
     startTimer,
     tickTimer,
@@ -124,13 +124,6 @@ export default function CleaningScreen() {
     haptic.selection();
   }, [focusTask, visibleTasks, isTaskCompleted, resetTimer, setFocusTask, haptic]);
 
-  const handleToggleTask = useCallback(
-    (taskId: string) => {
-      toggleTaskCompletion(taskId);
-    },
-    [toggleTaskCompletion],
-  );
-
   return (
     <ScreenContainer gradient="warmBackground">
       <ScrollView
@@ -149,22 +142,18 @@ export default function CleaningScreen() {
           }}>
           <AnimatedPressable
             hapticType="light"
-            onPress={() => navigation.goBack()}
+            onPress={() => setTaskListModalVisible(true)}
             style={{width: 36, height: 36, borderRadius: 10, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center'}}>
-            <ArrowLeft size={20} color="#374151" />
+            <List size={20} color="#374151" />
           </AnimatedPressable>
 
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
             <SprayCan size={18} color={primaryColor} />
-            {activeTab === 'space' && todayZone ? (
-              <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937'}}>
-                오늘의 구역: {todayZone.name} ({DAY_LABELS[todayZone.dayOfWeek]}요일)
-              </Text>
-            ) : (
-              <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937'}}>
-                청소/정리
-              </Text>
-            )}
+            <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937'}}>
+              {todayZone
+                ? `오늘의 구역: ${todayZone.name} (${DAY_LABELS[todayZone.dayOfWeek]}요일)`
+                : '청소/정리'}
+            </Text>
           </View>
 
           <AnimatedPressable
@@ -209,66 +198,100 @@ export default function CleaningScreen() {
         {/* 스트릭 */}
         <StreakBar streak={streak} />
 
-        {/* 탭 선택 (공간/디지털/물건) */}
-        <Animated.View
-          entering={FadeInDown.delay(500).duration(400)}
-          style={{
-            flexDirection: 'row',
-            paddingHorizontal: 16,
-            marginTop: 12,
-            marginBottom: 8,
-            gap: 6,
-          }}>
-          {TABS.map(tab => {
-            const isActive = activeTab === tab.key;
-            return (
-              <AnimatedPressable
-                key={tab.key}
-                hapticType="selection"
-                onPress={() => setActiveTab(tab.key)}
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  borderRadius: 10,
-                  alignItems: 'center',
-                  backgroundColor: isActive ? primaryColor + '15' : '#F3F4F6',
-                  borderWidth: isActive ? 1.5 : 0,
-                  borderColor: isActive ? primaryColor : 'transparent',
-                }}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: isActive ? '700' : '400',
-                    color: isActive ? primaryColor : '#6B7280',
-                  }}>
-                  {tab.label}
-                </Text>
-              </AnimatedPressable>
-            );
-          })}
-        </Animated.View>
-
-        {/* 카테고리 아코디언 */}
-        <View style={{paddingHorizontal: 12}}>
-          {categories.map((category, index) => {
-            const catTasks = allTasks.filter(t => t.tab === activeTab && t.category === category);
-            const {completed, total} = getCategoryCompletionCount(category);
-            return (
-              <CategoryAccordion
-                key={category}
-                category={category}
-                tasks={catTasks}
-                completedCount={completed}
-                totalCount={total}
-                isTaskCompleted={isTaskCompleted}
-                onToggleTask={handleToggleTask}
-                defaultOpen={index === 0}
-                enterDelay={600 + index * 50}
-              />
-            );
-          })}
-        </View>
       </ScrollView>
+
+      {/* 전체 태스크 목록 모달 */}
+      <Modal
+        visible={taskListModalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setTaskListModalVisible(false)}>
+        <View style={{flex: 1, backgroundColor: '#FFFFFF', paddingTop: 60}}>
+          {/* 모달 헤더 */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 16,
+              paddingBottom: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: '#F3F4F6',
+            }}>
+            <Text style={{fontSize: 17, fontWeight: '700', color: '#1F2937'}}>
+              전체 태스크 목록
+            </Text>
+            <AnimatedPressable
+              hapticType="light"
+              onPress={() => setTaskListModalVisible(false)}
+              style={{width: 36, height: 36, borderRadius: 10, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center'}}>
+              <X size={20} color="#374151" />
+            </AnimatedPressable>
+          </View>
+
+          {/* 탭 선택 */}
+          <View
+            style={{
+              flexDirection: 'row',
+              paddingHorizontal: 16,
+              marginTop: 12,
+              marginBottom: 8,
+              gap: 6,
+            }}>
+            {TABS.map(tab => {
+              const isActive = activeTab === tab.key;
+              return (
+                <AnimatedPressable
+                  key={tab.key}
+                  hapticType="selection"
+                  onPress={() => setActiveTab(tab.key)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    borderRadius: 10,
+                    alignItems: 'center',
+                    backgroundColor: isActive ? primaryColor + '15' : '#F3F4F6',
+                    borderWidth: isActive ? 1.5 : 0,
+                    borderColor: isActive ? primaryColor : 'transparent',
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: isActive ? '700' : '400',
+                      color: isActive ? primaryColor : '#6B7280',
+                    }}>
+                    {tab.label}
+                  </Text>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+
+          {/* 카테고리 아코디언 (읽기 전용) */}
+          <ScrollView
+            contentContainerStyle={{paddingBottom: 40}}
+            showsVerticalScrollIndicator={false}>
+            <View style={{paddingHorizontal: 12}}>
+              {categories.map((category, index) => {
+                const catTasks = allTasks.filter(t => t.tab === activeTab && t.category === category);
+                const {completed, total} = getCategoryCompletionCount(category);
+                return (
+                  <CategoryAccordion
+                    key={category}
+                    category={category}
+                    tasks={catTasks}
+                    completedCount={completed}
+                    totalCount={total}
+                    isTaskCompleted={isTaskCompleted}
+                    defaultOpen={index === 0}
+                    enterDelay={index * 50}
+                  />
+                );
+              })}
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
 
       {/* 구역 설정 Bottom Sheet */}
       <ZoneSettingsSheet ref={settingsRef} />
