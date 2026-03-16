@@ -101,9 +101,10 @@ export default function CleaningScreen() {
 
   // 카테고리 그룹핑 (에너지 필터 없이 전체 기준)
   const categories = useMemo(() => {
-    const catSet = new Set(allTasks.map(t => t.category));
+    const tabTasks = allTasks.filter(t => t.tab === activeTab);
+    const catSet = new Set(tabTasks.map(t => t.category));
     return Array.from(catSet);
-  }, [allTasks]);
+  }, [allTasks, activeTab]);
 
   const handleStartTimer = useCallback(() => {
     if (!focusTask) return;
@@ -250,7 +251,7 @@ export default function CleaningScreen() {
         {/* 카테고리 아코디언 */}
         <View style={{paddingHorizontal: 12}}>
           {categories.map((category, index) => {
-            const catTasks = allTasks.filter(t => t.category === category);
+            const catTasks = allTasks.filter(t => t.tab === activeTab && t.category === category);
             const {completed, total} = getCategoryCompletionCount(category);
             return (
               <CategoryAccordion
