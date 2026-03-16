@@ -9,7 +9,7 @@ import {AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTheme} from '@/theme';
 import {shadows} from '@/theme/tokens';
-import {TAB_LABELS, TAB_COLORS} from '@/constants/cleaning-data';
+import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface FocusCardProps {
@@ -99,10 +99,28 @@ export function FocusCard({
         </Text>
       </View>
 
-      {/* 예상 시간 */}
-      <Text style={{fontSize: 12, color: '#9CA3AF', marginBottom: 16}}>
-        예상 {task.estimatedMinutes}분
-      </Text>
+      {/* 예상 시간 + 에너지 코스트 */}
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16}}>
+        <Text style={{fontSize: 12, color: '#9CA3AF'}}>
+          예상 {task.estimatedMinutes}분
+        </Text>
+        <View
+          style={{
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+            borderRadius: 8,
+            backgroundColor: ENERGY_COLORS[task.energyCost] + '15',
+          }}>
+          <Text
+            style={{
+              fontSize: 10,
+              fontWeight: '600',
+              color: ENERGY_COLORS[task.energyCost],
+            }}>
+            ⚡{task.energyCost}
+          </Text>
+        </View>
+      </View>
 
       {/* 버튼 영역 */}
       <View style={{flexDirection: 'row', gap: 12}}>

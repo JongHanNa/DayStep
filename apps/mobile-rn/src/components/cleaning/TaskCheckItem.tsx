@@ -15,7 +15,7 @@ import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
-import {FREQUENCY_LABELS, FREQUENCY_COLORS, TAB_LABELS, TAB_COLORS} from '@/constants/cleaning-data';
+import {FREQUENCY_LABELS, FREQUENCY_COLORS, TAB_LABELS, TAB_COLORS, ENERGY_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface TaskCheckItemProps {
@@ -82,6 +82,24 @@ export function TaskCheckItem({task, isCompleted, onToggle}: TaskCheckItemProps)
         }}>
         {task.title}
       </Text>
+
+      {/* 에너지 코스트 뱃지 */}
+      <View
+        style={{
+          paddingHorizontal: 5,
+          paddingVertical: 2,
+          borderRadius: 8,
+          backgroundColor: ENERGY_COLORS[task.energyCost] + '15',
+        }}>
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '600',
+            color: ENERGY_COLORS[task.energyCost],
+          }}>
+          ⚡{task.energyCost}
+        </Text>
+      </View>
 
       {/* 예상시간 */}
       <Text style={{fontSize: 11, color: '#9CA3AF', marginRight: 4}}>

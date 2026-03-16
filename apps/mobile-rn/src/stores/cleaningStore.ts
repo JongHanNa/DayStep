@@ -183,20 +183,17 @@ export const useCleaningStore = create<CleaningStoreState>()(
       },
 
       getFilteredTasks: () => {
-        const {tasks, activeTab, energyLevel, zones} = get();
+        const {tasks, energyLevel, zones} = get();
         const config = ENERGY_CONFIG[energyLevel];
         const dayOfWeek = new Date().getDay();
         const todayZone = zones.find(z => z.dayOfWeek === dayOfWeek);
 
-        let filtered = tasks.filter(t => t.tab === activeTab);
+        let filtered = tasks.filter(t => t.energyCost <= config.maxEnergyCost);
 
-        // 에너지 필터
-        filtered = filtered.filter(t => t.energyCost <= config.maxEnergyCost);
-
-        // 공간 탭: 오늘 구역 필터 (daily는 항상 포함)
-        if (activeTab === 'space' && todayZone) {
+        // 공간 태스크: 오늘 구역 필터 (daily는 항상 포함)
+        if (todayZone) {
           filtered = filtered.filter(
-            t => t.frequency === 'daily' || t.zoneId === todayZone.id,
+            t => t.tab !== 'space' || t.frequency === 'daily' || t.zoneId === todayZone.id,
           );
         }
 
@@ -207,10 +204,10 @@ export const useCleaningStore = create<CleaningStoreState>()(
 
       getCategoryCompletionCount: (category, date) => {
         const d = date ?? getToday();
-        const {tasks, completions, activeTab, energyLevel} = get();
+        const {tasks, completions, energyLevel} = get();
         const config = ENERGY_CONFIG[energyLevel];
         const categoryTasks = tasks.filter(
-          t => t.tab === activeTab && t.category === category && t.energyCost <= config.maxEnergyCost,
+          t => t.category === category && t.energyCost <= config.maxEnergyCost,
         );
         const dayCompletions = completions[d] ?? [];
         const completed = categoryTasks.filter(t =>

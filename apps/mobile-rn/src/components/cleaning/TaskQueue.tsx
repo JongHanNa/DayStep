@@ -5,7 +5,7 @@ import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
-import {TAB_LABELS, TAB_COLORS} from '@/constants/cleaning-data';
+import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface TaskQueueProps {
@@ -52,6 +52,22 @@ export function TaskQueue({tasks, onSelectTask}: TaskQueueProps) {
           <Text style={{fontSize: 13, color: '#6B7280', flex: 1}} numberOfLines={1}>
             {task.title}
           </Text>
+          <View
+            style={{
+              paddingHorizontal: 4,
+              paddingVertical: 1,
+              borderRadius: 4,
+              backgroundColor: ENERGY_COLORS[task.energyCost] + '15',
+            }}>
+            <Text
+              style={{
+                fontSize: 9,
+                fontWeight: '600',
+                color: ENERGY_COLORS[task.energyCost],
+              }}>
+              ⚡{task.energyCost}
+            </Text>
+          </View>
           <Text style={{fontSize: 11, color: '#9CA3AF'}}>
             {task.estimatedMinutes}분
           </Text>

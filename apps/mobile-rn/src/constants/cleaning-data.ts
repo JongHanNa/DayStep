@@ -203,3 +203,9 @@ export const TAB_COLORS: Record<CleaningTab, string> = {
   digital: '#0EA5E9',
   belongings: '#8B5CF6',
 };
+
+export const ENERGY_COLORS: Record<1 | 2 | 3, string> = {
+  1: '#10B981',  // 초록 (쉬움)
+  2: '#F59E0B',  // 주황 (보통)
+  3: '#EF4444',  // 빨강 (힘듦)
+};
