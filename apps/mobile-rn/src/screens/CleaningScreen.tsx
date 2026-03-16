@@ -13,7 +13,6 @@ import {FocusCard} from '@/components/cleaning/FocusCard';
 import {TaskQueue} from '@/components/cleaning/TaskQueue';
 import {StreakBar} from '@/components/cleaning/StreakBar';
 import {CategoryAccordion} from '@/components/cleaning/CategoryAccordion';
-import {ZoneSettingsSheet, type ZoneSettingsSheetRef} from '@/components/cleaning/ZoneSettingsSheet';
 import {useCleaningStore} from '@/stores/cleaningStore';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -32,9 +31,9 @@ export default function CleaningScreen() {
   const navigation = useNavigation();
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
-  const settingsRef = useRef<ZoneSettingsSheetRef>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [taskListModalVisible, setTaskListModalVisible] = useState(false);
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
 
   const {
     energyLevel,
@@ -52,6 +51,8 @@ export default function CleaningScreen() {
     pauseTimer,
     resumeTimer,
     resetTimer,
+    zones,
+    updateZoneDayOfWeek,
     getTodayZone,
     getAllTasks,
     getFilteredTasks,
@@ -158,7 +159,7 @@ export default function CleaningScreen() {
 
           <AnimatedPressable
             hapticType="light"
-            onPress={() => settingsRef.current?.open()}
+            onPress={() => setSettingsModalVisible(true)}
             style={{width: 36, height: 36, borderRadius: 10, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center'}}>
             <Settings size={18} color="#6B7280" />
           </AnimatedPressable>
@@ -293,8 +294,84 @@ export default function CleaningScreen() {
         </View>
       </Modal>
 
-      {/* 구역 설정 Bottom Sheet */}
-      <ZoneSettingsSheet ref={settingsRef} />
+      {/* 구역 설정 모달 */}
+      <Modal
+        visible={settingsModalVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setSettingsModalVisible(false)}>
+        <View style={{flex: 1, backgroundColor: '#FFFFFF', paddingTop: 60}}>
+          {/* 모달 헤더 */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 16,
+              paddingBottom: 12,
+              borderBottomWidth: 1,
+              borderBottomColor: '#F3F4F6',
+            }}>
+            <Text style={{fontSize: 17, fontWeight: '700', color: '#1F2937'}}>
+              구역 설정
+            </Text>
+            <AnimatedPressable
+              hapticType="light"
+              onPress={() => setSettingsModalVisible(false)}
+              style={{width: 36, height: 36, borderRadius: 10, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center'}}>
+              <X size={20} color="#374151" />
+            </AnimatedPressable>
+          </View>
+
+          <ScrollView
+            contentContainerStyle={{padding: 20, paddingBottom: 40}}
+            showsVerticalScrollIndicator={false}>
+            <Text style={{fontSize: 13, color: '#9CA3AF', marginBottom: 20}}>
+              각 구역이 어떤 요일에 표시될지 설정하세요
+            </Text>
+
+            {zones.map(zone => (
+              <View key={zone.id} style={{marginBottom: 20}}>
+                <Text style={{fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8}}>
+                  {zone.name}
+                </Text>
+                <View style={{flexDirection: 'row', gap: 6}}>
+                  {DAY_LABELS.map((label, index) => {
+                    const isActive = zone.dayOfWeek === index;
+                    return (
+                      <AnimatedPressable
+                        key={index}
+                        hapticType="selection"
+                        onPress={() => {
+                          haptic.selection();
+                          updateZoneDayOfWeek(zone.id, index);
+                        }}
+                        style={{
+                          flex: 1,
+                          paddingVertical: 8,
+                          borderRadius: 8,
+                          alignItems: 'center',
+                          backgroundColor: isActive ? primaryColor + '15' : '#F3F4F6',
+                          borderWidth: isActive ? 1.5 : 0,
+                          borderColor: isActive ? primaryColor : 'transparent',
+                        }}>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: isActive ? '700' : '400',
+                            color: isActive ? primaryColor : '#6B7280',
+                          }}>
+                          {label}
+                        </Text>
+                      </AnimatedPressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
