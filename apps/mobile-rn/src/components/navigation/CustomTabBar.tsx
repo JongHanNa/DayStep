@@ -60,7 +60,7 @@ const SF_SYMBOL_MAP: Record<string, string> = {
 const MORE_SCREENS = new Set([
   'AIPlan', 'AIChat', 'Guide',
   'Record', 'Cleanup', 'SleepRecord',
-  'ADHDUnderstanding',
+  'ADHDUnderstanding', 'Cleaning',
 ]);
 
 // iOS 26+ 네이티브 확장 패널용 SF Symbol 매핑
@@ -73,6 +73,7 @@ const MENU_SF_SYMBOLS: Record<string, string> = {
   Record: 'person.2',
   SleepRecord: 'moon.zzz',
   ADHDUnderstanding: 'brain.head.profile',
+  Cleaning: 'bubbles.and.sparkles',
 };
 
 const MENU_LABELS: Record<string, string> = {
@@ -84,12 +85,13 @@ const MENU_LABELS: Record<string, string> = {
   Record: '관계기록',
   SleepRecord: '수면기록',
   ADHDUnderstanding: 'ADHD이해',
+  Cleaning: '청소/정리하기',
 };
 
 // 네이티브 메뉴 아이템 순서 (MorePanel의 MENU_ITEMS와 동일)
 const MENU_SCREEN_ORDER = [
   'MoreLanding', 'AIPlan', 'AIChat', 'Guide',
-  'Cleanup', 'Record', 'SleepRecord',
+  'Cleanup', 'Cleaning', 'Record', 'SleepRecord',
   'ADHDUnderstanding',
 ];
 
