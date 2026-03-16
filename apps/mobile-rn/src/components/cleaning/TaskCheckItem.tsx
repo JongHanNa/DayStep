@@ -15,7 +15,7 @@ import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
-import {FREQUENCY_LABELS, FREQUENCY_COLORS} from '@/constants/cleaning-data';
+import {FREQUENCY_LABELS, FREQUENCY_COLORS, TAB_LABELS, TAB_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface TaskCheckItemProps {
@@ -87,6 +87,24 @@ export function TaskCheckItem({task, isCompleted, onToggle}: TaskCheckItemProps)
       <Text style={{fontSize: 11, color: '#9CA3AF', marginRight: 4}}>
         {task.estimatedMinutes}분
       </Text>
+
+      {/* 탭 뱃지 */}
+      <View
+        style={{
+          paddingHorizontal: 6,
+          paddingVertical: 2,
+          borderRadius: 8,
+          backgroundColor: TAB_COLORS[task.tab] + '15',
+        }}>
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '600',
+            color: TAB_COLORS[task.tab],
+          }}>
+          {TAB_LABELS[task.tab]}
+        </Text>
+      </View>
 
       {/* 주기 뱃지 */}
       <View

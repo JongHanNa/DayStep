@@ -9,6 +9,7 @@ import {AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTheme} from '@/theme';
 import {shadows} from '@/theme/tokens';
+import {TAB_LABELS, TAB_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface FocusCardProps {
@@ -52,6 +53,26 @@ export function FocusCard({
           alignItems: 'center',
         },
       ]}>
+      {/* 탭 뱃지 */}
+      <View
+        style={{
+          paddingHorizontal: 8,
+          paddingVertical: 2,
+          borderRadius: 8,
+          backgroundColor: TAB_COLORS[task.tab] + '15',
+          alignSelf: 'center',
+          marginBottom: 6,
+        }}>
+        <Text
+          style={{
+            fontSize: 10,
+            fontWeight: '600',
+            color: TAB_COLORS[task.tab],
+          }}>
+          {TAB_LABELS[task.tab]}
+        </Text>
+      </View>
+
       {/* 태스크 제목 */}
       <Text style={{fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 16}}>
         {task.title}

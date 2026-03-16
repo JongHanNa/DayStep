@@ -5,6 +5,7 @@ import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
+import {TAB_LABELS, TAB_COLORS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface TaskQueueProps {
@@ -32,6 +33,22 @@ export function TaskQueue({tasks, onSelectTask}: TaskQueueProps) {
           <Text style={{fontSize: 12, color: '#9CA3AF', width: 20, textAlign: 'right'}}>
             {index + 1}.
           </Text>
+          <View
+            style={{
+              paddingHorizontal: 4,
+              paddingVertical: 1,
+              borderRadius: 4,
+              backgroundColor: TAB_COLORS[task.tab] + '15',
+            }}>
+            <Text
+              style={{
+                fontSize: 9,
+                fontWeight: '600',
+                color: TAB_COLORS[task.tab],
+              }}>
+              {TAB_LABELS[task.tab]}
+            </Text>
+          </View>
           <Text style={{fontSize: 13, color: '#6B7280', flex: 1}} numberOfLines={1}>
             {task.title}
           </Text>

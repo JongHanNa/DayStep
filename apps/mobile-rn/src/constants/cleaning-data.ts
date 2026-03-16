@@ -187,3 +187,19 @@ export const FREQUENCY_COLORS: Record<CleaningFrequency, string> = {
   monthly: '#8B5CF6',
   seasonal: '#F59E0B',
 };
+
+// ============================================
+// 탭 라벨 / 색상
+// ============================================
+
+export const TAB_LABELS: Record<CleaningTab, string> = {
+  space: '공간',
+  digital: '디지털',
+  belongings: '물건',
+};
+
+export const TAB_COLORS: Record<CleaningTab, string> = {
+  space: '#059669',
+  digital: '#0EA5E9',
+  belongings: '#8B5CF6',
+};
