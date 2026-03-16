@@ -65,6 +65,7 @@ interface CleaningStoreState {
 
   // Computed helpers
   getTodayZone: () => CleaningZone | undefined;
+  getAllTasks: () => CleaningTask[];
   getFilteredTasks: () => CleaningTask[];
   getStreak: () => number;
   getCategoryCompletionCount: (category: string, date?: string) => {completed: number; total: number};
@@ -182,33 +183,34 @@ export const useCleaningStore = create<CleaningStoreState>()(
         return get().zones.find(z => z.dayOfWeek === dayOfWeek);
       },
 
-      getFilteredTasks: () => {
-        const {tasks, energyLevel, zones} = get();
-        const config = ENERGY_CONFIG[energyLevel];
+      getAllTasks: () => {
+        const {tasks, zones} = get();
         const dayOfWeek = new Date().getDay();
         const todayZone = zones.find(z => z.dayOfWeek === dayOfWeek);
 
-        let filtered = tasks.filter(t => t.energyCost <= config.maxEnergyCost);
-
-        // 공간 태스크: 오늘 구역 필터 (daily는 항상 포함)
         if (todayZone) {
-          filtered = filtered.filter(
+          return tasks.filter(
             t => t.tab !== 'space' || t.frequency === 'daily' || t.zoneId === todayZone.id,
           );
         }
+        return tasks;
+      },
 
-        return filtered;
+      getFilteredTasks: () => {
+        const {energyLevel} = get();
+        const config = ENERGY_CONFIG[energyLevel];
+        const allTasks = get().getAllTasks();
+
+        return allTasks.filter(t => t.energyCost <= config.maxEnergyCost);
       },
 
       getStreak: () => calculateStreak(get().completions),
 
       getCategoryCompletionCount: (category, date) => {
         const d = date ?? getToday();
-        const {tasks, completions, energyLevel} = get();
-        const config = ENERGY_CONFIG[energyLevel];
-        const categoryTasks = tasks.filter(
-          t => t.category === category && t.energyCost <= config.maxEnergyCost,
-        );
+        const {completions} = get();
+        const allTasks = get().getAllTasks();
+        const categoryTasks = allTasks.filter(t => t.category === category);
         const dayCompletions = completions[d] ?? [];
         const completed = categoryTasks.filter(t =>
           dayCompletions.some(c => c.taskId === t.id),

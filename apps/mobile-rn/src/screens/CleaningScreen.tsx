@@ -53,6 +53,7 @@ export default function CleaningScreen() {
     resumeTimer,
     resetTimer,
     getTodayZone,
+    getAllTasks,
     getFilteredTasks,
     getStreak,
     getCategoryCompletionCount,
@@ -72,6 +73,7 @@ export default function CleaningScreen() {
   }, [isTimerRunning, tickTimer]);
 
   const todayZone = getTodayZone();
+  const allTasks = getAllTasks();
   const filteredTasks = getFilteredTasks();
   const streak = getStreak();
 
@@ -97,11 +99,11 @@ export default function CleaningScreen() {
     return visibleTasks.filter(t => t.id !== focusTask.id);
   }, [focusTask, visibleTasks]);
 
-  // 카테고리 그룹핑
+  // 카테고리 그룹핑 (에너지 필터 없이 전체 기준)
   const categories = useMemo(() => {
-    const catSet = new Set(filteredTasks.map(t => t.category));
+    const catSet = new Set(allTasks.map(t => t.category));
     return Array.from(catSet);
-  }, [filteredTasks]);
+  }, [allTasks]);
 
   const handleStartTimer = useCallback(() => {
     if (!focusTask) return;
@@ -248,7 +250,7 @@ export default function CleaningScreen() {
         {/* 카테고리 아코디언 */}
         <View style={{paddingHorizontal: 12}}>
           {categories.map((category, index) => {
-            const catTasks = filteredTasks.filter(t => t.category === category);
+            const catTasks = allTasks.filter(t => t.category === category);
             const {completed, total} = getCategoryCompletionCount(category);
             return (
               <CategoryAccordion
