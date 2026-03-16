@@ -9,6 +9,7 @@ import {Text, View, TouchableOpacity} from 'react-native';
 import {AnimatedCard} from '@/components/core';
 import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {Edit3, Trash2, RefreshCw} from 'lucide-react-native';
+import {resolveTodoIcon} from '@/lib/iconMap';
 import {STATUS_LABELS, getStatusMenuItems} from './constants';
 import type {Project, ProjectStatus} from '@/types/project';
 
@@ -47,9 +48,13 @@ export function ProjectCard({
                 marginRight: 8,
               }}
             />
-            {project.icon && (
-              <Text className="text-lg mr-2">{project.icon}</Text>
-            )}
+            {project.icon && (() => {
+              const IconComponent = resolveTodoIcon(project.icon);
+              if (IconComponent) {
+                return <IconComponent size={18} color="#6B7280" style={{marginRight: 8}} />;
+              }
+              return <Text className="text-lg mr-2">{project.icon}</Text>;
+            })()}
             <Text
               className="text-base font-semibold text-gray-800 flex-1"
               numberOfLines={1}>

@@ -134,11 +134,11 @@ struct ContactNudgeContent: View {
               onContactPress?(contact.person.name)
             }) {
               HStack(spacing: 4) {
-                Image(systemName: "phone")
+                Image(systemName: "square.and.pencil")
                   .font(.system(size: 12))
                   .foregroundColor(Color(hex: "#EC4899"))
 
-                Text("안부")
+                Text("소식기록")
                   .font(.system(size: 12, weight: .medium))
                   .foregroundColor(Color(hex: "#EC4899"))
               }

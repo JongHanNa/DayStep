@@ -39,6 +39,7 @@ struct LiquidGlassMenuContent: View {
         .foregroundStyle(Color(hex: state.iconColor))
         .frame(width: state.buttonSize, height: state.buttonSize)
     }
+    .glassEffect(.regular, in: .circle)
   }
 }
 

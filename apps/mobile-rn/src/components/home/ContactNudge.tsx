@@ -201,7 +201,7 @@ export function ContactNudge({
                     <Text
                       className="text-xs font-medium ml-1"
                       style={{color: '#EC4899'}}>
-                      안부
+                      소식기록
                     </Text>
                   </AnimatedPressable>
                 </View>

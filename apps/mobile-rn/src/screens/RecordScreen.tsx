@@ -4,7 +4,7 @@
  * Step 1: 사람 중심 카드 + 인라인 소식/감사 프리뷰
  */
 import React, {useState, useCallback, useEffect, useMemo, useRef} from 'react';
-import {useRoute} from '@react-navigation/native';
+import {useRoute, useNavigation} from '@react-navigation/native';
 import {
   Text,
   View,
@@ -32,7 +32,6 @@ import {
   Search,
   Plus,
   Heart,
-  Check,
   Users,
   Clock,
   MoreHorizontal,
@@ -270,6 +269,7 @@ function CollapsibleFields({
 
 export default function RecordScreen() {
   const route = useRoute<any>();
+  const navigation = useNavigation();
   const personNameParam = route.params?.personName as string | undefined;
   const user = useAuthStore(s => s.user);
   const {primaryColor} = useTheme();
@@ -280,7 +280,6 @@ export default function RecordScreen() {
     loadRecommendations,
     addPerson,
     addInteraction,
-    addInteractionWithTodo,
     getRecentNotesPerPerson,
     getRelationshipStats,
   } = useCherishedPeopleStore();
@@ -308,8 +307,6 @@ export default function RecordScreen() {
   const [requestFromThem, setRequestFromThem] = useState('');
   const [requestToThem, setRequestToThem] = useState('');
   const [meetingNote, setMeetingNote] = useState('');
-  const [todoTitle, setTodoTitle] = useState('');
-  const [wantToCreateTodo, setWantToCreateTodo] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -388,14 +385,8 @@ export default function RecordScreen() {
       meeting_note: meetingNote.trim() || undefined,
     };
 
-    let success = false;
-    if (wantToCreateTodo && todoTitle.trim()) {
-      const result = await addInteractionWithTodo(user.id, input, todoTitle.trim());
-      success = !!result;
-    } else {
-      const result = await addInteraction(user.id, input);
-      success = !!result;
-    }
+    const result = await addInteraction(user.id, input);
+    const success = !!result;
 
     setSaving(false);
     if (success) {
@@ -412,8 +403,6 @@ export default function RecordScreen() {
     requestFromThem,
     requestToThem,
     meetingNote,
-    wantToCreateTodo,
-    todoTitle,
     checkLimit,
   ]);
 
@@ -427,8 +416,6 @@ export default function RecordScreen() {
     setRequestFromThem('');
     setRequestToThem('');
     setMeetingNote('');
-    setTodoTitle('');
-    setWantToCreateTodo(false);
   }, []);
 
   /** 사람 카드에 표시할 마지막 연락 메타 정보 */
@@ -499,7 +486,13 @@ export default function RecordScreen() {
               entering={FadeInDown.duration(400)}
               className="px-4 pt-2 pb-4 flex-row items-center">
               <AnimatedPressable
-                onPress={() => setStep('select-person')}
+                onPress={() => {
+                  if (personNameParam) {
+                    navigation.goBack();
+                  } else {
+                    setStep('select-person');
+                  }
+                }}
                 hapticType="light"
                 scaleValue={0.97}
                 className="flex-row items-center"
@@ -510,18 +503,6 @@ export default function RecordScreen() {
                 </Text>
               </AnimatedPressable>
             </Animated.View>
-
-            {/* 관심 표현 방식 */}
-            <View className="px-4 mb-4">
-              <Text className="text-sm font-medium text-gray-700 mb-2">
-                어떤 관심을 표현하셨나요?
-              </Text>
-              <InteractionTypeGrid
-                selected={interactionType}
-                onSelect={setInteractionType}
-                primaryColor={primaryColor}
-              />
-            </View>
 
             {/* 들은 소식 (기본 노출) */}
             <View className="px-4 mb-4">
@@ -555,6 +536,18 @@ export default function RecordScreen() {
               />
             </View>
 
+            {/* 내가 표현한 관심 */}
+            <View className="px-4 mb-4">
+              <Text className="text-sm font-medium text-gray-700 mb-2">
+                내가 표현한 관심
+              </Text>
+              <InteractionTypeGrid
+                selected={interactionType}
+                onSelect={setInteractionType}
+                primaryColor={primaryColor}
+              />
+            </View>
+
             {/* 접힌 그룹: 받은 부탁 + 한 부탁 + 회의 메모 */}
             <CollapsibleFields
               requestFromThem={requestFromThem}
@@ -565,37 +558,6 @@ export default function RecordScreen() {
               setMeetingNote={setMeetingNote}
               primaryColor={primaryColor}
             />
-
-            {/* 할일 연동 */}
-            <View className="px-4 mb-6">
-              <AnimatedPressable
-                onPress={() => setWantToCreateTodo(!wantToCreateTodo)}
-                hapticType="light"
-                scaleValue={0.98}
-                className="flex-row items-center">
-                <View
-                  style={wantToCreateTodo ? {backgroundColor: primaryColor, borderColor: primaryColor} : undefined}
-                  className={`w-5 h-5 rounded border mr-2 items-center justify-center ${
-                    wantToCreateTodo ? '' : 'border-gray-300'
-                  }`}>
-                  {wantToCreateTodo && <Check size={14} color="#FFFFFF" />}
-                </View>
-                <Text className="text-sm text-gray-700">
-                  해드리고 싶은 것을 할일로 추가
-                </Text>
-              </AnimatedPressable>
-              {wantToCreateTodo && (
-                <Animated.View entering={FadeInDown.duration(300)}>
-                  <TextInput
-                    value={todoTitle}
-                    onChangeText={setTodoTitle}
-                    placeholder="할일 제목"
-                    placeholderTextColor="#9CA3AF"
-                    className="bg-white rounded-xl p-4 text-sm text-gray-800 mt-2"
-                  />
-                </Animated.View>
-              )}
-            </View>
 
             {/* 저장 버튼 */}
             <View className="px-4">

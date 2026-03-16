@@ -41,11 +41,9 @@ import {
   Link,
   Lightbulb,
   PenLine,
-  BarChart3,
   Trash2,
   Cpu,
 } from 'lucide-react-native';
-import {SCREEN_REGISTRY} from '@daystep/shared-core/constants';
 import {useTheme} from '@/theme';
 
 function getGreeting(): {text: string; Icon: React.FC<any>; gradient: string[]} {
@@ -213,16 +211,6 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('SleepRecord'),
-      },
-      {
-        id: 'activity',
-        icon: <BarChart3 size={20} color={primaryColor} />,
-        label: '활동 살펴보기',
-        description: '활동 패턴과 생산성 분석',
-        iconBgColor: PRIMARY_BG,
-        iconColor: primaryColor,
-        onPress: () => navigation.navigate('Activity'),
-        isPro: SCREEN_REGISTRY.activity.isPro,
       },
       {
         id: 'adhd-understanding',

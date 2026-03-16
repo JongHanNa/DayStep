@@ -59,7 +59,7 @@ const SF_SYMBOL_MAP: Record<string, string> = {
 // HomeStack 내 "More 소속" 화면 목록
 const MORE_SCREENS = new Set([
   'AIPlan', 'AIChat', 'Guide',
-  'Record', 'Activity', 'Cleanup', 'SleepRecord',
+  'Record', 'Cleanup', 'SleepRecord',
   'ADHDUnderstanding',
 ]);
 
@@ -71,7 +71,6 @@ const MENU_SF_SYMBOLS: Record<string, string> = {
   Guide: 'message',
   Cleanup: 'trash',
   Record: 'person.2',
-  Activity: 'waveform.path.ecg',
   SleepRecord: 'moon.zzz',
   ADHDUnderstanding: 'brain.head.profile',
 };
@@ -83,7 +82,6 @@ const MENU_LABELS: Record<string, string> = {
   Guide: 'Claude',
   Cleanup: '정리',
   Record: '관계기록',
-  Activity: '활동',
   SleepRecord: '수면기록',
   ADHDUnderstanding: 'ADHD이해',
 };
@@ -91,7 +89,7 @@ const MENU_LABELS: Record<string, string> = {
 // 네이티브 메뉴 아이템 순서 (MorePanel의 MENU_ITEMS와 동일)
 const MENU_SCREEN_ORDER = [
   'MoreLanding', 'AIPlan', 'AIChat', 'Guide',
-  'Cleanup', 'Record', 'Activity', 'SleepRecord',
+  'Cleanup', 'Record', 'SleepRecord',
   'ADHDUnderstanding',
 ];
 

@@ -25,6 +25,7 @@ import {STATUS_LABELS, getStatusMenuItems} from './constants';
 import {ActivitySquare, RefreshCw} from 'lucide-react-native';
 import {useTheme} from '@/theme';
 import {PROJECT_COLORS, PROJECT_ICONS} from '@/types/project';
+import {ICON_CATEGORIES} from '@/lib/iconMap';
 import type {Project, ProjectStatus} from '@/types/project';
 import type {Todo} from '@daystep/shared-core';
 
@@ -213,23 +214,31 @@ export const ProjectFormSheet = forwardRef<
 
         {/* 아이콘 */}
         <Text style={styles.label}>아이콘</Text>
-        <View style={styles.paletteRow}>
-          {PROJECT_ICONS.map(icon => (
-            <TouchableOpacity
-              key={icon}
-              onPress={() => setFormIcon(icon)}
-              style={[
-                styles.iconBox,
-                formIcon === icon && {
-                  backgroundColor: primaryColor + '20',
-                  borderWidth: 1,
-                  borderColor: primaryColor + '66',
-                },
-              ]}>
-              <Text style={styles.iconText}>{icon}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {ICON_CATEGORIES.map(category => (
+          <View key={category.label} style={{marginBottom: 12}}>
+            <Text style={styles.categoryLabel}>{category.label}</Text>
+            <View style={styles.paletteRow}>
+              {category.icons.map(({key, Icon}) => (
+                <TouchableOpacity
+                  key={key}
+                  onPress={() => setFormIcon(key)}
+                  style={[
+                    styles.iconBox,
+                    formIcon === key && {
+                      backgroundColor: primaryColor + '20',
+                      borderWidth: 1,
+                      borderColor: primaryColor + '66',
+                    },
+                  ]}>
+                  <Icon
+                    size={20}
+                    color={formIcon === key ? primaryColor : '#6B7280'}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ))}
 
         {/* 연결된 할일 (편집 모드) */}
         {editingProject && (
@@ -338,6 +347,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#1F2937',
   },
+  categoryLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#9CA3AF',
+    marginBottom: 6,
+  },
   iconBox: {
     width: 40,
     height: 40,
@@ -347,9 +362,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F9FAFB',
-  },
-  iconText: {
-    fontSize: 18,
   },
   statusSection: {
     borderTopWidth: 1,

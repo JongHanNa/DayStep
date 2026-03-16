@@ -25,7 +25,6 @@ import AIPlanScreen from '../screens/AIPlanScreen';
 import AIChatScreen from '../screens/AIChatScreen';
 import GuideScreen from '../screens/GuideScreen';
 import RecordScreen from '../screens/RecordScreen';
-import ActivityScreen from '../screens/ActivityScreen';
 import CleanupScreen from '../screens/CleanupScreen';
 import SleepRecordScreen from '../screens/SleepRecordScreen';
 import ADHDUnderstandingScreen from '../screens/ADHDUnderstandingScreen';
@@ -59,7 +58,6 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="AIChat" component={AIChatScreen} />
       <HomeStack.Screen name="Guide" component={GuideScreen} />
       <HomeStack.Screen name="Record" component={RecordScreen} />
-      <HomeStack.Screen name="Activity" component={ActivityScreen} />
       <HomeStack.Screen name="Cleanup" component={CleanupScreen} />
       <HomeStack.Screen name="SleepRecord" component={SleepRecordScreen} />
       <HomeStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
@@ -84,7 +82,6 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="AIChat" component={AIChatScreen} />
       <MoreStack.Screen name="Guide" component={GuideScreen} />
       <MoreStack.Screen name="Record" component={RecordScreen} />
-      <MoreStack.Screen name="Activity" component={ActivityScreen} />
       <MoreStack.Screen name="Cleanup" component={CleanupScreen} />
       <MoreStack.Screen name="SleepRecord" component={SleepRecordScreen} />
       <MoreStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
