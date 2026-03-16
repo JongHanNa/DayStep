@@ -12,4 +12,5 @@ export {NativeProgressCardNative} from './NativeProgressCard';
 export {NativeGroupSectionNative} from './NativeGroupSection';
 export {NativeMissionCardNative} from './NativeMissionCard';
 export {NativeContactNudgeNative} from './NativeContactNudge';
+export {NativeSleepActionButton} from './NativeSleepActionButton';
 export {isIOS26Plus} from './utils';

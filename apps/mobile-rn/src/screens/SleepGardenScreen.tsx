@@ -2,13 +2,12 @@
  * SleepGardenScreen — 수면 정원 메인 화면
  * 30일 정원 그리드 + 스트릭 + 목표 설정 + 세션 FAB
  */
-import React, {useCallback, useEffect, useRef, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import {View, Text, StyleSheet, ScrollView, Pressable} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {TreePine, Moon, Sun, Settings, Shield} from 'lucide-react-native';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
-import {SleepGoalBottomSheet, type SleepGoalBottomSheetRef} from '@/components/sleep/SleepGoalBottomSheet';
 import {useSleepStore, type GardenDay} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
@@ -68,7 +67,6 @@ function GardenCell({day, primaryColor}: {day: GardenDay; primaryColor: string})
 export default function SleepGardenScreen() {
   const navigation = useNavigation<any>();
   const {primaryColor} = useTheme();
-  const goalSheetRef = useRef<SleepGoalBottomSheetRef>(null);
 
   const {
     sleepGoalTime,
@@ -194,7 +192,7 @@ export default function SleepGardenScreen() {
               </View>
             </View>
             <Pressable
-              onPress={() => goalSheetRef.current?.open()}
+              onPress={() => navigation.navigate('SleepGoal')}
               hitSlop={12}>
               <Settings size={20} color="#9CA3AF" />
             </Pressable>
@@ -232,8 +230,6 @@ export default function SleepGardenScreen() {
         <Text style={styles.fabLabel}>잠들기 시작</Text>
       </View>
 
-      {/* 바텀시트 */}
-      <SleepGoalBottomSheet ref={goalSheetRef} />
     </ScreenContainer>
   );
 }

@@ -31,6 +31,8 @@ import SleepGardenScreen from '../screens/SleepGardenScreen';
 import SleepSessionScreen from '../screens/SleepSessionScreen';
 import ADHDUnderstandingScreen from '../screens/ADHDUnderstandingScreen';
 import CleaningScreen from '../screens/CleaningScreen';
+import SleepGoalScreen from '../screens/SleepGoalScreen';
+import ScreenTimeAppsScreen from '../screens/ScreenTimeAppsScreen';
 
 /** MonthlyPlanner 리다이렉트: Planner 탭으로 이동 + viewMode='monthlyPlanner' */
 function MonthlyPlannerRedirect() {
@@ -64,6 +66,8 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Cleanup" component={CleanupScreen} />
       <HomeStack.Screen name="SleepGarden" component={SleepGardenScreen} />
       <HomeStack.Screen name="SleepSession" component={SleepSessionScreen}  />
+      <HomeStack.Screen name="SleepGoal" component={SleepGoalScreen} />
+      <HomeStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
       <HomeStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
       <HomeStack.Screen name="Cleaning" component={CleaningScreen} />
     </HomeStack.Navigator>
@@ -90,6 +94,8 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="Cleanup" component={CleanupScreen} />
       <MoreStack.Screen name="SleepGarden" component={SleepGardenScreen} />
       <MoreStack.Screen name="SleepSession" component={SleepSessionScreen}  />
+      <MoreStack.Screen name="SleepGoal" component={SleepGoalScreen} />
+      <MoreStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
       <MoreStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
       <MoreStack.Screen name="Cleaning" component={CleaningScreen} />
     </MoreStack.Navigator>

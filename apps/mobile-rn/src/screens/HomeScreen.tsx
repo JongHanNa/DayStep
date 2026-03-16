@@ -322,32 +322,32 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* 4. 계획 세우기 (Blue) */}
-          <View className="mt-6">
-            <GroupSection
-              dotColor={primaryColor}
-              title="계획 세우기"
-              items={planItems}
-              enterDelay={400}
-            />
-          </View>
-
-          {/* 5. 생각과 기억 (Violet) */}
-          <View className="mt-6">
-            <GroupSection
-              dotColor={primaryColor}
-              title="생각과 기억"
-              items={thoughtItems}
-              enterDelay={500}
-            />
-          </View>
-
-          {/* 6. 일상 돌보기 (Emerald) */}
+          {/* 4. 일상 돌보기 (Emerald) */}
           <View className="mt-6">
             <GroupSection
               dotColor={primaryColor}
               title="일상 돌보기"
               items={careItems}
+              enterDelay={400}
+            />
+          </View>
+
+          {/* 5. 계획 세우기 (Blue) */}
+          <View className="mt-6">
+            <GroupSection
+              dotColor={primaryColor}
+              title="계획 세우기"
+              items={planItems}
+              enterDelay={500}
+            />
+          </View>
+
+          {/* 6. 생각과 기억 (Violet) */}
+          <View className="mt-6">
+            <GroupSection
+              dotColor={primaryColor}
+              title="생각과 기억"
+              items={thoughtItems}
               enterDelay={600}
             />
           </View>

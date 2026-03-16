@@ -1,9 +1,12 @@
 /**
  * SleepSessionScreen — 실시간 수면 세션 화면
  * 다크 그라디언트 + TimerRing + 호흡 애니메이션
+ *
+ * Phase 2: 네이티브 기상 버튼 + ActionSheetIOS 포기 확인
+ * Phase 4: 스크린타임 바이패스 감지
  */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {View, Text, StyleSheet, AppState} from 'react-native';
+import {View, Text, StyleSheet, AppState, ActionSheetIOS, Platform} from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -17,11 +20,12 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {TreePine} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TimerRing} from '@/components/core/TimerRing';
-import {AbandonConfirmModal} from '@/components/sleep/AbandonConfirmModal';
+import {NativeSleepActionButton} from '@/components/native';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useSleepStore} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
 import {differenceInSeconds} from 'date-fns';
+import {getAuthorizationStatus} from '@/lib/screenTimeManager';
 
 const RING_SIZE = 280;
 const TEAL = '#059669';
@@ -49,6 +53,7 @@ export default function SleepSessionScreen() {
 
   const {
     sessionState,
+    screenTimeLinkEnabled,
     startSleepSession,
     completeSleepSession,
     abandonSleepSession,
@@ -56,9 +61,9 @@ export default function SleepSessionScreen() {
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [progress, setProgress] = useState(0);
-  const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [goalReached, setGoalReached] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickRef = useRef(0);
 
   // 세션 시작 (idle 상태에서 진입 시)
   useFocusEffect(
@@ -88,16 +93,30 @@ export default function SleepSessionScreen() {
     transform: [{scale: breathScale.value}],
   }));
 
-  // 타이머 갱신 (매초)
+  // 타이머 갱신 (매초) + 스크린타임 바이패스 감지 (30초마다)
   useEffect(() => {
-    intervalRef.current = setInterval(() => {
+    intervalRef.current = setInterval(async () => {
       setCurrentTime(new Date());
+
+      // Phase 4: 30초마다 스크린타임 권한 체크
+      tickRef.current += 1;
+      if (tickRef.current % 30 === 0 && screenTimeLinkEnabled) {
+        try {
+          const status = await getAuthorizationStatus();
+          if (status !== 'approved') {
+            await abandonSleepSession();
+            navigation.goBack();
+          }
+        } catch {
+          // 스크린타임 체크 실패 시 무시 (세션 유지)
+        }
+      }
     }, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [screenTimeLinkEnabled, abandonSleepSession, navigation]);
 
   // progress 계산
   useEffect(() => {
@@ -115,15 +134,28 @@ export default function SleepSessionScreen() {
     }
   }, [currentTime, sessionState, goalReached, haptic]);
 
-  // AppState 리스너: foreground 복귀 시 즉시 재계산
+  // AppState 리스너: foreground 복귀 시 즉시 재계산 + 스크린타임 체크
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextState) => {
+    const subscription = AppState.addEventListener('change', async (nextState) => {
       if (nextState === 'active') {
         setCurrentTime(new Date());
+
+        // Phase 4: foreground 복귀 시 스크린타임 권한 체크
+        if (screenTimeLinkEnabled) {
+          try {
+            const status = await getAuthorizationStatus();
+            if (status !== 'approved') {
+              await abandonSleepSession();
+              navigation.goBack();
+            }
+          } catch {
+            // 체크 실패 시 무시
+          }
+        }
       }
     });
     return () => subscription.remove();
-  }, []);
+  }, [screenTimeLinkEnabled, abandonSleepSession, navigation]);
 
   // 남은 시간 계산
   const remainingSeconds = sessionState.startedAt
@@ -140,11 +172,26 @@ export default function SleepSessionScreen() {
     navigation.goBack();
   }, [completeSleepSession, navigation, haptic]);
 
-  const handleAbandon = useCallback(async () => {
-    setShowAbandonModal(false);
-    haptic.warning();
-    await abandonSleepSession();
-    navigation.goBack();
+  // Phase 2B: 네이티브 ActionSheet로 포기 확인
+  const showAbandonSheet = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['계속 자기', '포기하기'],
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 0,
+          title: '정말 포기할까요?',
+          message: '수면 기록이 실패로 저장됩니다',
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 1) {
+            haptic.warning();
+            await abandonSleepSession();
+            navigation.goBack();
+          }
+        },
+      );
+    }
   }, [abandonSleepSession, navigation, haptic]);
 
   const timerColor = goalReached ? '#22C55E' : TEAL;
@@ -189,16 +236,14 @@ export default function SleepSessionScreen() {
         {/* 하단 버튼 */}
         <Animated.View entering={FadeInDown.delay(300).duration(400)} style={styles.bottomControls}>
           {goalReached ? (
-            <AnimatedPressable
+            <NativeSleepActionButton
+              title="기상하기"
+              backgroundColor="#22C55E"
               onPress={handleComplete}
-              hapticType="medium"
-              scaleValue={0.95}
-              style={[styles.wakeUpBtn, {backgroundColor: '#22C55E'}]}>
-              <Text style={styles.wakeUpBtnText}>기상하기</Text>
-            </AnimatedPressable>
+            />
           ) : (
             <AnimatedPressable
-              onPress={() => setShowAbandonModal(true)}
+              onPress={showAbandonSheet}
               hapticType="light"
               scaleValue={0.95}
               style={styles.abandonBtn}>
@@ -207,13 +252,6 @@ export default function SleepSessionScreen() {
           )}
         </Animated.View>
       </View>
-
-      {/* 포기 확인 모달 */}
-      <AbandonConfirmModal
-        visible={showAbandonModal}
-        onContinue={() => setShowAbandonModal(false)}
-        onAbandon={handleAbandon}
-      />
     </ScreenContainer>
   );
 }
@@ -276,20 +314,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: 'rgba(255,255,255,0.5)',
-  },
-  wakeUpBtn: {
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  wakeUpBtnText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
 });

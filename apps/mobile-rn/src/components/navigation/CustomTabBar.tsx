@@ -236,6 +236,12 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     return null;
   }
 
+  // 수면 세션 활성 시 탭바 숨김
+  const isSleepActive = activeHomeScreen === 'SleepSession' || activeMoreScreen === 'SleepSession';
+  if (isSleepActive) {
+    return null;
+  }
+
   // iOS 26+: 네이티브 Liquid Glass 탭바 (자체 확장 방식)
   if (isIOS26Plus) {
     const showLabels = true;

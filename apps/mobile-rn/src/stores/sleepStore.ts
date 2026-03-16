@@ -7,6 +7,7 @@ import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage} from '@/lib/mmkv';
 import {format, startOfMonth, endOfMonth, differenceInMinutes, subDays, addDays} from 'date-fns';
+import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield} from '@/lib/screenTimeManager';
 
 // ============================================
 // Types
@@ -100,7 +101,7 @@ interface SleepStoreState {
   setWakeGoalTime: (time: string) => void;
   setScreenTimeLinkEnabled: (v: boolean) => void;
   getGoalDurationMinutes: () => number;
-  startSleepSession: () => void;
+  startSleepSession: () => Promise<void>;
   completeSleepSession: () => Promise<void>;
   abandonSleepSession: () => Promise<void>;
   recoverSession: () => Promise<void>;
@@ -313,11 +314,17 @@ export const useSleepStore = create<SleepStoreState>()(
         return calcGoalMinutes(sleepGoalTime, wakeGoalTime);
       },
 
-      startSleepSession: () => {
-        const {sleepGoalTime, wakeGoalTime} = get();
+      startSleepSession: async () => {
+        const {sleepGoalTime, wakeGoalTime, screenTimeLinkEnabled} = get();
         const goalDuration = calcGoalMinutes(sleepGoalTime, wakeGoalTime);
         const now = new Date();
         const expected = new Date(now.getTime() + goalDuration * 60 * 1000);
+
+        // 스크린타임 연동 활성 시 shield 적용
+        if (screenTimeLinkEnabled) {
+          await shieldAllExceptAllowed();
+          await scheduleAutoUnshield(expected);
+        }
 
         set({
           sessionState: {
@@ -332,6 +339,9 @@ export const useSleepStore = create<SleepStoreState>()(
       completeSleepSession: async () => {
         const {sessionState, upsertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
+
+        // 스크린타임 차단 해제 (항상 호출 — 안전)
+        await clearShield();
 
         const now = new Date();
         const startedAt = new Date(sessionState.startedAt);
@@ -355,6 +365,9 @@ export const useSleepStore = create<SleepStoreState>()(
       abandonSleepSession: async () => {
         const {sessionState, upsertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
+
+        // 스크린타임 차단 해제 (항상 호출 — 안전)
+        await clearShield();
 
         const now = new Date();
         const startedAt = new Date(sessionState.startedAt);

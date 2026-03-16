@@ -54,6 +54,20 @@ class LiquidGlassMenuUIView: UIView {
   private var hostingController: UIHostingController<AnyView>?
   private var hasSetUp = false
 
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    backgroundColor = .clear
+    clipsToBounds = true
+    isOpaque = false
+  }
+
+  required init?(coder: NSCoder) {
+    super.init(coder: coder)
+    backgroundColor = .clear
+    clipsToBounds = true
+    isOpaque = false
+  }
+
   // MARK: Prop Setters
 
   @objc func setSystemIconName(_ value: NSString) {
@@ -69,6 +83,7 @@ class LiquidGlassMenuUIView: UIView {
     let size = CGFloat(value.doubleValue)
     menuState.buttonSize = size
     menuState.iconSize = size * 0.5
+    layer.cornerRadius = size / 2
   }
 
   @objc func setMenuItems(_ value: NSArray) {
@@ -81,7 +96,7 @@ class LiquidGlassMenuUIView: UIView {
   private func setupOnce() {
     guard !hasSetUp else { return }
     hasSetUp = true
-    backgroundColor = .clear
+    layer.cornerRadius = menuState.buttonSize / 2
 
     guard #available(iOS 26.0, *) else {
       // iOS 25 이하: JS 폴백 (RN 래퍼에서 ActionSheetIOS)
@@ -97,6 +112,7 @@ class LiquidGlassMenuUIView: UIView {
 
     let hc = UIHostingController(rootView: AnyView(swiftUIView))
     hc.view.backgroundColor = .clear
+    hc.view.isOpaque = false
     hostingController = hc
 
     addSubview(hc.view)
