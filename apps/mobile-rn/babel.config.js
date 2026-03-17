@@ -18,7 +18,7 @@ function nativewindPresetWithoutWorklets() {
 
 module.exports = {
   presets: [
-    'module:@react-native/babel-preset',
+    'babel-preset-expo',
     nativewindPresetWithoutWorklets,
   ],
   plugins: [
