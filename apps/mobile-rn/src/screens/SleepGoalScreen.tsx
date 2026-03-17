@@ -3,16 +3,16 @@
  * Phase 3: 스크린타임 토글 활성화 + 권한 요청
  */
 import React, {useCallback, useState} from 'react';
-import {View, Text, StyleSheet, Switch, Pressable, Alert} from 'react-native';
+import {View, Text, StyleSheet, Pressable} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
-import {ChevronLeft, ChevronRight, Moon, Sun, Shield} from 'lucide-react-native';
+import {ChevronLeft, Moon, Sun} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {useSleepStore} from '@/stores/sleepStore';
-import {requestAuthorization, isScreenTimeAvailable} from '@/lib/screenTimeManager';
+
 
 function timeStringToDate(time: string): Date {
   const [h, m] = time.split(':').map(Number);
@@ -45,10 +45,8 @@ export default function SleepGoalScreen() {
   const {
     sleepGoalTime,
     wakeGoalTime,
-    screenTimeLinkEnabled,
     setSleepGoalTime,
     setWakeGoalTime,
-    setScreenTimeLinkEnabled,
   } = useSleepStore();
 
   const [localSleepTime, setLocalSleepTime] = useState(timeStringToDate(sleepGoalTime));
@@ -65,31 +63,6 @@ export default function SleepGoalScreen() {
     setWakeGoalTime(dateToTimeString(localWakeTime));
     navigation.goBack();
   }, [localSleepTime, localWakeTime, setSleepGoalTime, setWakeGoalTime, haptic, navigation]);
-
-  const handleScreenTimeToggle = useCallback(async (value: boolean) => {
-    if (value) {
-      // 토글 ON → 권한 요청
-      const result = await requestAuthorization();
-      if (result === 'approved') {
-        setScreenTimeLinkEnabled(true);
-        haptic.success();
-        // 허용 앱 선택 화면으로 이동
-        navigation.navigate('ScreenTimeApps');
-      } else {
-        // 거부 → 토글 OFF 유지
-        Alert.alert(
-          '권한 필요',
-          '스크린타임 연동을 사용하려면 스크린타임 권한을 허용해주세요.\n설정 > 스크린타임에서 변경할 수 있습니다.',
-        );
-      }
-    } else {
-      // 토글 OFF
-      setScreenTimeLinkEnabled(false);
-      haptic.light();
-    }
-  }, [setScreenTimeLinkEnabled, navigation, haptic]);
-
-  const screenTimeAvailable = isScreenTimeAvailable();
 
   return (
     <ScreenContainer>
@@ -144,37 +117,6 @@ export default function SleepGoalScreen() {
             목표 수면: {goalText}
           </Text>
         </View>
-
-        {/* 스크린타임 연동 토글 */}
-        <View style={styles.screenTimeRow}>
-          <View style={styles.screenTimeLeft}>
-            <Shield size={16} color={screenTimeLinkEnabled ? primaryColor : '#9CA3AF'} />
-            <Text style={styles.screenTimeLabel}>스크린타임 연동</Text>
-            {!screenTimeAvailable && (
-              <View style={styles.unavailableBadge}>
-                <Text style={styles.unavailableBadgeText}>미지원</Text>
-              </View>
-            )}
-          </View>
-          <Switch
-            value={screenTimeLinkEnabled}
-            onValueChange={handleScreenTimeToggle}
-            disabled={!screenTimeAvailable}
-            trackColor={{false: '#E5E7EB', true: primaryColor}}
-          />
-        </View>
-
-        {/* 허용 앱 설정 링크 (스크린타임 활성 시만) */}
-        {screenTimeLinkEnabled && (
-          <Pressable
-            onPress={() => navigation.navigate('ScreenTimeApps')}
-            style={styles.screenTimeLink}>
-            <Text style={[styles.screenTimeLinkText, {color: primaryColor}]}>
-              허용 앱 설정
-            </Text>
-            <ChevronRight size={16} color={primaryColor} />
-          </Pressable>
-        )}
 
         {/* 저장 버튼 */}
         <AnimatedPressable
@@ -237,46 +179,6 @@ const styles = StyleSheet.create({
   goalText: {
     fontSize: 16,
     fontWeight: '700',
-  },
-  screenTimeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  screenTimeLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  screenTimeLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  unavailableBadge: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  unavailableBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#9CA3AF',
-  },
-  screenTimeLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    marginBottom: 24,
-  },
-  screenTimeLinkText: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   saveBtn: {
     paddingVertical: 14,

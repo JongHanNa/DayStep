@@ -2,11 +2,12 @@
  * SleepGardenScreen — 수면 정원 메인 화면
  * 30일 정원 그리드 + 스트릭 + 목표 설정 + 세션 FAB
  */
-import React, {useCallback, useEffect, useMemo} from 'react';
-import {View, Text, StyleSheet, ScrollView, Pressable} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {View, Text, StyleSheet, ScrollView, Pressable, Modal} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {TreePine, Moon, Sun, Settings, Shield} from 'lucide-react-native';
+import {requestAuthorization, isScreenTimeAvailable} from '@/lib/screenTimeManager';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {useSleepStore, type GardenDay} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
@@ -72,6 +73,7 @@ export default function SleepGardenScreen() {
     sleepGoalTime,
     wakeGoalTime,
     screenTimeLinkEnabled,
+    setScreenTimeLinkEnabled,
     sessionState,
     fetchMonthRecords,
     getGardenData,
@@ -79,6 +81,17 @@ export default function SleepGardenScreen() {
     getGoalDurationMinutes,
     recoverSession,
   } = useSleepStore();
+
+  const [showScreenTimeModal, setShowScreenTimeModal] = useState(false);
+
+  // 화면 포커스 시 스크린타임 연동 팝업
+  useFocusEffect(
+    useCallback(() => {
+      if (!screenTimeLinkEnabled && isScreenTimeAvailable()) {
+        setShowScreenTimeModal(true);
+      }
+    }, [screenTimeLinkEnabled]),
+  );
 
   // 화면 포커스 시 데이터 로딩
   useFocusEffect(
@@ -204,16 +217,6 @@ export default function SleepGardenScreen() {
           </View>
         </AnimatedCard>
 
-        {/* 스크린타임 상태 뱃지 */}
-        <Animated.View entering={FadeInDown.delay(400).duration(400)}>
-          <View style={styles.screenTimeBadge}>
-            <Shield size={14} color="#92400E" />
-            <Text style={styles.screenTimeBadgeText}>
-              {screenTimeLinkEnabled ? '스크린타임 연동' : '스크린타임 비연동'}
-            </Text>
-          </View>
-        </Animated.View>
-
         {/* 하단 여백 (FAB 겹침 방지) */}
         <View style={{height: 100}} />
       </ScrollView>
@@ -230,6 +233,39 @@ export default function SleepGardenScreen() {
         <Text style={styles.fabLabel}>잠들기 시작</Text>
       </View>
 
+      {/* 스크린타임 연동 유도 모달 */}
+      <Modal
+        visible={showScreenTimeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowScreenTimeModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Shield size={32} color={primaryColor} />
+            <Text style={styles.modalTitle}>스크린타임 연동</Text>
+            <Text style={styles.modalDesc}>
+              수면 중 앱 사용을 제한하여{'\n'}더 깊은 수면을 도와드려요
+            </Text>
+            <Pressable
+              onPress={async () => {
+                const result = await requestAuthorization();
+                if (result === 'approved') {
+                  setScreenTimeLinkEnabled(true);
+                  setShowScreenTimeModal(false);
+                  navigation.navigate('ScreenTimeApps');
+                }
+              }}
+              style={[styles.modalPrimaryBtn, {backgroundColor: primaryColor}]}>
+              <Text style={styles.modalPrimaryBtnText}>연동하기</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowScreenTimeModal(false)}
+              style={styles.modalSecondaryBtn}>
+              <Text style={styles.modalSecondaryBtnText}>나중에</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -376,22 +412,55 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Screen time
-  screenTimeBadge: {
-    flexDirection: 'row',
+  // Screen time modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: '#FEF3C7',
-    borderRadius: 8,
-    marginLeft: 4,
+    paddingHorizontal: 32,
   },
-  screenTimeBadgeText: {
-    fontSize: 12,
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginTop: 12,
+  },
+  modalDesc: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  modalPrimaryBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalPrimaryBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalSecondaryBtn: {
+    paddingVertical: 10,
+  },
+  modalSecondaryBtnText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#92400E',
+    color: '#9CA3AF',
   },
 
   // FAB
