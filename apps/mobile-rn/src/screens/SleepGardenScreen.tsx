@@ -43,8 +43,8 @@ export default function SleepGardenScreen() {
   const [showScreenTimeModal, setShowScreenTimeModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('month');
 
-  // 네이티브 컴포넌트 높이 애니메이션
-  const gardenHeight = useSharedValue(400);
+  // 네이티브 컴포넌트 높이 애니메이션 (absoluteFill 패턴)
+  const gardenHeight = useSharedValue(450);
   const gardenAnimatedStyle = useAnimatedStyle(() => ({
     height: gardenHeight.value,
     overflow: 'hidden' as const,
@@ -188,7 +188,7 @@ export default function SleepGardenScreen() {
               onHeightChange={handleHeightChange}
               onViewModeChange={handleViewModeChange}
               onMonthChange={handleMonthChange}
-              style={styles.nativeGarden}
+              style={StyleSheet.absoluteFill}
             />
           </Animated.View>
         </AnimatedCard>
@@ -327,10 +327,6 @@ const styles = StyleSheet.create({
   gardenCard: {
     marginBottom: 12,
   },
-  nativeGarden: {
-    width: '100%',
-  },
-
   // Goal
   goalCard: {
     marginBottom: 12,

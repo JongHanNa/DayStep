@@ -50,6 +50,49 @@ class SleepGardenState: ObservableObject {
   }
 }
 
+// MARK: - Tree Appearance Helper
+
+struct TreeAppearance {
+  let icon: String
+  let size: CGFloat
+  let color: String
+
+  /// 수면 시간과 outcome에 따라 나무 외형 결정
+  static func from(session: SleepSessionInfo) -> TreeAppearance {
+    if session.outcome == "abandoned" {
+      return TreeAppearance(icon: "tree", size: 22, color: "#9CA3AF")
+    }
+    let hours = Double(session.durationMinutes) / 60.0
+    if hours >= 7 {
+      return TreeAppearance(icon: "tree.fill", size: 28, color: "#22C55E")
+    } else if hours >= 5 {
+      return TreeAppearance(icon: "leaf.fill", size: 22, color: "#84CC16")
+    } else {
+      return TreeAppearance(icon: "leaf", size: 16, color: "#FCD34D")
+    }
+  }
+
+  /// 월/주 뷰용 미니 사이즈 (크기 축소)
+  static func miniFrom(session: SleepSessionInfo) -> TreeAppearance {
+    let full = from(session: session)
+    return TreeAppearance(icon: full.icon, size: max(10, full.size * 0.5), color: full.color)
+  }
+
+  /// dayStatus 기반 (세션 정보 없이 상태만으로 판단)
+  static func fromStatus(_ status: String, totalMinutes: Int) -> TreeAppearance {
+    let hours = Double(totalMinutes) / 60.0
+    if hours >= 7 {
+      return TreeAppearance(icon: "tree.fill", size: 12, color: "#22C55E")
+    } else if hours >= 5 {
+      return TreeAppearance(icon: "leaf.fill", size: 11, color: "#84CC16")
+    } else if totalMinutes > 0 {
+      return TreeAppearance(icon: "leaf", size: 10, color: "#FCD34D")
+    } else {
+      return TreeAppearance(icon: "tree", size: 11, color: "#9CA3AF")
+    }
+  }
+}
+
 // MARK: - SwiftUI Main View
 
 struct SleepGardenContent: View {
@@ -152,14 +195,16 @@ struct SleepGardenContent: View {
   // MARK: - Legend
 
   private var legendView: some View {
-    HStack(spacing: 16) {
-      legendItem(icon: "tree.fill", color: "#22C55E", label: "성공")
-      legendItem(icon: "tree.fill", color: "#9CA3AF", label: "미달")
+    HStack(spacing: 12) {
+      legendItem(icon: "tree.fill", color: "#22C55E", label: "7h+")
+      legendItem(icon: "leaf.fill", color: "#84CC16", label: "5-7h")
+      legendItem(icon: "leaf", color: "#FCD34D", label: "~5h")
+      legendItem(icon: "tree", color: "#9CA3AF", label: "포기")
       HStack(spacing: 4) {
         Circle()
           .fill(Color(hex: "#E5E7EB"))
           .frame(width: 8, height: 8)
-        Text("기록없음")
+        Text("없음")
           .font(.system(size: 11))
           .foregroundColor(Color(hex: "#9CA3AF"))
       }
@@ -234,10 +279,11 @@ struct DayGardenView: View {
   }
 
   private func sessionTreeView(session: SleepSessionInfo, index: Int) -> some View {
-    VStack(spacing: 6) {
-      Image(systemName: "tree.fill")
-        .font(.system(size: 28))
-        .foregroundColor(Color(hex: session.isHealthy ? "#22C55E" : "#9CA3AF"))
+    let appearance = TreeAppearance.from(session: session)
+    return VStack(spacing: 6) {
+      Image(systemName: appearance.icon)
+        .font(.system(size: appearance.size))
+        .foregroundColor(Color(hex: appearance.color))
 
       Text("\(session.durationMinutes / 60)h \(session.durationMinutes % 60)m")
         .font(.system(size: 11))
@@ -362,9 +408,10 @@ struct WeekGardenView: View {
         // 나무 세로 스택
         VStack(spacing: 2) {
           ForEach(Array(sessions.prefix(3).enumerated()), id: \.offset) { _, session in
-            Image(systemName: "tree.fill")
-              .font(.system(size: 14))
-              .foregroundColor(Color(hex: session.isHealthy ? "#22C55E" : "#9CA3AF"))
+            let mini = TreeAppearance.miniFrom(session: session)
+            Image(systemName: mini.icon)
+              .font(.system(size: mini.size))
+              .foregroundColor(Color(hex: mini.color))
           }
           if sessions.count > 3 {
             Text("+\(sessions.count - 3)")
@@ -522,10 +569,12 @@ struct MonthGardenView: View {
             .fill(Color(hex: "#F3F4F6"))
             .frame(width: 6, height: 6)
         } else {
+          let totalMin = state.totalCompletedMinutes(for: dateStr)
+          let treeApp = TreeAppearance.fromStatus(status, totalMinutes: totalMin)
           ZStack {
-            Image(systemName: "tree.fill")
-              .font(.system(size: 12))
-              .foregroundColor(Color(hex: status == "healthy" ? "#22C55E" : "#9CA3AF"))
+            Image(systemName: treeApp.icon)
+              .font(.system(size: treeApp.size))
+              .foregroundColor(Color(hex: treeApp.color))
 
             if sessions.count > 1 {
               Text("\(sessions.count)")
@@ -714,6 +763,7 @@ class NativeSleepGardenUIView: UIView {
 
   @objc func setPrimaryColor(_ value: NSString) {
     gardenState.primaryColor = value as String
+    setupOnce()
   }
 
   @objc func setGoalMinutes(_ value: NSNumber) {
