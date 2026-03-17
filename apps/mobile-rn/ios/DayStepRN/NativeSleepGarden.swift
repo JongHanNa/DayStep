@@ -50,46 +50,233 @@ class SleepGardenState: ObservableObject {
   }
 }
 
-// MARK: - Tree Appearance Helper
+// MARK: - Tree Canvas View
 
-struct TreeAppearance {
-  let icon: String
+struct TreeCanvasView: View {
+  let durationMinutes: Int
+  let outcome: String   // "completed" | "abandoned"
   let size: CGFloat
-  let color: String
 
-  /// 수면 시간과 outcome에 따라 나무 외형 결정
-  static func from(session: SleepSessionInfo) -> TreeAppearance {
-    if session.outcome == "abandoned" {
-      return TreeAppearance(icon: "tree", size: 22, color: "#9CA3AF")
-    }
-    let hours = Double(session.durationMinutes) / 60.0
-    if hours >= 7 {
-      return TreeAppearance(icon: "tree.fill", size: 28, color: "#22C55E")
-    } else if hours >= 5 {
-      return TreeAppearance(icon: "leaf.fill", size: 22, color: "#84CC16")
-    } else {
-      return TreeAppearance(icon: "leaf", size: 16, color: "#FCD34D")
+  /// 성장 단계: 0=씨앗, 1=새싹, 2=작은나무, 3=큰나무
+  private var growthLevel: Int {
+    let hours = Double(durationMinutes) / 60.0
+    if hours >= 7 { return 3 }
+    if hours >= 5 { return 2 }
+    if hours >= 2 { return 1 }
+    return 0
+  }
+
+  private var isAbandoned: Bool { outcome == "abandoned" }
+
+  /// 성장 단계별 crown 색상
+  private var crownColor: Color {
+    if isAbandoned { return Color(hex: "#9CA3AF") }
+    switch growthLevel {
+    case 3: return Color(hex: "#22C55E")
+    case 2: return Color(hex: "#16A34A")
+    case 1: return Color(hex: "#84CC16")
+    default: return Color(hex: "#FCD34D")
     }
   }
 
-  /// 월/주 뷰용 미니 사이즈 (크기 축소)
-  static func miniFrom(session: SleepSessionInfo) -> TreeAppearance {
-    let full = from(session: session)
-    return TreeAppearance(icon: full.icon, size: max(10, full.size * 0.5), color: full.color)
+  /// 성장 단계별 trunk 색상
+  private var trunkColor: Color {
+    if isAbandoned { return Color(hex: "#9CA3AF") }
+    switch growthLevel {
+    case 3: return Color(hex: "#92400E")
+    case 2: return Color(hex: "#92400E")
+    case 1: return Color(hex: "#A16207")
+    default: return Color(hex: "#D97706")
+    }
   }
 
-  /// dayStatus 기반 (세션 정보 없이 상태만으로 판단)
-  static func fromStatus(_ status: String, totalMinutes: Int) -> TreeAppearance {
-    let hours = Double(totalMinutes) / 60.0
-    if hours >= 7 {
-      return TreeAppearance(icon: "tree.fill", size: 12, color: "#22C55E")
-    } else if hours >= 5 {
-      return TreeAppearance(icon: "leaf.fill", size: 11, color: "#84CC16")
-    } else if totalMinutes > 0 {
-      return TreeAppearance(icon: "leaf", size: 10, color: "#FCD34D")
-    } else {
-      return TreeAppearance(icon: "tree", size: 11, color: "#9CA3AF")
+  /// 땅 색상
+  private var groundColor: Color {
+    isAbandoned ? Color(hex: "#D1D5DB") : Color(hex: "#92400E").opacity(0.3)
+  }
+
+  var body: some View {
+    Canvas { context, canvasSize in
+      let w = canvasSize.width
+      let h = canvasSize.height
+      let cx = w / 2        // center x
+      let groundY = h * 0.88 // 땅 기준선
+
+      // 땅 (작은 타원)
+      let groundRect = CGRect(x: cx - w * 0.3, y: groundY, width: w * 0.6, height: h * 0.1)
+      context.fill(Ellipse().path(in: groundRect), with: .color(groundColor))
+
+      if isAbandoned {
+        drawWiltedTree(context: context, w: w, h: h, cx: cx, groundY: groundY)
+      } else {
+        switch growthLevel {
+        case 0:
+          drawSeed(context: context, w: w, h: h, cx: cx, groundY: groundY)
+        case 1:
+          drawSprout(context: context, w: w, h: h, cx: cx, groundY: groundY)
+        case 2:
+          drawSmallTree(context: context, w: w, h: h, cx: cx, groundY: groundY)
+        default:
+          drawBigTree(context: context, w: w, h: h, cx: cx, groundY: groundY)
+        }
+      }
     }
+    .frame(width: size, height: size)
+  }
+
+  // MARK: - 씨앗 (growth 0)
+  private func drawSeed(context: GraphicsContext, w: CGFloat, h: CGFloat, cx: CGFloat, groundY: CGFloat) {
+    let seedSize = w * 0.18
+    let seedRect = CGRect(x: cx - seedSize / 2, y: groundY - seedSize * 0.6, width: seedSize, height: seedSize)
+    context.fill(Ellipse().path(in: seedRect), with: .color(trunkColor))
+
+    // 씨앗 위 작은 싹 (V자)
+    var sproutPath = Path()
+    let tipY = groundY - seedSize * 0.6 - w * 0.08
+    sproutPath.move(to: CGPoint(x: cx, y: groundY - seedSize * 0.6))
+    sproutPath.addLine(to: CGPoint(x: cx, y: tipY))
+    context.stroke(sproutPath, with: .color(Color(hex: "#84CC16")), lineWidth: max(1, w * 0.04))
+  }
+
+  // MARK: - 새싹 (growth 1)
+  private func drawSprout(context: GraphicsContext, w: CGFloat, h: CGFloat, cx: CGFloat, groundY: CGFloat) {
+    let stemHeight = h * 0.35
+    let stemTop = groundY - stemHeight
+    let stemWidth = max(1.5, w * 0.06)
+
+    // 줄기
+    var stem = Path()
+    stem.move(to: CGPoint(x: cx, y: groundY))
+    stem.addLine(to: CGPoint(x: cx, y: stemTop))
+    context.stroke(stem, with: .color(trunkColor), lineWidth: stemWidth)
+
+    // 왼쪽 잎
+    let leafW = w * 0.22
+    let leafH = w * 0.12
+    let leafY = stemTop + stemHeight * 0.3
+    let leftLeaf = CGRect(x: cx - leafW - stemWidth / 2, y: leafY - leafH / 2, width: leafW, height: leafH)
+    context.fill(Ellipse().path(in: leftLeaf), with: .color(crownColor))
+
+    // 오른쪽 잎
+    let rightLeaf = CGRect(x: cx + stemWidth / 2, y: leafY - leafH * 0.8, width: leafW, height: leafH)
+    context.fill(Ellipse().path(in: rightLeaf), with: .color(crownColor))
+
+    // 꼭대기 잎
+    let topLeafW = w * 0.16
+    let topLeafH = w * 0.20
+    let topLeaf = CGRect(x: cx - topLeafW / 2, y: stemTop - topLeafH * 0.7, width: topLeafW, height: topLeafH)
+    context.fill(Ellipse().path(in: topLeaf), with: .color(crownColor))
+  }
+
+  // MARK: - 작은 나무 (growth 2)
+  private func drawSmallTree(context: GraphicsContext, w: CGFloat, h: CGFloat, cx: CGFloat, groundY: CGFloat) {
+    let trunkH = h * 0.32
+    let trunkW = w * 0.10
+    let trunkTop = groundY - trunkH
+
+    // Trunk (사다리꼴)
+    var trunk = Path()
+    trunk.move(to: CGPoint(x: cx - trunkW * 0.7, y: groundY))
+    trunk.addLine(to: CGPoint(x: cx - trunkW * 0.4, y: trunkTop))
+    trunk.addLine(to: CGPoint(x: cx + trunkW * 0.4, y: trunkTop))
+    trunk.addLine(to: CGPoint(x: cx + trunkW * 0.7, y: groundY))
+    trunk.closeSubpath()
+    context.fill(trunk, with: .color(trunkColor))
+
+    // Crown (원형)
+    let crownR = w * 0.28
+    let crownRect = CGRect(x: cx - crownR, y: trunkTop - crownR * 1.3, width: crownR * 2, height: crownR * 1.8)
+    context.fill(Ellipse().path(in: crownRect), with: .color(crownColor))
+
+    // Crown 하이라이트 (살짝 밝은 원)
+    let hlR = crownR * 0.5
+    let hlRect = CGRect(x: cx - hlR * 0.6, y: trunkTop - crownR * 1.1, width: hlR, height: hlR * 0.8)
+    context.fill(Ellipse().path(in: hlRect), with: .color(crownColor.opacity(0.4)))
+  }
+
+  // MARK: - 큰 나무 (growth 3)
+  private func drawBigTree(context: GraphicsContext, w: CGFloat, h: CGFloat, cx: CGFloat, groundY: CGFloat) {
+    let trunkH = h * 0.42
+    let trunkW = w * 0.12
+    let trunkTop = groundY - trunkH
+
+    // Trunk
+    var trunk = Path()
+    trunk.move(to: CGPoint(x: cx - trunkW * 0.8, y: groundY))
+    trunk.addLine(to: CGPoint(x: cx - trunkW * 0.4, y: trunkTop))
+    trunk.addLine(to: CGPoint(x: cx + trunkW * 0.4, y: trunkTop))
+    trunk.addLine(to: CGPoint(x: cx + trunkW * 0.8, y: groundY))
+    trunk.closeSubpath()
+    context.fill(trunk, with: .color(trunkColor))
+
+    // 왼쪽 가지
+    let branchY = trunkTop + trunkH * 0.3
+    var leftBranch = Path()
+    leftBranch.move(to: CGPoint(x: cx - trunkW * 0.3, y: branchY))
+    leftBranch.addQuadCurve(
+      to: CGPoint(x: cx - w * 0.28, y: branchY - h * 0.12),
+      control: CGPoint(x: cx - w * 0.22, y: branchY + h * 0.02)
+    )
+    context.stroke(leftBranch, with: .color(trunkColor), lineWidth: max(1.5, w * 0.04))
+
+    // 오른쪽 가지
+    var rightBranch = Path()
+    rightBranch.move(to: CGPoint(x: cx + trunkW * 0.3, y: branchY - h * 0.05))
+    rightBranch.addQuadCurve(
+      to: CGPoint(x: cx + w * 0.26, y: branchY - h * 0.16),
+      control: CGPoint(x: cx + w * 0.2, y: branchY - h * 0.02)
+    )
+    context.stroke(rightBranch, with: .color(trunkColor), lineWidth: max(1.5, w * 0.04))
+
+    // Crown 메인 (큰 타원)
+    let crownR = w * 0.38
+    let crownRect = CGRect(x: cx - crownR, y: trunkTop - crownR * 1.2, width: crownR * 2, height: crownR * 1.7)
+    context.fill(Ellipse().path(in: crownRect), with: .color(crownColor))
+
+    // Crown 좌측 보조
+    let subR = crownR * 0.55
+    let leftCrown = CGRect(x: cx - crownR * 1.05, y: trunkTop - crownR * 0.6, width: subR * 1.6, height: subR * 1.3)
+    context.fill(Ellipse().path(in: leftCrown), with: .color(crownColor))
+
+    // Crown 우측 보조
+    let rightCrown = CGRect(x: cx + crownR * 0.25, y: trunkTop - crownR * 0.7, width: subR * 1.5, height: subR * 1.2)
+    context.fill(Ellipse().path(in: rightCrown), with: .color(crownColor))
+
+    // 하이라이트
+    let hlR = crownR * 0.35
+    let hlRect = CGRect(x: cx - hlR * 0.5, y: trunkTop - crownR * 1.0, width: hlR, height: hlR * 0.7)
+    context.fill(Ellipse().path(in: hlRect), with: .color(.white.opacity(0.15)))
+  }
+
+  // MARK: - 시든 나무 (abandoned)
+  private func drawWiltedTree(context: GraphicsContext, w: CGFloat, h: CGFloat, cx: CGFloat, groundY: CGFloat) {
+    let trunkH = h * 0.35
+    let trunkW = w * 0.10
+    let tilt = w * 0.06  // 기울기
+    let trunkTop = groundY - trunkH
+
+    // 기울어진 Trunk
+    var trunk = Path()
+    trunk.move(to: CGPoint(x: cx - trunkW * 0.6, y: groundY))
+    trunk.addLine(to: CGPoint(x: cx - trunkW * 0.3 + tilt, y: trunkTop))
+    trunk.addLine(to: CGPoint(x: cx + trunkW * 0.3 + tilt, y: trunkTop))
+    trunk.addLine(to: CGPoint(x: cx + trunkW * 0.6, y: groundY))
+    trunk.closeSubpath()
+    context.fill(trunk, with: .color(Color(hex: "#9CA3AF")))
+
+    // 처진 Crown (y축 눌림 + 아래로 처짐)
+    let crownR = w * 0.26
+    let crownRect = CGRect(
+      x: cx - crownR + tilt,
+      y: trunkTop - crownR * 0.5,  // 덜 올라감 (처진 느낌)
+      width: crownR * 2,
+      height: crownR * 1.2  // 눌린 비율
+    )
+    context.fill(Ellipse().path(in: crownRect), with: .color(Color(hex: "#9CA3AF").opacity(0.6)))
+
+    // 떨어진 잎 하나
+    let fallenLeaf = CGRect(x: cx + w * 0.15, y: groundY - h * 0.08, width: w * 0.08, height: w * 0.05)
+    context.fill(Ellipse().path(in: fallenLeaf), with: .color(Color(hex: "#D1D5DB")))
   }
 }
 
@@ -196,10 +383,11 @@ struct SleepGardenContent: View {
 
   private var legendView: some View {
     HStack(spacing: 12) {
-      legendItem(icon: "tree.fill", color: "#22C55E", label: "7h+")
-      legendItem(icon: "leaf.fill", color: "#84CC16", label: "5-7h")
-      legendItem(icon: "leaf", color: "#FCD34D", label: "~5h")
-      legendItem(icon: "tree", color: "#9CA3AF", label: "포기")
+      legendItem(minutes: 420, outcome: "completed", label: "7h+")
+      legendItem(minutes: 360, outcome: "completed", label: "5-7h")
+      legendItem(minutes: 150, outcome: "completed", label: "2-5h")
+      legendItem(minutes: 60, outcome: "completed", label: "~2h")
+      legendItem(minutes: 300, outcome: "abandoned", label: "포기")
       HStack(spacing: 4) {
         Circle()
           .fill(Color(hex: "#E5E7EB"))
@@ -211,11 +399,9 @@ struct SleepGardenContent: View {
     }
   }
 
-  private func legendItem(icon: String, color: String, label: String) -> some View {
+  private func legendItem(minutes: Int, outcome: String, label: String) -> some View {
     HStack(spacing: 4) {
-      Image(systemName: icon)
-        .font(.system(size: 10))
-        .foregroundColor(Color(hex: color))
+      TreeCanvasView(durationMinutes: minutes, outcome: outcome, size: 14)
       Text(label)
         .font(.system(size: 11))
         .foregroundColor(Color(hex: "#9CA3AF"))
@@ -279,11 +465,8 @@ struct DayGardenView: View {
   }
 
   private func sessionTreeView(session: SleepSessionInfo, index: Int) -> some View {
-    let appearance = TreeAppearance.from(session: session)
     return VStack(spacing: 6) {
-      Image(systemName: appearance.icon)
-        .font(.system(size: appearance.size))
-        .foregroundColor(Color(hex: appearance.color))
+      TreeCanvasView(durationMinutes: session.durationMinutes, outcome: session.outcome, size: 48)
 
       Text("\(session.durationMinutes / 60)h \(session.durationMinutes % 60)m")
         .font(.system(size: 11))
@@ -408,10 +591,7 @@ struct WeekGardenView: View {
         // 나무 세로 스택
         VStack(spacing: 2) {
           ForEach(Array(sessions.prefix(3).enumerated()), id: \.offset) { _, session in
-            let mini = TreeAppearance.miniFrom(session: session)
-            Image(systemName: mini.icon)
-              .font(.system(size: mini.size))
-              .foregroundColor(Color(hex: mini.color))
+            TreeCanvasView(durationMinutes: session.durationMinutes, outcome: session.outcome, size: 24)
           }
           if sessions.count > 3 {
             Text("+\(sessions.count - 3)")
@@ -570,11 +750,13 @@ struct MonthGardenView: View {
             .frame(width: 6, height: 6)
         } else {
           let totalMin = state.totalCompletedMinutes(for: dateStr)
-          let treeApp = TreeAppearance.fromStatus(status, totalMinutes: totalMin)
+          let hasAbandoned = sessions.contains(where: { $0.outcome == "abandoned" }) && sessions.filter({ $0.outcome == "completed" }).isEmpty
           ZStack {
-            Image(systemName: treeApp.icon)
-              .font(.system(size: treeApp.size))
-              .foregroundColor(Color(hex: treeApp.color))
+            TreeCanvasView(
+              durationMinutes: totalMin,
+              outcome: hasAbandoned ? "abandoned" : "completed",
+              size: 14
+            )
 
             if sessions.count > 1 {
               Text("\(sessions.count)")
