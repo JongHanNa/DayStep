@@ -3,11 +3,11 @@
  * 30일 정원 그리드 + 스트릭 + 목표 설정 + 세션 FAB
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, Pressable, Modal} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Pressable, Modal, Alert} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {TreePine, Moon, Sun, Settings, Shield} from 'lucide-react-native';
-import {requestAuthorization, isScreenTimeAvailable} from '@/lib/screenTimeManager';
+import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus} from '@/lib/screenTimeManager';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {useSleepStore, type GardenDay} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
@@ -84,13 +84,21 @@ export default function SleepGardenScreen() {
 
   const [showScreenTimeModal, setShowScreenTimeModal] = useState(false);
 
-  // 화면 포커스 시 스크린타임 연동 팝업
+  // 화면 포커스 시 스크린타임 권한 상태 동기화 + 연동 팝업
   useFocusEffect(
     useCallback(() => {
+      // 스크린타임 권한이 해제된 경우 → screenTimeLinkEnabled 리셋
+      if (screenTimeLinkEnabled) {
+        const status = getAuthorizationStatus();
+        if (status !== 'approved') {
+          setScreenTimeLinkEnabled(false);
+        }
+      }
+      // screenTimeLinkEnabled가 false이면 모달 표시
       if (!screenTimeLinkEnabled && isScreenTimeAvailable()) {
         setShowScreenTimeModal(true);
       }
-    }, [screenTimeLinkEnabled]),
+    }, [screenTimeLinkEnabled, setScreenTimeLinkEnabled]),
   );
 
   // 화면 포커스 시 데이터 로딩
@@ -248,11 +256,17 @@ export default function SleepGardenScreen() {
             </Text>
             <Pressable
               onPress={async () => {
-                const result = await requestAuthorization();
-                if (result === 'approved') {
+                try {
+                  await requestAuthorization(); // void 반환, 실패 시 throw
                   setScreenTimeLinkEnabled(true);
                   setShowScreenTimeModal(false);
                   navigation.navigate('ScreenTimeApps');
+                } catch {
+                  setShowScreenTimeModal(false);
+                  Alert.alert(
+                    '권한 필요',
+                    '스크린타임 권한을 허용해주세요.\n다른 앱에서 이미 사용 중인 경우, 해당 앱의 스크린타임 연동을 해제해주세요.',
+                  );
                 }
               }}
               style={[styles.modalPrimaryBtn, {backgroundColor: primaryColor}]}>

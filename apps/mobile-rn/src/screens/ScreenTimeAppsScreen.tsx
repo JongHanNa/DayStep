@@ -1,6 +1,6 @@
 /**
  * ScreenTimeAppsScreen — 허용 앱 선택 화면
- * Apple 네이티브 FamilyActivityPicker 뷰 사용
+ * Apple 네이티브 DeviceActivitySelectionView 사용
  * 선택된 앱 토큰은 네이티브 측에 저장 (opaque Data, JS로 직렬화 불가)
  */
 import React from 'react';
@@ -9,11 +9,11 @@ import {useNavigation} from '@react-navigation/native';
 import {ChevronLeft} from 'lucide-react-native';
 import {ScreenContainer} from '@/components/core';
 
-// react-native-device-activity의 FamilyActivityPicker 컴포넌트
-let FamilyActivityPicker: any = null;
+// react-native-device-activity의 DeviceActivitySelectionView 컴포넌트
+let DeviceActivitySelectionView: any = null;
 try {
   const da = require('react-native-device-activity');
-  FamilyActivityPicker = da.FamilyActivityPicker;
+  DeviceActivitySelectionView = da.DeviceActivitySelectionView;
 } catch {
   // 패키지 미설치 시 무시
 }
@@ -33,14 +33,14 @@ export default function ScreenTimeAppsScreen() {
       </View>
 
       <View style={styles.content}>
-        {Platform.OS === 'ios' && FamilyActivityPicker ? (
+        {Platform.OS === 'ios' && DeviceActivitySelectionView ? (
           <>
             <Text style={styles.description}>
               수면 중 사용할 수 있는 앱을 선택하세요.{'\n'}
               선택하지 않은 앱은 수면 시간 동안 차단됩니다.
             </Text>
             <View style={styles.pickerContainer}>
-              <FamilyActivityPicker
+              <DeviceActivitySelectionView
                 style={styles.picker}
               />
             </View>

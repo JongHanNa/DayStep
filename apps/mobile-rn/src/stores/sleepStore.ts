@@ -407,12 +407,16 @@ export const useSleepStore = create<SleepStoreState>()(
           if (permissionRevoked || !isPastWakeTime) {
             // 권한 해제 또는 기상시간 미경과 (= 앱 강제 종료) → 포기 처리
             await clearShield();
+            // 권한 해제 시 screenTimeLinkEnabled도 리셋
+            if (permissionRevoked) {
+              set({screenTimeLinkEnabled: false});
+            }
             const recordDate = format(now, 'yyyy-MM-dd');
             try {
               await upsertRecord({
                 date: recordDate,
                 sleep_time: startedAt.toISOString(),
-                wake_time: now.toISOString(),
+                wake_time: startedAt.toISOString(), // duration 0 → wilted 처리
                 mood: 'poor',
               });
             } catch {
