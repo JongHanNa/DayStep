@@ -31,6 +31,37 @@ export interface CleaningZone {
   icon: string; // Lucide icon name
 }
 
+export interface CategorySchedule {
+  id: string;
+  tab: CleaningTab;
+  category: string;
+  name: string;
+  dayOfWeek: number; // 0(일)~6(토)
+}
+
+// ============================================
+// 디지털 카테고리 스케줄 (요일별 순환)
+// ============================================
+
+export const DEFAULT_DIGITAL_SCHEDULES: CategorySchedule[] = [
+  {id: 'cs-email', tab: 'digital', category: '이메일', name: '이메일', dayOfWeek: 1},
+  {id: 'cs-file', tab: 'digital', category: '파일', name: '파일', dayOfWeek: 3},
+  {id: 'cs-app', tab: 'digital', category: '앱/브라우저', name: '앱/브라우저', dayOfWeek: 5},
+  {id: 'cs-note', tab: 'digital', category: '메모/노트', name: '메모/노트', dayOfWeek: 6},
+];
+
+// ============================================
+// 물건 카테고리 스케줄 (요일별 순환)
+// ============================================
+
+export const DEFAULT_BELONGINGS_SCHEDULES: CategorySchedule[] = [
+  {id: 'cs-closet', tab: 'belongings', category: '옷장', name: '옷장', dayOfWeek: 1},
+  {id: 'cs-supply', tab: 'belongings', category: '소모품', name: '소모품', dayOfWeek: 2},
+  {id: 'cs-storage', tab: 'belongings', category: '수납', name: '수납', dayOfWeek: 3},
+  {id: 'cs-carry', tab: 'belongings', category: '가방/지갑', name: '가방/지갑', dayOfWeek: 4},
+  {id: 'cs-recycle', tab: 'belongings', category: '분리수거', name: '분리수거', dayOfWeek: 5},
+];
+
 // ============================================
 // 기본 구역 (요일별 순환)
 // ============================================

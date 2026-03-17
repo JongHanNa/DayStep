@@ -48,6 +48,8 @@
 		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
 		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
 		F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */; };
+		FA1B2C3D4E5F6A7B8C9D0E1F /* NativeSleepGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */; };
+		FA3D4E5F6A7B8C9D0E1F2A3B /* NativeSleepGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -123,6 +125,8 @@
 		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeWeekStripCalendar.swift; path = DayStepRN/NativeWeekStripCalendar.swift; sourceTree = "<group>"; };
+		FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeSleepGarden.swift; path = DayStepRN/NativeSleepGarden.swift; sourceTree = "<group>"; };
+		FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeSleepGardenBridge.m; path = DayStepRN/NativeSleepGardenBridge.m; sourceTree = "<group>"; };
 		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -206,6 +210,8 @@
 				DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */,
 				8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */,
 				C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */,
+				FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */,
+				FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */,
 				25B5E30421766026F915B4B0 /* NativeGroupSection.swift */,
 				960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */,
 				B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */,
@@ -521,6 +527,8 @@
 				DA8B9C0D1E2F3A4B5C6D7E8F /* NativeMultiDayTimeGridBridge.m in Sources */,
 				2471C3C4D3E00A76861BDF22 /* NativeProgressCard.swift in Sources */,
 				1F11AF99A05E5B04B2E2585D /* NativeProgressCardBridge.m in Sources */,
+				FA1B2C3D4E5F6A7B8C9D0E1F /* NativeSleepGarden.swift in Sources */,
+				FA3D4E5F6A7B8C9D0E1F2A3B /* NativeSleepGardenBridge.m in Sources */,
 				E4762033124F21875BA5CD8A /* NativeGroupSection.swift in Sources */,
 				899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */,
 				4EA6F8C29F16FFE12737528C /* NativeMissionCard.swift in Sources */,

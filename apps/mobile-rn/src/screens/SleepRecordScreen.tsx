@@ -82,7 +82,7 @@ export default function SleepRecordScreen() {
     selectedDate,
     isLoading,
     fetchMonthRecords,
-    upsertRecord,
+    insertRecord,
     setSelectedDate,
   } = useSleepStore();
 
@@ -96,7 +96,9 @@ export default function SleepRecordScreen() {
 
   const getMonthStats = useSleepStore(s => s.getMonthStats);
   const stats = useMemo(() => getMonthStats(year, month), [getMonthStats, year, month, records]);
-  const selectedRecord = records[selectedDate];
+  // 다중 세션: 첫 번째 completed 세션 또는 마지막 세션 표시
+  const selectedRecords = records[selectedDate] ?? [];
+  const selectedRecord = selectedRecords.find(r => r.session_outcome === 'completed') ?? selectedRecords[selectedRecords.length - 1] ?? null;
 
   // 월 네비게이션
   const goToPrevMonth = useCallback(() => {
@@ -126,10 +128,14 @@ export default function SleepRecordScreen() {
     const days = eachDayOfInterval({start: monthStart, end: monthEnd});
     return days.map(d => {
       const key = format(d, 'yyyy-MM-dd');
-      const record = records[key];
+      const sessions = records[key] ?? [];
+      // completed 세션들의 총 수면 시간
+      const totalMinutes = sessions
+        .filter(r => r.session_outcome === 'completed')
+        .reduce((sum, r) => sum + r.duration_minutes, 0);
       return {
         day: d.getDate(),
-        minutes: record?.duration_minutes ?? 0,
+        minutes: totalMinutes,
         date: key,
       };
     });
@@ -163,9 +169,9 @@ export default function SleepRecordScreen() {
 
   const handleSubmit = useCallback(
     async (input: SleepRecordInput) => {
-      await upsertRecord(input);
+      await insertRecord(input);
     },
-    [upsertRecord],
+    [insertRecord],
   );
 
   return (
@@ -253,7 +259,9 @@ export default function SleepRecordScreen() {
                 return <View key={`pad-${i}`} style={styles.dayCell} />;
               }
               const dateStr = format(date, 'yyyy-MM-dd');
-              const record = records[dateStr];
+              const dateSessions = records[dateStr] ?? [];
+              // 대표 세션: completed 우선, 없으면 마지막 세션
+              const record = dateSessions.find(r => r.session_outcome === 'completed') ?? dateSessions[dateSessions.length - 1] ?? null;
               const quality = record
                 ? record.mood ?? getDurationQuality(record.duration_minutes)
                 : null;

@@ -1,69 +1,25 @@
 /**
  * SleepGardenScreen — 수면 정원 메인 화면
- * 30일 정원 그리드 + 스트릭 + 목표 설정 + 세션 FAB
+ * 네이티브 SwiftUI 4-뷰 가든 + 스트릭 + 목표 설정 + 세션 FAB
  */
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, Pressable, Modal, Alert} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import {View, Text, StyleSheet, ScrollView, Pressable, Modal, Alert, Platform} from 'react-native';
+import Animated, {FadeInDown, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {TreePine, Moon, Sun, Settings, Shield} from 'lucide-react-native';
 import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus} from '@/lib/screenTimeManager';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
+import {NativeSleepGardenNative} from '@/components/native';
 import {useSleepStore, type GardenDay} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
-
-// ============================================
-// Garden Cell
-// ============================================
-
-function GardenCell({day, primaryColor}: {day: GardenDay; primaryColor: string}) {
-  const dayNum = parseInt(day.date.split('-')[2], 10);
-
-  let iconColor = '#D1D5DB';
-  let bgColor = hexWithOpacity(primaryColor, 0.05);
-  let borderColor = 'transparent';
-  let showTree = false;
-
-  switch (day.status) {
-    case 'healthy':
-      iconColor = '#22C55E';
-      bgColor = hexWithOpacity('#22C55E', 0.08);
-      showTree = true;
-      break;
-    case 'wilted':
-      iconColor = '#9CA3AF';
-      bgColor = hexWithOpacity('#9CA3AF', 0.06);
-      showTree = true;
-      break;
-    case 'today':
-      borderColor = primaryColor;
-      bgColor = hexWithOpacity(primaryColor, 0.08);
-      // 오늘 기록이 있으면 나무 표시
-      if (day.durationMinutes && day.durationMinutes > 0) {
-        iconColor = '#22C55E';
-        showTree = true;
-      }
-      break;
-    case 'empty':
-      break;
-  }
-
-  return (
-    <View style={[styles.gardenCell, {backgroundColor: bgColor, borderColor}]}>
-      {showTree ? (
-        <TreePine size={22} color={iconColor} />
-      ) : (
-        <View style={styles.emptyDot} />
-      )}
-      <Text style={styles.gardenCellDate}>{dayNum}</Text>
-    </View>
-  );
-}
+import {format} from 'date-fns';
 
 // ============================================
 // Main Screen
 // ============================================
+
+type ViewMode = 'day' | 'week' | 'month' | 'year';
 
 export default function SleepGardenScreen() {
   const navigation = useNavigation<any>();
@@ -80,9 +36,19 @@ export default function SleepGardenScreen() {
     getStreak,
     getGoalDurationMinutes,
     recoverSession,
+    selectedDate,
+    setSelectedDate,
   } = useSleepStore();
 
   const [showScreenTimeModal, setShowScreenTimeModal] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+
+  // 네이티브 컴포넌트 높이 애니메이션
+  const gardenHeight = useSharedValue(400);
+  const gardenAnimatedStyle = useAnimatedStyle(() => ({
+    height: gardenHeight.value,
+    overflow: 'hidden' as const,
+  }));
 
   // 화면 포커스 시 스크린타임 권한 상태 동기화 + 연동 팝업
   useFocusEffect(
@@ -133,6 +99,21 @@ export default function SleepGardenScreen() {
   const goalHours = Math.floor(goalMinutes / 60);
   const goalMins = goalMinutes % 60;
 
+  // 네이티브 컴포넌트용 JSON payload
+  const gardenDataJson = useMemo(() => {
+    const payload = {
+      days: gardenData.map(day => ({
+        date: day.date,
+        sessions: day.sessions.map(s => ({
+          durationMinutes: s.durationMinutes,
+          outcome: s.outcome,
+          isHealthy: s.isHealthy,
+        })),
+      })),
+    };
+    return JSON.stringify(payload);
+  }, [gardenData]);
+
   // HH:mm → 12시간 포맷
   const formatTimeDisplay = (time: string) => {
     const [h, m] = time.split(':').map(Number);
@@ -144,6 +125,25 @@ export default function SleepGardenScreen() {
   const handleStartSession = useCallback(() => {
     navigation.navigate('SleepSession');
   }, [navigation]);
+
+  const handleDateSelect = useCallback((e: {nativeEvent: {date: string}}) => {
+    setSelectedDate(e.nativeEvent.date);
+  }, [setSelectedDate]);
+
+  const handleHeightChange = useCallback((e: {nativeEvent: {height: number}}) => {
+    gardenHeight.value = withSpring(e.nativeEvent.height, {
+      damping: 20,
+      stiffness: 150,
+    });
+  }, [gardenHeight]);
+
+  const handleViewModeChange = useCallback((e: {nativeEvent: {mode: string}}) => {
+    setViewMode(e.nativeEvent.mode as ViewMode);
+  }, []);
+
+  const handleMonthChange = useCallback((e: {nativeEvent: {year: number; month: number}}) => {
+    fetchMonthRecords(e.nativeEvent.year, e.nativeEvent.month);
+  }, [fetchMonthRecords]);
 
   return (
     <ScreenContainer>
@@ -174,28 +174,23 @@ export default function SleepGardenScreen() {
           </View>
         </AnimatedCard>
 
-        {/* 30일 정원 그리드 */}
+        {/* 네이티브 수면 정원 */}
         <AnimatedCard enterDelay={200} style={styles.gardenCard}>
-          <Text style={styles.sectionTitle}>최근 30일</Text>
-          <View style={styles.gardenGrid}>
-            {gardenData.map(day => (
-              <GardenCell key={day.date} day={day} primaryColor={primaryColor} />
-            ))}
-          </View>
-          <View style={styles.legendRow}>
-            <View style={styles.legendItem}>
-              <TreePine size={12} color="#22C55E" />
-              <Text style={styles.legendText}>성공</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <TreePine size={12} color="#9CA3AF" />
-              <Text style={styles.legendText}>미달</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, {backgroundColor: '#E5E7EB'}]} />
-              <Text style={styles.legendText}>기록없음</Text>
-            </View>
-          </View>
+          <Animated.View style={gardenAnimatedStyle}>
+            <NativeSleepGardenNative
+              viewMode={viewMode}
+              selectedDate={selectedDate}
+              primaryColor={primaryColor}
+              gardenData={gardenDataJson}
+              goalMinutes={goalMinutes}
+              streak={streak}
+              onDateSelect={handleDateSelect}
+              onHeightChange={handleHeightChange}
+              onViewModeChange={handleViewModeChange}
+              onMonthChange={handleMonthChange}
+              style={styles.nativeGarden}
+            />
+          </Animated.View>
         </AnimatedCard>
 
         {/* 목표 요약 바 */}
@@ -328,62 +323,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // Garden Grid
+  // Garden
   gardenCard: {
     marginBottom: 12,
   },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 12,
-  },
-  gardenGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  gardenCell: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  gardenCellDate: {
-    fontSize: 9,
-    color: '#9CA3AF',
-    position: 'absolute',
-    bottom: 2,
-    right: 4,
-  },
-  emptyDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E5E7EB',
-  },
-  legendRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 12,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 11,
-    color: '#9CA3AF',
+  nativeGarden: {
+    width: '100%',
   },
 
   // Goal

@@ -54,7 +54,9 @@ export default function CleaningScreen() {
     resumeTimer,
     resetTimer,
     zones,
+    categorySchedules,
     updateZoneDayOfWeek,
+    updateCategoryScheduleDayOfWeek,
     getTodayZone,
     getAllTasks,
     getFilteredTasks,
@@ -106,8 +108,8 @@ export default function CleaningScreen() {
     if (dailyRoutine.some(t => t.id === focusTask.id)) return '매일 할 일';
     if (zoneFocus.some(t => t.id === focusTask.id))
       return todayZone ? `오늘의 구역: ${todayZone.name}` : null;
-    if (digitalTasks.some(t => t.id === focusTask.id)) return '디지털 정리';
-    if (belongingsTasks.some(t => t.id === focusTask.id)) return '물건 관리';
+    if (digitalTasks.some(t => t.id === focusTask.id)) return '오늘의 디지털';
+    if (belongingsTasks.some(t => t.id === focusTask.id)) return '오늘의 물건';
     return null;
   }, [focusTask, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todayZone]);
 
@@ -128,8 +130,8 @@ export default function CleaningScreen() {
         title: todayZone ? `오늘의 구역: ${todayZone.name}` : '오늘의 구역',
         tasks: zoneQueue,
       });
-    if (digitalQueue.length > 0) sections.push({title: '디지털 정리', tasks: digitalQueue});
-    if (belongingsQueue.length > 0) sections.push({title: '물건 관리', tasks: belongingsQueue});
+    if (digitalQueue.length > 0) sections.push({title: '오늘의 디지털', tasks: digitalQueue});
+    if (belongingsQueue.length > 0) sections.push({title: '오늘의 물건', tasks: belongingsQueue});
     return sections;
   }, [focusTask, activeTasks, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todayZone]);
 
@@ -456,7 +458,7 @@ export default function CleaningScreen() {
               borderBottomColor: '#F3F4F6',
             }}>
             <Text style={{fontSize: 17, fontWeight: '700', color: '#1F2937'}}>
-              구역 설정
+              요일 설정
             </Text>
             <AnimatedPressable
               hapticType="light"
@@ -470,9 +472,13 @@ export default function CleaningScreen() {
             contentContainerStyle={{padding: 20, paddingBottom: 40}}
             showsVerticalScrollIndicator={false}>
             <Text style={{fontSize: 13, color: '#9CA3AF', marginBottom: 20}}>
-              각 구역이 어떤 요일에 표시될지 설정하세요
+              각 항목이 어떤 요일에 표시될지 설정하세요
             </Text>
 
+            {/* 공간 청소 섹션 */}
+            <Text style={{fontSize: 15, fontWeight: '700', color: '#059669', marginBottom: 12}}>
+              공간 청소
+            </Text>
             {zones.map(zone => (
               <View key={zone.id} style={{marginBottom: 20}}>
                 <Text style={{fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8}}>
@@ -512,6 +518,100 @@ export default function CleaningScreen() {
                 </View>
               </View>
             ))}
+
+            {/* 디지털 정리 섹션 */}
+            <View style={{height: 1, backgroundColor: '#E5E7EB', marginVertical: 8}} />
+            <Text style={{fontSize: 15, fontWeight: '700', color: '#0EA5E9', marginBottom: 12, marginTop: 8}}>
+              디지털 정리
+            </Text>
+            {categorySchedules
+              .filter(cs => cs.tab === 'digital')
+              .map(cs => (
+                <View key={cs.id} style={{marginBottom: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8}}>
+                    {cs.name}
+                  </Text>
+                  <View style={{flexDirection: 'row', gap: 6}}>
+                    {DAY_LABELS.map((label, index) => {
+                      const isActive = cs.dayOfWeek === index;
+                      return (
+                        <AnimatedPressable
+                          key={index}
+                          hapticType="selection"
+                          onPress={() => {
+                            haptic.selection();
+                            updateCategoryScheduleDayOfWeek(cs.id, index);
+                          }}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 8,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            backgroundColor: isActive ? '#0EA5E9' + '15' : '#F3F4F6',
+                            borderWidth: isActive ? 1.5 : 0,
+                            borderColor: isActive ? '#0EA5E9' : 'transparent',
+                          }}>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontWeight: isActive ? '700' : '400',
+                              color: isActive ? '#0EA5E9' : '#6B7280',
+                            }}>
+                            {label}
+                          </Text>
+                        </AnimatedPressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+
+            {/* 물건 관리 섹션 */}
+            <View style={{height: 1, backgroundColor: '#E5E7EB', marginVertical: 8}} />
+            <Text style={{fontSize: 15, fontWeight: '700', color: '#8B5CF6', marginBottom: 12, marginTop: 8}}>
+              물건 관리
+            </Text>
+            {categorySchedules
+              .filter(cs => cs.tab === 'belongings')
+              .map(cs => (
+                <View key={cs.id} style={{marginBottom: 20}}>
+                  <Text style={{fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8}}>
+                    {cs.name}
+                  </Text>
+                  <View style={{flexDirection: 'row', gap: 6}}>
+                    {DAY_LABELS.map((label, index) => {
+                      const isActive = cs.dayOfWeek === index;
+                      return (
+                        <AnimatedPressable
+                          key={index}
+                          hapticType="selection"
+                          onPress={() => {
+                            haptic.selection();
+                            updateCategoryScheduleDayOfWeek(cs.id, index);
+                          }}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 8,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            backgroundColor: isActive ? '#8B5CF6' + '15' : '#F3F4F6',
+                            borderWidth: isActive ? 1.5 : 0,
+                            borderColor: isActive ? '#8B5CF6' : 'transparent',
+                          }}>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontWeight: isActive ? '700' : '400',
+                              color: isActive ? '#8B5CF6' : '#6B7280',
+                            }}>
+                            {label}
+                          </Text>
+                        </AnimatedPressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
           </ScrollView>
         </View>
       </Modal>

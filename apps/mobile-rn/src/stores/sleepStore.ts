@@ -1,6 +1,7 @@
 /**
  * Sleep Record Store (Zustand + MMKV)
  * 수면 기록 CRUD + 월간 통계 + 수면 세션 (정원 게이미피케이션)
+ * 하루 다중 세션 지원 (v2)
  */
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
@@ -26,6 +27,7 @@ export interface SleepRecord {
   took_rx: boolean;
   took_supplement: boolean;
   note: string | null;
+  session_outcome: 'completed' | 'abandoned';
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +40,7 @@ export interface SleepRecordInput {
   took_rx?: boolean;
   took_supplement?: boolean;
   note?: string | null;
+  session_outcome?: 'completed' | 'abandoned';
 }
 
 interface MonthStats {
@@ -62,10 +65,18 @@ export interface SleepSessionState {
 
 export type GardenDayStatus = 'healthy' | 'wilted' | 'empty' | 'today';
 
+export interface GardenSession {
+  id: string;
+  durationMinutes: number;
+  outcome: 'completed' | 'abandoned';
+  isHealthy: boolean;
+}
+
 export interface GardenDay {
   date: string; // yyyy-MM-dd
   status: GardenDayStatus;
   durationMinutes?: number;
+  sessions: GardenSession[];
 }
 
 const DEFAULT_SESSION: SleepSessionState = {
@@ -76,7 +87,7 @@ const DEFAULT_SESSION: SleepSessionState = {
 };
 
 interface SleepStoreState {
-  records: Record<string, SleepRecord>; // key: date (yyyy-MM-dd)
+  records: Record<string, SleepRecord[]>; // key: date (yyyy-MM-dd), value: 세션 배열
   selectedDate: string;
   isLoading: boolean;
   error: string | null;
@@ -89,11 +100,11 @@ interface SleepStoreState {
 
   // Actions (기존)
   fetchMonthRecords: (year: number, month: number) => Promise<void>;
-  upsertRecord: (input: SleepRecordInput) => Promise<void>;
-  deleteRecord: (date: string) => Promise<void>;
+  insertRecord: (input: SleepRecordInput) => Promise<void>;
+  deleteRecord: (id: string) => Promise<void>;
   setSelectedDate: (date: string) => void;
   getMonthStats: (year: number, month: number) => MonthStats;
-  getRecordForDate: (date: string) => SleepRecord | undefined;
+  getRecordsForDate: (date: string) => SleepRecord[];
   clearError: () => void;
 
   // Actions (수면 정원)
@@ -121,6 +132,27 @@ function calcGoalMinutes(sleepTime: string, wakeTime: string): number {
   let wakeMins = wh * 60 + wm;
   if (wakeMins <= sleepMins) wakeMins += 24 * 60; // 자정 넘김
   return wakeMins - sleepMins;
+}
+
+/** 기존 단일 레코드 형식(Record<string, SleepRecord>)을 배열 형식으로 마이그레이션 */
+function migrateRecordsToArray(records: any): Record<string, SleepRecord[]> {
+  if (!records || typeof records !== 'object') return {};
+
+  const result: Record<string, SleepRecord[]> = {};
+  for (const [key, value] of Object.entries(records)) {
+    if (Array.isArray(value)) {
+      // 이미 배열 형식
+      result[key] = value as SleepRecord[];
+    } else if (value && typeof value === 'object' && 'id' in (value as any)) {
+      // 단일 레코드 → 배열로 감싸기
+      const record = value as SleepRecord;
+      if (!record.session_outcome) {
+        (record as any).session_outcome = 'completed';
+      }
+      result[key] = [record];
+    }
+  }
+  return result;
 }
 
 // ============================================
@@ -156,14 +188,33 @@ export const useSleepStore = create<SleepStoreState>()(
             .select('*')
             .gte('date', format(monthStart, 'yyyy-MM-dd'))
             .lte('date', format(monthEnd, 'yyyy-MM-dd'))
-            .order('date', {ascending: true});
+            .order('date', {ascending: true})
+            .order('created_at', {ascending: true});
 
           if (error) throw error;
 
+          // 날짜별 배열로 그룹핑
           const newRecords = {...get().records};
+          const grouped: Record<string, SleepRecord[]> = {};
           (data ?? []).forEach((r: SleepRecord) => {
-            newRecords[r.date] = r;
+            if (!grouped[r.date]) grouped[r.date] = [];
+            grouped[r.date].push(r);
           });
+
+          // 기존 records에 병합 (해당 월 날짜만 덮어쓰기)
+          for (const [date, sessions] of Object.entries(grouped)) {
+            newRecords[date] = sessions;
+          }
+
+          // 해당 월에 데이터가 없는 날짜는 빈 배열로 (기존 캐시 정리)
+          const startStr = format(monthStart, 'yyyy-MM-dd');
+          const endStr = format(monthEnd, 'yyyy-MM-dd');
+          for (const date of Object.keys(newRecords)) {
+            if (date >= startStr && date <= endStr && !grouped[date]) {
+              delete newRecords[date];
+            }
+          }
+
           set({records: newRecords});
         } catch (err: any) {
           console.error('[SleepStore] fetchMonthRecords error:', err);
@@ -173,7 +224,7 @@ export const useSleepStore = create<SleepStoreState>()(
         }
       },
 
-      upsertRecord: async (input) => {
+      insertRecord: async (input) => {
         set({isLoading: true, error: null});
         try {
           const {
@@ -195,21 +246,23 @@ export const useSleepStore = create<SleepStoreState>()(
             took_rx: input.took_rx ?? false,
             took_supplement: input.took_supplement ?? false,
             note: input.note ?? null,
+            session_outcome: input.session_outcome ?? 'completed',
           };
 
           const {data, error} = await supabase
             .from('sleep_records')
-            .upsert(record, {onConflict: 'user_id,date'})
+            .insert(record)
             .select()
             .single();
 
           if (error) throw error;
 
           const newRecords = {...get().records};
-          newRecords[data.date] = data;
+          if (!newRecords[data.date]) newRecords[data.date] = [];
+          newRecords[data.date] = [...newRecords[data.date], data];
           set({records: newRecords});
         } catch (err: any) {
-          console.error('[SleepStore] upsertRecord error:', err);
+          console.error('[SleepStore] insertRecord error:', err);
           set({error: err.message});
           throw err;
         } finally {
@@ -217,21 +270,27 @@ export const useSleepStore = create<SleepStoreState>()(
         }
       },
 
-      deleteRecord: async (date) => {
+      deleteRecord: async (id) => {
         set({isLoading: true, error: null});
         try {
-          const record = get().records[date];
-          if (!record) return;
-
           const {error} = await supabase
             .from('sleep_records')
             .delete()
-            .eq('id', record.id);
+            .eq('id', id);
 
           if (error) throw error;
 
+          // records에서 해당 id 제거
           const newRecords = {...get().records};
-          delete newRecords[date];
+          for (const date of Object.keys(newRecords)) {
+            const sessions = newRecords[date];
+            const filtered = sessions.filter(r => r.id !== id);
+            if (filtered.length === 0) {
+              delete newRecords[date];
+            } else if (filtered.length !== sessions.length) {
+              newRecords[date] = filtered;
+            }
+          }
           set({records: newRecords});
         } catch (err: any) {
           console.error('[SleepStore] deleteRecord error:', err);
@@ -243,7 +302,7 @@ export const useSleepStore = create<SleepStoreState>()(
 
       setSelectedDate: (date) => set({selectedDate: date}),
 
-      getRecordForDate: (date) => get().records[date],
+      getRecordsForDate: (date) => get().records[date] ?? [],
 
       getMonthStats: (year, month) => {
         const records = get().records;
@@ -253,12 +312,18 @@ export const useSleepStore = create<SleepStoreState>()(
         const lastDay = monthEnd > today ? today : monthEnd;
         const totalDays = lastDay.getDate() - monthStart.getDate() + 1;
 
-        const monthRecords = Object.values(records).filter(r => {
-          const d = new Date(r.date);
-          return d >= monthStart && d <= monthEnd;
-        });
+        // 모든 세션을 플랫화
+        const allSessions: SleepRecord[] = [];
+        const datesWithRecords = new Set<string>();
+        for (const [date, sessions] of Object.entries(records)) {
+          const d = new Date(date);
+          if (d >= monthStart && d <= monthEnd) {
+            datesWithRecords.add(date);
+            allSessions.push(...sessions);
+          }
+        }
 
-        const recordedDays = monthRecords.length;
+        const recordedDays = datesWithRecords.size;
         if (recordedDays === 0) {
           return {
             avgDuration: 0,
@@ -270,27 +335,40 @@ export const useSleepStore = create<SleepStoreState>()(
           };
         }
 
-        const totalDuration = monthRecords.reduce((s, r) => s + r.duration_minutes, 0);
+        // completed 세션만으로 평균 계산
+        const completedSessions = allSessions.filter(r => r.session_outcome === 'completed');
+        if (completedSessions.length === 0) {
+          return {
+            avgDuration: 0,
+            avgSleepHour: 0,
+            avgWakeHour: 0,
+            recordRate: recordedDays / totalDays,
+            totalDays,
+            recordedDays,
+          };
+        }
+
+        const totalDuration = completedSessions.reduce((s, r) => s + r.duration_minutes, 0);
 
         // 취침 시간 평균 (자정 넘김 처리: 0~6시는 +24로 계산)
-        const sleepHours = monthRecords.map(r => {
+        const sleepHours = completedSessions.map(r => {
           const h = new Date(r.sleep_time).getHours();
           const m = new Date(r.sleep_time).getMinutes();
           const hour = h + m / 60;
           return hour < 12 ? hour + 24 : hour; // 자정 이후는 +24
         });
-        const avgSleepRaw = sleepHours.reduce((s, h) => s + h, 0) / recordedDays;
+        const avgSleepRaw = sleepHours.reduce((s, h) => s + h, 0) / completedSessions.length;
         const avgSleepHour = avgSleepRaw >= 24 ? avgSleepRaw - 24 : avgSleepRaw;
 
-        const wakeHours = monthRecords.map(r => {
+        const wakeHours = completedSessions.map(r => {
           const h = new Date(r.wake_time).getHours();
           const m = new Date(r.wake_time).getMinutes();
           return h + m / 60;
         });
-        const avgWakeHour = wakeHours.reduce((s, h) => s + h, 0) / recordedDays;
+        const avgWakeHour = wakeHours.reduce((s, h) => s + h, 0) / completedSessions.length;
 
         return {
-          avgDuration: Math.round(totalDuration / recordedDays),
+          avgDuration: Math.round(totalDuration / completedSessions.length),
           avgSleepHour: Math.round(avgSleepHour * 10) / 10,
           avgWakeHour: Math.round(avgWakeHour * 10) / 10,
           recordRate: recordedDays / totalDays,
@@ -337,7 +415,7 @@ export const useSleepStore = create<SleepStoreState>()(
       },
 
       completeSleepSession: async () => {
-        const {sessionState, upsertRecord} = get();
+        const {sessionState, insertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
         // 스크린타임 차단 해제 (항상 호출 — 안전)
@@ -349,21 +427,22 @@ export const useSleepStore = create<SleepStoreState>()(
         const recordDate = format(now, 'yyyy-MM-dd');
 
         try {
-          await upsertRecord({
+          await insertRecord({
             date: recordDate,
             sleep_time: startedAt.toISOString(),
             wake_time: now.toISOString(),
             mood: 'good',
+            session_outcome: 'completed',
           });
         } catch {
-          // upsertRecord 내부에서 에러 처리됨
+          // insertRecord 내부에서 에러 처리됨
         }
 
         set({sessionState: {...DEFAULT_SESSION}});
       },
 
       abandonSleepSession: async () => {
-        const {sessionState, upsertRecord} = get();
+        const {sessionState, insertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
         // 스크린타임 차단 해제 (항상 호출 — 안전)
@@ -374,14 +453,15 @@ export const useSleepStore = create<SleepStoreState>()(
         const recordDate = format(now, 'yyyy-MM-dd');
 
         try {
-          await upsertRecord({
+          await insertRecord({
             date: recordDate,
             sleep_time: startedAt.toISOString(),
             wake_time: now.toISOString(),
             mood: 'poor',
+            session_outcome: 'abandoned',
           });
         } catch {
-          // upsertRecord 내부에서 에러 처리됨
+          // insertRecord 내부에서 에러 처리됨
         }
 
         set({sessionState: {...DEFAULT_SESSION}});
@@ -389,7 +469,7 @@ export const useSleepStore = create<SleepStoreState>()(
 
       /** 앱 재시작 시 크래시 복구 */
       recoverSession: async () => {
-        const {sessionState, screenTimeLinkEnabled, upsertRecord} = get();
+        const {sessionState, screenTimeLinkEnabled, insertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
         const now = new Date();
@@ -413,11 +493,12 @@ export const useSleepStore = create<SleepStoreState>()(
             }
             const recordDate = format(now, 'yyyy-MM-dd');
             try {
-              await upsertRecord({
+              await insertRecord({
                 date: recordDate,
                 sleep_time: startedAt.toISOString(),
                 wake_time: startedAt.toISOString(), // duration 0 → wilted 처리
                 mood: 'poor',
+                session_outcome: 'abandoned',
               });
             } catch {
               // 에러 시 세션은 리셋하되 기록은 무시
@@ -430,11 +511,12 @@ export const useSleepStore = create<SleepStoreState>()(
           await clearShield();
           const recordDate = format(expectedWake, 'yyyy-MM-dd');
           try {
-            await upsertRecord({
+            await insertRecord({
               date: recordDate,
               sleep_time: startedAt.toISOString(),
               wake_time: expectedWake.toISOString(),
               mood: 'good',
+              session_outcome: 'completed',
             });
           } catch {
             // 에러 시 세션은 리셋하되 기록은 무시
@@ -447,11 +529,12 @@ export const useSleepStore = create<SleepStoreState>()(
         if (isPastWakeTime && expectedWake) {
           const recordDate = format(expectedWake, 'yyyy-MM-dd');
           try {
-            await upsertRecord({
+            await insertRecord({
               date: recordDate,
               sleep_time: startedAt.toISOString(),
               wake_time: expectedWake.toISOString(),
               mood: 'good',
+              session_outcome: 'completed',
             });
           } catch {
             // 에러 시 세션은 리셋하되 기록은 무시
@@ -470,22 +553,38 @@ export const useSleepStore = create<SleepStoreState>()(
 
         for (let i = 29; i >= 0; i--) {
           const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
-          const record = records[date];
+          const sessions = records[date] ?? [];
+
+          const gardenSessions: GardenSession[] = sessions.map(r => ({
+            id: r.id,
+            durationMinutes: r.duration_minutes,
+            outcome: r.session_outcome,
+            isHealthy: r.session_outcome === 'completed' && r.duration_minutes >= threshold,
+          }));
+
+          // 하루 중 1개라도 healthy면 healthy
+          const hasHealthy = gardenSessions.some(s => s.isHealthy);
+          // 총 수면 시간 (completed 세션만)
+          const totalDuration = sessions
+            .filter(r => r.session_outcome === 'completed')
+            .reduce((sum, r) => sum + r.duration_minutes, 0);
 
           if (date === today) {
             days.push({
               date,
               status: 'today',
-              durationMinutes: record?.duration_minutes,
+              durationMinutes: totalDuration || undefined,
+              sessions: gardenSessions,
             });
-          } else if (record) {
+          } else if (sessions.length > 0) {
             days.push({
               date,
-              status: record.duration_minutes >= threshold ? 'healthy' : 'wilted',
-              durationMinutes: record.duration_minutes,
+              status: hasHealthy ? 'healthy' : 'wilted',
+              durationMinutes: totalDuration || undefined,
+              sessions: gardenSessions,
             });
           } else {
-            days.push({date, status: 'empty'});
+            days.push({date, status: 'empty', sessions: []});
           }
         }
 
@@ -499,10 +598,14 @@ export const useSleepStore = create<SleepStoreState>()(
         let streak = 0;
 
         // 어제부터 역순으로 연속 성공일 카운트
+        // 하루에 1개 이상 healthy 세션이 있으면 성공일
         for (let i = 1; i <= 365; i++) {
           const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
-          const record = records[date];
-          if (record && record.duration_minutes >= threshold) {
+          const sessions = records[date] ?? [];
+          const hasHealthy = sessions.some(
+            r => r.session_outcome === 'completed' && r.duration_minutes >= threshold,
+          );
+          if (hasHealthy) {
             streak++;
           } else {
             break;
@@ -526,6 +629,8 @@ export const useSleepStore = create<SleepStoreState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.selectedDate = format(new Date(), 'yyyy-MM-dd');
+          // 기존 단일 레코드 형식 → 배열 형식 마이그레이션
+          state.records = migrateRecordsToArray(state.records);
         }
       },
     },

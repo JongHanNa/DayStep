@@ -9,11 +9,14 @@ import {format} from 'date-fns';
 import {
   ALL_DEFAULT_TASKS,
   DEFAULT_ZONES,
+  DEFAULT_DIGITAL_SCHEDULES,
+  DEFAULT_BELONGINGS_SCHEDULES,
   ENERGY_CONFIG,
   type EnergyLevel,
   type CleaningTab,
   type CleaningTask,
   type CleaningZone,
+  type CategorySchedule,
 } from '@/constants/cleaning-data';
 
 // ============================================
@@ -30,6 +33,7 @@ interface CleaningStoreState {
   // Data
   tasks: CleaningTask[];
   zones: CleaningZone[];
+  categorySchedules: CategorySchedule[];
   completions: Record<string, CompletionRecord[]>; // key: date
 
   // UI State
@@ -55,6 +59,9 @@ interface CleaningStoreState {
 
   // Zone actions
   updateZoneDayOfWeek: (zoneId: string, dayOfWeek: number) => void;
+
+  // Category schedule actions
+  updateCategoryScheduleDayOfWeek: (id: string, dayOfWeek: number) => void;
 
   // Timer actions
   startTimer: (totalSeconds: number) => void;
@@ -106,6 +113,7 @@ export const useCleaningStore = create<CleaningStoreState>()(
     (set, get) => ({
       tasks: ALL_DEFAULT_TASKS,
       zones: DEFAULT_ZONES,
+      categorySchedules: [...DEFAULT_DIGITAL_SCHEDULES, ...DEFAULT_BELONGINGS_SCHEDULES],
       completions: {},
       energyLevel: 'moderate',
       activeTab: 'space',
@@ -162,6 +170,13 @@ export const useCleaningStore = create<CleaningStoreState>()(
         set({zones});
       },
 
+      updateCategoryScheduleDayOfWeek: (id, dayOfWeek) => {
+        const categorySchedules = get().categorySchedules.map(cs =>
+          cs.id === id ? {...cs, dayOfWeek} : cs,
+        );
+        set({categorySchedules});
+      },
+
       startTimer: (totalSeconds) => {
         set({timerSeconds: totalSeconds, timerTotalSeconds: totalSeconds, isTimerRunning: true});
       },
@@ -185,14 +200,23 @@ export const useCleaningStore = create<CleaningStoreState>()(
       },
 
       getAllTasks: () => {
-        const {tasks, zones} = get();
+        const {tasks, zones, categorySchedules} = get();
         const dayOfWeek = new Date().getDay();
         const todayZone = zones.find(z => z.dayOfWeek === dayOfWeek);
 
         return tasks.filter(t => {
-          if (t.tab !== 'space') return true;
+          // space 탭: 기존 zone 로직
+          if (t.tab === 'space') {
+            if (t.frequency === 'daily') return true;
+            if (todayZone && t.zoneId === todayZone.id) return true;
+            return false;
+          }
+          // digital/belongings: 카테고리 스케줄 기준
           if (t.frequency === 'daily') return true;
-          if (todayZone && t.zoneId === todayZone.id) return true;
+          const schedule = categorySchedules.find(
+            cs => cs.tab === t.tab && cs.category === t.category,
+          );
+          if (schedule && schedule.dayOfWeek === dayOfWeek) return true;
           return false;
         });
       },
@@ -206,13 +230,13 @@ export const useCleaningStore = create<CleaningStoreState>()(
       },
 
       getOrderedTasks: () => {
-        const {tasks, zones, energyLevel} = get();
+        const {tasks, zones, categorySchedules, energyLevel} = get();
         const dayOfWeek = new Date().getDay();
         const todayZone = zones.find(z => z.dayOfWeek === dayOfWeek);
         const config = ENERGY_CONFIG[energyLevel];
 
         const dailyRoutine = tasks.filter(
-          t => t.tab === 'space' && t.frequency === 'daily' && t.energyCost <= config.maxEnergyCost,
+          t => t.frequency === 'daily' && t.energyCost <= config.maxEnergyCost,
         );
         const zoneFocus = todayZone
           ? tasks.filter(
@@ -224,12 +248,22 @@ export const useCleaningStore = create<CleaningStoreState>()(
             )
           : [];
 
-        const digitalTasks = tasks.filter(
-          t => t.tab === 'digital' && t.energyCost <= config.maxEnergyCost,
-        );
-        const belongingsTasks = tasks.filter(
-          t => t.tab === 'belongings' && t.energyCost <= config.maxEnergyCost,
-        );
+        const digitalTasks = tasks.filter(t => {
+          if (t.tab !== 'digital' || t.energyCost > config.maxEnergyCost) return false;
+          if (t.frequency === 'daily') return false;
+          const schedule = categorySchedules.find(
+            cs => cs.tab === 'digital' && cs.category === t.category,
+          );
+          return schedule ? schedule.dayOfWeek === dayOfWeek : false;
+        });
+        const belongingsTasks = tasks.filter(t => {
+          if (t.tab !== 'belongings' || t.energyCost > config.maxEnergyCost) return false;
+          if (t.frequency === 'daily') return false;
+          const schedule = categorySchedules.find(
+            cs => cs.tab === 'belongings' && cs.category === t.category,
+          );
+          return schedule ? schedule.dayOfWeek === dayOfWeek : false;
+        });
 
         return {dailyRoutine, zoneFocus, digitalTasks, belongingsTasks};
       },
@@ -254,6 +288,7 @@ export const useCleaningStore = create<CleaningStoreState>()(
       partialize: (state) => ({
         tasks: state.tasks,
         zones: state.zones,
+        categorySchedules: state.categorySchedules,
         completions: state.completions,
         energyLevel: state.energyLevel,
         activeTab: state.activeTab,
