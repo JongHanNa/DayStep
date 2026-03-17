@@ -1,20 +1,9 @@
-const path = require('path');
 const { getDefaultConfig } = require('expo/metro-config');
-const { mergeConfig } = require('@react-native/metro-config');
-const {withNativeWind} = require('nativewind/metro');
+const { withNativeWind } = require('nativewind/metro');
 
-const projectRoot = __dirname;
-const monorepoRoot = path.resolve(projectRoot, '../..');
+const config = getDefaultConfig(__dirname);
 
-const config = mergeConfig(getDefaultConfig(__dirname), {
-  watchFolders: [monorepoRoot],
-  resolver: {
-    nodeModulesPaths: [
-      path.resolve(projectRoot, 'node_modules'),
-      path.resolve(monorepoRoot, 'node_modules'),
-    ],
-    disableHierarchicalLookup: true,
-  },
-});
+// Expo가 모노레포 루트를 unstable_serverRoot로 설정하는 것을 앱 디렉터리로 오버라이드
+config.server.unstable_serverRoot = __dirname;
 
-module.exports = withNativeWind(config, {input: './global.css'});
+module.exports = withNativeWind(config, { input: './global.css' });
