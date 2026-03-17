@@ -102,16 +102,41 @@ export default function CleaningScreen() {
     return activeTasks[0] ?? null;
   }, [focusTaskId, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, activeTasks]);
 
+  // 통합 라벨: "오늘의 구역, 디지털, 물건: 침실, 파일, 수납"
+  const todaySectionLabel = useMemo(() => {
+    const tabLabels: string[] = [];
+    const categories: string[] = [];
+
+    if (zoneFocus.length > 0) {
+      tabLabels.push('구역');
+      if (todayZone) categories.push(todayZone.name);
+    }
+    if (digitalTasks.length > 0) {
+      tabLabels.push('디지털');
+      const cats = [...new Set(digitalTasks.map(t => t.category))];
+      categories.push(...cats);
+    }
+    if (belongingsTasks.length > 0) {
+      tabLabels.push('물건');
+      const cats = [...new Set(belongingsTasks.map(t => t.category))];
+      categories.push(...cats);
+    }
+
+    if (tabLabels.length === 0) return null;
+    return `오늘의 ${tabLabels.join(', ')}: ${categories.join(', ')}`;
+  }, [zoneFocus, digitalTasks, belongingsTasks, todayZone]);
+
   // 현재 포커스 태스크가 어느 섹션에 속하는지
   const focusSectionLabel = useMemo(() => {
     if (!focusTask) return null;
     if (dailyRoutine.some(t => t.id === focusTask.id)) return '매일 할 일';
-    if (zoneFocus.some(t => t.id === focusTask.id))
-      return todayZone ? `오늘의 구역: ${todayZone.name}` : null;
-    if (digitalTasks.some(t => t.id === focusTask.id)) return '오늘의 디지털';
-    if (belongingsTasks.some(t => t.id === focusTask.id)) return '오늘의 물건';
+    if (
+      zoneFocus.some(t => t.id === focusTask.id) ||
+      digitalTasks.some(t => t.id === focusTask.id) ||
+      belongingsTasks.some(t => t.id === focusTask.id)
+    ) return todaySectionLabel;
     return null;
-  }, [focusTask, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todayZone]);
+  }, [focusTask, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todaySectionLabel]);
 
   // 큐 태스크 (포커스 제외), 섹션 분리 — 전체 탭 통합
   const queueSections = useMemo((): TaskQueueSection[] => {
@@ -125,15 +150,13 @@ export default function CleaningScreen() {
 
     const sections: TaskQueueSection[] = [];
     if (dailyQueue.length > 0) sections.push({title: '매일 할 일', tasks: dailyQueue});
-    if (zoneQueue.length > 0)
-      sections.push({
-        title: todayZone ? `오늘의 구역: ${todayZone.name}` : '오늘의 구역',
-        tasks: zoneQueue,
-      });
-    if (digitalQueue.length > 0) sections.push({title: '오늘의 디지털', tasks: digitalQueue});
-    if (belongingsQueue.length > 0) sections.push({title: '오늘의 물건', tasks: belongingsQueue});
+
+    const todayQueue = [...zoneQueue, ...digitalQueue, ...belongingsQueue];
+    if (todayQueue.length > 0 && todaySectionLabel) {
+      sections.push({title: todaySectionLabel, tasks: todayQueue});
+    }
     return sections;
-  }, [focusTask, activeTasks, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todayZone]);
+  }, [focusTask, activeTasks, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todaySectionLabel]);
 
   // 카테고리 그룹핑 (모달용 — space 탭은 2그룹으로 분리)
   const categories = useMemo(() => {
