@@ -15,7 +15,7 @@ import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
-import {FREQUENCY_LABELS, FREQUENCY_COLORS, TAB_LABELS, TAB_COLORS, ENERGY_COLORS} from '@/constants/cleaning-data';
+import {FREQUENCY_LABELS, TAB_LABELS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface TaskCheckItemProps {
@@ -85,64 +85,19 @@ export function TaskCheckItem({task, isCompleted, onToggle}: TaskCheckItemProps)
         {task.title}
       </Text>
 
-      {/* 에너지 코스트 뱃지 */}
-      <View
-        style={{
-          paddingHorizontal: 5,
-          paddingVertical: 2,
-          borderRadius: 8,
-          backgroundColor: ENERGY_COLORS[task.energyCost] + '15',
-        }}>
-        <Text
-          style={{
-            fontSize: 10,
-            fontWeight: '600',
-            color: ENERGY_COLORS[task.energyCost],
-          }}>
-          ⚡{task.energyCost}
-        </Text>
-      </View>
+      {/* 에너지 코스트 */}
+      <Text style={{fontSize: 11, color: '#9CA3AF'}}>⚡{task.energyCost}</Text>
 
       {/* 예상시간 */}
-      <Text style={{fontSize: 11, color: '#9CA3AF', marginRight: 4}}>
+      <Text style={{fontSize: 11, color: '#9CA3AF'}}>
         {task.estimatedMinutes}분
       </Text>
 
-      {/* 탭 뱃지 */}
-      <View
-        style={{
-          paddingHorizontal: 6,
-          paddingVertical: 2,
-          borderRadius: 8,
-          backgroundColor: TAB_COLORS[task.tab] + '15',
-        }}>
-        <Text
-          style={{
-            fontSize: 10,
-            fontWeight: '600',
-            color: TAB_COLORS[task.tab],
-          }}>
-          {TAB_LABELS[task.tab]}
-        </Text>
-      </View>
+      {/* 탭 */}
+      <Text style={{fontSize: 11, color: '#9CA3AF'}}>{TAB_LABELS[task.tab]}</Text>
 
-      {/* 주기 뱃지 */}
-      <View
-        style={{
-          paddingHorizontal: 6,
-          paddingVertical: 2,
-          borderRadius: 8,
-          backgroundColor: FREQUENCY_COLORS[task.frequency] + '15',
-        }}>
-        <Text
-          style={{
-            fontSize: 10,
-            fontWeight: '600',
-            color: FREQUENCY_COLORS[task.frequency],
-          }}>
-          {FREQUENCY_LABELS[task.frequency]}
-        </Text>
-      </View>
+      {/* 주기 */}
+      <Text style={{fontSize: 11, color: '#9CA3AF'}}>{FREQUENCY_LABELS[task.frequency]}</Text>
     </AnimatedPressable>
   );
 }

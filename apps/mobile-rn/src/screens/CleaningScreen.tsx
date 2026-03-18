@@ -9,6 +9,7 @@ import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {Settings, List, SprayCan, X} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {LiquidGlassButton} from '@/components/native';
 import {EnergySelector} from '@/components/cleaning/EnergySelector';
 import {FocusCard} from '@/components/cleaning/FocusCard';
 import {TaskQueue} from '@/components/cleaning/TaskQueue';
@@ -222,12 +223,13 @@ export default function CleaningScreen() {
             paddingTop: 8,
             paddingBottom: 12,
           }}>
-          <AnimatedPressable
-            hapticType="light"
+          <LiquidGlassButton
+            systemIconName="list.bullet"
+            fallbackIcon={<List size={18} color={primaryColor} />}
+            iconColor={primaryColor}
+            size={36}
             onPress={() => setTaskListModalVisible(true)}
-            style={{width: 36, height: 36, borderRadius: 10, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center'}}>
-            <List size={20} color="#374151" />
-          </AnimatedPressable>
+          />
 
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
             <SprayCan size={18} color={primaryColor} />
@@ -238,12 +240,13 @@ export default function CleaningScreen() {
             </Text>
           </View>
 
-          <AnimatedPressable
-            hapticType="light"
+          <LiquidGlassButton
+            systemIconName="gearshape"
+            fallbackIcon={<Settings size={18} color={primaryColor} />}
+            iconColor={primaryColor}
+            size={36}
             onPress={() => setSettingsModalVisible(true)}
-            style={{width: 36, height: 36, borderRadius: 10, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center'}}>
-            <Settings size={18} color="#6B7280" />
-          </AnimatedPressable>
+          />
         </Animated.View>
 
         {/* 에너지 선택기 */}

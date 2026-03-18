@@ -14,4 +14,5 @@ export {NativeMissionCardNative} from './NativeMissionCard';
 export {NativeContactNudgeNative} from './NativeContactNudge';
 export {NativeSleepActionButton} from './NativeSleepActionButton';
 export {NativeSleepGardenNative} from './NativeSleepGarden';
+export {LiquidGlassButton} from './LiquidGlassButton';
 export {isIOS26Plus} from './utils';

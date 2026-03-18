@@ -9,7 +9,7 @@ import {AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTheme} from '@/theme';
 import {shadows} from '@/theme/tokens';
-import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS, FREQUENCY_LABELS, FREQUENCY_COLORS} from '@/constants/cleaning-data';
+import {FREQUENCY_LABELS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 interface FocusCardProps {
@@ -53,56 +53,14 @@ export function FocusCard({
           alignItems: 'center',
         },
       ]}>
-      {/* 탭 뱃지 + 카테고리 뱃지 */}
-      <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginBottom: 6}}>
-        <View
-          style={{
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-            borderRadius: 8,
-            backgroundColor: TAB_COLORS[task.tab] + '15',
-          }}>
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: '600',
-              color: TAB_COLORS[task.tab],
-            }}>
-            {TAB_LABELS[task.tab]}
-          </Text>
-        </View>
-        <View
-          style={{
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-            borderRadius: 8,
-            backgroundColor: FREQUENCY_COLORS[task.frequency] + '15',
-          }}>
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: '600',
-              color: FREQUENCY_COLORS[task.frequency],
-            }}>
-            {FREQUENCY_LABELS[task.frequency]}
-          </Text>
-        </View>
-        <View
-          style={{
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-            borderRadius: 8,
-            backgroundColor: '#F3F4F6',
-          }}>
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: '600',
-              color: '#6B7280',
-            }}>
-            {task.category}
-          </Text>
-        </View>
+      {/* 카테고리 + 빈도 뱃지 */}
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4}}>
+        <Text style={{fontSize: 11, fontWeight: '600', color: '#9CA3AF'}}>
+          {task.category}
+        </Text>
+        <Text style={{fontSize: 11, color: '#9CA3AF'}}>
+          {FREQUENCY_LABELS[task.frequency]}
+        </Text>
       </View>
 
       {/* 태스크 제목 */}
@@ -136,22 +94,7 @@ export function FocusCard({
         <Text style={{fontSize: 12, color: '#9CA3AF'}}>
           예상 {task.estimatedMinutes}분
         </Text>
-        <View
-          style={{
-            paddingHorizontal: 6,
-            paddingVertical: 2,
-            borderRadius: 8,
-            backgroundColor: ENERGY_COLORS[task.energyCost] + '15',
-          }}>
-          <Text
-            style={{
-              fontSize: 10,
-              fontWeight: '600',
-              color: ENERGY_COLORS[task.energyCost],
-            }}>
-            ⚡{task.energyCost}
-          </Text>
-        </View>
+        <Text style={{fontSize: 11, color: '#9CA3AF'}}>⚡{task.energyCost}</Text>
       </View>
 
       {/* 버튼 영역 */}

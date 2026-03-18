@@ -73,7 +73,6 @@ export const DEFAULT_ZONES: CleaningZone[] = [
   {id: 'living', name: '거실', dayOfWeek: 4, icon: 'Sofa'},
   {id: 'entrance', name: '현관/베란다', dayOfWeek: 5, icon: 'DoorOpen'},
   {id: 'desk', name: '책상/작업공간', dayOfWeek: 6, icon: 'Monitor'},
-  {id: 'whole', name: '전체 간단 정리', dayOfWeek: 0, icon: 'Home'},
 ];
 
 // ============================================

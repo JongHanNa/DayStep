@@ -5,7 +5,7 @@ import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
-import {TAB_LABELS, TAB_COLORS, ENERGY_COLORS, FREQUENCY_LABELS, FREQUENCY_COLORS} from '@/constants/cleaning-data';
+import {FREQUENCY_LABELS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
 export interface TaskQueueSection {
@@ -57,73 +57,16 @@ export function TaskQueue({sections, onSelectTask}: TaskQueueProps) {
                 <Text style={{fontSize: 12, color: '#9CA3AF', width: 20, textAlign: 'right'}}>
                   {idx}.
                 </Text>
-                <View
-                  style={{
-                    paddingHorizontal: 4,
-                    paddingVertical: 1,
-                    borderRadius: 4,
-                    backgroundColor: TAB_COLORS[task.tab] + '15',
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: TAB_COLORS[task.tab],
-                    }}>
-                    {TAB_LABELS[task.tab]}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    paddingHorizontal: 4,
-                    paddingVertical: 1,
-                    borderRadius: 4,
-                    backgroundColor: FREQUENCY_COLORS[task.frequency] + '15',
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: FREQUENCY_COLORS[task.frequency],
-                    }}>
-                    {FREQUENCY_LABELS[task.frequency]}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    paddingHorizontal: 4,
-                    paddingVertical: 1,
-                    borderRadius: 4,
-                    backgroundColor: '#F3F4F6',
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: '#6B7280',
-                    }}>
-                    {task.category}
-                  </Text>
-                </View>
+                <Text style={{fontSize: 10, color: '#9CA3AF'}}>
+                  {task.category}
+                </Text>
                 <Text style={{fontSize: 13, color: '#6B7280', flex: 1}} numberOfLines={1}>
                   {task.title}
                 </Text>
-                <View
-                  style={{
-                    paddingHorizontal: 4,
-                    paddingVertical: 1,
-                    borderRadius: 4,
-                    backgroundColor: ENERGY_COLORS[task.energyCost] + '15',
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 9,
-                      fontWeight: '600',
-                      color: ENERGY_COLORS[task.energyCost],
-                    }}>
-                    ⚡{task.energyCost}
-                  </Text>
-                </View>
+                <Text style={{fontSize: 11, color: '#9CA3AF'}}>
+                  {FREQUENCY_LABELS[task.frequency]}
+                </Text>
+                <Text style={{fontSize: 11, color: '#9CA3AF'}}>⚡{task.energyCost}</Text>
                 <Text style={{fontSize: 11, color: '#9CA3AF'}}>
                   {task.estimatedMinutes}분
                 </Text>
