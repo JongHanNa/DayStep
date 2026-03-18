@@ -60,18 +60,14 @@ export default function SleepGardenScreen() {
         useSleepStore.getState();
       const status = getAuthorizationStatus();
 
-      if (linked) {
-        if (status === 'denied') {
-          setLinked(false);
-        }
-        return;
-      }
-
+      // 1) approved → 연동 상태 보장, 모달 불필요
       if (status === 'approved') {
-        setLinked(true);
+        if (!linked) setLinked(true);
         return;
       }
 
+      // 2) approved가 아님 (denied | notDetermined) → 연동 해제 + 모달
+      if (linked) setLinked(false);
       setShowScreenTimeModal(true);
     }, []), // 빈 deps: 포커스 이벤트에서만 실행
   );
