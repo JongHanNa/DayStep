@@ -25,7 +25,7 @@ import {TrialOfferModal} from '@/components/subscription/TrialOfferModal';
 import {scheduleTrialExpiryReminder} from '@/lib/notifications';
 import Config from 'react-native-config';
 import {useTheme} from '@/theme';
-import {useSleepStore} from '@/stores/sleepStore';
+import {useSleepStore, useSleepStoreHydrated} from '@/stores/sleepStore';
 import {useBedtimeMonitor} from '@/hooks/useBedtimeMonitor';
 import {BedtimeModal} from '@/components/sleep/BedtimeModal';
 import {useNavigation} from '@react-navigation/native';
@@ -50,6 +50,22 @@ function AuthenticatedApp() {
   useSettingsSync(settingsUser?.id);
   useCleaningSettingsSync(settingsUser?.id);
   useSleepSettingsSync(settingsUser?.id);
+
+  // 세션 복구 (hydration 완료 후)
+  const hydrated = useSleepStoreHydrated();
+  const sessionStatus = useSleepStore(s => s.sessionState.status);
+  const recoverSession = useSleepStore(s => s.recoverSession);
+
+  useEffect(() => {
+    if (!hydrated || sessionStatus !== 'running') return;
+    recoverSession().then(() => {
+      const current = useSleepStore.getState().sessionState;
+      if (current.status === 'running') {
+        navigation.navigate('Main', {screen: 'Home', params: {screen: 'SleepSession'}});
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
 
   // 자동 취침 모니터
   const {showBedtimeModal, onStartSleep, onSnooze, onSkipTonight} = useBedtimeMonitor();

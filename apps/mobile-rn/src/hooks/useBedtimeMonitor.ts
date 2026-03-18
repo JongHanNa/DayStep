@@ -4,7 +4,7 @@
  * 취침 시간 ~ 기상 시간 윈도우 내 앱 진입 시 BedtimeModal 표시
  */
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {useSleepStore} from '@/stores/sleepStore';
+import {useSleepStore, useSleepStoreHydrated} from '@/stores/sleepStore';
 import {storage} from '@/lib/mmkv';
 import {format} from 'date-fns';
 
@@ -13,6 +13,7 @@ const MMKV_SKIP_KEY = 'bedtime-skip-date';
 
 export function useBedtimeMonitor() {
   const {autoSleepEnabled, sleepGoalTime, wakeGoalTime, sessionState} = useSleepStore();
+  const hydrated = useSleepStoreHydrated();
   const [showBedtimeModal, setShowBedtimeModal] = useState(false);
   const [isSkippedTonight, setIsSkippedTonight] = useState(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -21,7 +22,7 @@ export function useBedtimeMonitor() {
   const snoozeUntilRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!autoSleepEnabled) return;
+    if (!autoSleepEnabled || !hydrated) return;
 
     const check = () => {
       // 이미 세션 진행 중이면 스킵
@@ -56,7 +57,7 @@ export function useBedtimeMonitor() {
     check();
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
-  }, [autoSleepEnabled, sleepGoalTime, wakeGoalTime, sessionState.status]);
+  }, [autoSleepEnabled, sleepGoalTime, wakeGoalTime, sessionState.status, hydrated]);
 
   const onStartSleep = useCallback(() => {
     setShowBedtimeModal(false);

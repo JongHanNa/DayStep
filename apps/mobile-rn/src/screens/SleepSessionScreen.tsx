@@ -118,17 +118,18 @@ export default function SleepSessionScreen() {
     };
   }, [screenTimeLinkEnabled, abandonSleepSession, navigation]);
 
-  // progress 계산
+  // progress 계산 (expectedWakeTime 기반)
   useEffect(() => {
-    if (sessionState.status !== 'running' || !sessionState.startedAt) return;
+    if (sessionState.status !== 'running' || !sessionState.startedAt || !sessionState.expectedWakeTime) return;
 
     const startedAt = new Date(sessionState.startedAt);
+    const expectedWake = new Date(sessionState.expectedWakeTime);
+    const totalSeconds = differenceInSeconds(expectedWake, startedAt);
     const elapsed = differenceInSeconds(currentTime, startedAt);
-    const goalSeconds = sessionState.goalDurationMinutes * 60;
-    const newProgress = Math.min(elapsed / goalSeconds, 1);
+    const newProgress = totalSeconds > 0 ? Math.min(Math.max(elapsed / totalSeconds, 0), 1) : 0;
     setProgress(newProgress);
 
-    if (newProgress >= 1 && !goalReached) {
+    if (currentTime >= expectedWake && !goalReached) {
       setGoalReached(true);
       haptic.success();
     }
@@ -157,13 +158,9 @@ export default function SleepSessionScreen() {
     return () => subscription.remove();
   }, [screenTimeLinkEnabled, abandonSleepSession, navigation]);
 
-  // 남은 시간 계산
-  const remainingSeconds = sessionState.startedAt
-    ? Math.max(
-        sessionState.goalDurationMinutes * 60 -
-          differenceInSeconds(currentTime, new Date(sessionState.startedAt)),
-        0,
-      )
+  // 남은 시간 계산 (expectedWakeTime 기반)
+  const remainingSeconds = sessionState.expectedWakeTime
+    ? Math.max(differenceInSeconds(new Date(sessionState.expectedWakeTime), currentTime), 0)
     : 0;
 
   const handleComplete = useCallback(async () => {
@@ -226,10 +223,15 @@ export default function SleepSessionScreen() {
         <Animated.View entering={FadeIn.duration(600)} style={styles.timeContainer}>
           <Text style={styles.timeDisplay}>{formatCurrentTime(currentTime)}</Text>
           <Text style={styles.statusText}>
-            {goalReached ? '목표 달성!' : '수면 중'}
+            {goalReached ? '목표 수면 달성!' : '수면시간이에요'}
           </Text>
+          {!goalReached && (
+            <Text style={styles.guideText}>
+              {'과몰입하던 일을 멈추고\n소등 후 취침하세요'}
+            </Text>
+          )}
           <Text style={styles.remainingText}>
-            {goalReached ? '기상해도 좋아요' : formatRemainingTime(remainingSeconds)}
+            {goalReached ? '기상해도 좋아요 ☀️' : formatRemainingTime(remainingSeconds)}
           </Text>
         </Animated.View>
 
@@ -292,6 +294,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'rgba(255,255,255,0.7)',
     marginTop: 8,
+  },
+  guideText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.35)',
+    marginTop: 6,
+    textAlign: 'center' as const,
+    lineHeight: 18,
   },
   remainingText: {
     fontSize: 14,

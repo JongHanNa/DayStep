@@ -3,10 +3,11 @@
  * 수면 기록 CRUD + 월간 통계 + 수면 세션 (정원 게이미피케이션)
  * 하루 다중 세션 지원 (v2)
  */
+import {useState, useEffect} from 'react';
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
-import {zustandMMKVStorage} from '@/lib/mmkv';
+import {zustandMMKVStorage, storage} from '@/lib/mmkv';
 import {format, startOfMonth, endOfMonth, differenceInMinutes, subDays, addDays} from 'date-fns';
 import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield, cancelAutoUnshield, getAuthorizationStatus} from '@/lib/screenTimeManager';
 
@@ -434,9 +435,20 @@ export const useSleepStore = create<SleepStoreState>()(
 
       startSleepSession: async () => {
         const {sleepGoalTime, wakeGoalTime, screenTimeLinkEnabled} = get();
-        const goalDuration = calcGoalMinutes(sleepGoalTime, wakeGoalTime);
         const now = new Date();
-        const expected = new Date(now.getTime() + goalDuration * 60 * 1000);
+
+        // expectedWakeTime: 다음 도래하는 wakeGoalTime
+        const [wh, wm] = wakeGoalTime.split(':').map(Number);
+        const expected = new Date(now);
+        expected.setHours(wh, wm, 0, 0);
+        if (expected <= now) {
+          expected.setDate(expected.getDate() + 1); // 이미 지났으면 내일
+        }
+
+        // goalDurationMinutes: 실제 now → expectedWakeTime 간격
+        const goalDuration = Math.round(
+          (expected.getTime() - now.getTime()) / (60 * 1000),
+        );
 
         // 스크린타임 연동 활성 시 shield 적용
         if (screenTimeLinkEnabled) {
@@ -560,6 +572,8 @@ export const useSleepStore = create<SleepStoreState>()(
             } catch {
               // 에러 시 세션은 리셋하되 기록은 무시
             }
+            // 자동완료 후 취침 모달 억제
+            storage.set('bedtime-skip-date', format(new Date(), 'yyyy-MM-dd'));
             set({sessionState: {...DEFAULT_SESSION}});
             return;
           }
@@ -585,6 +599,8 @@ export const useSleepStore = create<SleepStoreState>()(
           } catch {
             // 에러 시 세션은 리셋하되 기록은 무시
           }
+          // 자동완료 후 취침 모달 억제
+          storage.set('bedtime-skip-date', format(new Date(), 'yyyy-MM-dd'));
           set({sessionState: {...DEFAULT_SESSION}});
         }
         // 아직 진행 중이면 세션 유지 (SleepSessionScreen으로 복귀)
@@ -679,11 +695,34 @@ export const useSleepStore = create<SleepStoreState>()(
           state.selectedDate = format(new Date(), 'yyyy-MM-dd');
           // 기존 단일 레코드 형식 → 배열 형식 마이그레이션
           state.records = migrateRecordsToArray(state.records);
+          // running 세션의 expectedWakeTime 보정 (버그 수정 이전 세션 대응)
+          if (state.sessionState?.status === 'running' && state.sessionState.startedAt) {
+            const [wh, wm] = state.wakeGoalTime.split(':').map(Number);
+            const startedAt = new Date(state.sessionState.startedAt);
+            const expected = new Date(startedAt);
+            expected.setHours(wh, wm, 0, 0);
+            if (expected <= startedAt) {
+              expected.setDate(expected.getDate() + 1);
+            }
+            const goalDuration = Math.round((expected.getTime() - startedAt.getTime()) / (60 * 1000));
+            state.sessionState.expectedWakeTime = expected.toISOString();
+            state.sessionState.goalDurationMinutes = goalDuration;
+          }
         }
       },
     },
   ),
 );
+
+/** Zustand persist hydration 완료 대기 훅 */
+export function useSleepStoreHydrated(): boolean {
+  const [hydrated, setHydrated] = useState(useSleepStore.persist.hasHydrated());
+  useEffect(() => {
+    const unsub = useSleepStore.persist.onFinishHydration(() => setHydrated(true));
+    return unsub;
+  }, []);
+  return hydrated;
+}
 
 /** DB 동기화용 설정 스냅샷 추출 */
 export function getSleepSettingsForSync() {
