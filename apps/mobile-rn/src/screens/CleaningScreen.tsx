@@ -216,9 +216,10 @@ export default function CleaningScreen() {
           }}>
           <LiquidGlassButton
             systemIconName="list.bullet"
-            fallbackIcon={<List size={18} color={primaryColor} />}
-            iconColor={primaryColor}
-            size={36}
+            fallbackIcon={<List size={16} color="#6B7280" />}
+            iconColor="#6B7280"
+            size={40}
+            iconSize={16}
             onPress={() => setTaskListModalVisible(true)}
           />
 
@@ -231,9 +232,10 @@ export default function CleaningScreen() {
 
           <LiquidGlassButton
             systemIconName="gearshape"
-            fallbackIcon={<Settings size={18} color={primaryColor} />}
-            iconColor={primaryColor}
-            size={36}
+            fallbackIcon={<Settings size={16} color="#6B7280" />}
+            iconColor="#6B7280"
+            size={40}
+            iconSize={16}
             onPress={() => setSettingsModalVisible(true)}
           />
         </Animated.View>

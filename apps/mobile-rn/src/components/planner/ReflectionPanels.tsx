@@ -1,8 +1,8 @@
 /**
  * Reflection Panels
- * 보상 + 어제의 점검/회고/교훈(읽기전용) + 오늘의 점검/회고/교훈(편집가능)
+ * 어제의 다짐/결단(읽기전용) + 어제의 점검/회고/교훈(읽기전용) + 오늘의 다짐/결단(편집) + 오늘의 점검/회고/교훈(편집)
  */
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {View, Text, TextInput, StyleSheet, ScrollView} from 'react-native';
 import {subDays, format, parseISO} from 'date-fns';
 import {useReflectionStore} from '@/stores/reflectionStore';
@@ -28,8 +28,9 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
   const yesterdayDate = format(subDays(parseISO(selectedDate), 1), 'yyyy-MM-dd');
   const yesterdayReflection = getReflection(yesterdayDate);
 
-  const [reward, setReward] = useState('');
+  const [todayResolution, setTodayResolution] = useState('');
   const [todayLesson, setTodayLesson] = useState('');
+  const prevDateRef = useRef(selectedDate);
 
   // 오늘 + 어제 데이터 로드
   useEffect(() => {
@@ -40,11 +41,30 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
   }, [user?.id, selectedDate, yesterdayDate]);
 
   useEffect(() => {
-    if (reflection) {
-      setReward(reflection.reward ?? '');
-      setTodayLesson(reflection.today_lesson ?? '');
+    // 날짜 변경 시: 이전 날짜에 미저장 값 auto-save
+    if (prevDateRef.current !== selectedDate && user?.id) {
+      const prevDate = prevDateRef.current;
+      const prevReflection = getReflection(prevDate);
+
+      const resolutionChanged =
+        todayResolution !== (prevReflection?.today_resolution ?? '');
+      const lessonChanged =
+        todayLesson !== (prevReflection?.today_lesson ?? '');
+
+      if (resolutionChanged || lessonChanged) {
+        const updates: Record<string, string> = {};
+        if (resolutionChanged) updates.today_resolution = todayResolution;
+        if (lessonChanged) updates.today_lesson = todayLesson;
+        upsertReflection(user.id, prevDate, updates);
+      }
+
+      prevDateRef.current = selectedDate;
     }
-  }, [reflection?.id]);
+
+    // 현재 날짜 데이터로 리셋
+    setTodayResolution(reflection?.today_resolution ?? '');
+    setTodayLesson(reflection?.today_lesson ?? '');
+  }, [selectedDate, reflection?.id]);
 
   const handleSave = useCallback(
     (field: string, value: any) => {
@@ -62,25 +82,19 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
 
   return (
     <View>
-      {/* 보상 */}
+      {/* 어제의 다짐/결단 (읽기전용) */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Text className="text-base font-semibold text-gray-800">
-            오늘의 보상
+            어제의 다짐/결단
           </Text>
         </View>
-        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.08)}} className="rounded-2xl p-4">
-          <TextInput
-            value={reward}
-            onChangeText={setReward}
-            onFocus={handleInputFocus}
-            onBlur={() => handleSave('reward', reward)}
-            placeholder="오늘 하루 수고한 나에게 줄 보상은?"
-            placeholderTextColor={hexWithOpacity(primaryColor, 0.4)}
-            className="text-sm text-gray-800"
-            style={styles.input}
-            multiline
-          />
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.05)}} className="rounded-2xl p-4">
+          <Text className="text-sm text-gray-600" style={styles.readonlyText}>
+            {yesterdayReflection?.today_resolution
+              ? yesterdayReflection.today_resolution
+              : '아직 작성된 다짐/결단이 없습니다'}
+          </Text>
         </View>
       </View>
 
@@ -97,6 +111,28 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
               ? yesterdayReflection.today_lesson
               : '아직 작성된 교훈이 없습니다'}
           </Text>
+        </View>
+      </View>
+
+      {/* 오늘의 다짐/결단 (편집가능) */}
+      <View className="mb-4">
+        <View className="flex-row items-center mb-2">
+          <Text className="text-base font-semibold text-gray-800">
+            오늘의 다짐/결단
+          </Text>
+        </View>
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.08)}} className="rounded-2xl p-4">
+          <TextInput
+            value={todayResolution}
+            onChangeText={setTodayResolution}
+            onFocus={handleInputFocus}
+            onBlur={() => handleSave('today_resolution', todayResolution)}
+            placeholder="오늘의 다짐과 결단을 적어보세요"
+            placeholderTextColor={hexWithOpacity(primaryColor, 0.4)}
+            className="text-sm text-gray-800"
+            style={styles.input}
+            multiline
+          />
         </View>
       </View>
 

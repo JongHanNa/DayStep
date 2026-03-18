@@ -31,10 +31,11 @@ struct LiquidGlassButtonContent: View {
       Image(systemName: state.systemIconName)
         .font(.system(size: state.iconSize))
         .foregroundStyle(Color(hex: state.iconColor))
+        .frame(width: state.buttonSize, height: state.buttonSize)
     }
     .buttonStyle(.plain)
+    .contentShape(.circle)
     .glassEffect(.regular, in: .circle)
-    .frame(width: state.buttonSize, height: state.buttonSize)
   }
 }
 
@@ -47,6 +48,8 @@ class LiquidGlassButtonUIView: UIView {
   private let buttonState = GlassButtonState()
   private var hostingController: UIHostingController<AnyView>?
   private var hasSetUp = false
+
+  private var customIconSizeSet = false
 
   // MARK: Prop Setters
 
@@ -62,7 +65,14 @@ class LiquidGlassButtonUIView: UIView {
   @objc func setSize(_ value: NSNumber) {
     let size = CGFloat(value.doubleValue)
     buttonState.buttonSize = size
-    buttonState.iconSize = size * 0.5
+    if !customIconSizeSet {
+      buttonState.iconSize = size * 0.5
+    }
+  }
+
+  @objc func setIconSize(_ value: NSNumber) {
+    customIconSizeSet = true
+    buttonState.iconSize = CGFloat(value.doubleValue)
   }
 
   // MARK: - 1회 초기화 (UIHostingController 재생성 금지)

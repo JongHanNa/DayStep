@@ -524,6 +524,7 @@ export interface DailyReflection {
   spending_note: string;
   thought_archive: string;
   today_lesson: string;
+  today_resolution: string;
   created_at: string;
   updated_at: string;
 }

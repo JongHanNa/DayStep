@@ -14,6 +14,7 @@ interface NativeLiquidGlassButtonProps {
   systemIconName: string;
   iconColor?: string;
   size?: number;
+  iconSize?: number;
   onButtonPress?: () => void;
   style?: any;
 }
@@ -26,6 +27,8 @@ interface LiquidGlassButtonProps {
   systemIconName: string;
   iconColor?: string;
   size?: number;
+  /** 아이콘 크기 (미지정 시 size * 0.5) */
+  iconSize?: number;
   onPress?: () => void;
   /** iOS 25- 폴백 시 렌더링할 아이콘 */
   fallbackIcon?: React.ReactNode;
@@ -35,6 +38,7 @@ export function LiquidGlassButton({
   systemIconName,
   iconColor = '#6B7280',
   size = 40,
+  iconSize,
   onPress,
   fallbackIcon,
 }: LiquidGlassButtonProps): React.ReactElement {
@@ -44,6 +48,7 @@ export function LiquidGlassButton({
         systemIconName={systemIconName}
         iconColor={iconColor}
         size={size}
+        iconSize={iconSize}
         onButtonPress={onPress}
         style={{width: size, height: size}}
       />

@@ -8,6 +8,7 @@
 RCT_EXPORT_VIEW_PROPERTY(systemIconName, NSString)
 RCT_EXPORT_VIEW_PROPERTY(iconColor, NSString)
 RCT_EXPORT_VIEW_PROPERTY(size, NSNumber)
+RCT_EXPORT_VIEW_PROPERTY(iconSize, NSNumber)
 RCT_EXPORT_VIEW_PROPERTY(onButtonPress, RCTDirectEventBlock)
 
 @end

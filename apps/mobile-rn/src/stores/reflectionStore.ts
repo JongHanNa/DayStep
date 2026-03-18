@@ -18,6 +18,7 @@ interface DayReflection {
   spending_note: string;
   thought_archive: string;
   today_lesson: string;
+  today_resolution: string;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +62,12 @@ export const useReflectionStore = create<ReflectionState>()(
             set(state => ({
               reflections: {...state.reflections, [date]: data},
             }));
+          } else {
+            // DB에 없으면 캐시도 클리어 (stale data 방지)
+            set(state => {
+              const {[date]: _, ...rest} = state.reflections;
+              return {reflections: rest};
+            });
           }
         } catch (err: any) {
           console.error('[ReflectionStore] Load error:', err);
@@ -86,6 +93,7 @@ export const useReflectionStore = create<ReflectionState>()(
             spending_note: '',
             thought_archive: '',
             today_lesson: '',
+            today_resolution: '',
             created_at: new Date().toISOString(),
           }),
           ...data,
