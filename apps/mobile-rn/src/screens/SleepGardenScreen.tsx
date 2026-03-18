@@ -6,7 +6,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View, Text, StyleSheet, ScrollView, Pressable, Modal, Alert, Platform} from 'react-native';
 import Animated, {FadeInDown, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {TreePine, Moon, Sun, Settings, Shield} from 'lucide-react-native';
+import {TreePine, Moon, Sun, Settings, Shield, ChevronRight} from 'lucide-react-native';
 import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus} from '@/lib/screenTimeManager';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {NativeSleepGardenNative} from '@/components/native';
@@ -225,6 +225,17 @@ export default function SleepGardenScreen() {
           </View>
         </AnimatedCard>
 
+        {/* 허용 앱 관리 링크 */}
+        {screenTimeLinkEnabled && Platform.OS === 'ios' && (
+          <Pressable
+            onPress={() => navigation.navigate('ScreenTimeApps')}
+            style={styles.screenTimeLink}>
+            <Shield size={18} color="#6366F1" />
+            <Text style={styles.screenTimeLinkText}>허용 앱 관리</Text>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </Pressable>
+        )}
+
         {/* 하단 여백 (FAB 겹침 방지) */}
         <View style={{height: 100}} />
       </ScrollView>
@@ -421,6 +432,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#9CA3AF',
+  },
+
+  // Screen time link
+  screenTimeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    gap: 10,
+  },
+  screenTimeLinkText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#374151',
   },
 
   // FAB

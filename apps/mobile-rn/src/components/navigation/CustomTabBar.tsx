@@ -35,6 +35,7 @@ import {
 } from '@/components/native';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useSettingsStore} from '@/stores/settingsStore';
+import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {Canvas, Path, Skia} from '@shopify/react-native-skia';
 // MorePanel 높이 상수 (iOS 25- JS 폴백용)
 const MORE_PANEL_CONTENT_HEIGHT = 200;
@@ -107,6 +108,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const {primaryColor} = useTheme();
   const timerState = usePomodoroStore(s => s.timerState);
   const isTimerActive = timerState.isRunning || timerState.isPaused;
+  const plannerViewMode = useSettingsStore(s => s.plannerViewMode);
+  const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const [morePanelVisible, setMorePanelVisible] = useState(false);
   const [panelContentHeight, setPanelContentHeight] = useState(MORE_PANEL_CONTENT_HEIGHT);
   const [shouldRenderPanel, setShouldRenderPanel] = useState(false);
@@ -240,6 +243,12 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isSleepActive = activeHomeScreen === 'SleepSession' || activeMoreScreen === 'SleepSession';
   const isScreenTimeApps = activeHomeScreen === 'ScreenTimeApps' || activeMoreScreen === 'ScreenTimeApps';
   if (isSleepActive || isScreenTimeApps) {
+    return null;
+  }
+
+  // 월간 캘린더 업셀 화면 시 탭바 숨김
+  const isMonthlyUpsell = focusedRoute.name === 'Planner' && plannerViewMode === 'monthlyPlanner' && !hasActiveSubscription;
+  if (isMonthlyUpsell) {
     return null;
   }
 

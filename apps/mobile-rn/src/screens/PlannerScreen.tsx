@@ -4,12 +4,15 @@
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet, Modal} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer} from '@/components/core';
 import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/native';
 import {DailyPlannerView} from '@/components/planner/DailyPlannerView';
 import {MonthlyPlannerView} from '@/components/planner/MonthlyPlannerView';
+import {MonthlyPremiumUpsell} from '@/components/subscription/MonthlyPremiumUpsell';
+import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import {MonthlyFAB} from '@/components/monthly-planner';
 import {TodoFormBottomSheet, type TodoFormBottomSheetRef} from '@/components/todo/TodoFormBottomSheet';
 import {NativeDayTimeGridNative} from '@/components/native/NativeDayTimeGrid';
@@ -17,6 +20,7 @@ import {NativeMultiDayTimeGridNative} from '@/components/native/NativeMultiDayTi
 import {useSettingsStore, type PlannerViewMode} from '@/stores/settingsStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
+import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
 import {Calendar} from 'lucide-react-native';
@@ -46,6 +50,13 @@ export default function PlannerScreen() {
   const {primaryColor} = useTheme();
   const {selectedDate, setSelectedDate, todos, fetchTodosForDateRange} = useTodoStore();
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
+  const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
+  const isTrialEligible = useSubscriptionStore(s => s.isTrialEligible);
+  const [showPaywallModal, setShowPaywallModal] = useState(false);
+
+  const handleUpgrade = useCallback(() => {
+    setShowPaywallModal(true);
+  }, []);
 
   // 3일/주 뷰용 날짜 범위 데이터
   const [multiDayTodoMap, setMultiDayTodoMap] = useState<Record<string, Todo[]>>({});
@@ -221,6 +232,15 @@ export default function PlannerScreen() {
           />
         );
       case 'monthlyPlanner':
+        if (!hasActiveSubscription) {
+          return (
+            <MonthlyPremiumUpsell
+              onUpgrade={handleUpgrade}
+              menuItems={MENU_ITEMS}
+              onMenuSelect={handleMenuSelect}
+            />
+          );
+        }
         return (
           <MonthlyPlannerView
             menuItems={MENU_ITEMS}
@@ -314,6 +334,18 @@ export default function PlannerScreen() {
         <MonthlyFAB onPress={() => formSheetRef.current?.openCreate(selectedDate)} />
       )}
       <TodoFormBottomSheet ref={formSheetRef} />
+      <Modal
+        visible={showPaywallModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPaywallModal(false)}>
+        <SafeAreaProvider>
+          <SubscriptionView
+            onBack={() => setShowPaywallModal(false)}
+            trialMode={isTrialEligible}
+          />
+        </SafeAreaProvider>
+      </Modal>
     </ScreenContainer>
   );
 }
