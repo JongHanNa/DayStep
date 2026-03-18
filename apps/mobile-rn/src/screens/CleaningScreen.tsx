@@ -7,7 +7,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, ScrollView, Modal} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {Settings, List, SprayCan, X} from 'lucide-react-native';
+import {Settings, List, SprayCan, X, Minus, Plus} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {LiquidGlassButton} from '@/components/native';
 import {EnergySelector} from '@/components/cleaning/EnergySelector';
@@ -20,7 +20,7 @@ import {useCleaningStore} from '@/stores/cleaningStore';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
 import {ENERGY_CONFIG} from '@/constants/cleaning-data';
-import type {CleaningTab} from '@/constants/cleaning-data';
+import type {CleaningTab, EnergyLevel} from '@/constants/cleaning-data';
 
 const TABS: {key: CleaningTab; label: string}[] = [
   {key: 'space', label: '공간 청소'},
@@ -64,6 +64,8 @@ export default function CleaningScreen() {
     getOrderedTasks,
     getStreak,
     getCategoryCompletionCount,
+    customMaxTasks,
+    setCustomMaxTasks,
   } = useCleaningStore();
 
   // 타이머 interval
@@ -85,15 +87,16 @@ export default function CleaningScreen() {
   const {dailyRoutine, zoneFocus, digitalTasks, belongingsTasks} = getOrderedTasks();
   const streak = getStreak();
 
-  // 에너지 기반 표시 제한
+  // 에너지 기반 표시 제한 (customMaxTasks 우선)
   const config = ENERGY_CONFIG[energyLevel];
+  const effectiveMaxTasks = customMaxTasks[energyLevel] ?? config.maxTasks;
 
   // 전체 탭 통합: dailyRoutine → zoneFocus → digital → belongings (탭 필터링 없음)
   const activeTasks = useMemo(() => {
     const combined = [...dailyRoutine, ...zoneFocus, ...digitalTasks, ...belongingsTasks];
     const uncompleted = combined.filter(t => !isTaskCompleted(t.id));
-    return uncompleted.slice(0, config.maxTasks);
-  }, [dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, config.maxTasks, isTaskCompleted]);
+    return uncompleted.slice(0, effectiveMaxTasks);
+  }, [dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, effectiveMaxTasks, isTaskCompleted]);
 
   // 포커스 태스크
   const focusTask = useMemo(() => {
@@ -386,7 +389,7 @@ export default function CleaningScreen() {
               borderBottomColor: '#F3F4F6',
             }}>
             <Text style={{fontSize: 17, fontWeight: '700', color: '#1F2937'}}>
-              요일 설정
+              청소 설정
             </Text>
             <AnimatedPressable
               hapticType="light"
@@ -399,7 +402,76 @@ export default function CleaningScreen() {
           <ScrollView
             contentContainerStyle={{padding: 20, paddingBottom: 40}}
             showsVerticalScrollIndicator={false}>
-            <Text style={{fontSize: 13, color: '#9CA3AF', marginBottom: 20}}>
+            {/* 에너지별 최대 태스크 수 */}
+            <Text style={{fontSize: 15, fontWeight: '700', color: '#1F2937', marginBottom: 12}}>
+              에너지별 최대 태스크 수
+            </Text>
+            <Text style={{fontSize: 12, color: '#9CA3AF', marginBottom: 14}}>
+              에너지 레벨별로 한 번에 보여줄 태스크 수를 조절하세요
+            </Text>
+            {(['good', 'moderate', 'low'] as EnergyLevel[]).map(level => {
+              const defaultMax = ENERGY_CONFIG[level].maxTasks;
+              const currentVal = customMaxTasks[level] ?? defaultMax;
+              const displayText = currentVal >= 99 ? '무제한' : String(currentVal);
+              return (
+                <View
+                  key={level}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 14,
+                    paddingHorizontal: 4,
+                  }}>
+                  <Text style={{fontSize: 14, fontWeight: '500', color: '#374151', flex: 1}}>
+                    {ENERGY_CONFIG[level].label}
+                  </Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
+                    <AnimatedPressable
+                      hapticType="light"
+                      onPress={() => {
+                        haptic.light();
+                        const next = Math.max(1, currentVal - 1);
+                        setCustomMaxTasks(level, next);
+                      }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundColor: currentVal <= 1 ? '#F3F4F6' : primaryColor + '15',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Minus size={16} color={currentVal <= 1 ? '#D1D5DB' : primaryColor} />
+                    </AnimatedPressable>
+                    <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937', minWidth: 40, textAlign: 'center'}}>
+                      {displayText}
+                    </Text>
+                    <AnimatedPressable
+                      hapticType="light"
+                      onPress={() => {
+                        haptic.light();
+                        const next = Math.min(99, currentVal + 1);
+                        setCustomMaxTasks(level, next);
+                      }}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundColor: currentVal >= 99 ? '#F3F4F6' : primaryColor + '15',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Plus size={16} color={currentVal >= 99 ? '#D1D5DB' : primaryColor} />
+                    </AnimatedPressable>
+                  </View>
+                </View>
+              );
+            })}
+
+            <View style={{height: 1, backgroundColor: '#E5E7EB', marginVertical: 8}} />
+
+            <Text style={{fontSize: 13, color: '#9CA3AF', marginBottom: 20, marginTop: 12}}>
               각 항목이 어떤 요일에 표시될지 설정하세요
             </Text>
 

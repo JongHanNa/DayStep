@@ -35,6 +35,8 @@ interface CleaningStoreState {
   zones: CleaningZone[];
   categorySchedules: CategorySchedule[];
   completions: Record<string, CompletionRecord[]>; // key: date
+  customMaxTasks: Partial<Record<EnergyLevel, number>>;
+  _cleaningSettingsSyncedAt: string | null;
 
   // UI State
   energyLevel: EnergyLevel;
@@ -56,6 +58,10 @@ interface CleaningStoreState {
   isTaskCompleted: (taskId: string, date?: string) => boolean;
   addCustomTask: (task: CleaningTask) => void;
   removeCustomTask: (taskId: string) => void;
+
+  // Custom settings actions
+  setCustomMaxTasks: (level: EnergyLevel, maxTasks: number) => void;
+  loadCleaningSettingsFromDB: (settings: Record<string, any>) => void;
 
   // Zone actions
   updateZoneDayOfWeek: (zoneId: string, dayOfWeek: number) => void;
@@ -115,12 +121,29 @@ export const useCleaningStore = create<CleaningStoreState>()(
       zones: DEFAULT_ZONES,
       categorySchedules: [...DEFAULT_DIGITAL_SCHEDULES, ...DEFAULT_BELONGINGS_SCHEDULES],
       completions: {},
+      customMaxTasks: {},
+      _cleaningSettingsSyncedAt: null,
       energyLevel: 'moderate',
       activeTab: 'space',
       focusTaskId: null,
       timerSeconds: 0,
       timerTotalSeconds: 0,
       isTimerRunning: false,
+
+      setCustomMaxTasks: (level, maxTasks) => {
+        const current = get().customMaxTasks;
+        set({
+          customMaxTasks: {...current, [level]: maxTasks},
+          _cleaningSettingsSyncedAt: new Date().toISOString(),
+        });
+      },
+
+      loadCleaningSettingsFromDB: (settings) => {
+        set({
+          customMaxTasks: settings.customMaxTasks ?? {},
+          _cleaningSettingsSyncedAt: settings._lastSyncedAt ?? null,
+        });
+      },
 
       setEnergyLevel: (level) => {
         set({energyLevel: level, focusTaskId: null});
@@ -290,9 +313,17 @@ export const useCleaningStore = create<CleaningStoreState>()(
         zones: state.zones,
         categorySchedules: state.categorySchedules,
         completions: state.completions,
+        customMaxTasks: state.customMaxTasks,
         energyLevel: state.energyLevel,
         activeTab: state.activeTab,
       }),
     },
   ),
 );
+
+/** DB 동기화용 설정 스냅샷 */
+export function getCleaningSettingsForSync() {
+  const {customMaxTasks, _cleaningSettingsSyncedAt} =
+    useCleaningStore.getState();
+  return {customMaxTasks, _lastSyncedAt: _cleaningSettingsSyncedAt};
+}
