@@ -241,8 +241,9 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
   // 수면 세션 활성 시 탭바 숨김
   const isSleepActive = activeHomeScreen === 'SleepSession' || activeMoreScreen === 'SleepSession';
+  const isSleepGoal = activeHomeScreen === 'SleepGoal' || activeMoreScreen === 'SleepGoal';
   const isScreenTimeApps = activeHomeScreen === 'ScreenTimeApps' || activeMoreScreen === 'ScreenTimeApps';
-  if (isSleepActive || isScreenTimeApps) {
+  if (isSleepActive || isSleepGoal || isScreenTimeApps) {
     return null;
   }
 

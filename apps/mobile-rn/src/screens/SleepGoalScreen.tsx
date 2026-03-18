@@ -7,12 +7,14 @@ import {View, Text, StyleSheet, Pressable, Switch, Alert} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
-import {ChevronLeft, Moon, Sun, Bell} from 'lucide-react-native';
+import {ChevronLeft, Moon, Sun, Bell, XCircle} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {useSleepStore} from '@/stores/sleepStore';
 import {requestNotificationPermission} from '@/lib/notifications';
+import {storage} from '@/lib/mmkv';
+import {format} from 'date-fns';
 
 
 function timeStringToDate(time: string): Date {
@@ -51,6 +53,18 @@ export default function SleepGoalScreen() {
     setWakeGoalTime,
     setAutoSleepEnabled,
   } = useSleepStore();
+
+  const MMKV_SKIP_KEY = 'bedtime-skip-date';
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const [isSkippedTonight, setIsSkippedTonight] = useState(
+    () => storage.getString(MMKV_SKIP_KEY) === today,
+  );
+
+  const handleCancelSkip = useCallback(() => {
+    haptic.light();
+    storage.remove(MMKV_SKIP_KEY);
+    setIsSkippedTonight(false);
+  }, [haptic]);
 
   const [localSleepTime, setLocalSleepTime] = useState(timeStringToDate(sleepGoalTime));
   const [localWakeTime, setLocalWakeTime] = useState(timeStringToDate(wakeGoalTime));
@@ -150,6 +164,23 @@ export default function SleepGoalScreen() {
           />
         </View>
 
+        {/* 오늘 건너뛰기 상태 */}
+        {autoSleepEnabled && isSkippedTonight && (
+          <View style={styles.skipBanner}>
+            <View style={styles.skipTextWrap}>
+              <XCircle size={16} color="#F59E0B" />
+              <Text style={styles.skipText}>오늘 취침 알림이 건너뛰기 되었습니다</Text>
+            </View>
+            <AnimatedPressable
+              onPress={handleCancelSkip}
+              haptic={false}
+              scaleValue={0.95}
+              style={styles.skipCancelBtn}>
+              <Text style={styles.skipCancelText}>취소</Text>
+            </AnimatedPressable>
+          </View>
+        )}
+
         {/* 저장 버튼 */}
         <AnimatedPressable
           onPress={handleSave}
@@ -237,6 +268,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9CA3AF',
     marginTop: 2,
+  },
+  skipBanner: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  skipTextWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  skipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#92400E',
+    flex: 1,
+  },
+  skipCancelBtn: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginLeft: 8,
+  },
+  skipCancelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   saveBtn: {
     paddingVertical: 14,

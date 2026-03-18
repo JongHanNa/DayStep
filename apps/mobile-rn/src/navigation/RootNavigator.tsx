@@ -17,6 +17,7 @@ import Purchases from 'react-native-purchases';
 import {useRealtimeSync} from '@/hooks/useRealtimeSync';
 import {useSettingsSync} from '@/hooks/useSettingsSync';
 import {useCleaningSettingsSync} from '@/hooks/useCleaningSettingsSync';
+import {useSleepSettingsSync} from '@/hooks/useSleepSettingsSync';
 import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {supabase} from '@/lib/supabase';
@@ -48,12 +49,13 @@ function AuthenticatedApp() {
   const settingsUser = useAuthStore(s => s.user);
   useSettingsSync(settingsUser?.id);
   useCleaningSettingsSync(settingsUser?.id);
+  useSleepSettingsSync(settingsUser?.id);
 
   // 자동 취침 모니터
   const {showBedtimeModal, onStartSleep, onSnooze, onSkipTonight} = useBedtimeMonitor();
   const handleBedtimeStart = useCallback(() => {
     onStartSleep();
-    navigation.navigate('Home', {screen: 'SleepSession'});
+    navigation.navigate('Main', {screen: 'Home', params: {screen: 'SleepSession'}});
   }, [onStartSleep, navigation]);
 
   // plan_limits fetch + Realtime 구독 (인증 완료 시 1회)

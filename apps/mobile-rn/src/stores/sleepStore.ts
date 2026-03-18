@@ -98,6 +98,7 @@ interface SleepStoreState {
   screenTimeLinkEnabled: boolean;
   autoSleepEnabled: boolean; // 자동 취침 알림
   sessionState: SleepSessionState;
+  _sleepSettingsSyncedAt: string | null;
 
   // Actions (기존)
   fetchMonthRecords: (year: number, month: number) => Promise<void>;
@@ -107,6 +108,9 @@ interface SleepStoreState {
   getMonthStats: (year: number, month: number) => MonthStats;
   getRecordsForDate: (date: string) => SleepRecord[];
   clearError: () => void;
+
+  // Actions (DB 동기화)
+  loadSleepSettingsFromDB: (settings: Record<string, any>) => void;
 
   // Actions (수면 정원)
   setSleepGoalTime: (time: string) => void;
@@ -175,6 +179,7 @@ export const useSleepStore = create<SleepStoreState>()(
       screenTimeLinkEnabled: false,
       autoSleepEnabled: false,
       sessionState: {...DEFAULT_SESSION},
+      _sleepSettingsSyncedAt: null,
 
       // ============================================
       // 기존 Actions
@@ -381,6 +386,21 @@ export const useSleepStore = create<SleepStoreState>()(
       },
 
       clearError: () => set({error: null}),
+
+      // ============================================
+      // DB 동기화 Actions
+      // ============================================
+
+      loadSleepSettingsFromDB: (settings) => {
+        const now = new Date().toISOString();
+        set({
+          sleepGoalTime: settings.sleepGoalTime ?? '23:30',
+          wakeGoalTime: settings.wakeGoalTime ?? '07:00',
+          screenTimeLinkEnabled: settings.screenTimeLinkEnabled ?? false,
+          autoSleepEnabled: settings.autoSleepEnabled ?? false,
+          _sleepSettingsSyncedAt: settings._lastSyncedAt ?? now,
+        });
+      },
 
       // ============================================
       // 수면 정원 Actions
@@ -646,6 +666,7 @@ export const useSleepStore = create<SleepStoreState>()(
         screenTimeLinkEnabled: state.screenTimeLinkEnabled,
         autoSleepEnabled: state.autoSleepEnabled,
         sessionState: state.sessionState,
+        _sleepSettingsSyncedAt: state._sleepSettingsSyncedAt,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -657,3 +678,14 @@ export const useSleepStore = create<SleepStoreState>()(
     },
   ),
 );
+
+/** DB 동기화용 설정 스냅샷 추출 */
+export function getSleepSettingsForSync() {
+  const s = useSleepStore.getState();
+  return {
+    sleepGoalTime: s.sleepGoalTime,
+    wakeGoalTime: s.wakeGoalTime,
+    screenTimeLinkEnabled: s.screenTimeLinkEnabled,
+    autoSleepEnabled: s.autoSleepEnabled,
+  };
+}

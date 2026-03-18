@@ -86,6 +86,64 @@ export async function saveCleaningSettings(
   }
 }
 
+/** sleep_settings 키로 수면 설정 로드 */
+export async function loadSleepSettings(
+  userId: string,
+): Promise<Record<string, any> | null> {
+  try {
+    const {data, error} = await supabase
+      .from('user_preferences')
+      .select('preference_value')
+      .eq('user_id', userId)
+      .eq('preference_key', 'sleep_settings')
+      .maybeSingle();
+
+    if (error) {
+      console.error('[Preferences] sleep load error:', error);
+      return null;
+    }
+
+    return data?.preference_value ?? null;
+  } catch (err) {
+    console.error('[Preferences] sleep load error:', err);
+    return null;
+  }
+}
+
+/** sleep_settings 키로 수면 설정 저장 (upsert) */
+export async function saveSleepSettings(
+  userId: string,
+  settings: Record<string, any>,
+): Promise<boolean> {
+  try {
+    const {error} = await supabase
+      .from('user_preferences')
+      .upsert(
+        {
+          user_id: userId,
+          preference_key: 'sleep_settings',
+          preference_value: {
+            ...settings,
+            _lastSyncedAt: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        },
+        {onConflict: 'user_id,preference_key', ignoreDuplicates: false},
+      )
+      .select();
+
+    if (error) {
+      console.error('[Preferences] sleep save error:', error);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('[Preferences] sleep save error:', err);
+    return false;
+  }
+}
+
 /** app_settings 키로 앱 설정 저장 (upsert) */
 export async function saveAppSettings(
   userId: string,
