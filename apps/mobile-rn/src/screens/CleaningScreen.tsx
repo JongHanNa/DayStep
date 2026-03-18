@@ -106,28 +106,25 @@ export default function CleaningScreen() {
     return activeTasks[0] ?? null;
   }, [focusTaskId, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, activeTasks]);
 
-  // 통합 라벨: "오늘의 구역, 디지털, 물건: 침실, 파일, 수납"
+  // 통합 라벨: "오늘(수요일): 침실, 파일, 수납"
   const todaySectionLabel = useMemo(() => {
-    const tabLabels: string[] = [];
     const categories: string[] = [];
 
-    if (zoneFocus.length > 0) {
-      tabLabels.push('구역');
-      if (todayZone) categories.push(todayZone.name);
+    if (zoneFocus.length > 0 && todayZone) {
+      categories.push(todayZone.name);
     }
     if (digitalTasks.length > 0) {
-      tabLabels.push('디지털');
       const cats = [...new Set(digitalTasks.map(t => t.category))];
       categories.push(...cats);
     }
     if (belongingsTasks.length > 0) {
-      tabLabels.push('물건');
       const cats = [...new Set(belongingsTasks.map(t => t.category))];
       categories.push(...cats);
     }
 
-    if (tabLabels.length === 0) return null;
-    return `오늘의 ${tabLabels.join(', ')}: ${categories.join(', ')}`;
+    if (categories.length === 0) return null;
+    const dayName = DAY_LABELS[new Date().getDay()];
+    return `오늘(${dayName}요일): ${categories.join(', ')}`;
   }, [zoneFocus, digitalTasks, belongingsTasks, todayZone]);
 
   // 현재 포커스 태스크가 어느 섹션에 속하는지
@@ -153,12 +150,12 @@ export default function CleaningScreen() {
     const belongingsQueue = remaining.filter(t => belongingsTasks.some(b => b.id === t.id));
 
     const sections: TaskQueueSection[] = [];
-    if (dailyQueue.length > 0) sections.push({title: '매일 할 일', tasks: dailyQueue});
 
     const todayQueue = [...zoneQueue, ...digitalQueue, ...belongingsQueue];
     if (todayQueue.length > 0 && todaySectionLabel) {
       sections.push({title: todaySectionLabel, tasks: todayQueue});
     }
+    if (dailyQueue.length > 0) sections.push({title: '매일 할 일', tasks: dailyQueue});
     return sections;
   }, [focusTask, activeTasks, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todaySectionLabel]);
 
@@ -213,9 +210,7 @@ export default function CleaningScreen() {
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
             <SprayCan size={18} color={primaryColor} />
             <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937'}}>
-              {todayZone
-                ? `오늘의 구역: ${todayZone.name} (${DAY_LABELS[todayZone.dayOfWeek]}요일)`
-                : '청소/정리'}
+              {todaySectionLabel ?? '청소/정리'}
             </Text>
           </View>
 
