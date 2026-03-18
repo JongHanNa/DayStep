@@ -17,6 +17,7 @@ interface DayReflection {
   reflection: string;
   spending_note: string;
   thought_archive: string;
+  today_lesson: string;
   created_at: string;
   updated_at: string;
 }
@@ -84,6 +85,7 @@ export const useReflectionStore = create<ReflectionState>()(
             reflection: '',
             spending_note: '',
             thought_archive: '',
+            today_lesson: '',
             created_at: new Date().toISOString(),
           }),
           ...data,

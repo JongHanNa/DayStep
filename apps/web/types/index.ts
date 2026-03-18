@@ -523,6 +523,7 @@ export interface DailyReflection {
   reflection: string;
   spending_note: string;
   thought_archive: string;
+  today_lesson: string;
   created_at: string;
   updated_at: string;
 }

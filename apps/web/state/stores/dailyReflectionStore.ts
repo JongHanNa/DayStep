@@ -58,6 +58,7 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
             reflection: data.reflection || '',
             spending_note: data.spending_note || '',
             thought_archive: data.thought_archive || '',
+            today_lesson: data.today_lesson || '',
             created_at: data.created_at,
             updated_at: data.updated_at,
           };
@@ -97,6 +98,7 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
         reflection: data.reflection ?? existing?.reflection ?? '',
         spending_note: data.spending_note ?? existing?.spending_note ?? '',
         thought_archive: data.thought_archive ?? existing?.thought_archive ?? '',
+        today_lesson: data.today_lesson ?? existing?.today_lesson ?? '',
         created_at: existing?.created_at ?? new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -115,6 +117,7 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
           reflection: optimistic.reflection,
           spending_note: optimistic.spending_note,
           thought_archive: optimistic.thought_archive,
+          today_lesson: optimistic.today_lesson,
           updated_at: new Date().toISOString(),
         };
 
@@ -137,6 +140,7 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
               reflection: result.reflection || '',
               spending_note: result.spending_note || '',
               thought_archive: result.thought_archive || '',
+              today_lesson: result.today_lesson || '',
               created_at: result.created_at,
               updated_at: result.updated_at,
             });

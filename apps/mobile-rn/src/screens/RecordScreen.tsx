@@ -171,12 +171,15 @@ function CollapsibleFields({
   primaryColor: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [measured, setMeasured] = useState(false);
   const contentHeight = useRef(0);
   const animHeight = useSharedValue(0);
 
   const animStyle = useAnimatedStyle(() => ({
-    height: animHeight.value,
-    overflow: 'hidden',
+    height: measured ? animHeight.value : 'auto',
+    overflow: 'hidden' as const,
+    opacity: measured ? 1 : 0,
+    position: measured ? 'relative' : 'absolute',
   }));
 
   const toggleExpanded = useCallback(() => {
@@ -209,7 +212,10 @@ function CollapsibleFields({
             const h = e.nativeEvent.layout.height;
             if (h > 0) {
               contentHeight.current = h;
-              if (expanded) {
+              if (!measured) {
+                animHeight.value = 0;
+                setMeasured(true);
+              } else if (expanded) {
                 animHeight.value = withSpring(h, springs.nativeGlass);
               }
             }

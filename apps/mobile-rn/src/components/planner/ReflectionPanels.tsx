@@ -1,9 +1,10 @@
 /**
  * Reflection Panels
- * 보상 + 칭찬(3개) + 감사(3개) 입력 패널
+ * 보상 + 어제의 점검/회고/교훈(읽기전용) + 오늘의 점검/회고/교훈(편집가능)
  */
 import React, {useEffect, useState, useCallback} from 'react';
 import {View, Text, TextInput, StyleSheet, ScrollView} from 'react-native';
+import {subDays, format, parseISO} from 'date-fns';
 import {useReflectionStore} from '@/stores/reflectionStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTodoStore} from '@/stores/todoStore';
@@ -23,29 +24,25 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
 
   const reflection = getReflection(selectedDate);
 
-  const [reward, setReward] = useState('');
-  const [praises, setPraises] = useState<string[]>(['', '', '']);
-  const [gratitudes, setGratitudes] = useState<string[]>(['', '', '']);
+  // 어제 날짜 계산
+  const yesterdayDate = format(subDays(parseISO(selectedDate), 1), 'yyyy-MM-dd');
+  const yesterdayReflection = getReflection(yesterdayDate);
 
+  const [reward, setReward] = useState('');
+  const [todayLesson, setTodayLesson] = useState('');
+
+  // 오늘 + 어제 데이터 로드
   useEffect(() => {
     if (user?.id) {
       loadReflection(user.id, selectedDate);
+      loadReflection(user.id, yesterdayDate);
     }
-  }, [user?.id, selectedDate]);
+  }, [user?.id, selectedDate, yesterdayDate]);
 
   useEffect(() => {
     if (reflection) {
       setReward(reflection.reward ?? '');
-      setPraises([
-        reflection.praises?.[0] ?? '',
-        reflection.praises?.[1] ?? '',
-        reflection.praises?.[2] ?? '',
-      ]);
-      setGratitudes([
-        reflection.gratitudes?.[0] ?? '',
-        reflection.gratitudes?.[1] ?? '',
-        reflection.gratitudes?.[2] ?? '',
-      ]);
+      setTodayLesson(reflection.today_lesson ?? '');
     }
   }, [reflection?.id]);
 
@@ -56,18 +53,6 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
     },
     [user?.id, selectedDate, upsertReflection],
   );
-
-  const updatePraise = (index: number, text: string) => {
-    const updated = [...praises];
-    updated[index] = text;
-    setPraises(updated);
-  };
-
-  const updateGratitude = (index: number, text: string) => {
-    const updated = [...gratitudes];
-    updated[index] = text;
-    setGratitudes(updated);
-  };
 
   const handleInputFocus = useCallback(() => {
     setTimeout(() => {
@@ -99,61 +84,41 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
         </View>
       </View>
 
-      {/* 칭찬 3가지 */}
+      {/* 어제의 점검/회고/교훈 (읽기전용) */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
           <Text className="text-base font-semibold text-gray-800">
-            오늘 칭찬 3가지
-          </Text>
-        </View>
-        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.06)}} className="rounded-2xl p-4">
-          {praises.map((praise, index) => (
-            <View key={index} className="flex-row items-center mb-2">
-              <Text className="text-sm mr-2 w-5" style={{color: hexWithOpacity(primaryColor, 0.5)}}>
-                {index + 1}.
-              </Text>
-              <TextInput
-                value={praise}
-                onChangeText={text => updatePraise(index, text)}
-                onFocus={handleInputFocus}
-                onBlur={() => handleSave('praises', praises.filter(p => p.trim()))}
-                placeholder={`칭찬 ${index + 1}`}
-                placeholderTextColor={hexWithOpacity(primaryColor, 0.35)}
-                className="flex-1 text-sm text-gray-800"
-                style={styles.lineInput}
-              />
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* 감사 3가지 */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-2">
-          <Text className="text-base font-semibold text-gray-800">
-            오늘 감사 3가지
+            어제의 점검/회고/교훈
           </Text>
         </View>
         <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.05)}} className="rounded-2xl p-4">
-          {gratitudes.map((gratitude, index) => (
-            <View key={index} className="flex-row items-center mb-2">
-              <Text className="text-sm mr-2 w-5" style={{color: hexWithOpacity(primaryColor, 0.5)}}>
-                {index + 1}.
-              </Text>
-              <TextInput
-                value={gratitude}
-                onChangeText={text => updateGratitude(index, text)}
-                onFocus={handleInputFocus}
-                onBlur={() =>
-                  handleSave('gratitudes', gratitudes.filter(g => g.trim()))
-                }
-                placeholder={`감사 ${index + 1}`}
-                placeholderTextColor={hexWithOpacity(primaryColor, 0.35)}
-                className="flex-1 text-sm text-gray-800"
-                style={styles.lineInput}
-              />
-            </View>
-          ))}
+          <Text className="text-sm text-gray-600" style={styles.readonlyText}>
+            {yesterdayReflection?.today_lesson
+              ? yesterdayReflection.today_lesson
+              : '아직 작성된 교훈이 없습니다'}
+          </Text>
+        </View>
+      </View>
+
+      {/* 오늘의 점검/회고/교훈 (편집가능) */}
+      <View className="mb-4">
+        <View className="flex-row items-center mb-2">
+          <Text className="text-base font-semibold text-gray-800">
+            오늘의 점검/회고/교훈
+          </Text>
+        </View>
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.06)}} className="rounded-2xl p-4">
+          <TextInput
+            value={todayLesson}
+            onChangeText={setTodayLesson}
+            onFocus={handleInputFocus}
+            onBlur={() => handleSave('today_lesson', todayLesson)}
+            placeholder="오늘 하루에서 배운 교훈을 적어보세요"
+            placeholderTextColor={hexWithOpacity(primaryColor, 0.35)}
+            className="text-sm text-gray-800"
+            style={styles.input}
+            multiline
+          />
         </View>
       </View>
     </View>
@@ -165,10 +130,8 @@ const styles = StyleSheet.create({
     minHeight: 40,
     textAlignVertical: 'top',
   },
-  lineInput: {
-    height: 32,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
-    paddingVertical: 4,
+  readonlyText: {
+    minHeight: 20,
+    lineHeight: 20,
   },
 });
