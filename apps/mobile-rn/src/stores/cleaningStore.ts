@@ -11,7 +11,6 @@ import {
   DEFAULT_ZONES,
   DEFAULT_DIGITAL_SCHEDULES,
   DEFAULT_BELONGINGS_SCHEDULES,
-  ENERGY_CONFIG,
   type EnergyLevel,
   type CleaningTab,
   type CleaningTask,
@@ -35,7 +34,7 @@ interface CleaningStoreState {
   zones: CleaningZone[];
   categorySchedules: CategorySchedule[];
   completions: Record<string, CompletionRecord[]>; // key: date
-  customMaxTasks: Partial<Record<EnergyLevel, number>>;
+  customMaxTasks: Partial<Record<EnergyLevel, number | {daily: number; today: number}>>;
   _cleaningSettingsSyncedAt: string | null;
 
   // UI State
@@ -60,7 +59,7 @@ interface CleaningStoreState {
   removeCustomTask: (taskId: string) => void;
 
   // Custom settings actions
-  setCustomMaxTasks: (level: EnergyLevel, maxTasks: number) => void;
+  setCustomMaxTasks: (level: EnergyLevel, maxTasks: number | {daily: number; today: number}) => void;
   loadCleaningSettingsFromDB: (settings: Record<string, any>) => void;
 
   // Zone actions
@@ -245,34 +244,28 @@ export const useCleaningStore = create<CleaningStoreState>()(
       },
 
       getFilteredTasks: () => {
-        const {energyLevel} = get();
-        const config = ENERGY_CONFIG[energyLevel];
-        const allTasks = get().getAllTasks();
-
-        return allTasks.filter(t => t.energyCost <= config.maxEnergyCost);
+        return get().getAllTasks(); // energyCost 필터 제거, daily/today 개수 제한으로 관리
       },
 
       getOrderedTasks: () => {
-        const {tasks, zones, categorySchedules, energyLevel} = get();
+        const {tasks, zones, categorySchedules} = get();
         const dayOfWeek = new Date().getDay();
         const todayZone = zones.find(z => z.dayOfWeek === dayOfWeek);
-        const config = ENERGY_CONFIG[energyLevel];
 
         const dailyRoutine = tasks.filter(
-          t => t.frequency === 'daily' && t.energyCost <= config.maxEnergyCost,
+          t => t.frequency === 'daily',
         );
         const zoneFocus = todayZone
           ? tasks.filter(
               t =>
                 t.tab === 'space' &&
                 t.frequency !== 'daily' &&
-                t.zoneId === todayZone.id &&
-                t.energyCost <= config.maxEnergyCost,
+                t.zoneId === todayZone.id,
             )
           : [];
 
         const digitalTasks = tasks.filter(t => {
-          if (t.tab !== 'digital' || t.energyCost > config.maxEnergyCost) return false;
+          if (t.tab !== 'digital') return false;
           if (t.frequency === 'daily') return false;
           const schedule = categorySchedules.find(
             cs => cs.tab === 'digital' && cs.category === t.category,
@@ -280,7 +273,7 @@ export const useCleaningStore = create<CleaningStoreState>()(
           return schedule ? schedule.dayOfWeek === dayOfWeek : false;
         });
         const belongingsTasks = tasks.filter(t => {
-          if (t.tab !== 'belongings' || t.energyCost > config.maxEnergyCost) return false;
+          if (t.tab !== 'belongings') return false;
           if (t.frequency === 'daily') return false;
           const schedule = categorySchedules.find(
             cs => cs.tab === 'belongings' && cs.category === t.category,

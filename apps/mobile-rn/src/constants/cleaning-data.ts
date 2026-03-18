@@ -195,9 +195,9 @@ export const ALL_DEFAULT_TASKS: CleaningTask[] = [
 // ============================================
 
 export const ENERGY_CONFIG = {
-  good: {label: '괜찮음', maxTasks: 99, maxEnergyCost: 3 as const, icon: 'BatteryFull'},
-  moderate: {label: '보통', maxTasks: 4, maxEnergyCost: 2 as const, icon: 'BatteryMedium'},
-  low: {label: '힘듦', maxTasks: 2, maxEnergyCost: 1 as const, icon: 'BatteryLow'},
+  good: {label: '괜찮음', maxTasks: {daily: 99, today: 99}, icon: 'BatteryFull'},
+  moderate: {label: '보통', maxTasks: {daily: 5, today: 5}, icon: 'BatteryMedium'},
+  low: {label: '힘듦', maxTasks: {daily: 3, today: 2}, icon: 'BatteryLow'},
 } as const;
 
 // ============================================

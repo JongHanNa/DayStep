@@ -87,16 +87,31 @@ export default function CleaningScreen() {
   const {dailyRoutine, zoneFocus, digitalTasks, belongingsTasks} = getOrderedTasks();
   const streak = getStreak();
 
-  // 에너지 기반 표시 제한 (customMaxTasks 우선)
+  // 에너지 기반 표시 제한 (customMaxTasks 우선, daily/today 분리)
   const config = ENERGY_CONFIG[energyLevel];
-  const effectiveMaxTasks = customMaxTasks[energyLevel] ?? config.maxTasks;
+  const customSetting = customMaxTasks[energyLevel];
+  const {dailyMax, todayMax} = useMemo(() => {
+    if (typeof customSetting === 'object' && customSetting !== null) {
+      return {dailyMax: customSetting.daily, todayMax: customSetting.today};
+    }
+    const defaultSetting = config.maxTasks;
+    if (typeof customSetting === 'number') {
+      return {dailyMax: customSetting, todayMax: customSetting};
+    }
+    // 기본값 (객체)
+    if (typeof defaultSetting === 'object') {
+      return {dailyMax: defaultSetting.daily, todayMax: defaultSetting.today};
+    }
+    return {dailyMax: defaultSetting, todayMax: defaultSetting};
+  }, [customSetting, config.maxTasks]);
 
-  // 전체 탭 통합: dailyRoutine → zoneFocus → digital → belongings (탭 필터링 없음)
+  // 전체 탭 통합: 카테고리별 개별 slice 후 합치기 (오늘 먼저)
   const activeTasks = useMemo(() => {
-    const combined = [...dailyRoutine, ...zoneFocus, ...digitalTasks, ...belongingsTasks];
-    const uncompleted = combined.filter(t => !isTaskCompleted(t.id));
-    return uncompleted.slice(0, effectiveMaxTasks);
-  }, [dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, effectiveMaxTasks, isTaskCompleted]);
+    const dailyUncompleted = dailyRoutine.filter(t => !isTaskCompleted(t.id)).slice(0, dailyMax);
+    const todayUncompleted = [...zoneFocus, ...digitalTasks, ...belongingsTasks]
+      .filter(t => !isTaskCompleted(t.id)).slice(0, todayMax);
+    return [...todayUncompleted, ...dailyUncompleted];
+  }, [dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, dailyMax, todayMax, isTaskCompleted]);
 
   // 포커스 태스크
   const focusTask = useMemo(() => {
@@ -406,60 +421,77 @@ export default function CleaningScreen() {
             </Text>
             {(['good', 'moderate', 'low'] as EnergyLevel[]).map(level => {
               const defaultMax = ENERGY_CONFIG[level].maxTasks;
-              const currentVal = customMaxTasks[level] ?? defaultMax;
-              const displayText = currentVal >= 99 ? '무제한' : String(currentVal);
+              const custom = customMaxTasks[level];
+              // daily/today 값 resolve
+              const resolvedDaily = typeof custom === 'object' && custom !== null
+                ? custom.daily
+                : typeof custom === 'number' ? custom : defaultMax.daily;
+              const resolvedToday = typeof custom === 'object' && custom !== null
+                ? custom.today
+                : typeof custom === 'number' ? custom : defaultMax.today;
+
+              const renderRow = (label: string, value: number, key: 'daily' | 'today') => {
+                const displayText = value >= 99 ? '무제한' : String(value);
+                const otherKey = key === 'daily' ? 'today' : 'daily';
+                const otherValue = key === 'daily' ? resolvedToday : resolvedDaily;
+                return (
+                  <View
+                    key={`${level}-${key}`}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 8,
+                      paddingHorizontal: 4,
+                      paddingLeft: 20,
+                    }}>
+                    <Text style={{fontSize: 13, color: '#6B7280', flex: 1}}>
+                      {label}
+                    </Text>
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
+                      <AnimatedPressable
+                        hapticType="light"
+                        onPress={() => {
+                          haptic.light();
+                          const next = Math.max(1, value - 1);
+                          setCustomMaxTasks(level, {[key]: next, [otherKey]: otherValue} as {daily: number; today: number});
+                        }}
+                        style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          backgroundColor: value <= 1 ? '#F3F4F6' : primaryColor + '15',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}>
+                        <Minus size={16} color={value <= 1 ? '#D1D5DB' : primaryColor} />
+                      </AnimatedPressable>
+                      <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937', minWidth: 40, textAlign: 'center'}}>
+                        {displayText}
+                      </Text>
+                      <AnimatedPressable
+                        hapticType="light"
+                        onPress={() => {
+                          haptic.light();
+                          const next = Math.min(99, value + 1);
+                          setCustomMaxTasks(level, {[key]: next, [otherKey]: otherValue} as {daily: number; today: number});
+                        }}
+                        style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          backgroundColor: value >= 99 ? '#F3F4F6' : primaryColor + '15',
+                          alignItems: 'center', justifyContent: 'center',
+                        }}>
+                        <Plus size={16} color={value >= 99 ? '#D1D5DB' : primaryColor} />
+                      </AnimatedPressable>
+                    </View>
+                  </View>
+                );
+              };
+
               return (
-                <View
-                  key={level}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 14,
-                    paddingHorizontal: 4,
-                  }}>
-                  <Text style={{fontSize: 14, fontWeight: '500', color: '#374151', flex: 1}}>
+                <View key={level} style={{marginBottom: 14}}>
+                  <Text style={{fontSize: 14, fontWeight: '500', color: '#374151', marginBottom: 6, paddingHorizontal: 4}}>
                     {ENERGY_CONFIG[level].label}
                   </Text>
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
-                    <AnimatedPressable
-                      hapticType="light"
-                      onPress={() => {
-                        haptic.light();
-                        const next = Math.max(1, currentVal - 1);
-                        setCustomMaxTasks(level, next);
-                      }}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        backgroundColor: currentVal <= 1 ? '#F3F4F6' : primaryColor + '15',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      <Minus size={16} color={currentVal <= 1 ? '#D1D5DB' : primaryColor} />
-                    </AnimatedPressable>
-                    <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937', minWidth: 40, textAlign: 'center'}}>
-                      {displayText}
-                    </Text>
-                    <AnimatedPressable
-                      hapticType="light"
-                      onPress={() => {
-                        haptic.light();
-                        const next = Math.min(99, currentVal + 1);
-                        setCustomMaxTasks(level, next);
-                      }}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        backgroundColor: currentVal >= 99 ? '#F3F4F6' : primaryColor + '15',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      <Plus size={16} color={currentVal >= 99 ? '#D1D5DB' : primaryColor} />
-                    </AnimatedPressable>
-                  </View>
+                  {renderRow('매일 할 일', resolvedDaily, 'daily')}
+                  {renderRow('요일 할 일', resolvedToday, 'today')}
                 </View>
               );
             })}
