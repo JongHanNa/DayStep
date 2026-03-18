@@ -16,6 +16,7 @@ import {
   resetBlocks,
   startMonitoring,
   stopMonitoring,
+  configureActions,
   isAvailable,
   AuthorizationStatus,
 } from 'react-native-device-activity';
@@ -83,6 +84,16 @@ export async function scheduleAutoUnshield(wakeTime: Date): Promise<void> {
 
   const now = new Date();
   try {
+    // intervalDidEnd 시 자동으로 shield 해제하도록 action 등록
+    configureActions({
+      activityName: 'sleep-session',
+      callbackName: 'intervalDidEnd',
+      actions: [
+        { type: 'disableBlockAllMode' },
+        { type: 'resetBlocks' },
+      ],
+    });
+
     await startMonitoring(
       'sleep-session',
       {
