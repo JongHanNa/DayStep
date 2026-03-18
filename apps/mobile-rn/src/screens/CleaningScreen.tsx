@@ -166,30 +166,6 @@ export default function CleaningScreen() {
     return Array.from(catSet);
   }, [allTasks, activeTab]);
 
-  // space 탭 모달용: dailyRoutine / zoneFocus 카테고리 분리
-  const spaceSections = useMemo(() => {
-    if (activeTab !== 'space') return null;
-    const dailyTasks = allTasks.filter(t => t.tab === 'space' && t.frequency === 'daily');
-    const dailyCats = Array.from(new Set(dailyTasks.map(t => t.category)));
-
-    const todayZoneObj = getTodayZone();
-    const zoneTasks = todayZoneObj
-      ? allTasks.filter(
-          t => t.tab === 'space' && t.frequency !== 'daily' && t.zoneId === todayZoneObj.id,
-        )
-      : [];
-    const zoneCats = Array.from(new Set(zoneTasks.map(t => t.category)));
-
-    return {
-      daily: {title: '매일 할 일', categories: dailyCats, tasks: dailyTasks},
-      zone: {
-        title: todayZoneObj ? `오늘의 구역: ${todayZoneObj.name}` : '오늘의 구역',
-        categories: zoneCats,
-        tasks: zoneTasks,
-      },
-    };
-  }, [activeTab, allTasks, getTodayZone]);
-
   const handleStartTimer = useCallback(() => {
     if (!focusTask) return;
     startTimer(focusTask.estimatedMinutes * 60);
@@ -369,97 +345,23 @@ export default function CleaningScreen() {
             contentContainerStyle={{paddingBottom: 40}}
             showsVerticalScrollIndicator={false}>
             <View style={{paddingHorizontal: 12}}>
-              {activeTab === 'space' && spaceSections ? (
-                <>
-                  {/* 매일 할 일 섹션 */}
-                  {spaceSections.daily.tasks.length > 0 && (
-                    <View style={{marginBottom: 8}}>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '700',
-                          color: '#374151',
-                          paddingHorizontal: 4,
-                          paddingVertical: 10,
-                        }}>
-                        {spaceSections.daily.title}
-                      </Text>
-                      {spaceSections.daily.categories.map((category, index) => {
-                        const catTasks = spaceSections.daily.tasks.filter(
-                          t => t.category === category,
-                        );
-                        const {completed, total} = getCategoryCompletionCount(category);
-                        return (
-                          <CategoryAccordion
-                            key={`daily-${category}`}
-                            category={category}
-                            tasks={catTasks}
-                            completedCount={completed}
-                            totalCount={total}
-                            isTaskCompleted={isTaskCompleted}
-                            defaultOpen={index === 0}
-                            enterDelay={index * 50}
-                          />
-                        );
-                      })}
-                    </View>
-                  )}
-
-                  {/* 오늘의 구역 섹션 */}
-                  {spaceSections.zone.tasks.length > 0 && (
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: 14,
-                          fontWeight: '700',
-                          color: '#374151',
-                          paddingHorizontal: 4,
-                          paddingVertical: 10,
-                        }}>
-                        {spaceSections.zone.title}
-                      </Text>
-                      {spaceSections.zone.categories.map((category, index) => {
-                        const catTasks = spaceSections.zone.tasks.filter(
-                          t => t.category === category,
-                        );
-                        const {completed, total} = getCategoryCompletionCount(category);
-                        return (
-                          <CategoryAccordion
-                            key={`zone-${category}`}
-                            category={category}
-                            tasks={catTasks}
-                            completedCount={completed}
-                            totalCount={total}
-                            isTaskCompleted={isTaskCompleted}
-                            defaultOpen={index === 0}
-                            enterDelay={index * 50}
-                          />
-                        );
-                      })}
-                    </View>
-                  )}
-                </>
-              ) : (
-                // digital / belongings 탭: 기존 로직
-                categories.map((category, index) => {
-                  const catTasks = allTasks.filter(
-                    t => t.tab === activeTab && t.category === category,
-                  );
-                  const {completed, total} = getCategoryCompletionCount(category);
-                  return (
-                    <CategoryAccordion
-                      key={category}
-                      category={category}
-                      tasks={catTasks}
-                      completedCount={completed}
-                      totalCount={total}
-                      isTaskCompleted={isTaskCompleted}
-                      defaultOpen={index === 0}
-                      enterDelay={index * 50}
-                    />
-                  );
-                })
-              )}
+              {categories.map((category, index) => {
+                const catTasks = allTasks.filter(
+                  t => t.tab === activeTab && t.category === category,
+                );
+                const {completed, total} = getCategoryCompletionCount(category);
+                return (
+                  <CategoryAccordion
+                    key={category}
+                    category={category}
+                    tasks={catTasks}
+                    completedCount={completed}
+                    totalCount={total}
+                    defaultOpen={index === 0}
+                    enterDelay={index * 50}
+                  />
+                );
+              })}
             </View>
           </ScrollView>
         </View>

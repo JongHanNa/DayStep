@@ -21,8 +21,6 @@ interface CategoryAccordionProps {
   tasks: CleaningTask[];
   completedCount: number;
   totalCount: number;
-  isTaskCompleted: (taskId: string) => boolean;
-  onToggleTask?: (taskId: string) => void;
   defaultOpen?: boolean;
   enterDelay?: number;
 }
@@ -32,8 +30,6 @@ export function CategoryAccordion({
   tasks,
   completedCount,
   totalCount,
-  isTaskCompleted,
-  onToggleTask,
   defaultOpen = false,
   enterDelay = 0,
 }: CategoryAccordionProps) {
@@ -81,8 +77,6 @@ export function CategoryAccordion({
             <TaskCheckItem
               key={task.id}
               task={task}
-              isCompleted={isTaskCompleted(task.id)}
-              onToggle={onToggleTask ? () => onToggleTask(task.id) : undefined}
             />
           ))}
         </View>
