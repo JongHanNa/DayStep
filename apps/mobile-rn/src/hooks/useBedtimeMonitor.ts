@@ -1,6 +1,7 @@
 /**
  * useBedtimeMonitor — 포그라운드 취침 시간 감지 훅
- * 60초 간격으로 현재 시간 vs sleepGoalTime 비교 → 모달 표시
+ * 30초 간격으로 현재 시간 vs sleepGoalTime 비교 → 모달 표시
+ * 취침 시간 경과 후 30분 윈도우 내 앱 진입 시 BedtimeModal 표시
  */
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {useSleepStore} from '@/stores/sleepStore';
@@ -36,15 +37,17 @@ export function useBedtimeMonitor() {
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
       const goalMinutes = goalH * 60 + goalM;
 
-      // 정확히 같은 분이거나, 1분 이내 차이면 트리거
-      if (Math.abs(nowMinutes - goalMinutes) <= 1) {
+      // 취침 시간 이후 ~ +30분 윈도우 내에 있으면 모달 표시
+      // 자정 넘김(예: 23:30 goal, 0:15 now) 처리 포함
+      const diff = (nowMinutes - goalMinutes + 1440) % 1440;
+      if (diff >= 0 && diff <= 30) {
         setShowBedtimeModal(true);
       }
     };
 
-    // 즉시 1회 체크 + 60초 간격
+    // 즉시 1회 체크 + 30초 간격
     check();
-    const interval = setInterval(check, 60_000);
+    const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
   }, [autoSleepEnabled, sleepGoalTime, sessionState.status]);
 
