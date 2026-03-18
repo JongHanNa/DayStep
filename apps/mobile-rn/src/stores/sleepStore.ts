@@ -8,7 +8,7 @@ import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage} from '@/lib/mmkv';
 import {format, startOfMonth, endOfMonth, differenceInMinutes, subDays, addDays} from 'date-fns';
-import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield, getAuthorizationStatus} from '@/lib/screenTimeManager';
+import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield, cancelAutoUnshield, getAuthorizationStatus} from '@/lib/screenTimeManager';
 
 // ============================================
 // Types
@@ -524,13 +524,10 @@ export const useSleepStore = create<SleepStoreState>()(
           const authStatus = await getAuthorizationStatus();
           const permissionRevoked = authStatus !== 'approved';
 
-          if (permissionRevoked || !isPastWakeTime) {
-            // 권한 해제 또는 기상시간 미경과 (= 앱 강제 종료) → 포기 처리
+          // Case 1: 권한 해제 → 포기 처리
+          if (permissionRevoked) {
             await clearShield();
-            // 권한 해제 시 screenTimeLinkEnabled도 리셋
-            if (permissionRevoked) {
-              set({screenTimeLinkEnabled: false});
-            }
+            set({screenTimeLinkEnabled: false});
             const recordDate = format(now, 'yyyy-MM-dd');
             try {
               await insertRecord({
@@ -547,21 +544,30 @@ export const useSleepStore = create<SleepStoreState>()(
             return;
           }
 
-          // 기상시간 경과 + 권한 유지 → 정상 수면 성공
-          await clearShield();
-          const recordDate = format(expectedWake, 'yyyy-MM-dd');
-          try {
-            await insertRecord({
-              date: recordDate,
-              sleep_time: startedAt.toISOString(),
-              wake_time: expectedWake.toISOString(),
-              mood: 'good',
-              session_outcome: 'completed',
-            });
-          } catch {
-            // 에러 시 세션은 리셋하되 기록은 무시
+          // Case 2: 기상시간 경과 + 권한 유지 → 정상 수면 완료
+          if (isPastWakeTime) {
+            await clearShield();
+            cancelAutoUnshield();
+            const recordDate = format(expectedWake!, 'yyyy-MM-dd');
+            try {
+              await insertRecord({
+                date: recordDate,
+                sleep_time: startedAt.toISOString(),
+                wake_time: expectedWake!.toISOString(),
+                mood: 'good',
+                session_outcome: 'completed',
+              });
+            } catch {
+              // 에러 시 세션은 리셋하되 기록은 무시
+            }
+            set({sessionState: {...DEFAULT_SESSION}});
+            return;
           }
-          set({sessionState: {...DEFAULT_SESSION}});
+
+          // Case 3: 기상시간 미경과 + 권한 유지 → 아직 수면 중, 세션 계속
+          // 앱 재시작(메모리 해제, Metro 리로드 등)으로 ManagedSettingsStore가 초기화되었을 수 있으므로 재적용
+          await shieldAllExceptAllowed();
+          // sessionState는 'running' 유지 → SleepGardenScreen에서 SleepSession으로 네비게이션
           return;
         }
 
