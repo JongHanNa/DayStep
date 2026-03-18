@@ -3,15 +3,16 @@
  * Phase 3: 스크린타임 토글 활성화 + 권한 요청
  */
 import React, {useCallback, useState} from 'react';
-import {View, Text, StyleSheet, Pressable} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Switch, Alert} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
-import {ChevronLeft, Moon, Sun} from 'lucide-react-native';
+import {ChevronLeft, Moon, Sun, Bell} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {useSleepStore} from '@/stores/sleepStore';
+import {requestNotificationPermission} from '@/lib/notifications';
 
 
 function timeStringToDate(time: string): Date {
@@ -45,8 +46,10 @@ export default function SleepGoalScreen() {
   const {
     sleepGoalTime,
     wakeGoalTime,
+    autoSleepEnabled,
     setSleepGoalTime,
     setWakeGoalTime,
+    setAutoSleepEnabled,
   } = useSleepStore();
 
   const [localSleepTime, setLocalSleepTime] = useState(timeStringToDate(sleepGoalTime));
@@ -56,6 +59,18 @@ export default function SleepGoalScreen() {
     dateToTimeString(localSleepTime),
     dateToTimeString(localWakeTime),
   );
+
+  const handleAutoSleepToggle = useCallback(async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert('알림 권한 필요', '자동 취침 알림을 사용하려면 설정에서 알림 권한을 허용해주세요.');
+        return;
+      }
+    }
+    haptic.light();
+    setAutoSleepEnabled(value);
+  }, [haptic, setAutoSleepEnabled]);
 
   const handleSave = useCallback(() => {
     haptic.medium();
@@ -118,6 +133,23 @@ export default function SleepGoalScreen() {
           </Text>
         </View>
 
+        {/* 자동 취침 알림 토글 */}
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLeft}>
+            <Bell size={16} color="#6366F1" />
+            <View>
+              <Text style={styles.toggleLabel}>자동 취침 알림</Text>
+              <Text style={styles.toggleDesc}>취침 시간에 알림을 보내드려요</Text>
+            </View>
+          </View>
+          <Switch
+            value={autoSleepEnabled}
+            onValueChange={handleAutoSleepToggle}
+            trackColor={{false: '#D1D5DB', true: '#A78BFA'}}
+            thumbColor={autoSleepEnabled ? '#7C3AED' : '#F3F4F6'}
+          />
+        </View>
+
         {/* 저장 버튼 */}
         <AnimatedPressable
           onPress={handleSave}
@@ -172,13 +204,39 @@ const styles = StyleSheet.create({
   goalBadge: {
     alignItems: 'center',
     paddingVertical: 10,
-    marginBottom: 24,
+    marginBottom: 16,
     backgroundColor: '#F3F4F6',
     borderRadius: 12,
   },
   goalText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 24,
+  },
+  toggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  toggleLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  toggleDesc: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
   },
   saveBtn: {
     paddingVertical: 14,

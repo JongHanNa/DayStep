@@ -24,6 +24,10 @@ import {TrialOfferModal} from '@/components/subscription/TrialOfferModal';
 import {scheduleTrialExpiryReminder} from '@/lib/notifications';
 import Config from 'react-native-config';
 import {useTheme} from '@/theme';
+import {useSleepStore} from '@/stores/sleepStore';
+import {useBedtimeMonitor} from '@/hooks/useBedtimeMonitor';
+import {BedtimeModal} from '@/components/sleep/BedtimeModal';
+import {useNavigation} from '@react-navigation/native';
 
 const TRIAL_DAYS = parseInt(Config.TRIAL_DAYS || '7', 10);
 import {SubscriptionView} from '@/components/settings/SubscriptionView';
@@ -38,11 +42,19 @@ const Stack = createNativeStackNavigator();
  */
 function AuthenticatedApp() {
   useRealtimeSync();
+  const navigation = useNavigation<any>();
 
   // 설정 DB 동기화 (morePanelShowLabels 등)
   const settingsUser = useAuthStore(s => s.user);
   useSettingsSync(settingsUser?.id);
   useCleaningSettingsSync(settingsUser?.id);
+
+  // 자동 취침 모니터
+  const {showBedtimeModal, onStartSleep, onSnooze, onSkipTonight} = useBedtimeMonitor();
+  const handleBedtimeStart = useCallback(() => {
+    onStartSleep();
+    navigation.navigate('Home', {screen: 'SleepSession'});
+  }, [onStartSleep, navigation]);
 
   // plan_limits fetch + Realtime 구독 (인증 완료 시 1회)
   const {fetchLimits, subscribeLimits, unsubscribeLimits} = usePlanLimitsStore();
@@ -56,21 +68,28 @@ function AuthenticatedApp() {
   }, []);
 
   // 알림 채널 생성(Android) + 권한 요청(iOS/Android 13+) + 반복 알람 초기 스케줄
+  const {autoSleepEnabled, sleepGoalTime} = useSleepStore();
   useEffect(() => {
     import('@/lib/notifications').then(
       ({
         setupNotificationChannel,
         requestNotificationPermission,
         scheduleExistingRecurringAlarms,
+        scheduleSleepBedtimeNotification,
       }) => {
         setupNotificationChannel();
         requestNotificationPermission().then(granted => {
           if (granted) {
             scheduleExistingRecurringAlarms();
+            // 자동 취침 알림 스케줄 (앱 시작 시)
+            if (autoSleepEnabled) {
+              scheduleSleepBedtimeNotification(sleepGoalTime);
+            }
           }
         });
       },
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── 7일 무료 체험 제안 로직 ──
@@ -188,6 +207,12 @@ function AuthenticatedApp() {
   return (
     <>
       <MainTabNavigator />
+      <BedtimeModal
+        visible={showBedtimeModal}
+        onStartSleep={handleBedtimeStart}
+        onSnooze={onSnooze}
+        onSkipTonight={onSkipTonight}
+      />
       <TrialOfferModal
         visible={showTrialModal}
         onClose={handleTrialClose}

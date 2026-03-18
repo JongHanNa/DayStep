@@ -53,18 +53,27 @@ export default function SleepGardenScreen() {
   // 화면 포커스 시 스크린타임 권한 상태 동기화 + 연동 팝업
   useFocusEffect(
     useCallback(() => {
-      // 스크린타임 권한이 해제된 경우 → screenTimeLinkEnabled 리셋
-      if (screenTimeLinkEnabled) {
-        const status = getAuthorizationStatus();
-        if (status !== 'approved') {
-          setScreenTimeLinkEnabled(false);
+      if (!isScreenTimeAvailable()) return;
+
+      // 반응형 구독 대신 getState()로 직접 읽기 — 재실행 루프 방지
+      const {screenTimeLinkEnabled: linked, setScreenTimeLinkEnabled: setLinked} =
+        useSleepStore.getState();
+      const status = getAuthorizationStatus();
+
+      if (linked) {
+        if (status === 'denied') {
+          setLinked(false);
         }
+        return;
       }
-      // screenTimeLinkEnabled가 false이면 모달 표시
-      if (!screenTimeLinkEnabled && isScreenTimeAvailable()) {
-        setShowScreenTimeModal(true);
+
+      if (status === 'approved') {
+        setLinked(true);
+        return;
       }
-    }, [screenTimeLinkEnabled, setScreenTimeLinkEnabled]),
+
+      setShowScreenTimeModal(true);
+    }, []), // 빈 deps: 포커스 이벤트에서만 실행
   );
 
   // 화면 포커스 시 데이터 로딩

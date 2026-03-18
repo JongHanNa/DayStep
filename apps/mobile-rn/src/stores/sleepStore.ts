@@ -96,6 +96,7 @@ interface SleepStoreState {
   sleepGoalTime: string; // HH:mm (기본 23:30)
   wakeGoalTime: string; // HH:mm (기본 07:00)
   screenTimeLinkEnabled: boolean;
+  autoSleepEnabled: boolean; // 자동 취침 알림
   sessionState: SleepSessionState;
 
   // Actions (기존)
@@ -111,6 +112,7 @@ interface SleepStoreState {
   setSleepGoalTime: (time: string) => void;
   setWakeGoalTime: (time: string) => void;
   setScreenTimeLinkEnabled: (v: boolean) => void;
+  setAutoSleepEnabled: (v: boolean) => void;
   getGoalDurationMinutes: () => number;
   startSleepSession: () => Promise<void>;
   completeSleepSession: () => Promise<void>;
@@ -171,6 +173,7 @@ export const useSleepStore = create<SleepStoreState>()(
       sleepGoalTime: '23:30',
       wakeGoalTime: '07:00',
       screenTimeLinkEnabled: false,
+      autoSleepEnabled: false,
       sessionState: {...DEFAULT_SESSION},
 
       // ============================================
@@ -383,9 +386,26 @@ export const useSleepStore = create<SleepStoreState>()(
       // 수면 정원 Actions
       // ============================================
 
-      setSleepGoalTime: (time) => set({sleepGoalTime: time}),
+      setSleepGoalTime: (time) => {
+        set({sleepGoalTime: time});
+        if (get().autoSleepEnabled) {
+          import('@/lib/notifications').then(({scheduleSleepBedtimeNotification}) =>
+            scheduleSleepBedtimeNotification(time),
+          );
+        }
+      },
       setWakeGoalTime: (time) => set({wakeGoalTime: time}),
       setScreenTimeLinkEnabled: (v) => set({screenTimeLinkEnabled: v}),
+      setAutoSleepEnabled: (v) => {
+        set({autoSleepEnabled: v});
+        import('@/lib/notifications').then(({scheduleSleepBedtimeNotification, cancelSleepBedtimeNotification}) => {
+          if (v) {
+            scheduleSleepBedtimeNotification(get().sleepGoalTime);
+          } else {
+            cancelSleepBedtimeNotification();
+          }
+        });
+      },
 
       getGoalDurationMinutes: () => {
         const {sleepGoalTime, wakeGoalTime} = get();
@@ -624,6 +644,7 @@ export const useSleepStore = create<SleepStoreState>()(
         sleepGoalTime: state.sleepGoalTime,
         wakeGoalTime: state.wakeGoalTime,
         screenTimeLinkEnabled: state.screenTimeLinkEnabled,
+        autoSleepEnabled: state.autoSleepEnabled,
         sessionState: state.sessionState,
       }),
       onRehydrateStorage: () => (state) => {

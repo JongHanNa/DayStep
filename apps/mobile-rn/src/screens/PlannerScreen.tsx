@@ -202,11 +202,11 @@ export default function PlannerScreen() {
     <View style={styles.menuOverlay} pointerEvents="box-none">
       <LiquidGlassMenu
         systemIconName="calendar"
-        iconColor={primaryColor}
+        iconColor="#1F2937"
         size={36}
         menuItems={MENU_ITEMS}
         onSelect={handleMenuSelect}
-        fallbackIcon={<Calendar size={18} color={primaryColor} />}
+        fallbackIcon={<Calendar size={18} color="#1F2937" />}
       />
     </View>
   );
@@ -268,11 +268,11 @@ export default function PlannerScreen() {
               </Text>
               <LiquidGlassMenu
                 systemIconName="calendar"
-                iconColor={primaryColor}
+                iconColor="#1F2937"
                 size={36}
                 menuItems={MENU_ITEMS}
                 onSelect={handleMenuSelect}
-                fallbackIcon={<Calendar size={18} color={primaryColor} />}
+                fallbackIcon={<Calendar size={18} color="#1F2937" />}
               />
               <View style={styles.toolbarSpacer} />
             </View>

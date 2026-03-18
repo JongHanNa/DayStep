@@ -365,11 +365,11 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
         <View style={styles.menuOverlay} pointerEvents="box-none">
           <LiquidGlassMenu
             systemIconName="calendar"
-            iconColor={primaryColor}
+            iconColor="#9CA3AF"
             size={36}
             menuItems={menuItems}
             onSelect={onMenuSelect}
-            fallbackIcon={<Calendar size={18} color={primaryColor} />}
+            fallbackIcon={<Calendar size={18} color="#9CA3AF" />}
           />
         </View>
       </View>

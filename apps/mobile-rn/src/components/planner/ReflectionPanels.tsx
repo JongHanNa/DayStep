@@ -1,10 +1,9 @@
 /**
  * Reflection Panels
- * 어제의 다짐/결단(읽기전용) + 어제의 점검/회고/교훈(읽기전용) + 오늘의 다짐/결단(편집) + 오늘의 점검/회고/교훈(편집)
+ * 오늘의 다짐/결단(편집) + 오늘의 점검/회고/교훈(편집)
  */
 import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {View, Text, TextInput, StyleSheet, ScrollView} from 'react-native';
-import {subDays, format, parseISO} from 'date-fns';
 import {useReflectionStore} from '@/stores/reflectionStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTodoStore} from '@/stores/todoStore';
@@ -24,21 +23,16 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
 
   const reflection = getReflection(selectedDate);
 
-  // 어제 날짜 계산
-  const yesterdayDate = format(subDays(parseISO(selectedDate), 1), 'yyyy-MM-dd');
-  const yesterdayReflection = getReflection(yesterdayDate);
-
   const [todayResolution, setTodayResolution] = useState('');
   const [todayLesson, setTodayLesson] = useState('');
   const prevDateRef = useRef(selectedDate);
 
-  // 오늘 + 어제 데이터 로드
+  // 오늘 데이터 로드
   useEffect(() => {
     if (user?.id) {
       loadReflection(user.id, selectedDate);
-      loadReflection(user.id, yesterdayDate);
     }
-  }, [user?.id, selectedDate, yesterdayDate]);
+  }, [user?.id, selectedDate]);
 
   useEffect(() => {
     // 날짜 변경 시: 이전 날짜에 미저장 값 auto-save
@@ -82,38 +76,6 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
 
   return (
     <View>
-      {/* 어제의 다짐/결단 (읽기전용) */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-2">
-          <Text className="text-base font-semibold text-gray-800">
-            어제의 다짐/결단
-          </Text>
-        </View>
-        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.05)}} className="rounded-2xl p-4">
-          <Text className="text-sm text-gray-600" style={styles.readonlyText}>
-            {yesterdayReflection?.today_resolution
-              ? yesterdayReflection.today_resolution
-              : '아직 작성된 다짐/결단이 없습니다'}
-          </Text>
-        </View>
-      </View>
-
-      {/* 어제의 점검/회고/교훈 (읽기전용) */}
-      <View className="mb-4">
-        <View className="flex-row items-center mb-2">
-          <Text className="text-base font-semibold text-gray-800">
-            어제의 점검/회고/교훈
-          </Text>
-        </View>
-        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.05)}} className="rounded-2xl p-4">
-          <Text className="text-sm text-gray-600" style={styles.readonlyText}>
-            {yesterdayReflection?.today_lesson
-              ? yesterdayReflection.today_lesson
-              : '아직 작성된 교훈이 없습니다'}
-          </Text>
-        </View>
-      </View>
-
       {/* 오늘의 다짐/결단 (편집가능) */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
@@ -165,9 +127,5 @@ const styles = StyleSheet.create({
   input: {
     minHeight: 40,
     textAlignVertical: 'top',
-  },
-  readonlyText: {
-    minHeight: 20,
-    lineHeight: 20,
   },
 });

@@ -34,11 +34,11 @@ export default function ADHDUnderstandingScreen() {
       <View style={styles.navBar}>
         <LiquidGlassMenu
           systemIconName="line.3.horizontal"
-          iconColor={primaryColor}
+          iconColor="#9CA3AF"
           size={40}
           menuItems={MENU_ITEMS}
           onSelect={handleMenuSelect}
-          fallbackIcon={<Menu size={20} color={primaryColor} />}
+          fallbackIcon={<Menu size={20} color="#9CA3AF" />}
         />
       </View>
 

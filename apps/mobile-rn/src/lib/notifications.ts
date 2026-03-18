@@ -343,6 +343,62 @@ export async function cancelTrialExpiryReminder(): Promise<void> {
 }
 
 // ============================================
+// Sleep Bedtime Notification
+// ============================================
+
+const SLEEP_BEDTIME_ID = 'sleep-bedtime-reminder';
+
+/**
+ * 다음 취침 시간에 time-sensitive 로컬 알림 스케줄링
+ * @param sleepGoalTime - HH:mm 형식의 목표 취침 시간
+ */
+export async function scheduleSleepBedtimeNotification(sleepGoalTime: string): Promise<void> {
+  // 기존 알림 취소 후 재스케줄
+  await notifee.cancelNotification(SLEEP_BEDTIME_ID);
+
+  const [h, m] = sleepGoalTime.split(':').map(Number);
+  const now = new Date();
+  const triggerDate = new Date();
+  triggerDate.setHours(h, m, 0, 0);
+
+  // 이미 지난 시간이면 내일로
+  if (triggerDate.getTime() <= now.getTime()) {
+    triggerDate.setDate(triggerDate.getDate() + 1);
+  }
+
+  const trigger: TimestampTrigger = {
+    type: TriggerType.TIMESTAMP,
+    timestamp: triggerDate.getTime(),
+  };
+
+  await notifee.createTriggerNotification(
+    {
+      id: SLEEP_BEDTIME_ID,
+      title: '취침 시간이에요 🌙',
+      body: '수면 정원에서 잠들기를 시작해보세요.',
+      data: {type: 'sleep-bedtime'},
+      android: {
+        channelId: CHANNEL_ID,
+        smallIcon: 'ic_notification',
+        importance: AndroidImportance.HIGH,
+        pressAction: {id: 'default'},
+      },
+      ios: {
+        sound: 'default',
+        interruptionLevel: 'timeSensitive' as any,
+      },
+    },
+    trigger,
+  );
+  console.log(`[Notifications] scheduled sleep bedtime for ${triggerDate.toISOString()}`);
+}
+
+/** 취침 알림 취소 */
+export async function cancelSleepBedtimeNotification(): Promise<void> {
+  await notifee.cancelNotification(SLEEP_BEDTIME_ID);
+}
+
+// ============================================
 // Utilities
 // ============================================
 
