@@ -3,15 +3,17 @@
  * Apple 네이티브 DeviceActivitySelectionView 사용
  * 선택된 앱 토큰은 네이티브 측에 저장 (opaque Data, JS로 직렬화 불가)
  *
- * 무료 사용자: 앱 + 카테고리 합계 1개까지 (소프트 제한 — 배너 표시)
+ * 무료 사용자: 앱 + 카테고리 합계 1개까지 (하드 제한 — 오버레이 차단)
  * Pro 사용자: 제한 없음
  */
 import React, {useState, useCallback} from 'react';
 import {View, Text, StyleSheet, Pressable, Platform} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {ChevronLeft, Crown} from 'lucide-react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {ScreenContainer} from '@/components/core';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {useTheme} from '@/theme';
 import type {NativeSyntheticEvent} from 'react-native';
 
 // react-native-device-activity의 DeviceActivitySelectionView 컴포넌트
@@ -30,6 +32,7 @@ export default function ScreenTimeAppsScreen() {
   const hasActiveSubscription = useSubscriptionStore(
     s => s.hasActiveSubscription,
   );
+  const {primaryColor} = useTheme();
 
   const [appCount, setAppCount] = useState(0);
   const [categoryCount, setCategoryCount] = useState(0);
@@ -83,23 +86,24 @@ export default function ScreenTimeAppsScreen() {
               </View>
             )}
 
-            {/* 한도 초과 업그레이드 배너 */}
-            {isOverLimit && (
-              <Pressable style={styles.upgradeBanner} onPress={handleUpgrade}>
-                <Crown size={18} color="#F59E0B" />
-                <View style={styles.upgradeBannerTextWrap}>
-                  <Text style={styles.upgradeBannerTitle}>
-                    무료 한도를 초과했어요
+            {/* 무료 사용자 업그레이드 배너 */}
+            {!hasActiveSubscription && (
+              <Pressable onPress={handleUpgrade}>
+                <LinearGradient
+                  colors={['#34D399', '#3B82F6']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 0}}
+                  style={styles.gradientBanner}>
+                  <Crown size={20} color="#FFFFFF" />
+                  <Text style={styles.gradientBannerText}>
+                    업그레이드하면 더 많은 앱을 허용할 수 있어요
                   </Text>
-                  <Text style={styles.upgradeBannerDesc}>
-                    Pro로 업그레이드하면 더 많은 앱을 허용할 수 있어요
-                  </Text>
-                </View>
-                <ChevronLeft
-                  size={16}
-                  color="#9CA3AF"
-                  style={{transform: [{rotate: '180deg'}]}}
-                />
+                  <ChevronLeft
+                    size={16}
+                    color="rgba(255,255,255,0.7)"
+                    style={{transform: [{rotate: '180deg'}]}}
+                  />
+                </LinearGradient>
               </Pressable>
             )}
 
@@ -109,6 +113,26 @@ export default function ScreenTimeAppsScreen() {
                 headerText={headerText}
                 onSelectionChange={handleSelectionChange}
               />
+              {/* 한도 초과 시 피커 블로킹 오버레이 */}
+              {isOverLimit && (
+                <View style={styles.pickerOverlay}>
+                  <Crown size={28} color="#F59E0B" />
+                  <Text style={styles.overlayTitle}>한도 초과</Text>
+                  <Text style={styles.overlayDesc}>
+                    무료 플랜에서는 {FREE_ALLOWED_TOTAL}개까지만 허용할 수 있어요
+                  </Text>
+                  <Pressable
+                    style={[
+                      styles.overlayButton,
+                      {backgroundColor: primaryColor},
+                    ]}
+                    onPress={handleUpgrade}>
+                    <Text style={styles.overlayButtonText}>
+                      Pro로 업그레이드
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
           </>
         ) : (
@@ -159,35 +183,59 @@ const styles = StyleSheet.create({
     color: '#374151',
     fontWeight: '500',
   },
-  upgradeBanner: {
+  gradientBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
     gap: 10,
   },
-  upgradeBannerTextWrap: {
+  gradientBannerText: {
     flex: 1,
-  },
-  upgradeBannerTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#92400E',
-    marginBottom: 2,
-  },
-  upgradeBannerDesc: {
-    fontSize: 12,
-    color: '#B45309',
-    lineHeight: 16,
+    color: '#FFFFFF',
+    lineHeight: 18,
   },
   pickerContainer: {
     flex: 1,
     borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  pickerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+    borderRadius: 12,
+    zIndex: 10,
+  },
+  overlayTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  overlayDesc: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  overlayButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 10,
+  },
+  overlayButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   picker: {
     flex: 1,
