@@ -7,7 +7,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, ScrollView, Modal} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {Settings, List, SprayCan, X, Minus, Plus} from 'lucide-react-native';
+import {Settings, List, X, Minus, Plus} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {LiquidGlassButton} from '@/components/native';
 import {EnergySelector} from '@/components/cleaning/EnergySelector';
@@ -223,12 +223,7 @@ export default function CleaningScreen() {
             onPress={() => setTaskListModalVisible(true)}
           />
 
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-            <SprayCan size={18} color={primaryColor} />
-            <Text style={{fontSize: 15, fontWeight: '600', color: '#1F2937'}}>
-              {todaySectionLabel ?? '청소/정리'}
-            </Text>
-          </View>
+          <View />
 
           <LiquidGlassButton
             systemIconName="gearshape"

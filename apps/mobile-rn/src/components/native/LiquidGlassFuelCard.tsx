@@ -8,6 +8,7 @@ import React from 'react';
 import {requireNativeComponent, type ViewStyle} from 'react-native';
 
 interface NativeLiquidGlassFuelCardProps {
+  primaryColor?: string;
   noteTitle?: string;
   noteContent?: string;
   hasNote: boolean;

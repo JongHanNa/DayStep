@@ -1,6 +1,6 @@
 /**
  * Reflection Panels
- * 오늘의 다짐/결단(편집) + 오늘의 점검/회고/교훈(편집)
+ * 현재 기간 + 오늘의 다짐/결단 + 오늘의 기도(admin) + 오늘의 점검/회고/교훈
  */
 import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {View, Text, TextInput, StyleSheet, ScrollView} from 'react-native';
@@ -9,6 +9,7 @@ import {useAuthStore} from '@/stores/authStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
+import {supabase} from '@/lib/supabase';
 
 interface ReflectionPanelsProps {
   scrollViewRef?: React.RefObject<ScrollView>;
@@ -23,9 +24,23 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
 
   const reflection = getReflection(selectedDate);
 
+  const [currentPeriod, setCurrentPeriod] = useState('');
   const [todayResolution, setTodayResolution] = useState('');
+  const [todayPrayer, setTodayPrayer] = useState('');
   const [todayLesson, setTodayLesson] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const prevDateRef = useRef(selectedDate);
+
+  // admin 확인
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+      .then(({data}) => setIsAdmin(data?.role === 'admin'));
+  }, [user?.id]);
 
   // 오늘 데이터 로드
   useEffect(() => {
@@ -40,14 +55,20 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
       const prevDate = prevDateRef.current;
       const prevReflection = getReflection(prevDate);
 
+      const periodChanged =
+        currentPeriod !== (prevReflection?.current_period ?? '');
       const resolutionChanged =
         todayResolution !== (prevReflection?.today_resolution ?? '');
+      const prayerChanged =
+        todayPrayer !== (prevReflection?.today_prayer ?? '');
       const lessonChanged =
         todayLesson !== (prevReflection?.today_lesson ?? '');
 
-      if (resolutionChanged || lessonChanged) {
+      if (periodChanged || resolutionChanged || prayerChanged || lessonChanged) {
         const updates: Record<string, string> = {};
+        if (periodChanged) updates.current_period = currentPeriod;
         if (resolutionChanged) updates.today_resolution = todayResolution;
+        if (prayerChanged) updates.today_prayer = todayPrayer;
         if (lessonChanged) updates.today_lesson = todayLesson;
         upsertReflection(user.id, prevDate, updates);
       }
@@ -56,7 +77,9 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
     }
 
     // 현재 날짜 데이터로 리셋
+    setCurrentPeriod(reflection?.current_period ?? '');
     setTodayResolution(reflection?.today_resolution ?? '');
+    setTodayPrayer(reflection?.today_prayer ?? '');
     setTodayLesson(reflection?.today_lesson ?? '');
   }, [selectedDate, reflection?.id]);
 
@@ -76,6 +99,28 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
 
   return (
     <View>
+      {/* 현재 무슨 기간인지 상기해보기 */}
+      <View className="mb-4">
+        <View className="flex-row items-center mb-2">
+          <Text className="text-base font-semibold text-gray-800">
+            현재 무슨 기간인지 상기해보기
+          </Text>
+        </View>
+        <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.07)}} className="rounded-2xl p-4">
+          <TextInput
+            value={currentPeriod}
+            onChangeText={setCurrentPeriod}
+            onFocus={handleInputFocus}
+            onBlur={() => handleSave('current_period', currentPeriod)}
+            placeholder="지금은 어떤 기간인가요? (예: 시험기간, 프로젝트 마감 등)"
+            placeholderTextColor={hexWithOpacity(primaryColor, 0.4)}
+            className="text-sm text-gray-800"
+            style={styles.input}
+            multiline
+          />
+        </View>
+      </View>
+
       {/* 오늘의 다짐/결단 (편집가능) */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
@@ -97,6 +142,30 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
           />
         </View>
       </View>
+
+      {/* 오늘의 기도 (admin only) */}
+      {isAdmin && (
+        <View className="mb-4">
+          <View className="flex-row items-center mb-2">
+            <Text className="text-base font-semibold text-gray-800">
+              오늘의 기도(하나님과 대화)
+            </Text>
+          </View>
+          <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.09)}} className="rounded-2xl p-4">
+            <TextInput
+              value={todayPrayer}
+              onChangeText={setTodayPrayer}
+              onFocus={handleInputFocus}
+              onBlur={() => handleSave('today_prayer', todayPrayer)}
+              placeholder="하나님과의 대화를 적어보세요"
+              placeholderTextColor={hexWithOpacity(primaryColor, 0.4)}
+              className="text-sm text-gray-800"
+              style={styles.input}
+              multiline
+            />
+          </View>
+        </View>
+      )}
 
       {/* 오늘의 점검/회고/교훈 (편집가능) */}
       <View className="mb-4">

@@ -4,6 +4,7 @@
 
 @interface RCT_EXTERN_MODULE(NativeContactNudgeManager, RCTViewManager)
 
+RCT_EXPORT_VIEW_PROPERTY(primaryColor, NSString)
 RCT_EXPORT_VIEW_PROPERTY(contactsData, NSString)
 RCT_EXPORT_VIEW_PROPERTY(onContactPress, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onHeightChange, RCTDirectEventBlock)

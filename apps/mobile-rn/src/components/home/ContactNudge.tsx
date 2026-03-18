@@ -15,6 +15,8 @@ import {HeartHandshake, Phone} from 'lucide-react-native';
 import {fixedColors} from '@/theme/colors';
 import {NativeContactNudgeNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
+import {useTheme} from '@/theme';
+import {hexWithOpacity} from '@/lib/todoUtils';
 
 interface ContactRecommendation {
   person: {
@@ -43,6 +45,7 @@ export function ContactNudge({
   enterDelay = 0,
   onContactPress,
 }: ContactNudgeProps) {
+  const {primaryColor} = useTheme();
   const animatedHeight = useSharedValue(200);
 
   const heightStyle = useAnimatedStyle(() => ({
@@ -73,6 +76,7 @@ export function ContactNudge({
         className="mx-4">
         <Animated.View style={heightStyle}>
           <NativeContactNudgeNative
+            primaryColor={primaryColor}
             contactsData={contactsDataJson}
             onContactPress={e => onContactPress?.(e.nativeEvent.personName)}
             onHeightChange={e => {
@@ -95,20 +99,20 @@ export function ContactNudge({
       className="mx-4">
       {/* 헤더 */}
       <View className="flex-row items-center mb-3">
-        <HeartHandshake size={22} color="#EC4899" />
+        <HeartHandshake size={22} color={primaryColor} />
         <Text className="text-lg font-semibold text-gray-800 ml-2">
           연락할 사람
         </Text>
         {recommendations.length > 0 && (
           <View
             style={{
-              backgroundColor: '#FCE7F3',
+              backgroundColor: hexWithOpacity(primaryColor, 0.1),
               borderRadius: 10,
               paddingHorizontal: 8,
               paddingVertical: 2,
               marginLeft: 8,
             }}>
-            <Text className="text-xs font-medium" style={{color: '#EC4899'}}>
+            <Text className="text-xs font-medium" style={{color: primaryColor}}>
               {recommendations.length}
             </Text>
           </View>
@@ -171,12 +175,12 @@ export function ContactNudge({
                           <View
                             key={i}
                             style={{
-                              backgroundColor: '#FCE7F3',
+                              backgroundColor: hexWithOpacity(primaryColor, 0.08),
                               borderRadius: 8,
                               paddingHorizontal: 6,
                               paddingVertical: 2,
                             }}>
-                            <Text className="text-xs" style={{color: '#9D174D'}}>
+                            <Text className="text-xs" style={{color: hexWithOpacity(primaryColor, 0.7)}}>
                               {rel}
                             </Text>
                           </View>
@@ -190,17 +194,17 @@ export function ContactNudge({
                     hapticType="light"
                     scaleValue={0.95}
                     style={{
-                      backgroundColor: '#FCE7F3',
+                      backgroundColor: hexWithOpacity(primaryColor, 0.1),
                       borderRadius: 10,
                       paddingHorizontal: 12,
                       paddingVertical: 8,
                       flexDirection: 'row',
                       alignItems: 'center',
                     }}>
-                    <Phone size={14} color="#EC4899" />
+                    <Phone size={14} color={primaryColor} />
                     <Text
                       className="text-xs font-medium ml-1"
-                      style={{color: '#EC4899'}}>
+                      style={{color: primaryColor}}>
                       소식기록
                     </Text>
                   </AnimatedPressable>
@@ -219,7 +223,7 @@ export function ContactNudge({
             borderWidth: 1,
             borderColor: '#F3F4F6',
           }}>
-          <HeartHandshake size={32} color="#D1D5DB" />
+          <HeartHandshake size={32} color={hexWithOpacity(primaryColor, 0.3)} />
           <Text className="text-sm text-gray-400 mt-2 text-center">
             소중한 사람을 등록하면{'\n'}연락 리마인더를 받을 수 있어요
           </Text>

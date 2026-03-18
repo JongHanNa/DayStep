@@ -19,6 +19,8 @@ interface DayReflection {
   thought_archive: string;
   today_lesson: string;
   today_resolution: string;
+  current_period: string;
+  today_prayer: string;
   created_at: string;
   updated_at: string;
 }
@@ -94,6 +96,8 @@ export const useReflectionStore = create<ReflectionState>()(
             thought_archive: '',
             today_lesson: '',
             today_resolution: '',
+            current_period: '',
+            today_prayer: '',
             created_at: new Date().toISOString(),
           }),
           ...data,

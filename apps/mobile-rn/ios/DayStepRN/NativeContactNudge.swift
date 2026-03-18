@@ -29,6 +29,7 @@ struct ContactRecommendationData: Codable, Identifiable {
 
 class ContactNudgeState: ObservableObject {
   @Published var contacts: [ContactRecommendationData] = []
+  @Published var primaryColor: String = "#6366F1"
 }
 
 // MARK: - Priority Color
@@ -54,7 +55,7 @@ struct ContactNudgeContent: View {
       HStack(spacing: 8) {
         Image(systemName: "heart.circle.fill")
           .font(.system(size: 22))
-          .foregroundColor(Color(hex: "#EC4899"))
+          .foregroundColor(Color(hex: state.primaryColor))
 
         Text("연락할 사람")
           .font(.system(size: 18, weight: .semibold))
@@ -63,10 +64,10 @@ struct ContactNudgeContent: View {
         if !state.contacts.isEmpty {
           Text("\(state.contacts.count)")
             .font(.system(size: 12, weight: .medium))
-            .foregroundColor(Color(hex: "#EC4899"))
+            .foregroundColor(Color(hex: state.primaryColor))
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background(Color(hex: "#FCE7F3"))
+            .background(Color(hex: state.primaryColor).opacity(0.1))
             .cornerRadius(10)
         }
       }
@@ -76,7 +77,7 @@ struct ContactNudgeContent: View {
         VStack(spacing: 8) {
           Image(systemName: "heart.circle")
             .font(.system(size: 32))
-            .foregroundColor(Color(hex: "#D1D5DB"))
+            .foregroundColor(Color(hex: state.primaryColor).opacity(0.3))
 
           Text("소중한 사람을 등록하면\n연락 리마인더를 받을 수 있어요")
             .font(.system(size: 14))
@@ -117,10 +118,10 @@ struct ContactNudgeContent: View {
                   ForEach(contact.person.relationships, id: \.self) { rel in
                     Text(rel)
                       .font(.system(size: 12))
-                      .foregroundColor(Color(hex: "#9D174D"))
+                      .foregroundColor(Color(hex: state.primaryColor).opacity(0.7))
                       .padding(.horizontal, 6)
                       .padding(.vertical, 2)
-                      .background(Color(hex: "#FCE7F3"))
+                      .background(Color(hex: state.primaryColor).opacity(0.08))
                       .cornerRadius(8)
                   }
                 }
@@ -136,15 +137,15 @@ struct ContactNudgeContent: View {
               HStack(spacing: 4) {
                 Image(systemName: "square.and.pencil")
                   .font(.system(size: 12))
-                  .foregroundColor(Color(hex: "#EC4899"))
+                  .foregroundColor(Color(hex: state.primaryColor))
 
                 Text("소식기록")
                   .font(.system(size: 12, weight: .medium))
-                  .foregroundColor(Color(hex: "#EC4899"))
+                  .foregroundColor(Color(hex: state.primaryColor))
               }
               .padding(.horizontal, 12)
               .padding(.vertical, 8)
-              .background(Color(hex: "#FCE7F3"))
+              .background(Color(hex: state.primaryColor).opacity(0.1))
               .cornerRadius(10)
             }
             .buttonStyle(.plain)
@@ -169,6 +170,10 @@ class NativeContactNudgeUIView: UIView {
   private var hasSetUp = false
 
   // MARK: Prop Setters
+
+  @objc func setPrimaryColor(_ value: NSString) {
+    nudgeState.primaryColor = value as String
+  }
 
   @objc func setContactsData(_ value: NSString) {
     guard let data = (value as String).data(using: .utf8) else { return }

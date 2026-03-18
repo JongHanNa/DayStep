@@ -17,6 +17,7 @@ class FuelCardState: ObservableObject {
   @Published var noteTitle: String = ""
   @Published var noteContent: String = ""
   @Published var hasNote: Bool = false
+  @Published var primaryColor: String = "#6366F1"
 }
 
 // MARK: - SwiftUI View (iOS 26+)
@@ -49,18 +50,18 @@ struct LiquidGlassFuelCardContent: View {
     }) {
       HStack(spacing: 12) {
         Image(systemName: "flame.fill")
-          .foregroundColor(Color(hex: "#92400E"))
+          .foregroundColor(Color(hex: state.primaryColor))
           .font(.system(size: 22))
 
         VStack(alignment: .leading, spacing: 2) {
           Text("나의 원동력")
             .font(.system(size: 18, weight: .semibold))
-            .foregroundColor(Color(hex: "#92400E"))
+            .foregroundColor(Color(hex: state.primaryColor))
 
           if state.hasNote && !state.noteTitle.isEmpty {
             Text(state.noteTitle)
               .font(.system(size: 14))
-              .foregroundColor(Color(hex: "#92400E").opacity(0.8))
+              .foregroundColor(Color(hex: state.primaryColor).opacity(0.8))
               .lineLimit(1)
           }
         }
@@ -68,7 +69,7 @@ struct LiquidGlassFuelCardContent: View {
         Spacer()
 
         Image(systemName: "chevron.down")
-          .foregroundColor(Color(hex: "#92400E").opacity(0.6))
+          .foregroundColor(Color(hex: state.primaryColor).opacity(0.6))
           .font(.system(size: 14, weight: .medium))
       }
       .padding(16)
@@ -83,11 +84,11 @@ struct LiquidGlassFuelCardContent: View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
         Image(systemName: "flame.fill")
-          .foregroundColor(Color(hex: "#92400E"))
+          .foregroundColor(Color(hex: state.primaryColor))
           .font(.system(size: 22))
         Text("나의 원동력")
           .font(.system(size: 18, weight: .semibold))
-          .foregroundColor(Color(hex: "#92400E"))
+          .foregroundColor(Color(hex: state.primaryColor))
 
         Spacer()
 
@@ -97,7 +98,7 @@ struct LiquidGlassFuelCardContent: View {
           }
         }) {
           Image(systemName: "chevron.up")
-            .foregroundColor(Color(hex: "#92400E").opacity(0.6))
+            .foregroundColor(Color(hex: state.primaryColor).opacity(0.6))
             .font(.system(size: 14, weight: .medium))
             .padding(8)
         }
@@ -108,16 +109,16 @@ struct LiquidGlassFuelCardContent: View {
         if !state.noteTitle.isEmpty {
           Text(state.noteTitle)
             .font(.system(size: 16, weight: .medium))
-            .foregroundColor(Color(hex: "#92400E"))
+            .foregroundColor(Color(hex: state.primaryColor))
         }
         Text(state.noteContent)
           .font(.system(size: 14))
-          .foregroundColor(Color(hex: "#92400E").opacity(0.8))
+          .foregroundColor(Color(hex: state.primaryColor).opacity(0.8))
           .fixedSize(horizontal: false, vertical: true)
       } else {
         Text("아직 원동력이 없어요.\nNotes에서 원동력을 기록해보세요.")
           .font(.system(size: 14))
-          .foregroundColor(Color(hex: "#92400E").opacity(0.6))
+          .foregroundColor(Color(hex: state.primaryColor).opacity(0.6))
           .fixedSize(horizontal: false, vertical: true)
       }
     }
@@ -140,6 +141,10 @@ class LiquidGlassFuelCardUIView: UIView {
   private var hasSetUp = false
 
   // MARK: Prop Setters
+
+  @objc func setPrimaryColor(_ value: NSString) {
+    cardState.primaryColor = value as String
+  }
 
   @objc func setNoteTitle(_ value: NSString) {
     cardState.noteTitle = value as String

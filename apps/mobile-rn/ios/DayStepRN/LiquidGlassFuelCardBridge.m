@@ -5,6 +5,7 @@
 
 @interface RCT_EXTERN_MODULE(LiquidGlassFuelCardManager, RCTViewManager)
 
+RCT_EXPORT_VIEW_PROPERTY(primaryColor, NSString)
 RCT_EXPORT_VIEW_PROPERTY(noteTitle, NSString)
 RCT_EXPORT_VIEW_PROPERTY(noteContent, NSString)
 RCT_EXPORT_VIEW_PROPERTY(hasNote, BOOL)

@@ -5,6 +5,7 @@ import React from 'react';
 import {requireNativeComponent, type ViewStyle} from 'react-native';
 
 interface NativeContactNudgeProps {
+  primaryColor?: string;
   contactsData: string;
   onContactPress?: (event: {nativeEvent: {personName: string}}) => void;
   onHeightChange?: (event: {nativeEvent: {height: number}}) => void;
