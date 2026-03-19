@@ -50,8 +50,8 @@
 		F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */; };
 		FA1B2C3D4E5F6A7B8C9D0E1F /* NativeSleepGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */; };
 		FA3D4E5F6A7B8C9D0E1F2A3B /* NativeSleepGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */; };
-		GA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = GB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */; };
-		GA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = GC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */; };
+		EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */; };
+		EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -129,8 +129,8 @@
 		F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeWeekStripCalendar.swift; path = DayStepRN/NativeWeekStripCalendar.swift; sourceTree = "<group>"; };
 		FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeSleepGarden.swift; path = DayStepRN/NativeSleepGarden.swift; sourceTree = "<group>"; };
 		FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeSleepGardenBridge.m; path = DayStepRN/NativeSleepGardenBridge.m; sourceTree = "<group>"; };
-		GB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleaningGarden.swift; path = DayStepRN/NativeCleaningGarden.swift; sourceTree = "<group>"; };
-		GC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleaningGardenBridge.m; path = DayStepRN/NativeCleaningGardenBridge.m; sourceTree = "<group>"; };
+		EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleaningGarden.swift; path = DayStepRN/NativeCleaningGarden.swift; sourceTree = "<group>"; };
+		EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleaningGardenBridge.m; path = DayStepRN/NativeCleaningGardenBridge.m; sourceTree = "<group>"; };
 		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -222,8 +222,8 @@
 				8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */,
 				59502988256F1D4368F740C1 /* NativeContactNudge.swift */,
 				9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */,
-				GB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */,
-				GC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */,
+				EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */,
+				EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -541,8 +541,8 @@
 				C3CAAEF0626409E6D2C3155C /* NativeMissionCardBridge.m in Sources */,
 				C6F8A1669C5EDFADDD08FB8D /* NativeContactNudge.swift in Sources */,
 				9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */,
-				GA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */,
-				GA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */,
+				EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */,
+				EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */,
 				EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

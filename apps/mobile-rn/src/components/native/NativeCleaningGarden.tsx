@@ -18,4 +18,4 @@ interface NativeCleaningGardenProps {
 }
 
 export const NativeCleaningGardenNative =
-  requireNativeComponent<NativeCleaningGardenProps>('NativeCleaningGardenManager');
+  requireNativeComponent<NativeCleaningGardenProps>('NativeCleaningGarden');

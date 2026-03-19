@@ -6,7 +6,8 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View, Text, StyleSheet, ScrollView, Pressable, Modal, Alert, Platform} from 'react-native';
 import Animated, {FadeInDown, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
-import {TreePine, Moon, Sun, Settings, Shield, ChevronRight} from 'lucide-react-native';
+import {TreePine, Moon, Sun, Settings, Shield, ChevronRight, MoreHorizontal} from 'lucide-react-native';
+import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus} from '@/lib/screenTimeManager';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {NativeSleepGardenNative} from '@/components/native';
@@ -20,6 +21,10 @@ import {format} from 'date-fns';
 // ============================================
 
 type ViewMode = 'day' | 'week' | 'month' | 'year';
+
+const SLEEP_MENU_ITEMS = [
+  {title: '수면과 ADHD', key: 'sleepADHDInfo'},
+];
 
 export default function SleepGardenScreen() {
   const navigation = useNavigation<any>();
@@ -136,6 +141,12 @@ export default function SleepGardenScreen() {
     return `${displayH}:${m.toString().padStart(2, '0')} ${period}`;
   };
 
+  const handleMenuSelect = useCallback((key: string) => {
+    if (key === 'sleepADHDInfo') {
+      navigation.navigate('SleepADHDInfo');
+    }
+  }, [navigation]);
+
   const handleStartSession = useCallback(() => {
     navigation.navigate('SleepSession');
   }, [navigation]);
@@ -168,7 +179,15 @@ export default function SleepGardenScreen() {
         {/* 헤더 */}
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
           <TreePine size={20} color={primaryColor} />
-          <Text style={styles.headerTitle}>수면 정원</Text>
+          <Text style={[styles.headerTitle, {flex: 1}]}>수면 정원</Text>
+          <LiquidGlassMenu
+            systemIconName="ellipsis.circle"
+            iconColor="#9CA3AF"
+            size={36}
+            menuItems={SLEEP_MENU_ITEMS}
+            onSelect={handleMenuSelect}
+            fallbackIcon={<MoreHorizontal size={18} color="#9CA3AF" />}
+          />
         </Animated.View>
 
         {/* 스트릭 배너 */}
