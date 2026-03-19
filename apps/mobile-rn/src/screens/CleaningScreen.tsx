@@ -16,6 +16,8 @@ import {TaskQueue} from '@/components/cleaning/TaskQueue';
 import type {TaskQueueSection} from '@/components/cleaning/TaskQueue';
 import {StreakBar} from '@/components/cleaning/StreakBar';
 import {CategoryAccordion} from '@/components/cleaning/CategoryAccordion';
+import {CleaningGardenView} from '@/components/cleaning/CleaningGardenView';
+import {ScreenTimeToggle} from '@/components/cleaning/ScreenTimeToggle';
 import {useCleaningStore} from '@/stores/cleaningStore';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -67,7 +69,21 @@ export default function CleaningScreen() {
     toggleTaskCompletion,
     customMaxTasks,
     setCustomMaxTasks,
+    gardenViewMode,
+    startCleaningSession,
+    completeCleaningSession,
+    abandonCleaningSession,
+    checkOrphanedSession,
   } = useCleaningStore();
+
+  // 정원 뷰 모드 추적 (일 뷰일 때만 태스크 UI 표시)
+  const [currentViewMode, setCurrentViewMode] = useState<'day' | 'week' | 'month' | 'year'>(gardenViewMode);
+  const isDayView = currentViewMode === 'day';
+
+  // 앱 재시작 시 orphaned session 복구
+  useEffect(() => {
+    checkOrphanedSession();
+  }, []);
 
   // 타이머 interval
   useEffect(() => {
@@ -182,13 +198,32 @@ export default function CleaningScreen() {
     return Array.from(catSet);
   }, [allTasks, activeTab]);
 
-  const handleStartTimer = useCallback(() => {
+  const handleComplete = useCallback((taskId: string) => {
+    const isFocusedTask = taskId === focusTask?.id;
+    if (isFocusedTask) resetTimer();
+    toggleTaskCompletion(taskId);
+    haptic.success();
+    // 세션 완료 → DB 기록 + 정원 업데이트
+    if (isFocusedTask) {
+      completeCleaningSession();
+      const nextUncompleted = activeTasks.find(
+        t => t.id !== taskId && !isTaskCompleted(t.id),
+      );
+      setFocusTask(nextUncompleted?.id ?? null);
+    }
+  }, [focusTask, activeTasks, isTaskCompleted, resetTimer, toggleTaskCompletion, setFocusTask, haptic, completeCleaningSession]);
+
+  // 세션 시작 핸들러 (타이머 시작 + 세션 시작)
+  const handleSessionStart = useCallback(() => {
     if (!focusTask) return;
     startTimer(focusTask.estimatedMinutes * 60);
+    startCleaningSession(focusTask.id);
     haptic.light();
-  }, [focusTask, startTimer, haptic]);
+  }, [focusTask, startTimer, startCleaningSession, haptic]);
 
-  const handleSkip = useCallback(() => {
+  // 스킵 시 세션 포기
+  const handleSessionSkip = useCallback(() => {
+    abandonCleaningSession();
     resetTimer();
     if (focusTask) {
       const nextUncompleted = activeTasks.find(
@@ -197,20 +232,11 @@ export default function CleaningScreen() {
       setFocusTask(nextUncompleted?.id ?? null);
     }
     haptic.selection();
-  }, [focusTask, activeTasks, isTaskCompleted, resetTimer, setFocusTask, haptic]);
+  }, [focusTask, activeTasks, isTaskCompleted, resetTimer, setFocusTask, haptic, abandonCleaningSession]);
 
-  const handleComplete = useCallback((taskId: string) => {
-    const isFocusedTask = taskId === focusTask?.id;
-    if (isFocusedTask) resetTimer();
-    toggleTaskCompletion(taskId);
-    haptic.success();
-    if (isFocusedTask) {
-      const nextUncompleted = activeTasks.find(
-        t => t.id !== taskId && !isTaskCompleted(t.id),
-      );
-      setFocusTask(nextUncompleted?.id ?? null);
-    }
-  }, [focusTask, activeTasks, isTaskCompleted, resetTimer, toggleTaskCompletion, setFocusTask, haptic]);
+  const handleGardenViewModeChange = useCallback((mode: 'day' | 'week' | 'month' | 'year') => {
+    setCurrentViewMode(mode);
+  }, []);
 
   return (
     <ScreenContainer gradient="warmBackground">
@@ -249,52 +275,64 @@ export default function CleaningScreen() {
           />
         </Animated.View>
 
-        {/* 에너지 선택기 */}
+        {/* 청소 정원 */}
         <Animated.View
-          entering={FadeInDown.delay(100).duration(400)}
-          style={{paddingHorizontal: 16, marginBottom: 16}}>
-          <EnergySelector value={energyLevel} onChange={setEnergyLevel} />
+          entering={FadeInDown.delay(50).duration(400)}
+          style={{marginBottom: 12}}>
+          <CleaningGardenView onViewModeChange={handleGardenViewModeChange} />
         </Animated.View>
 
-        {/* 포커스 카드 */}
-        {focusTask && (
-          <View style={{paddingHorizontal: 16, marginBottom: 8}}>
-            {/* 섹션 라벨 */}
-            {focusSectionLabel && (
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '600',
-                  color: '#6B7280',
-                  marginBottom: 6,
-                }}>
-                {focusSectionLabel}
-              </Text>
+        {/* 일 뷰일 때만 태스크 UI 표시 */}
+        {isDayView && (
+          <>
+            {/* 에너지 선택기 */}
+            <Animated.View
+              entering={FadeInDown.delay(100).duration(400)}
+              style={{paddingHorizontal: 16, marginBottom: 16}}>
+              <EnergySelector value={energyLevel} onChange={setEnergyLevel} />
+            </Animated.View>
+
+            {/* 포커스 카드 */}
+            {focusTask && (
+              <View style={{paddingHorizontal: 16, marginBottom: 8}}>
+                {/* 섹션 라벨 */}
+                {focusSectionLabel && (
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      fontWeight: '600',
+                      color: '#6B7280',
+                      marginBottom: 6,
+                    }}>
+                    {focusSectionLabel}
+                  </Text>
+                )}
+                <FocusCard
+                  task={focusTask}
+                  timerSeconds={timerSeconds}
+                  timerTotalSeconds={timerTotalSeconds}
+                  isRunning={isTimerRunning}
+                  onStart={handleSessionStart}
+                  onPause={pauseTimer}
+                  onResume={resumeTimer}
+                  onSkip={handleSessionSkip}
+                  onReset={resetTimer}
+                  onComplete={() => handleComplete(focusTask.id)}
+                />
+              </View>
             )}
-            <FocusCard
-              task={focusTask}
-              timerSeconds={timerSeconds}
-              timerTotalSeconds={timerTotalSeconds}
-              isRunning={isTimerRunning}
-              onStart={handleStartTimer}
-              onPause={pauseTimer}
-              onResume={resumeTimer}
-              onSkip={handleSkip}
-              onReset={resetTimer}
-              onComplete={() => handleComplete(focusTask.id)}
-            />
-          </View>
-        )}
 
-        {/* 다음 큐 */}
-        {queueSections.length > 0 && (
-          <View style={{paddingHorizontal: 20, marginBottom: 8}}>
-            <TaskQueue sections={queueSections} onSelectTask={setFocusTask} onCompleteTask={handleComplete} />
-          </View>
-        )}
+            {/* 다음 큐 */}
+            {queueSections.length > 0 && (
+              <View style={{paddingHorizontal: 20, marginBottom: 8}}>
+                <TaskQueue sections={queueSections} onSelectTask={setFocusTask} onCompleteTask={handleComplete} />
+              </View>
+            )}
 
-        {/* 스트릭 */}
-        <StreakBar streak={streak} />
+            {/* 스트릭 */}
+            <StreakBar streak={streak} />
+          </>
+        )}
 
       </ScrollView>
 
@@ -424,6 +462,10 @@ export default function CleaningScreen() {
           <ScrollView
             contentContainerStyle={{padding: 20, paddingBottom: 40}}
             showsVerticalScrollIndicator={false}>
+            {/* 스크린타임 차단 */}
+            <ScreenTimeToggle />
+            <View style={{height: 1, backgroundColor: '#E5E7EB', marginVertical: 12}} />
+
             {/* 에너지별 최대 태스크 수 */}
             <Text style={{fontSize: 15, fontWeight: '700', color: '#1F2937', marginBottom: 12}}>
               에너지별 최대 태스크 수

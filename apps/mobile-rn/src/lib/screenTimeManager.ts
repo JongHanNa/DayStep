@@ -129,6 +129,35 @@ export function cancelAutoUnshield(): void {
   }
 }
 
+// ============================================
+// 청소 세션 전용 Shield (별도 ManagedSettingsStore)
+// ============================================
+
+/**
+ * 청소 세션 중 앱 차단 (허용 앱 제외)
+ */
+export function shieldForCleaning(): void {
+  if (!isAvailable()) return;
+  try {
+    enableBlockAllMode('cleaning-session');
+  } catch (error) {
+    console.error('[ScreenTime] shieldForCleaning error:', error);
+  }
+}
+
+/**
+ * 청소 세션 종료 시 차단 해제
+ */
+export function clearCleaningShield(): void {
+  if (!isAvailable()) return;
+  try {
+    disableBlockAllMode('cleaning-session-end');
+    resetBlocks('cleaning-session-end');
+  } catch (error) {
+    console.error('[ScreenTime] clearCleaningShield error:', error);
+  }
+}
+
 /**
  * 스크린타임 기능 사용 가능 여부
  */

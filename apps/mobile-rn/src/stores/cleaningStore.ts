@@ -1,11 +1,13 @@
 /**
  * Cleaning Store (Zustand + MMKV)
- * 청소/정리 태스크 관리, 완료 기록, 스트릭, 타이머
+ * 청소/정리 태스크 관리, 완료 기록, 스트릭, 타이머, DB 세션 기록, 정원 데이터
  */
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
+import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage} from '@/lib/mmkv';
-import {format} from 'date-fns';
+import {format, subDays} from 'date-fns';
+import {shieldForCleaning, clearCleaningShield} from '@/lib/screenTimeManager';
 import {
   ALL_DEFAULT_TASKS,
   DEFAULT_ZONES,
@@ -28,14 +30,82 @@ interface CompletionRecord {
   completedAt: string; // ISO
 }
 
+/** DB cleaning_records 테이블 레코드 */
+export interface CleaningRecord {
+  id: string;
+  user_id: string;
+  date: string; // yyyy-MM-dd
+  task_id: string;
+  task_title: string;
+  tab: CleaningTab;
+  category: string;
+  duration_seconds: number;
+  session_outcome: 'completed' | 'abandoned' | 'skipped';
+  energy_level: EnergyLevel;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CleaningRecordInput {
+  date: string;
+  task_id: string;
+  task_title: string;
+  tab: CleaningTab;
+  category: string;
+  duration_seconds: number;
+  session_outcome: 'completed' | 'abandoned' | 'skipped';
+  energy_level: EnergyLevel;
+}
+
+/** 정원 데이터 (RN → Native) */
+export interface CleaningTreeInfo {
+  taskId: string;
+  durationSeconds: number;
+  outcome: 'completed' | 'abandoned' | 'skipped';
+  tab: CleaningTab;
+}
+
+export interface CleaningGardenDayInfo {
+  date: string; // yyyy-MM-dd
+  trees: CleaningTreeInfo[];
+}
+
+export interface CleaningGardenPayload {
+  days: CleaningGardenDayInfo[];
+}
+
+/** 청소 세션 상태 */
+export interface CleaningSessionState {
+  isActive: boolean;
+  taskId: string | null;
+  startedAt: string | null; // ISO
+}
+
+const DEFAULT_SESSION: CleaningSessionState = {
+  isActive: false,
+  taskId: null,
+  startedAt: null,
+};
+
 interface CleaningStoreState {
   // Data
   tasks: CleaningTask[];
   zones: CleaningZone[];
   categorySchedules: CategorySchedule[];
-  completions: Record<string, CompletionRecord[]>; // key: date
+  completions: Record<string, CompletionRecord[]>; // key: date (MMKV legacy)
   customMaxTasks: Partial<Record<EnergyLevel, number | {daily: number; today: number}>>;
   _cleaningSettingsSyncedAt: string | null;
+
+  // DB Records (cleaning_records)
+  cleaningRecords: Record<string, CleaningRecord[]>; // key: date
+
+  // Session
+  cleaningSession: CleaningSessionState;
+  screenTimeLinkEnabled: boolean;
+
+  // Garden view state
+  gardenViewMode: 'day' | 'week' | 'month' | 'year';
+  gardenSelectedDate: string; // yyyy-MM-dd
 
   // UI State
   energyLevel: EnergyLevel;
@@ -74,6 +144,22 @@ interface CleaningStoreState {
   pauseTimer: () => void;
   resumeTimer: () => void;
   resetTimer: () => void;
+
+  // Session actions
+  startCleaningSession: (taskId: string) => void;
+  completeCleaningSession: () => Promise<void>;
+  abandonCleaningSession: () => Promise<void>;
+  checkOrphanedSession: () => void;
+  toggleScreenTimeLink: () => void;
+
+  // DB CRUD actions
+  insertCleaningRecord: (input: CleaningRecordInput) => Promise<void>;
+  fetchCleaningRecords: (startDate: string, endDate: string) => Promise<void>;
+
+  // Garden actions
+  getGardenPayload: () => string;
+  setGardenViewMode: (mode: 'day' | 'week' | 'month' | 'year') => void;
+  setGardenSelectedDate: (date: string) => void;
 
   // Computed helpers
   getTodayZone: () => CleaningZone | undefined;
@@ -122,6 +208,11 @@ export const useCleaningStore = create<CleaningStoreState>()(
       completions: {},
       customMaxTasks: {},
       _cleaningSettingsSyncedAt: null,
+      cleaningRecords: {},
+      cleaningSession: {...DEFAULT_SESSION},
+      screenTimeLinkEnabled: false,
+      gardenViewMode: 'day',
+      gardenSelectedDate: getToday(),
       energyLevel: 'moderate',
       activeTab: 'space',
       focusTaskId: null,
@@ -216,6 +307,217 @@ export const useCleaningStore = create<CleaningStoreState>()(
       resumeTimer: () => set({isTimerRunning: true}),
       resetTimer: () => set({timerSeconds: 0, timerTotalSeconds: 0, isTimerRunning: false}),
 
+      // ============================================
+      // Session Actions
+      // ============================================
+
+      startCleaningSession: (taskId) => {
+        const {screenTimeLinkEnabled} = get();
+
+        if (screenTimeLinkEnabled) {
+          shieldForCleaning();
+        }
+
+        set({
+          cleaningSession: {
+            isActive: true,
+            taskId,
+            startedAt: new Date().toISOString(),
+          },
+        });
+      },
+
+      completeCleaningSession: async () => {
+        const {cleaningSession, screenTimeLinkEnabled, tasks, energyLevel, activeTab} = get();
+        if (!cleaningSession.isActive || !cleaningSession.taskId || !cleaningSession.startedAt) return;
+
+        if (screenTimeLinkEnabled) {
+          clearCleaningShield();
+        }
+
+        const now = new Date();
+        const startedAt = new Date(cleaningSession.startedAt);
+        const durationSeconds = Math.round((now.getTime() - startedAt.getTime()) / 1000);
+        const task = tasks.find(t => t.id === cleaningSession.taskId);
+
+        if (task) {
+          try {
+            await get().insertCleaningRecord({
+              date: getToday(),
+              task_id: task.id,
+              task_title: task.title,
+              tab: task.tab,
+              category: task.category,
+              duration_seconds: durationSeconds,
+              session_outcome: 'completed',
+              energy_level: energyLevel,
+            });
+          } catch {
+            // insertCleaningRecord 내부에서 에러 처리됨
+          }
+        }
+
+        set({cleaningSession: {...DEFAULT_SESSION}});
+      },
+
+      abandonCleaningSession: async () => {
+        const {cleaningSession, screenTimeLinkEnabled, tasks, energyLevel} = get();
+        if (!cleaningSession.isActive || !cleaningSession.taskId || !cleaningSession.startedAt) return;
+
+        if (screenTimeLinkEnabled) {
+          clearCleaningShield();
+        }
+
+        const now = new Date();
+        const startedAt = new Date(cleaningSession.startedAt);
+        const durationSeconds = Math.round((now.getTime() - startedAt.getTime()) / 1000);
+        const task = tasks.find(t => t.id === cleaningSession.taskId);
+
+        if (task) {
+          try {
+            await get().insertCleaningRecord({
+              date: getToday(),
+              task_id: task.id,
+              task_title: task.title,
+              tab: task.tab,
+              category: task.category,
+              duration_seconds: durationSeconds,
+              session_outcome: 'abandoned',
+              energy_level: energyLevel,
+            });
+          } catch {
+            // insertCleaningRecord 내부에서 에러 처리됨
+          }
+        }
+
+        set({cleaningSession: {...DEFAULT_SESSION}});
+      },
+
+      checkOrphanedSession: () => {
+        const {cleaningSession, screenTimeLinkEnabled} = get();
+        if (!cleaningSession.isActive) return;
+
+        // 앱 재시작 시 미완료 세션 → 차단 해제 + abandon 처리
+        if (screenTimeLinkEnabled) {
+          clearCleaningShield();
+        }
+
+        // 세션 리셋 (DB insert 없이 — 기간 불명확)
+        set({cleaningSession: {...DEFAULT_SESSION}});
+      },
+
+      toggleScreenTimeLink: () => {
+        set({screenTimeLinkEnabled: !get().screenTimeLinkEnabled});
+      },
+
+      // ============================================
+      // DB CRUD Actions
+      // ============================================
+
+      insertCleaningRecord: async (input) => {
+        try {
+          const {data: {user}} = await supabase.auth.getUser();
+          if (!user) throw new Error('Not authenticated');
+
+          const record = {
+            user_id: user.id,
+            ...input,
+          };
+
+          const {data, error} = await supabase
+            .from('cleaning_records')
+            .insert(record)
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          // 로컬 캐시 업데이트
+          const cleaningRecords = {...get().cleaningRecords};
+          if (!cleaningRecords[data.date]) cleaningRecords[data.date] = [];
+          cleaningRecords[data.date] = [...cleaningRecords[data.date], data];
+          set({cleaningRecords});
+        } catch (err: any) {
+          console.error('[CleaningStore] insertCleaningRecord error:', err);
+          throw err;
+        }
+      },
+
+      fetchCleaningRecords: async (startDate, endDate) => {
+        try {
+          const {data, error} = await supabase
+            .from('cleaning_records')
+            .select('*')
+            .gte('date', startDate)
+            .lte('date', endDate)
+            .order('date', {ascending: true})
+            .order('created_at', {ascending: true});
+
+          if (error) throw error;
+
+          // 날짜별 그룹핑
+          const cleaningRecords = {...get().cleaningRecords};
+          const grouped: Record<string, CleaningRecord[]> = {};
+          (data ?? []).forEach((r: CleaningRecord) => {
+            if (!grouped[r.date]) grouped[r.date] = [];
+            grouped[r.date].push(r);
+          });
+
+          // 해당 범위 날짜 덮어쓰기
+          for (const [date, records] of Object.entries(grouped)) {
+            cleaningRecords[date] = records;
+          }
+
+          // 범위 내 데이터 없는 날짜 정리
+          for (const date of Object.keys(cleaningRecords)) {
+            if (date >= startDate && date <= endDate && !grouped[date]) {
+              delete cleaningRecords[date];
+            }
+          }
+
+          set({cleaningRecords});
+        } catch (err: any) {
+          console.error('[CleaningStore] fetchCleaningRecords error:', err);
+        }
+      },
+
+      // ============================================
+      // Garden Actions
+      // ============================================
+
+      getGardenPayload: () => {
+        const {cleaningRecords} = get();
+        const days: CleaningGardenDayInfo[] = [];
+
+        // 최근 365일 (년 뷰 대응)
+        for (let i = 364; i >= 0; i--) {
+          const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+          const records = cleaningRecords[date] ?? [];
+
+          if (records.length > 0) {
+            days.push({
+              date,
+              trees: records.map(r => ({
+                taskId: r.task_id,
+                durationSeconds: r.duration_seconds,
+                outcome: r.session_outcome,
+                tab: r.tab as CleaningTab,
+              })),
+            });
+          }
+        }
+
+        const payload: CleaningGardenPayload = {days};
+        return JSON.stringify(payload);
+      },
+
+      setGardenViewMode: (mode) => set({gardenViewMode: mode}),
+      setGardenSelectedDate: (date) => set({gardenSelectedDate: date}),
+
+      // ============================================
+      // Computed Helpers
+      // ============================================
+
       getTodayZone: () => {
         const dayOfWeek = new Date().getDay();
         return get().zones.find(z => z.dayOfWeek === dayOfWeek);
@@ -301,7 +603,7 @@ export const useCleaningStore = create<CleaningStoreState>()(
     {
       name: 'cleaning-store',
       storage: createJSONStorage(() => zustandMMKVStorage),
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           // 기존 저장 데이터에 subtasks가 없음 → 기본 태스크를 최신으로 교체
@@ -309,6 +611,18 @@ export const useCleaningStore = create<CleaningStoreState>()(
             (t: any) => t.isCustom,
           );
           persistedState.tasks = [...ALL_DEFAULT_TASKS, ...customTasks];
+        }
+        if (version < 3) {
+          // v3: 정원 + 세션 필드 추가
+          persistedState.cleaningRecords = persistedState.cleaningRecords ?? {};
+          persistedState.cleaningSession = persistedState.cleaningSession ?? {
+            isActive: false,
+            taskId: null,
+            startedAt: null,
+          };
+          persistedState.screenTimeLinkEnabled = persistedState.screenTimeLinkEnabled ?? false;
+          persistedState.gardenViewMode = persistedState.gardenViewMode ?? 'day';
+          persistedState.gardenSelectedDate = persistedState.gardenSelectedDate ?? getToday();
         }
         return persistedState;
       },
@@ -320,6 +634,11 @@ export const useCleaningStore = create<CleaningStoreState>()(
         customMaxTasks: state.customMaxTasks,
         energyLevel: state.energyLevel,
         activeTab: state.activeTab,
+        cleaningRecords: state.cleaningRecords,
+        cleaningSession: state.cleaningSession,
+        screenTimeLinkEnabled: state.screenTimeLinkEnabled,
+        gardenViewMode: state.gardenViewMode,
+        gardenSelectedDate: state.gardenSelectedDate,
       }),
     },
   ),
