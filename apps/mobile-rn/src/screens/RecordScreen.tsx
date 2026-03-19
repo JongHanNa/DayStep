@@ -11,6 +11,7 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActionSheetIOS,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -285,6 +286,7 @@ export default function RecordScreen() {
     loadPeople,
     loadRecommendations,
     addPerson,
+    deletePerson,
     addInteraction,
     getRecentNotesPerPerson,
     getRelationshipStats,
@@ -439,6 +441,28 @@ export default function RecordScreen() {
     const hasGratitude = notes.some(n => !!n.gratitude_note);
     return {hasNews, hasGratitude};
   }, [notesPerPerson]);
+
+  const handleDeletePerson = useCallback((person: CherishedPerson) => {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: ['취소', '삭제'],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 0,
+        title: `${person.name}`,
+        message: '이 사람과 관련된 모든 기록이 함께 삭제됩니다.',
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 1) {
+          deletePerson(user!.id, person.id).then(success => {
+            if (success) {
+              loadRecommendations(user!.id);
+              getRecentNotesPerPerson(user!.id).then(setNotesPerPerson);
+            }
+          });
+        }
+      },
+    );
+  }, [user?.id, deletePerson, loadRecommendations, getRecentNotesPerPerson]);
 
   // ── Step 3: 완료 ──
   if (step === 'completed') {
@@ -660,6 +684,7 @@ export default function RecordScreen() {
                 <AnimatedPressable
                   key={person.id}
                   onPress={() => handleSelectPerson(person)}
+                  onLongPress={() => handleDeletePerson(person)}
                   hapticType="light"
                   scaleValue={0.97}
                   className="flex-row items-center py-3 border-b border-gray-50">
@@ -717,6 +742,7 @@ export default function RecordScreen() {
                       <AnimatedPressable
                         key={person.id}
                         onPress={() => handleSelectPerson(person)}
+                        onLongPress={() => handleDeletePerson(person)}
                         hapticType="light"
                         scaleValue={0.97}
                         style={[
@@ -779,6 +805,7 @@ export default function RecordScreen() {
                     <View key={person.id} style={recordStyles.activityCard}>
                       <AnimatedPressable
                         onPress={() => handleSelectPerson(person)}
+                        onLongPress={() => handleDeletePerson(person)}
                         hapticType="light"
                         scaleValue={0.97}
                         className="flex-row items-center">

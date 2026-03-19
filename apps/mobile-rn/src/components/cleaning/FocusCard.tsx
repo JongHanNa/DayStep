@@ -23,6 +23,7 @@ interface FocusCardProps {
   onResume: () => void;
   onSkip: () => void;
   onReset: () => void;
+  onComplete: () => void;
 }
 
 export function FocusCard({
@@ -35,6 +36,7 @@ export function FocusCard({
   onResume,
   onSkip,
   onReset,
+  onComplete,
 }: FocusCardProps) {
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
@@ -153,8 +155,8 @@ export function FocusCard({
               <Text style={{fontSize: 14, fontWeight: '600', color: '#FFFFFF'}}>시작</Text>
             </AnimatedPressable>
             <AnimatedPressable
-              hapticType="selection"
-              onPress={onSkip}
+              hapticType="light"
+              onPress={onComplete}
               style={{
                 flex: 1,
                 flexDirection: 'row',
@@ -162,11 +164,24 @@ export function FocusCard({
                 justifyContent: 'center',
                 paddingVertical: 12,
                 borderRadius: 12,
-                backgroundColor: '#F3F4F6',
+                backgroundColor: '#10B981',
                 gap: 6,
               }}>
+              <Check size={16} color="#FFFFFF" strokeWidth={3} />
+              <Text style={{fontSize: 14, fontWeight: '600', color: '#FFFFFF'}}>완료</Text>
+            </AnimatedPressable>
+            <AnimatedPressable
+              hapticType="selection"
+              onPress={onSkip}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                backgroundColor: '#F3F4F6',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
               <SkipForward size={16} color="#6B7280" />
-              <Text style={{fontSize: 14, fontWeight: '500', color: '#6B7280'}}>건너뛰기</Text>
             </AnimatedPressable>
           </>
         ) : (
@@ -196,6 +211,19 @@ export function FocusCard({
                   <Text style={{fontSize: 14, fontWeight: '600', color: '#FFFFFF'}}>재개</Text>
                 </>
               )}
+            </AnimatedPressable>
+            <AnimatedPressable
+              hapticType="light"
+              onPress={onComplete}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                backgroundColor: '#10B981',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Check size={16} color="#FFFFFF" strokeWidth={3} />
             </AnimatedPressable>
             <AnimatedPressable
               hapticType="selection"

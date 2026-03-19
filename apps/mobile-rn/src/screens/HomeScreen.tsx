@@ -352,15 +352,6 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* 7. 푸터 */}
-          <Animated.View
-            entering={FadeInDown.delay(700).duration(400)}
-            className="items-center py-8 mt-4">
-            <Sparkles size={20} color={primaryColor} />
-            <Text className="text-xs text-gray-400 mt-2 text-center leading-4">
-              오늘도 DayStep이 함께할게요
-            </Text>
-          </Animated.View>
         </ScrollView>
 
         {/* ═══ Page 1: 영감 (peek으로 살짝 노출) ═══ */}
@@ -394,7 +385,6 @@ export default function HomeScreen() {
               .mass(1)}
             entering={FadeInDown.delay(300).duration(400)}
             className="mx-4 mt-8 items-center">
-            <Sparkles size={24} color={primaryColor} />
             <Text className="text-base text-gray-600 mt-3 text-center leading-6 italic">
               "{inspirationQuote}"
             </Text>

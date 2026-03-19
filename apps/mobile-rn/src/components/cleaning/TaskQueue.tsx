@@ -4,6 +4,7 @@
 import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
+import {Check} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {FREQUENCY_LABELS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
@@ -16,9 +17,10 @@ export interface TaskQueueSection {
 interface TaskQueueProps {
   sections: TaskQueueSection[];
   onSelectTask: (taskId: string) => void;
+  onCompleteTask: (taskId: string) => void;
 }
 
-export function TaskQueue({sections, onSelectTask}: TaskQueueProps) {
+export function TaskQueue({sections, onSelectTask, onCompleteTask}: TaskQueueProps) {
   const nonEmpty = sections.filter(s => s.tasks.length > 0);
   if (nonEmpty.length === 0) return null;
 
@@ -43,34 +45,48 @@ export function TaskQueue({sections, onSelectTask}: TaskQueueProps) {
             globalIndex++;
             const idx = globalIndex;
             return (
-              <AnimatedPressable
-                key={task.id}
-                hapticType="selection"
-                onPress={() => onSelectTask(task.id)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingVertical: 8,
-                  paddingHorizontal: 4,
-                  gap: 8,
-                }}>
-                <Text style={{fontSize: 12, color: '#9CA3AF', width: 20, textAlign: 'right'}}>
-                  {idx}.
-                </Text>
-                <Text style={{fontSize: 10, color: '#9CA3AF'}}>
-                  {task.category}
-                </Text>
-                <Text style={{fontSize: 13, color: '#6B7280', flex: 1}} numberOfLines={1}>
-                  {task.title}
-                </Text>
-                <Text style={{fontSize: 11, color: '#9CA3AF'}}>
-                  {FREQUENCY_LABELS[task.frequency]}
-                </Text>
-                <Text style={{fontSize: 11, color: '#9CA3AF'}}>⚡{task.energyCost}</Text>
-                <Text style={{fontSize: 11, color: '#9CA3AF'}}>
-                  {task.estimatedMinutes}분
-                </Text>
-              </AnimatedPressable>
+              <View key={task.id} style={{flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, gap: 8}}>
+                <AnimatedPressable
+                  hapticType="light"
+                  onPress={() => onCompleteTask(task.id)}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    borderWidth: 1.5,
+                    borderColor: '#D1D5DB',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <Check size={10} color="#D1D5DB" strokeWidth={3} />
+                </AnimatedPressable>
+                <AnimatedPressable
+                  hapticType="selection"
+                  onPress={() => onSelectTask(task.id)}
+                  style={{
+                    flex: 1,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}>
+                  <Text style={{fontSize: 12, color: '#9CA3AF', width: 20, textAlign: 'right'}}>
+                    {idx}.
+                  </Text>
+                  <Text style={{fontSize: 10, color: '#9CA3AF'}}>
+                    {task.category}
+                  </Text>
+                  <Text style={{fontSize: 13, color: '#6B7280', flex: 1}} numberOfLines={1}>
+                    {task.title}
+                  </Text>
+                  <Text style={{fontSize: 11, color: '#9CA3AF'}}>
+                    {FREQUENCY_LABELS[task.frequency]}
+                  </Text>
+                  <Text style={{fontSize: 11, color: '#9CA3AF'}}>⚡{task.energyCost}</Text>
+                  <Text style={{fontSize: 11, color: '#9CA3AF'}}>
+                    {task.estimatedMinutes}분
+                  </Text>
+                </AnimatedPressable>
+              </View>
             );
           })}
         </View>

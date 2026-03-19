@@ -66,8 +66,17 @@ export default function SleepGardenScreen() {
         return;
       }
 
-      // 2) approved가 아님 (denied | notDetermined) → 연동 해제 + 모달
-      if (linked) setLinked(false);
+      // 2) denied → 실제 권한 취소, 연동 해제 + 모달
+      if (status === 'denied') {
+        if (linked) setLinked(false);
+        setShowScreenTimeModal(true);
+        return;
+      }
+
+      // 3) notDetermined + 이미 연동됨 → 콜드 스타트 초기화 지연, 무시
+      if (linked) return;
+
+      // 4) notDetermined + 미연동 → 최초 연동 안내 모달
       setShowScreenTimeModal(true);
     }, []), // 빈 deps: 포커스 이벤트에서만 실행
   );

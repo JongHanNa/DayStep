@@ -50,6 +50,7 @@ interface CherishedPeopleState {
   // 사람 CRUD (신규)
   addPerson: (userId: string, data: {name: string; nickname?: string}) => Promise<CherishedPerson | null>;
   updatePerson: (userId: string, personId: string, data: Partial<{name: string; nickname: string}>) => Promise<boolean>;
+  deletePerson: (userId: string, personId: string) => Promise<boolean>;
 
   // CareInteraction CRUD (신규)
   addInteraction: (userId: string, input: CareInteractionInput) => Promise<CareInteraction | null>;
@@ -210,6 +211,39 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           return true;
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Update person error:', err);
+          return false;
+        }
+      },
+
+      deletePerson: async (userId, personId) => {
+        try {
+          // 1. care_interactions 먼저 삭제 (FK 의존)
+          const {error: interactionError} = await supabase
+            .from('care_interactions')
+            .delete()
+            .eq('person_id', personId)
+            .eq('user_id', userId);
+
+          if (interactionError) throw interactionError;
+
+          // 2. cherished_people 삭제
+          const {error: personError} = await supabase
+            .from('cherished_people')
+            .delete()
+            .eq('id', personId)
+            .eq('user_id', userId);
+
+          if (personError) throw personError;
+
+          // 3. 로컬 상태 제거
+          set(state => ({
+            people: state.people.filter(p => p.id !== personId),
+            recommendations: state.recommendations.filter(r => r.person.id !== personId),
+          }));
+
+          return true;
+        } catch (err: any) {
+          console.error('[CherishedPeopleStore] Delete person error:', err);
           return false;
         }
       },

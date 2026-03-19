@@ -64,6 +64,7 @@ export default function CleaningScreen() {
     getOrderedTasks,
     getStreak,
     getCategoryCompletionCount,
+    toggleTaskCompletion,
     customMaxTasks,
     setCustomMaxTasks,
   } = useCleaningStore();
@@ -198,6 +199,19 @@ export default function CleaningScreen() {
     haptic.selection();
   }, [focusTask, activeTasks, isTaskCompleted, resetTimer, setFocusTask, haptic]);
 
+  const handleComplete = useCallback((taskId: string) => {
+    const isFocusedTask = taskId === focusTask?.id;
+    if (isFocusedTask) resetTimer();
+    toggleTaskCompletion(taskId);
+    haptic.success();
+    if (isFocusedTask) {
+      const nextUncompleted = activeTasks.find(
+        t => t.id !== taskId && !isTaskCompleted(t.id),
+      );
+      setFocusTask(nextUncompleted?.id ?? null);
+    }
+  }, [focusTask, activeTasks, isTaskCompleted, resetTimer, toggleTaskCompletion, setFocusTask, haptic]);
+
   return (
     <ScreenContainer gradient="warmBackground">
       <ScrollView
@@ -267,6 +281,7 @@ export default function CleaningScreen() {
               onResume={resumeTimer}
               onSkip={handleSkip}
               onReset={resetTimer}
+              onComplete={() => handleComplete(focusTask.id)}
             />
           </View>
         )}
@@ -274,7 +289,7 @@ export default function CleaningScreen() {
         {/* 다음 큐 */}
         {queueSections.length > 0 && (
           <View style={{paddingHorizontal: 20, marginBottom: 8}}>
-            <TaskQueue sections={queueSections} onSelectTask={setFocusTask} />
+            <TaskQueue sections={queueSections} onSelectTask={setFocusTask} onCompleteTask={handleComplete} />
           </View>
         )}
 
