@@ -84,8 +84,8 @@ export default function SleepGardenScreen() {
         return;
       }
 
-      // 3) notDetermined + 이미 연동됨 → 상태 불일치, 연동 리셋 후 재안내
-      if (linked) setLinked(false);
+      // 3) notDetermined + 이미 연동됨 → 네이티브 모듈이 notDetermined 반환할 수 있음, linked 신뢰
+      if (linked) return;
 
       // 4) notDetermined + 미연동 → 최초 연동 안내 모달
       setShowScreenTimeModal(true);
