@@ -224,7 +224,7 @@ struct WeekStripContent: View {
       // progress=1: offset=0 (전체 그리드 정상), height=monthFullHeight (전체 보임)
       monthScrollView
         .offset(y: -selectedRowOffset * (1.0 - state.expandProgress))
-        .frame(height: weekHeight + (monthFullHeight - weekHeight) * state.expandProgress)
+        .frame(height: weekHeight + (monthFullHeight - weekHeight) * state.expandProgress, alignment: .top)
         .clipped()
     }
     // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
@@ -427,6 +427,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
         let progress = min(1.0, ty / expandableHeight)
         weekState.expandProgress = max(0, progress)
       }
+      emitHeight()
 
     case .ended, .cancelled:
       weekState.isDragging = false
