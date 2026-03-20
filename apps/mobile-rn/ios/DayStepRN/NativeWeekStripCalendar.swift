@@ -1,14 +1,50 @@
 /**
  * NativeWeekStripCalendar — 주간/월간 스트립 캘린더 (Apple Calendar 스타일)
- * 상단 월 레이블 + "오늘" 버튼, 하단 가로 스크롤 주간/월간 그리드
+ * 순수 UIKit 구현: clipsToBounds로 snap-close 블리딩 완전 차단
+ * 헤더/요일 배경 투명 → RN GradientBackground 그대로 비침 (색상 불일치 해소)
  *
- * 패턴: ObservableObject + setupOnce() (NativeCleanupAccordion 참조)
- * 드래그: UIKit UIPanGestureRecognizer (SwiftUI ScrollView 충돌 방지)
+ * 레이어 구조:
+ * NativeWeekStripCalendarUIView (clipsToBounds=true)
+ * ├─ headerView (backgroundColor=.clear)
+ * │   ├─ monthLabel ("3월")
+ * │   └─ todayButton ("오늘")
+ * ├─ weekdayView (backgroundColor=.clear)
+ * │   └─ 일/월/화/수/목/금/토 labels
+ * └─ gridContainerView (clipsToBounds=true) ← 핵심: GPU 수준 마스킹
+ *     └─ gridScrollView (UIScrollView, horizontal paging)
+ *         └─ gridContentView
+ *             └─ monthPageViews: [UIView]
  */
 
 import Foundation
-import SwiftUI
 import UIKit
+
+// MARK: - UIColor hex extension
+
+private extension UIColor {
+  convenience init?(hex: String) {
+    let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+    var int: UInt64 = 0
+    Scanner(string: hex).scanHexInt64(&int)
+    let a, r, g, b: UInt64
+    switch hex.count {
+    case 3:
+      (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+    case 6:
+      (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+    case 8:
+      (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+    default:
+      return nil
+    }
+    self.init(
+      red: CGFloat(r) / 255,
+      green: CGFloat(g) / 255,
+      blue: CGFloat(b) / 255,
+      alpha: CGFloat(a) / 255
+    )
+  }
+}
 
 // MARK: - Data Models
 
@@ -25,19 +61,21 @@ struct MonthPageData: Identifiable {
   let rows: [[MonthGridCell]]
 }
 
-// MARK: - Observable State
+// MARK: - State (pure class, no SwiftUI dependency)
 
-class WeekStripState: ObservableObject {
-  @Published var selectedDate: Date = Date()
-  @Published var primaryColor: String = "#6366F1"
-  @Published var displayMonth: String = ""
-  @Published var isExpanded: Bool = false
-  @Published var expandProgress: CGFloat = 0  // 0=주간, 1=월간
-  @Published var isDragging: Bool = false
-  @Published var months: [MonthPageData] = []
-  @Published var currentMonthId: String = ""
+class WeekStripState {
+  var selectedDate: Date = Date()
+  var primaryColor: String = "#6366F1"
+  var displayMonth: String = ""
+  var isExpanded: Bool = false
+  var expandProgress: CGFloat = 0  // 0=주간, 1=월간
+  var isDragging: Bool = false
+  var months: [MonthPageData] = []
+  var currentMonthId: String = ""
 
-  // 레이아웃 상수 (수학적 높이 계산용)
+  // 레이아웃 상수
+  let cellHeight: CGFloat = 38
+  let cellSpacing: CGFloat = 2
   let weekHeight: CGFloat = 44    // 40 + padding 4
   let rowHeight: CGFloat = 40     // 38 cell + 2 spacing
   let headerHeight: CGFloat = 46  // padding(12+12) + font18 line height(~22)
@@ -45,7 +83,7 @@ class WeekStripState: ObservableObject {
 
   var monthFullHeight: CGFloat {
     let rowCount = CGFloat(currentMonthRowCount)
-    return rowCount * 38 + (rowCount - 1) * 2 + 4
+    return rowCount * cellHeight + (rowCount - 1) * cellSpacing + 4
   }
 
   var calculatedTotalHeight: CGFloat {
@@ -53,14 +91,14 @@ class WeekStripState: ObservableObject {
     return headerHeight + weekdayHeight + gridVisible
   }
 
-  private let calendar: Calendar = {
+  let calendar: Calendar = {
     var cal = Calendar(identifier: .gregorian)
-    cal.firstWeekday = 1 // 일요일 시작
+    cal.firstWeekday = 1
     cal.locale = Locale(identifier: "ko_KR")
     return cal
   }()
 
-  private let dateFormatter: DateFormatter = {
+  let dateFormatter: DateFormatter = {
     let df = DateFormatter()
     df.dateFormat = "yyyy-MM-dd"
     return df
@@ -85,13 +123,11 @@ class WeekStripState: ObservableObject {
     return dateFormatter.string(from: date)
   }
 
-  /// 현재 월의 행 수 (5 또는 6)
   var currentMonthRowCount: Int {
     guard let monthPage = months.first(where: { $0.id == currentMonthId }) else { return 5 }
     return monthPage.rows.count
   }
 
-  /// 현재 월 그리드에서 선택된 주가 몇 번째 행인지 (0-based)
   var selectedWeekRowIndex: Int {
     guard let monthPage = months.first(where: { $0.id == currentMonthId }) else { return 0 }
     let selectedStr = dateFormatter.string(from: selectedDate)
@@ -103,7 +139,11 @@ class WeekStripState: ObservableObject {
     return 0
   }
 
-  /// 선택된 날짜 기준 ±12개월 MonthPageData 배열 생성
+  /// 선택된 주 행의 Y offset
+  var selectedRowOffset: CGFloat {
+    CGFloat(selectedWeekRowIndex) * rowHeight
+  }
+
   func generateMonths(for date: Date) {
     let year = calendar.component(.year, from: date)
     let month = calendar.component(.month, from: date)
@@ -120,7 +160,6 @@ class WeekStripState: ObservableObject {
     currentMonthId = monthIdFormatter.string(from: baseDate)
   }
 
-  /// 단일 월의 그리드 행 생성 (5-6주 x 7일)
   private func buildMonthGrid(for date: Date) -> [[MonthGridCell]] {
     let year = calendar.component(.year, from: date)
     let month = calendar.component(.month, from: date)
@@ -130,11 +169,9 @@ class WeekStripState: ObservableObject {
     let lastDay = range.count
     guard let lastOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: lastDay)) else { return [] }
 
-    // 1일이 속한 주의 일요일
     let firstWeekday = calendar.component(.weekday, from: firstOfMonth)
     guard let firstSunday = calendar.date(byAdding: .day, value: -(firstWeekday - 1), to: firstOfMonth) else { return [] }
 
-    // 말일이 속한 주의 토요일
     let lastWeekday = calendar.component(.weekday, from: lastOfMonth)
     guard let lastSaturday = calendar.date(byAdding: .day, value: (7 - lastWeekday), to: lastOfMonth) else { return [] }
 
@@ -169,216 +206,33 @@ class WeekStripState: ObservableObject {
   }
 }
 
-// MARK: - SwiftUI View
+// MARK: - UIView (Pure UIKit)
 
-@available(iOS 17.0, *)
-struct WeekStripContent: View {
-  @ObservedObject var state: WeekStripState
-
-  var onDateSelect: ((String) -> Void)?
-  var onExpandChange: ((Bool) -> Void)?
-  var onHeightChange: (() -> Void)?
-
-  private let calendar: Calendar = {
-    var cal = Calendar(identifier: .gregorian)
-    cal.firstWeekday = 1
-    cal.locale = Locale(identifier: "ko_KR")
-    return cal
-  }()
-
-  private let dayLabels = ["일", "월", "화", "수", "목", "금", "토"]
-  private let today = Calendar.current.startOfDay(for: Date())
-
-  /// 선택된 주 행의 Y offset (그리드 내 위치)
-  private var selectedRowOffset: CGFloat {
-    CGFloat(state.selectedWeekRowIndex) * state.rowHeight
-  }
-
-  var body: some View {
-    VStack(spacing: 0) {
-      // 상단: 월 레이블 + 오늘 버튼
-      HStack {
-        Text(state.displayMonth)
-          .font(.system(size: 18, weight: .bold))
-          .foregroundColor(Color(hex: "#1F2937"))
-
-        Spacer()
-
-        let isOnToday = calendar.isDate(state.selectedDate, inSameDayAs: today)
-
-        Button(action: {
-          let todayStr = state.dateString(from: today)
-          state.selectedDate = today
-          state.updateDisplayMonth(for: today)
-          state.generateMonths(for: today)
-          onDateSelect?(todayStr)
-        }) {
-          Text("오늘")
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(isOnToday ? Color(hex: "#9CA3AF") : Color(hex: state.primaryColor))
-        }
-        .disabled(isOnToday)
-      }
-      .padding(.horizontal, 20)
-      .padding(.top, 12)
-      .padding(.bottom, 12)
-      .animation(nil, value: state.expandProgress)
-
-      // 요일 라벨 행 (week/month 공통)
-      weekdayHeader
-        .animation(nil, value: state.expandProgress)
-
-      // 서랍형 전환: 월간 그리드만 사용, 클리핑으로 선택된 행만 노출
-      // progress=0: offset=-selectedRowOffset (선택된 행이 상단), height=weekHeight (1행만 보임)
-      // progress=1: offset=0 (전체 그리드 정상), height=monthFullHeight (전체 보임)
-      monthScrollView
-        .compositingGroup()
-        .frame(height: state.monthFullHeight)
-        .offset(y: -selectedRowOffset * (1.0 - state.expandProgress))
-        .frame(height: state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress, alignment: .top)
-        .clipped()
-    }
-    // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
-  }
-
-  // MARK: - Weekday Header (공통)
-
-  private var weekdayHeader: some View {
-    HStack(spacing: 0) {
-      ForEach(Array(dayLabels.enumerated()), id: \.offset) { index, label in
-        Text(label)
-          .font(.system(size: 11, weight: .semibold))
-          .foregroundColor(weekdayColor(index: index))
-          .frame(maxWidth: .infinity)
-      }
-    }
-    .padding(.horizontal, 8)
-    .padding(.bottom, 6)
-  }
-
-  // MARK: - Month Scroll View (가로 페이징, 각 페이지 = 1개월 그리드)
-
-  private var monthScrollView: some View {
-    ScrollView(.horizontal, showsIndicators: false) {
-      LazyHStack(spacing: 0) {
-        ForEach(state.months) { monthPage in
-          monthPageView(monthPage: monthPage)
-            .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
-            .id(monthPage.id)
-        }
-      }
-      .scrollTargetLayout()
-    }
-    .scrollTargetBehavior(.paging)
-    .scrollPosition(id: Binding(
-      get: { state.currentMonthId },
-      set: { newId in
-        if let id = newId, id != state.currentMonthId {
-          state.currentMonthId = id
-          // "yyyy-MM" → 월 레이블 갱신
-          if let monthPage = state.months.first(where: { $0.id == id }),
-             let firstRow = monthPage.rows.first,
-             let midCell = firstRow.first(where: { $0.isCurrentMonth }) {
-            state.updateDisplayMonth(for: midCell.date)
-          }
-        }
-      }
-    ))
-    .scrollDisabled(state.expandProgress < 0.5)
-  }
-
-  /// 단일 월 페이지 (VStack 그리드)
-  private func monthPageView(monthPage: MonthPageData) -> some View {
-    VStack(spacing: 2) {
-      ForEach(Array(monthPage.rows.enumerated()), id: \.offset) { _, row in
-        HStack(spacing: 0) {
-          ForEach(row) { cell in
-            monthDayCellView(cell: cell)
-              .frame(maxWidth: .infinity)
-          }
-        }
-      }
-    }
-    .padding(.horizontal, 8)
-  }
-
-  private func monthDayCellView(cell: MonthGridCell) -> some View {
-    let isToday = calendar.isDate(cell.date, inSameDayAs: today)
-    let isSelected = calendar.isDate(cell.date, inSameDayAs: state.selectedDate)
-
-    return Button(action: {
-      state.selectedDate = cell.date
-      state.updateDisplayMonth(for: cell.date)
-      onDateSelect?(state.dateString(from: cell.date))
-
-      // 다른 달 날짜 탭 시 월 페이지 갱신
-      let tappedMonthId = state.monthId(for: cell.date)
-      if tappedMonthId != state.currentMonthId {
-        state.currentMonthId = tappedMonthId
-      }
-
-      // 날짜 선택 후 주간 모드로 축소
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-        withAnimation(.easeOut(duration: 0.25)) {
-          state.isExpanded = false
-          state.expandProgress = 0
-        }
-        onExpandChange?(false)
-        onHeightChange?()
-      }
-    }) {
-      ZStack {
-        if isToday {
-          Circle()
-            .fill(Color(hex: state.primaryColor))
-            .frame(width: 34, height: 34)
-        } else if isSelected {
-          Circle()
-            .fill(Color(hex: state.primaryColor).opacity(0.15))
-            .frame(width: 34, height: 34)
-        }
-
-        Text("\(cell.day)")
-          .font(.system(size: 15, weight: isToday || isSelected ? .bold : .regular))
-          .foregroundColor(
-            isToday ? .white :
-            !cell.isCurrentMonth ? Color(hex: "#D1D5DB") :
-            isSelected ? Color(hex: state.primaryColor) :
-            dayNumberColor(index: cell.weekdayIndex)
-          )
-      }
-      .frame(width: 40, height: 38)
-    }
-    .buttonStyle(.plain)
-  }
-
-  // MARK: - Color Helpers
-
-  private func weekdayColor(index: Int) -> Color {
-    if index == 0 { return Color(hex: "#EF4444") } // 일: 빨강
-    if index == 6 { return Color(hex: "#3B82F6") } // 토: 파랑
-    return Color(hex: "#9CA3AF")
-  }
-
-  private func dayNumberColor(index: Int) -> Color {
-    if index == 0 { return Color(hex: "#EF4444") }
-    if index == 6 { return Color(hex: "#3B82F6") }
-    return Color(hex: "#374151")
-  }
-}
-
-// MARK: - UIView Wrapper
-
-class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
+class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScrollViewDelegate {
 
   // RN Event Blocks
   @objc var onDateSelect: RCTDirectEventBlock?
   @objc var onHeightChange: RCTDirectEventBlock?
   @objc var onExpandChange: RCTDirectEventBlock?
 
-  private let weekState = WeekStripState()
-  private var hostingController: UIHostingController<AnyView>?
+  private let state = WeekStripState()
   private var hasSetUp = false
+
+  // UI Components
+  private let headerView = UIView()
+  private let monthLabel = UILabel()
+  private let todayButton = UIButton(type: .system)
+  private let weekdayView = UIView()
+  private var weekdayLabels: [UILabel] = []
+  private let gridContainerView = UIView()     // clipsToBounds=true → 핵심
+  private let gridScrollView = UIScrollView()  // horizontal paging
+  private let gridContentView = UIView()       // scrollView 내부 콘텐츠
+  private var monthPageViews: [String: UIView] = [:] // monthId → UIView
+  private var cellButtons: [String: UIButton] = [:]  // cellId → UIButton
+  private var circleViews: [String: UIView] = [:]    // cellId → circle background
+
+  private let dayLabels = ["일", "월", "화", "수", "목", "금", "토"]
+  private var today: Date { Calendar.current.startOfDay(for: Date()) }
 
   private let dateFormatter: DateFormatter = {
     let df = DateFormatter()
@@ -386,35 +240,424 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
     return df
   }()
 
-  // MARK: Prop Setters
+  // MARK: - Prop Setters
 
   @objc func setSelectedDate(_ value: NSString) {
     guard let date = dateFormatter.date(from: value as String) else { return }
-    weekState.selectedDate = date
-    weekState.updateDisplayMonth(for: date)
-    // 월이 바뀌면 monthId도 갱신
-    let newMonthId = weekState.monthId(for: date)
-    if newMonthId != weekState.currentMonthId {
-      weekState.currentMonthId = newMonthId
+    state.selectedDate = date
+    state.updateDisplayMonth(for: date)
+    let newMonthId = state.monthId(for: date)
+    if newMonthId != state.currentMonthId {
+      state.currentMonthId = newMonthId
     }
     setupOnce()
+    updateUI()
   }
 
   @objc func setPrimaryColor(_ value: NSString) {
-    weekState.primaryColor = value as String
+    state.primaryColor = value as String
+    if hasSetUp { updateUI() }
   }
+
+  // gradient props 유지 (인터페이스 호환) — 하지만 UIKit에서는 사용하지 않음 (투명 배경)
+  @objc func setGradientColors(_ value: NSArray) {}
+  @objc func setGradientStartX(_ value: NSNumber) {}
+  @objc func setGradientStartY(_ value: NSNumber) {}
+  @objc func setGradientEndX(_ value: NSNumber) {}
+  @objc func setGradientEndY(_ value: NSNumber) {}
 
   // MARK: - Height Emission
 
   private func emitHeight(animated: Bool = true) {
     guard bounds.width > 0 else { return }
-    onHeightChange?(["height": weekState.calculatedTotalHeight, "animated": animated])
+    onHeightChange?(["height": state.calculatedTotalHeight, "animated": animated])
   }
 
-  // MARK: - UIPanGestureRecognizer Handler
+  // MARK: - Setup Once
 
-  /// 드래그 가능한 높이 (월간 전체 - 주간 높이, 감도 기준)
+  private func setupOnce() {
+    guard !hasSetUp else { return }
+    hasSetUp = true
+
+    backgroundColor = .clear
+    clipsToBounds = true
+
+    state.generateMonths(for: state.selectedDate)
+
+    setupHeader()
+    setupWeekdayRow()
+    setupGrid()
+    setupPanGesture()
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+      self?.emitHeight()
+    }
+  }
+
+  // MARK: - Header (월 레이블 + 오늘 버튼)
+
+  private func setupHeader() {
+    headerView.backgroundColor = .clear
+    addSubview(headerView)
+
+    monthLabel.font = .systemFont(ofSize: 18, weight: .bold)
+    monthLabel.textColor = UIColor(hex: "#1F2937")
+    monthLabel.text = state.displayMonth
+    headerView.addSubview(monthLabel)
+
+    todayButton.setTitle("오늘", for: .normal)
+    todayButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+    todayButton.addTarget(self, action: #selector(todayTapped), for: .touchUpInside)
+    headerView.addSubview(todayButton)
+  }
+
+  @objc private func todayTapped() {
+    let todayDate = today
+    let todayStr = state.dateString(from: todayDate)
+    state.selectedDate = todayDate
+    state.updateDisplayMonth(for: todayDate)
+    state.generateMonths(for: todayDate)
+    onDateSelect?(["date": todayStr])
+    rebuildGrid()
+    updateUI()
+  }
+
+  // MARK: - Weekday Row
+
+  private func setupWeekdayRow() {
+    weekdayView.backgroundColor = .clear
+    addSubview(weekdayView)
+
+    for (index, label) in dayLabels.enumerated() {
+      let lbl = UILabel()
+      lbl.text = label
+      lbl.font = .systemFont(ofSize: 11, weight: .semibold)
+      lbl.textAlignment = .center
+      lbl.textColor = weekdayColor(index: index)
+      weekdayView.addSubview(lbl)
+      weekdayLabels.append(lbl)
+    }
+  }
+
+  // MARK: - Grid (핵심: clipsToBounds로 블리딩 차단)
+
+  private func setupGrid() {
+    // gridContainerView: clipsToBounds = true → GPU 수준 마스킹
+    gridContainerView.clipsToBounds = true
+    gridContainerView.layer.masksToBounds = true
+    gridContainerView.backgroundColor = .clear
+    addSubview(gridContainerView)
+
+    // gridScrollView: 가로 페이징
+    gridScrollView.isPagingEnabled = true
+    gridScrollView.showsHorizontalScrollIndicator = false
+    gridScrollView.showsVerticalScrollIndicator = false
+    gridScrollView.delegate = self
+    gridScrollView.backgroundColor = .clear
+    gridScrollView.clipsToBounds = false  // scrollView 자체는 클리핑 안 함 (container가 담당)
+    gridContainerView.addSubview(gridScrollView)
+
+    gridContentView.backgroundColor = .clear
+    gridScrollView.addSubview(gridContentView)
+
+    buildMonthPages()
+  }
+
+  private func buildMonthPages() {
+    // 기존 페이지 뷰 제거
+    for (_, view) in monthPageViews {
+      view.removeFromSuperview()
+    }
+    monthPageViews.removeAll()
+    cellButtons.removeAll()
+    circleViews.removeAll()
+
+    for monthPage in state.months {
+      let pageView = createMonthPageView(monthPage: monthPage)
+      gridContentView.addSubview(pageView)
+      monthPageViews[monthPage.id] = pageView
+    }
+  }
+
+  private func createMonthPageView(monthPage: MonthPageData) -> UIView {
+    let pageView = UIView()
+    pageView.backgroundColor = .clear
+
+    for (rowIndex, row) in monthPage.rows.enumerated() {
+      for cell in row {
+        // Circle background view
+        let circleView = UIView()
+        circleView.layer.cornerRadius = 17
+        circleView.backgroundColor = .clear
+        circleView.tag = rowIndex
+        pageView.addSubview(circleView)
+        circleViews[cell.id] = circleView
+
+        // Day button
+        let button = UIButton(type: .system)
+        button.setTitle("\(cell.day)", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 15, weight: .regular)
+        button.addTarget(self, action: #selector(dayCellTapped(_:)), for: .touchUpInside)
+        // accessibilityIdentifier에 cellId 저장
+        button.accessibilityIdentifier = cell.id
+        pageView.addSubview(button)
+        cellButtons[cell.id] = button
+      }
+    }
+
+    return pageView
+  }
+
+  @objc private func dayCellTapped(_ sender: UIButton) {
+    guard let cellId = sender.accessibilityIdentifier else { return }
+
+    // cellId ("yyyy-MM-dd") → Date
+    guard let date = dateFormatter.date(from: cellId) else { return }
+
+    state.selectedDate = date
+    state.updateDisplayMonth(for: date)
+    onDateSelect?(["date": cellId])
+
+    // 다른 달 날짜 탭 시 월 페이지 갱신
+    let tappedMonthId = state.monthId(for: date)
+    if tappedMonthId != state.currentMonthId {
+      state.currentMonthId = tappedMonthId
+      scrollToCurrentMonth(animated: true)
+    }
+
+    updateUI()
+
+    // 날짜 선택 후 주간 모드로 축소
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+      self?.animateCollapse()
+    }
+  }
+
+  private func animateCollapse() {
+    state.isExpanded = false
+    UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) { [weak self] in
+      guard let self = self else { return }
+      self.state.expandProgress = 0
+      self.layoutGrid()
+      self.layoutSubviews()
+    } completion: { [weak self] _ in
+      self?.updateScrollEnabled()
+    }
+    onExpandChange?(["expanded": false])
+    let gridVisible = state.weekHeight
+    let totalHeight = state.headerHeight + state.weekdayHeight + gridVisible
+    onHeightChange?(["height": totalHeight, "animated": true])
+  }
+
+  // MARK: - Layout
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+
+    let w = bounds.width
+    guard w > 0 else { return }
+
+    // Header
+    headerView.frame = CGRect(x: 0, y: 0, width: w, height: state.headerHeight)
+    monthLabel.sizeToFit()
+    monthLabel.frame = CGRect(x: 20, y: 12, width: monthLabel.bounds.width, height: 22)
+    todayButton.sizeToFit()
+    todayButton.frame = CGRect(
+      x: w - 20 - todayButton.bounds.width,
+      y: 12,
+      width: todayButton.bounds.width,
+      height: 22
+    )
+
+    // Weekday row
+    weekdayView.frame = CGRect(x: 0, y: state.headerHeight, width: w, height: state.weekdayHeight)
+    let weekdayInset: CGFloat = 8
+    let weekdayCellWidth = (w - weekdayInset * 2) / 7
+    for (index, lbl) in weekdayLabels.enumerated() {
+      lbl.frame = CGRect(
+        x: weekdayInset + CGFloat(index) * weekdayCellWidth,
+        y: 0,
+        width: weekdayCellWidth,
+        height: 15
+      )
+    }
+
+    // Grid container + scroll
+    layoutGrid()
+  }
+
+  private func layoutGrid() {
+    let w = bounds.width
+    guard w > 0 else { return }
+
+    let gridTop = state.headerHeight + state.weekdayHeight
+    let gridVisibleHeight = state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress
+    gridContainerView.frame = CGRect(x: 0, y: gridTop, width: w, height: gridVisibleHeight)
+
+    // scrollView는 전체 월 높이로 설정, offset으로 선택된 행 위치 조정
+    let scrollOffsetY = -state.selectedRowOffset * (1.0 - state.expandProgress)
+    gridScrollView.frame = CGRect(x: 0, y: scrollOffsetY, width: w, height: state.monthFullHeight)
+
+    // Content size = 모든 월 페이지 가로 나열
+    let pageCount = CGFloat(state.months.count)
+    gridContentView.frame = CGRect(x: 0, y: 0, width: w * pageCount, height: state.monthFullHeight)
+    gridScrollView.contentSize = CGSize(width: w * pageCount, height: state.monthFullHeight)
+
+    // 각 월 페이지 레이아웃
+    let gridInset: CGFloat = 8
+    let cellWidth = (w - gridInset * 2) / 7
+    let cellHeight = state.cellHeight
+    let cellSpacing = state.cellSpacing
+
+    for (pageIndex, monthPage) in state.months.enumerated() {
+      guard let pageView = monthPageViews[monthPage.id] else { continue }
+      pageView.frame = CGRect(x: CGFloat(pageIndex) * w, y: 0, width: w, height: state.monthFullHeight)
+
+      for (rowIndex, row) in monthPage.rows.enumerated() {
+        let rowY: CGFloat = CGFloat(rowIndex) * (cellHeight + cellSpacing) + 2 // +2 top padding
+        for cell in row {
+          let cellX = gridInset + CGFloat(cell.weekdayIndex) * cellWidth
+          let cellFrame = CGRect(x: cellX, y: rowY, width: cellWidth, height: cellHeight)
+
+          if let button = cellButtons[cell.id] {
+            button.frame = cellFrame
+          }
+          if let circle = circleViews[cell.id] {
+            // 원은 34x34, 셀 중앙
+            let circleSize: CGFloat = 34
+            circle.frame = CGRect(
+              x: cellX + (cellWidth - circleSize) / 2,
+              y: rowY + (cellHeight - circleSize) / 2,
+              width: circleSize,
+              height: circleSize
+            )
+          }
+        }
+      }
+    }
+  }
+
+  // MARK: - Update UI (selection, colors)
+
+  private func updateUI() {
+    guard hasSetUp else { return }
+
+    let todayStr = state.dateString(from: today)
+    let selectedStr = state.dateString(from: state.selectedDate)
+    let primaryUIColor = UIColor(hex: state.primaryColor) ?? .systemIndigo
+
+    // Header
+    monthLabel.text = state.displayMonth
+    monthLabel.sizeToFit()
+
+    // 오늘 버튼 색상
+    let isOnToday = state.calendar.isDate(state.selectedDate, inSameDayAs: today)
+    todayButton.setTitleColor(isOnToday ? UIColor(hex: "#9CA3AF") : primaryUIColor, for: .normal)
+    todayButton.isEnabled = !isOnToday
+
+    // Cell 스타일 업데이트
+    for monthPage in state.months {
+      for row in monthPage.rows {
+        for cell in row {
+          guard let button = cellButtons[cell.id],
+                let circle = circleViews[cell.id] else { continue }
+
+          let isToday = cell.id == todayStr
+          let isSelected = cell.id == selectedStr
+
+          // Circle background
+          if isToday {
+            circle.backgroundColor = primaryUIColor
+          } else if isSelected {
+            circle.backgroundColor = primaryUIColor.withAlphaComponent(0.15)
+          } else {
+            circle.backgroundColor = .clear
+          }
+
+          // Text style
+          let weight: UIFont.Weight = (isToday || isSelected) ? .bold : .regular
+          button.titleLabel?.font = .systemFont(ofSize: 15, weight: weight)
+
+          let textColor: UIColor
+          if isToday {
+            textColor = .white
+          } else if !cell.isCurrentMonth {
+            textColor = UIColor(hex: "#D1D5DB") ?? .lightGray
+          } else if isSelected {
+            textColor = primaryUIColor
+          } else {
+            textColor = dayNumberColor(index: cell.weekdayIndex)
+          }
+          button.setTitleColor(textColor, for: .normal)
+        }
+      }
+    }
+
+    // Scroll position 동기화
+    scrollToCurrentMonth(animated: false)
+    setNeedsLayout()
+  }
+
+  private func rebuildGrid() {
+    buildMonthPages()
+    setNeedsLayout()
+    layoutIfNeeded()
+    scrollToCurrentMonth(animated: false)
+  }
+
+  // MARK: - Scroll to Month
+
+  private func scrollToCurrentMonth(animated: Bool) {
+    guard let index = state.months.firstIndex(where: { $0.id == state.currentMonthId }) else { return }
+    let w = bounds.width
+    guard w > 0 else { return }
+    let offsetX = CGFloat(index) * w
+    gridScrollView.setContentOffset(CGPoint(x: offsetX, y: 0), animated: animated)
+  }
+
+  private func updateScrollEnabled() {
+    gridScrollView.isScrollEnabled = state.expandProgress >= 0.5
+  }
+
+  // MARK: - UIScrollViewDelegate (가로 페이징 → 월 변경)
+
+  func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+    guard scrollView === gridScrollView else { return }
+    updateCurrentMonthFromScroll()
+  }
+
+  func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+    guard scrollView === gridScrollView else { return }
+    updateCurrentMonthFromScroll()
+  }
+
+  private func updateCurrentMonthFromScroll() {
+    let w = bounds.width
+    guard w > 0 else { return }
+    let pageIndex = Int(round(gridScrollView.contentOffset.x / w))
+    guard pageIndex >= 0 && pageIndex < state.months.count else { return }
+
+    let newMonthId = state.months[pageIndex].id
+    if newMonthId != state.currentMonthId {
+      state.currentMonthId = newMonthId
+      if let monthPage = state.months.first(where: { $0.id == newMonthId }),
+         let firstRow = monthPage.rows.first,
+         let midCell = firstRow.first(where: { $0.isCurrentMonth }) {
+        state.updateDisplayMonth(for: midCell.date)
+      }
+      updateUI()
+    }
+  }
+
+  // MARK: - UIPanGestureRecognizer (수직 드래그 → expand/collapse)
+
   private var expandableHeight: CGFloat { 150.0 }
+
+  private func setupPanGesture() {
+    let pan = UIPanGestureRecognizer(target: self, action: #selector(handleVerticalPan(_:)))
+    pan.delegate = self
+    addGestureRecognizer(pan)
+  }
 
   @objc private func handleVerticalPan(_ gesture: UIPanGestureRecognizer) {
     let translation = gesture.translation(in: self)
@@ -422,44 +665,44 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
 
     switch gesture.state {
     case .began:
-      weekState.isDragging = true
+      state.isDragging = true
 
     case .changed:
       let ty = translation.y
-      if weekState.isExpanded {
-        // 축소 중: 위로 드래그 → progress 1→0
+      if state.isExpanded {
         let progress = max(0, 1.0 - (-ty / expandableHeight))
-        weekState.expandProgress = min(1.0, progress)
+        state.expandProgress = min(1.0, progress)
       } else {
-        // 확장 중: 아래로 드래그 → progress 0→1
         let progress = min(1.0, ty / expandableHeight)
-        weekState.expandProgress = max(0, progress)
+        state.expandProgress = max(0, progress)
       }
+      layoutGrid()
+      updateScrollEnabled()
       emitHeight(animated: false)
 
     case .ended, .cancelled:
-      weekState.isDragging = false
+      state.isDragging = false
 
-      // velocity + progress threshold로 스냅 결정
       let shouldExpand: Bool
-      if weekState.isExpanded {
-        // 현재 확장 → 축소 여부: progress < 0.6 또는 빠른 위 방향 velocity
-        shouldExpand = weekState.expandProgress > 0.6 && velocity.y > -500
+      if state.isExpanded {
+        shouldExpand = state.expandProgress > 0.6 && velocity.y > -500
       } else {
-        // 현재 축소 → 확장 여부: progress > 0.4 또는 빠른 아래 방향 velocity
-        shouldExpand = weekState.expandProgress > 0.4 || velocity.y > 500
+        shouldExpand = state.expandProgress > 0.4 || velocity.y > 500
       }
 
-      withAnimation(.easeOut(duration: 0.25)) {
-        weekState.expandProgress = shouldExpand ? 1.0 : 0.0
-        weekState.isExpanded = shouldExpand
+      state.isExpanded = shouldExpand
+      UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseOut) { [weak self] in
+        guard let self = self else { return }
+        self.state.expandProgress = shouldExpand ? 1.0 : 0.0
+        self.layoutGrid()
+      } completion: { [weak self] _ in
+        self?.updateScrollEnabled()
       }
       onExpandChange?(["expanded": shouldExpand])
 
-      // 최종 높이를 수학적으로 계산하여 즉시 emit (지연 제거)
       let finalProgress: CGFloat = shouldExpand ? 1.0 : 0.0
-      let gridVisible = weekState.weekHeight + (weekState.monthFullHeight - weekState.weekHeight) * finalProgress
-      let totalHeight = weekState.headerHeight + weekState.weekdayHeight + gridVisible
+      let gridVisible = state.weekHeight + (state.monthFullHeight - state.weekHeight) * finalProgress
+      let totalHeight = state.headerHeight + state.weekdayHeight + gridVisible
       onHeightChange?(["height": totalHeight, "animated": true])
 
     default:
@@ -467,11 +710,11 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
     }
   }
 
-  // UIGestureRecognizerDelegate — 수직 방향 우세 시에만 pan 인식 시작
+  // UIGestureRecognizerDelegate — 수직 방향 우세 시에만 pan 인식
   override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
     guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
     let v = pan.velocity(in: self)
-    return abs(v.y) > abs(v.x)  // 수직 우세
+    return abs(v.y) > abs(v.x)
   }
 
   // ScrollView와 동시 인식 허용
@@ -482,53 +725,18 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
     return true
   }
 
-  // MARK: - Setup Once
+  // MARK: - Color Helpers
 
-  private func setupOnce() {
-    guard !hasSetUp else { return }
-    hasSetUp = true
-    backgroundColor = .clear
-    clipsToBounds = true  // HC 오버플로우 방지
+  private func weekdayColor(index: Int) -> UIColor {
+    if index == 0 { return UIColor(hex: "#EF4444") ?? .red }
+    if index == 6 { return UIColor(hex: "#3B82F6") ?? .blue }
+    return UIColor(hex: "#9CA3AF") ?? .gray
+  }
 
-    weekState.generateMonths(for: weekState.selectedDate)
-
-    if #available(iOS 17.0, *) {
-      let swiftUIView = WeekStripContent(
-        state: weekState,
-        onDateSelect: { [weak self] dateString in
-          self?.onDateSelect?(["date": dateString])
-        },
-        onExpandChange: { [weak self] expanded in
-          self?.onExpandChange?(["expanded": expanded])
-        },
-        onHeightChange: { [weak self] in
-          self?.emitHeight()
-        }
-      )
-
-      let hc = UIHostingController(rootView: AnyView(swiftUIView))
-      hc.view.backgroundColor = .clear
-      hc.sizingOptions = .intrinsicContentSize  // HC가 SwiftUI 콘텐츠에 따라 자동 크기 결정
-      hostingController = hc
-
-      addSubview(hc.view)
-      hc.view.translatesAutoresizingMaskIntoConstraints = false
-      NSLayoutConstraint.activate([
-        hc.view.leadingAnchor.constraint(equalTo: leadingAnchor),
-        hc.view.trailingAnchor.constraint(equalTo: trailingAnchor),
-        hc.view.topAnchor.constraint(equalTo: topAnchor),
-        // bottom 제거 — intrinsicContentSize가 높이 결정 (RN 컨테이너와 디커플링)
-      ])
-
-      // UIPanGestureRecognizer 추가 (수직 드래그 → expand/collapse)
-      let pan = UIPanGestureRecognizer(target: self, action: #selector(handleVerticalPan(_:)))
-      pan.delegate = self
-      hc.view.addGestureRecognizer(pan)
-
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-        self?.emitHeight()
-      }
-    }
+  private func dayNumberColor(index: Int) -> UIColor {
+    if index == 0 { return UIColor(hex: "#EF4444") ?? .red }
+    if index == 6 { return UIColor(hex: "#3B82F6") ?? .blue }
+    return UIColor(hex: "#374151") ?? .darkGray
   }
 }
 

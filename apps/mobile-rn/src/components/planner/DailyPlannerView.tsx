@@ -8,7 +8,8 @@ import {Text, View, SectionList, RefreshControl, StyleSheet, Alert} from 'react-
 import {NativeWeekStripCalendarNative} from '@/components/native';
 import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
-import {AnimatedPressable} from '@/components/core';
+import {AnimatedPressable, gradientPresets} from '@/components/core';
+import {useSettingsStore} from '@/stores/settingsStore';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
 import {TodoCard} from '@/components/todo/TodoCard';
 import {
@@ -117,6 +118,8 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
     restoreDeferredTodo,
   } = useTodoStore();
   const {primaryColor} = useTheme();
+  const backgroundPreset = useSettingsStore(s => s.backgroundPreset);
+  const gradient = gradientPresets[backgroundPreset];
   const {projects, fetchProjects} = useProjectStore();
   const user = useAuthStore(s => s.user);
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
@@ -354,6 +357,11 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
           <NativeWeekStripCalendarNative
             selectedDate={selectedDate}
             primaryColor={primaryColor}
+            gradientColors={gradient.colors}
+            gradientStartX={gradient.start.x}
+            gradientStartY={gradient.start.y}
+            gradientEndX={gradient.end.x}
+            gradientEndY={gradient.end.y}
             onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
             onHeightChange={(e) => {
               calendarHeight.value = e.nativeEvent.height;

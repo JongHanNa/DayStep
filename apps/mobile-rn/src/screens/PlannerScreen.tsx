@@ -7,7 +7,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, StyleSheet, Modal} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import {ScreenContainer} from '@/components/core';
+import {ScreenContainer, gradientPresets} from '@/components/core';
 import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/native';
 import {DailyPlannerView} from '@/components/planner/DailyPlannerView';
 import {MonthlyPlannerView} from '@/components/planner/MonthlyPlannerView';
@@ -47,6 +47,8 @@ export default function PlannerScreen() {
   const viewMode = useSettingsStore(s => s.plannerViewMode);
   const setPlannerViewMode = useSettingsStore(s => s.setPlannerViewMode);
   const {primaryColor} = useTheme();
+  const backgroundPreset = useSettingsStore(s => s.backgroundPreset);
+  const calendarGradient = gradientPresets[backgroundPreset];
   const {selectedDate, setSelectedDate, todos, fetchTodosForDateRange} = useTodoStore();
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
@@ -254,6 +256,11 @@ export default function PlannerScreen() {
                 <NativeWeekStripCalendarNative
                   selectedDate={selectedDate}
                   primaryColor={primaryColor}
+                  gradientColors={calendarGradient.colors}
+                  gradientStartX={calendarGradient.start.x}
+                  gradientStartY={calendarGradient.start.y}
+                  gradientEndX={calendarGradient.end.x}
+                  gradientEndY={calendarGradient.end.y}
                   onDateSelect={handleDayDateSelect}
                   onHeightChange={(e) => {
                     calendarHeight.value = e.nativeEvent.height;
