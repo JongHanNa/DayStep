@@ -5,7 +5,7 @@
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {View, Text, StyleSheet, Modal} from 'react-native';
-import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
+import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer} from '@/components/core';
 import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/native';
@@ -22,7 +22,6 @@ import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {useTheme} from '@/theme';
-import {springs} from '@/theme/animations';
 import {Calendar} from 'lucide-react-native';
 import {format, addDays, subDays} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
@@ -257,7 +256,7 @@ export default function PlannerScreen() {
                   primaryColor={primaryColor}
                   onDateSelect={handleDayDateSelect}
                   onHeightChange={(e) => {
-                    calendarHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
+                    calendarHeight.value = e.nativeEvent.height;
                   }}
                   style={StyleSheet.absoluteFill}
                 />

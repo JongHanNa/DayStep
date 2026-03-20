@@ -6,7 +6,7 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Text, View, SectionList, RefreshControl, StyleSheet, Alert} from 'react-native';
 import {NativeWeekStripCalendarNative} from '@/components/native';
-import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
+import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
@@ -36,7 +36,6 @@ import {useCalendarStore} from '@/stores/calendarStore';
 import {DailyCalendarEventCard} from '@/components/todo/DailyCalendarEventCard';
 import {useTheme} from '@/theme';
 import {format} from 'date-fns';
-import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
 import {Inbox, CalendarDays} from 'lucide-react-native';
 
@@ -376,7 +375,7 @@ function TodoListScreenInner() {
             primaryColor={primaryColor}
             onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
             onHeightChange={(e) => {
-              calendarHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
+              calendarHeight.value = e.nativeEvent.height;
             }}
             style={StyleSheet.absoluteFill}
           />

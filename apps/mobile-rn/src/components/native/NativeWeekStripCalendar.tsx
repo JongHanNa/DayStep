@@ -10,7 +10,7 @@ interface NativeWeekStripCalendarProps {
   selectedDate: string;
   primaryColor: string;
   onDateSelect: (e: {nativeEvent: {date: string}}) => void;
-  onHeightChange: (e: {nativeEvent: {height: number}}) => void;
+  onHeightChange: (e: {nativeEvent: {height: number; animated?: boolean}}) => void;
   onExpandChange?: (e: {nativeEvent: {expanded: boolean}}) => void;
   style?: any;
 }

@@ -37,6 +37,22 @@ class WeekStripState: ObservableObject {
   @Published var months: [MonthPageData] = []
   @Published var currentMonthId: String = ""
 
+  // 레이아웃 상수 (수학적 높이 계산용)
+  let weekHeight: CGFloat = 44    // 40 + padding 4
+  let rowHeight: CGFloat = 40     // 38 cell + 2 spacing
+  let headerHeight: CGFloat = 46  // padding(12+12) + font18 line height(~22)
+  let weekdayHeight: CGFloat = 21 // font11(~15) + padding.bottom(6)
+
+  var monthFullHeight: CGFloat {
+    let rowCount = CGFloat(currentMonthRowCount)
+    return rowCount * 38 + (rowCount - 1) * 2 + 4
+  }
+
+  var calculatedTotalHeight: CGFloat {
+    let gridVisible = weekHeight + (monthFullHeight - weekHeight) * expandProgress
+    return headerHeight + weekdayHeight + gridVisible
+  }
+
   private let calendar: Calendar = {
     var cal = Calendar(identifier: .gregorian)
     cal.firstWeekday = 1 // 일요일 시작
@@ -173,18 +189,9 @@ struct WeekStripContent: View {
   private let dayLabels = ["일", "월", "화", "수", "목", "금", "토"]
   private let today = Calendar.current.startOfDay(for: Date())
 
-  private let weekHeight: CGFloat = 44  // 40 + padding 4
-  private let rowHeight: CGFloat = 40   // 38 cell + 2 spacing
-
-  /// 현재 월의 전체 높이 계산
-  private var monthFullHeight: CGFloat {
-    let rowCount = CGFloat(state.currentMonthRowCount)
-    return rowCount * 38 + (rowCount - 1) * 2 + 4  // cell(38) + spacing(2) + bottom padding(4)
-  }
-
   /// 선택된 주 행의 Y offset (그리드 내 위치)
   private var selectedRowOffset: CGFloat {
-    CGFloat(state.selectedWeekRowIndex) * rowHeight
+    CGFloat(state.selectedWeekRowIndex) * state.rowHeight
   }
 
   var body: some View {
@@ -215,17 +222,19 @@ struct WeekStripContent: View {
       .padding(.horizontal, 20)
       .padding(.top, 12)
       .padding(.bottom, 12)
+      .animation(nil, value: state.expandProgress)
 
       // 요일 라벨 행 (week/month 공통)
       weekdayHeader
+        .animation(nil, value: state.expandProgress)
 
       // 서랍형 전환: 월간 그리드만 사용, 클리핑으로 선택된 행만 노출
       // progress=0: offset=-selectedRowOffset (선택된 행이 상단), height=weekHeight (1행만 보임)
       // progress=1: offset=0 (전체 그리드 정상), height=monthFullHeight (전체 보임)
       monthScrollView
-        .frame(height: monthFullHeight)  // ScrollView 전체 높이 강제 (모든 행 렌더링)
+        .frame(height: state.monthFullHeight)  // ScrollView 전체 높이 강제 (모든 행 렌더링)
         .offset(y: -selectedRowOffset * (1.0 - state.expandProgress))
-        .frame(height: weekHeight + (monthFullHeight - weekHeight) * state.expandProgress, alignment: .top)
+        .frame(height: state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress, alignment: .top)
         .clipped()
     }
     // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
@@ -309,14 +318,12 @@ struct WeekStripContent: View {
 
       // 날짜 선택 후 주간 모드로 축소
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+        withAnimation(.easeOut(duration: 0.25)) {
           state.isExpanded = false
           state.expandProgress = 0
         }
         onExpandChange?(false)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-          onHeightChange?()
-        }
+        onHeightChange?()
       }
     }) {
       ZStack {
@@ -398,10 +405,9 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
 
   // MARK: - Height Emission
 
-  private func emitHeight() {
-    guard let hc = hostingController, bounds.width > 0 else { return }
-    let size = hc.sizeThatFits(in: CGSize(width: bounds.width, height: .greatestFiniteMagnitude))
-    onHeightChange?(["height": size.height])
+  private func emitHeight(animated: Bool = true) {
+    guard bounds.width > 0 else { return }
+    onHeightChange?(["height": weekState.calculatedTotalHeight, "animated": animated])
   }
 
   // MARK: - UIPanGestureRecognizer Handler
@@ -428,7 +434,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
         let progress = min(1.0, ty / expandableHeight)
         weekState.expandProgress = max(0, progress)
       }
-      emitHeight()
+      emitHeight(animated: false)
 
     case .ended, .cancelled:
       weekState.isDragging = false
@@ -443,14 +449,17 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
         shouldExpand = weekState.expandProgress > 0.4 || velocity.y > 500
       }
 
-      withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+      withAnimation(.easeOut(duration: 0.25)) {
         weekState.expandProgress = shouldExpand ? 1.0 : 0.0
         weekState.isExpanded = shouldExpand
       }
       onExpandChange?(["expanded": shouldExpand])
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-        self?.emitHeight()
-      }
+
+      // 최종 높이를 수학적으로 계산하여 즉시 emit (지연 제거)
+      let finalProgress: CGFloat = shouldExpand ? 1.0 : 0.0
+      let gridVisible = weekState.weekHeight + (weekState.monthFullHeight - weekState.weekHeight) * finalProgress
+      let totalHeight = weekState.headerHeight + weekState.weekdayHeight + gridVisible
+      onHeightChange?(["height": totalHeight, "animated": true])
 
     default:
       break
@@ -492,9 +501,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
           self?.onExpandChange?(["expanded": expanded])
         },
         onHeightChange: { [weak self] in
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            self?.emitHeight()
-          }
+          self?.emitHeight()
         }
       )
 
