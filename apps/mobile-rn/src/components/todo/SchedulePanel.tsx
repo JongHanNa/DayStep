@@ -5,12 +5,13 @@
  * TodoCreatePanel 위에 별도 시트로 열림 → create UI를 완전히 덮음
  */
 import React, {useCallback, useMemo, useState, useRef, forwardRef, useImperativeHandle} from 'react';
-import {View, Text, StyleSheet, Pressable} from 'react-native';
+import {View, Text, StyleSheet, Pressable, ScrollView, Modal} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable, Popover} from '@/components/core';
 import {useTheme} from '@/theme';
 import {fixedColors} from '@/theme/colors';
 import {useHaptic} from '@/hooks/useHaptic';
+import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
 import {
   X,
   Check,
@@ -271,15 +272,14 @@ function TimePopoverContent({
   const DURATIONS = [5, 10, 15, 20, 30, 45, 60, 90, 120];
   const TIMED_DURATIONS = [15, 30, 60, 90, 120];
 
-  const [directDurOpen, setDirectDurOpen] = useState(false);
-
   // 현재 소요 시간 (분)
   const durMins =
     form.startTime && form.endTime
       ? Math.round((form.endTime.getTime() - form.startTime.getTime()) / 60000)
       : 60;
-  const durHours = Math.floor(durMins / 60);
-  const durRemMins = durMins % 60;
+
+  const [durationPickerVisible, setDurationPickerVisible] = useState(false);
+  const [tempDuration, setTempDuration] = useState(durMins * 60); // 초 단위
 
   function getDurLabel(mins: number): string {
     if (mins < 60) return `${mins}분`;
@@ -288,60 +288,14 @@ function TimePopoverContent({
     return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
   }
 
-  // 시작 시간 조정 (소요 시간 유지 = endTime도 동량 이동)
-  const adjustStartHour = useCallback(
-    (delta: number) => {
-      haptic.selection();
-      const ms = delta * 3600000;
-      const newStart = new Date(form.startTime!.getTime() + ms);
-      updateField('startTime', newStart);
-      if (form.endTime) updateField('endTime', new Date(form.endTime.getTime() + ms));
-    },
-    [haptic, form.startTime, form.endTime, updateField],
-  );
-
-  const adjustStartMin = useCallback(
-    (delta: number) => {
-      haptic.selection();
-      const ms = delta * 60000;
-      const newStart = new Date(form.startTime!.getTime() + ms);
-      updateField('startTime', newStart);
-      if (form.endTime) updateField('endTime', new Date(form.endTime.getTime() + ms));
-    },
-    [haptic, form.startTime, form.endTime, updateField],
-  );
-
   // 소요 시간 칩 설정
   const setTimedDur = useCallback(
     (mins: number) => {
       haptic.selection();
       if (!form.startTime) return;
       updateField('endTime', new Date(form.startTime.getTime() + mins * 60000));
-      setDirectDurOpen(false);
     },
     [haptic, form.startTime, updateField],
-  );
-
-  // 소요 시간 직접 조정
-  const adjustDurHour = useCallback(
-    (delta: number) => {
-      haptic.selection();
-      const newH = Math.max(0, Math.min(23, durHours + delta));
-      const newDur = Math.max(1, newH * 60 + durRemMins);
-      if (form.startTime)
-        updateField('endTime', new Date(form.startTime.getTime() + newDur * 60000));
-    },
-    [haptic, durHours, durRemMins, form.startTime, updateField],
-  );
-
-  const adjustDurMin = useCallback(
-    (delta: number) => {
-      haptic.selection();
-      const newDur = Math.max(1, Math.min(23 * 60 + 59, durMins + delta));
-      if (form.startTime)
-        updateField('endTime', new Date(form.startTime.getTime() + newDur * 60000));
-    },
-    [haptic, durMins, form.startTime, updateField],
   );
 
   const handleTypeChange = useCallback(
@@ -364,7 +318,7 @@ function TimePopoverContent({
   );
 
   return (
-    <View style={popContentStyles.container}>
+    <ScrollView style={popContentStyles.container} showsVerticalScrollIndicator={false}>
       {/* Schedule type chips */}
       <View style={popContentStyles.chipRow}>
         {(['anytime', 'timed', 'all_day'] as const).map(type => (
@@ -392,50 +346,21 @@ function TimePopoverContent({
         <>
           {/* 시작 시간 */}
           <Text style={popContentStyles.sectionLabel}>시작 시간</Text>
-          <View style={popContentStyles.startTimeBlock}>
-            {/* 시간 stepper */}
-            <View style={popContentStyles.startTimeRow}>
-              <Text style={popContentStyles.startTimeLabel}>시간</Text>
-              <View style={popContentStyles.stepperCenter}>
-                <AnimatedPressable
-                  onPress={() => adjustStartHour(-1)}
-                  haptic={false}
-                  style={popContentStyles.stepBtn}>
-                  <Text style={popContentStyles.stepBtnText}>−</Text>
-                </AnimatedPressable>
-                <Text style={popContentStyles.stepValue}>
-                  {format(form.startTime, 'H')}시
-                </Text>
-                <AnimatedPressable
-                  onPress={() => adjustStartHour(1)}
-                  haptic={false}
-                  style={popContentStyles.stepBtn}>
-                  <Text style={popContentStyles.stepBtnText}>+</Text>
-                </AnimatedPressable>
-              </View>
-            </View>
-            {/* 분 stepper */}
-            <View style={popContentStyles.startTimeRow}>
-              <Text style={popContentStyles.startTimeLabel}>분</Text>
-              <View style={popContentStyles.stepperCenter}>
-                <AnimatedPressable
-                  onPress={() => adjustStartMin(-1)}
-                  haptic={false}
-                  style={popContentStyles.stepBtn}>
-                  <Text style={popContentStyles.stepBtnText}>−</Text>
-                </AnimatedPressable>
-                <Text style={popContentStyles.stepValue}>
-                  {format(form.startTime, 'mm')}분
-                </Text>
-                <AnimatedPressable
-                  onPress={() => adjustStartMin(1)}
-                  haptic={false}
-                  style={popContentStyles.stepBtn}>
-                  <Text style={popContentStyles.stepBtnText}>+</Text>
-                </AnimatedPressable>
-              </View>
-            </View>
-          </View>
+          <DateTimePicker
+            value={form.startTime}
+            mode="time"
+            display="spinner"
+            onChange={(_: DateTimePickerEvent, date?: Date) => {
+              if (!date) return;
+              if (form.endTime) {
+                const dur = form.endTime.getTime() - form.startTime!.getTime();
+                updateField('endTime', new Date(date.getTime() + dur));
+              }
+              updateField('startTime', date);
+            }}
+            style={popContentStyles.startTimePicker}
+            locale="ko"
+          />
 
           {/* 소요 시간 */}
           <Text style={popContentStyles.sectionLabel}>소요 시간</Text>
@@ -460,55 +385,51 @@ function TimePopoverContent({
             ))}
           </View>
 
-          {/* 직접 입력 토글 */}
+          {/* 직접 입력 → 소요 시간 휠 피커 모달 */}
           <Pressable
-            onPress={() => setDirectDurOpen(o => !o)}
+            onPress={() => {
+              setTempDuration(durMins * 60);
+              setDurationPickerVisible(true);
+            }}
             style={popContentStyles.directToggle}>
-            <Text style={popContentStyles.directToggleText}>직접 입력</Text>
-            <Text style={popContentStyles.directToggleText}>
-              {directDurOpen ? '▴' : '▾'}
-            </Text>
+            <Text style={popContentStyles.directToggleText}>직접 입력 ▸</Text>
           </Pressable>
-          {directDurOpen && (
-            <View style={popContentStyles.startTimeBlock}>
-              <View style={popContentStyles.startTimeRow}>
-                <Text style={popContentStyles.startTimeLabel}>시간</Text>
-                <View style={popContentStyles.stepperCenter}>
-                  <AnimatedPressable
-                    onPress={() => adjustDurHour(-1)}
-                    haptic={false}
-                    style={popContentStyles.stepBtn}>
-                    <Text style={popContentStyles.stepBtnText}>−</Text>
-                  </AnimatedPressable>
-                  <Text style={popContentStyles.stepValue}>{durHours}시간</Text>
-                  <AnimatedPressable
-                    onPress={() => adjustDurHour(1)}
-                    haptic={false}
-                    style={popContentStyles.stepBtn}>
-                    <Text style={popContentStyles.stepBtnText}>+</Text>
-                  </AnimatedPressable>
-                </View>
-              </View>
-              <View style={popContentStyles.startTimeRow}>
-                <Text style={popContentStyles.startTimeLabel}>분</Text>
-                <View style={popContentStyles.stepperCenter}>
-                  <AnimatedPressable
-                    onPress={() => adjustDurMin(-1)}
-                    haptic={false}
-                    style={popContentStyles.stepBtn}>
-                    <Text style={popContentStyles.stepBtnText}>−</Text>
-                  </AnimatedPressable>
-                  <Text style={popContentStyles.stepValue}>{durRemMins}분</Text>
-                  <AnimatedPressable
-                    onPress={() => adjustDurMin(1)}
-                    haptic={false}
-                    style={popContentStyles.stepBtn}>
-                    <Text style={popContentStyles.stepBtnText}>+</Text>
-                  </AnimatedPressable>
-                </View>
-              </View>
+
+          <Modal transparent visible={durationPickerVisible} animationType="fade">
+            <Pressable
+              style={[StyleSheet.absoluteFill, {backgroundColor: 'rgba(0,0,0,0.3)'}]}
+              onPress={() => setDurationPickerVisible(false)}
+            />
+            <View style={popContentStyles.durationModal}>
+              <Text style={popContentStyles.durationModalTitle}>소요 시간</Text>
+              <DateTimePicker
+                mode="countdown"
+                display="spinner"
+                value={new Date(0)}
+                minuteInterval={5}
+                countDownDuration={tempDuration}
+                locale="ko"
+                onChange={(_: DateTimePickerEvent, date?: Date) => {
+                  if (date) {
+                    const hours = date.getHours();
+                    const minutes = date.getMinutes();
+                    setTempDuration((hours * 60 + minutes) * 60);
+                  }
+                }}
+                style={{height: 180}}
+              />
+              <Pressable
+                onPress={() => {
+                  const newDurMins = Math.max(1, Math.floor(tempDuration / 60));
+                  if (form.startTime)
+                    updateField('endTime', new Date(form.startTime.getTime() + newDurMins * 60000));
+                  setDurationPickerVisible(false);
+                }}
+                style={[popContentStyles.durationConfirmBtn, {backgroundColor: primaryColor}]}>
+                <Text style={popContentStyles.durationConfirmText}>확인</Text>
+              </Pressable>
             </View>
-          )}
+          </Modal>
 
           {/* Preview bar */}
           <View
@@ -554,7 +475,7 @@ function TimePopoverContent({
           ))}
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -718,38 +639,6 @@ const popContentStyles = StyleSheet.create({
     fontWeight: '500',
     color: '#4B5563',
   },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  timeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  timeDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  timeSep: {
-    fontSize: 13,
-    color: '#9CA3AF',
-  },
   durationGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -771,49 +660,14 @@ const popContentStyles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 4,
   },
-  startTimeBlock: {
-    flexDirection: 'column',
-    gap: 4,
-    marginBottom: 10,
-  },
-  startTimeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(0,0,0,0.04)',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  startTimeLabel: {
-    fontSize: 10,
-    color: '#9CA3AF',
-    minWidth: 20,
-  },
-  stepperCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  stepBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  stepValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1F2937',
-    minWidth: 42,
-    textAlign: 'center',
+  startTimePicker: {
+    height: 100,
+    marginBottom: 4,
+    alignSelf: 'flex-start' as const,
+    width: 240,
+    transform: [{scale: 0.85}],
+    marginLeft: -30,
+    marginTop: -8,
   },
   durChipRow: {
     flexDirection: 'row',
@@ -853,6 +707,39 @@ const popContentStyles = StyleSheet.create({
   previewDur: {
     fontSize: 11,
     color: '#9CA3AF',
+  },
+  // Duration picker modal
+  durationModal: {
+    position: 'absolute',
+    bottom: '30%',
+    left: 20,
+    right: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  durationModalTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  durationConfirmBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 12,
+  },
+  durationConfirmText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   // List popovers (alarm, recurrence)
   listContainer: {

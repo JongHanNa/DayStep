@@ -3,7 +3,7 @@
  * 에너지 적응형 마이크로태스크 + 요일별 구역 순환
  * 2계층: 매일 할 일 (daily) + 오늘의 구역 (zone-specific)
  */
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View, Text, ScrollView, Modal} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
@@ -36,7 +36,6 @@ export default function CleaningScreen() {
   const navigation = useNavigation();
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [taskListModalVisible, setTaskListModalVisible] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
 
@@ -44,17 +43,11 @@ export default function CleaningScreen() {
     energyLevel,
     activeTab,
     focusTaskId,
-    timerSeconds,
-    timerTotalSeconds,
-    isTimerRunning,
     setEnergyLevel,
     setActiveTab,
     setFocusTask,
     isTaskCompleted,
     startTimer,
-    tickTimer,
-    pauseTimer,
-    resumeTimer,
     resetTimer,
     zones,
     categorySchedules,
@@ -83,19 +76,6 @@ export default function CleaningScreen() {
   useEffect(() => {
     checkOrphanedSession();
   }, []);
-
-  // 타이머 interval
-  useEffect(() => {
-    if (isTimerRunning) {
-      timerRef.current = setInterval(() => tickTimer(), 1000);
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isTimerRunning, tickTimer]);
 
   const todayZone = getTodayZone();
   const allTasks = getAllTasks();
@@ -212,13 +192,14 @@ export default function CleaningScreen() {
     }
   }, [focusTask, activeTasks, isTaskCompleted, resetTimer, toggleTaskCompletion, setFocusTask, haptic, completeCleaningSession]);
 
-  // 세션 시작 핸들러 (타이머 시작 + 세션 시작)
+  // 세션 시작 핸들러 (타이머 시작 + 세션 시작 + 전체화면 진입)
   const handleSessionStart = useCallback(() => {
     if (!focusTask) return;
     startTimer(focusTask.estimatedMinutes * 60);
     startCleaningSession(focusTask.id);
     haptic.light();
-  }, [focusTask, startTimer, startCleaningSession, haptic]);
+    navigation.navigate('CleaningSession' as never);
+  }, [focusTask, startTimer, startCleaningSession, haptic, navigation]);
 
   const handleGardenViewModeChange = useCallback((mode: 'day' | 'week' | 'month' | 'year') => {
     setCurrentViewMode(mode);
@@ -295,13 +276,7 @@ export default function CleaningScreen() {
                 )}
                 <FocusCard
                   task={focusTask}
-                  timerSeconds={timerSeconds}
-                  timerTotalSeconds={timerTotalSeconds}
-                  isRunning={isTimerRunning}
                   onStart={handleSessionStart}
-                  onPause={pauseTimer}
-                  onResume={resumeTimer}
-                  onReset={resetTimer}
                   onComplete={() => handleComplete(focusTask.id)}
                 />
               </View>

@@ -31,6 +31,7 @@ import SleepGardenScreen from '../screens/SleepGardenScreen';
 import SleepSessionScreen from '../screens/SleepSessionScreen';
 import ADHDUnderstandingScreen from '../screens/ADHDUnderstandingScreen';
 import CleaningScreen from '../screens/CleaningScreen';
+import CleaningSessionScreen from '../screens/CleaningSessionScreen';
 import SleepGoalScreen from '../screens/SleepGoalScreen';
 import ScreenTimeAppsScreen from '../screens/ScreenTimeAppsScreen';
 import SleepADHDInfoScreen from '../screens/SleepADHDInfoScreen';
@@ -71,6 +72,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
       <HomeStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
       <HomeStack.Screen name="Cleaning" component={CleaningScreen} />
+      <HomeStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
       <HomeStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
     </HomeStack.Navigator>
   );
@@ -100,6 +102,7 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
       <MoreStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
       <MoreStack.Screen name="Cleaning" component={CleaningScreen} />
+      <MoreStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
       <MoreStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
     </MoreStack.Navigator>
   );
