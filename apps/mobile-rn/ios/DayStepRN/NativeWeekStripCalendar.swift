@@ -223,6 +223,7 @@ struct WeekStripContent: View {
       // progress=0: offset=-selectedRowOffset (선택된 행이 상단), height=weekHeight (1행만 보임)
       // progress=1: offset=0 (전체 그리드 정상), height=monthFullHeight (전체 보임)
       monthScrollView
+        .frame(height: monthFullHeight)  // ScrollView 전체 높이 강제 (모든 행 렌더링)
         .offset(y: -selectedRowOffset * (1.0 - state.expandProgress))
         .frame(height: weekHeight + (monthFullHeight - weekHeight) * state.expandProgress, alignment: .top)
         .clipped()
@@ -477,6 +478,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
     guard !hasSetUp else { return }
     hasSetUp = true
     backgroundColor = .clear
+    clipsToBounds = true  // HC 오버플로우 방지
 
     weekState.generateMonths(for: weekState.selectedDate)
 
@@ -498,6 +500,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
 
       let hc = UIHostingController(rootView: AnyView(swiftUIView))
       hc.view.backgroundColor = .clear
+      hc.sizingOptions = .intrinsicContentSize  // HC가 SwiftUI 콘텐츠에 따라 자동 크기 결정
       hostingController = hc
 
       addSubview(hc.view)
@@ -506,7 +509,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
         hc.view.leadingAnchor.constraint(equalTo: leadingAnchor),
         hc.view.trailingAnchor.constraint(equalTo: trailingAnchor),
         hc.view.topAnchor.constraint(equalTo: topAnchor),
-        hc.view.bottomAnchor.constraint(equalTo: bottomAnchor),
+        // bottom 제거 — intrinsicContentSize가 높이 결정 (RN 컨테이너와 디커플링)
       ])
 
       // UIPanGestureRecognizer 추가 (수직 드래그 → expand/collapse)
