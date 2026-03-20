@@ -72,7 +72,6 @@ export default function CleaningScreen() {
     gardenViewMode,
     startCleaningSession,
     completeCleaningSession,
-    abandonCleaningSession,
     checkOrphanedSession,
   } = useCleaningStore();
 
@@ -221,19 +220,6 @@ export default function CleaningScreen() {
     haptic.light();
   }, [focusTask, startTimer, startCleaningSession, haptic]);
 
-  // 스킵 시 세션 포기
-  const handleSessionSkip = useCallback(() => {
-    abandonCleaningSession();
-    resetTimer();
-    if (focusTask) {
-      const nextUncompleted = activeTasks.find(
-        t => t.id !== focusTask.id && !isTaskCompleted(t.id),
-      );
-      setFocusTask(nextUncompleted?.id ?? null);
-    }
-    haptic.selection();
-  }, [focusTask, activeTasks, isTaskCompleted, resetTimer, setFocusTask, haptic, abandonCleaningSession]);
-
   const handleGardenViewModeChange = useCallback((mode: 'day' | 'week' | 'month' | 'year') => {
     setCurrentViewMode(mode);
   }, []);
@@ -315,7 +301,6 @@ export default function CleaningScreen() {
                   onStart={handleSessionStart}
                   onPause={pauseTimer}
                   onResume={resumeTimer}
-                  onSkip={handleSessionSkip}
                   onReset={resetTimer}
                   onComplete={() => handleComplete(focusTask.id)}
                 />

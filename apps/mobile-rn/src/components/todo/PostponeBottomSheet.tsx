@@ -14,7 +14,7 @@ import React, {
   useImperativeHandle,
 } from 'react';
 import {View, Text, StyleSheet, Platform} from 'react-native';
-import {BottomSheetModal, BottomSheetBackdrop} from '@gorhom/bottom-sheet';
+import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
@@ -83,7 +83,6 @@ export const PostponeBottomSheet = forwardRef<
     useState<PostponeAction>('reschedule');
   const [pickerDate, setPickerDate] = useState(new Date());
 
-  const snapPoints = useMemo(() => ['55%'], []);
 
   const resolvedOptions = useMemo(
     () =>
@@ -144,11 +143,10 @@ export const PostponeBottomSheet = forwardRef<
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={snapPoints}
       backdropComponent={renderBackdrop}
-      enableDynamicSizing={false}
+      enableDynamicSizing={true}
       handleIndicatorStyle={styles.handleIndicator}>
-      <View style={styles.sheet}>
+      <BottomSheetView style={styles.sheet}>
         {/* 헤더 */}
         {todo && (
           <View style={styles.header}>
@@ -241,7 +239,7 @@ export const PostponeBottomSheet = forwardRef<
           style={[styles.confirmBtn, {backgroundColor: primaryColor}]}>
           <Text style={styles.confirmBtnText}>확인</Text>
         </AnimatedPressable>
-      </View>
+      </BottomSheetView>
     </BottomSheetModal>
   );
 });

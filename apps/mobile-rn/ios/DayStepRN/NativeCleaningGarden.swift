@@ -257,7 +257,7 @@ struct IsometricGardenView: View {
   private var tileHeight: CGFloat { tileWidth * 0.5 }
 
   private var gardenWidth: CGFloat { tileWidth * CGFloat(gridSize) }
-  private var gardenHeight: CGFloat { tileHeight * CGFloat(gridSize) + 60 }  // +60 나무 높이 여유
+  private var gardenHeight: CGFloat { tileHeight * CGFloat(gridSize) + 90 }  // +90 나무 높이 여유
 
   var body: some View {
     let dateStr = state.selectedDate.isEmpty ? todayStr : state.selectedDate

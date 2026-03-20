@@ -4,7 +4,7 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {Play, Pause, SkipForward, RotateCcw, Check, Zap} from 'lucide-react-native';
+import {Play, Pause, RotateCcw, Check, Zap} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useTheme} from '@/theme';
@@ -21,7 +21,6 @@ interface FocusCardProps {
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
-  onSkip: () => void;
   onReset: () => void;
   onComplete: () => void;
 }
@@ -34,7 +33,6 @@ export function FocusCard({
   onStart,
   onPause,
   onResume,
-  onSkip,
   onReset,
   onComplete,
 }: FocusCardProps) {
@@ -173,19 +171,6 @@ export function FocusCard({
               <Check size={16} color="#FFFFFF" strokeWidth={3} />
               <Text style={{fontSize: 14, fontWeight: '600', color: '#FFFFFF'}}>완료</Text>
             </AnimatedPressable>
-            <AnimatedPressable
-              hapticType="selection"
-              onPress={onSkip}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: '#F3F4F6',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <SkipForward size={16} color="#6B7280" />
-            </AnimatedPressable>
           </>
         ) : (
           // 진행 중
@@ -240,19 +225,6 @@ export function FocusCard({
                 justifyContent: 'center',
               }}>
               <RotateCcw size={16} color="#6B7280" />
-            </AnimatedPressable>
-            <AnimatedPressable
-              hapticType="selection"
-              onPress={onSkip}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: '#F3F4F6',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <SkipForward size={16} color="#6B7280" />
             </AnimatedPressable>
           </>
         )}

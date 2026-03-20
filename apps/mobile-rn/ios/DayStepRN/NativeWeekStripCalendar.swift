@@ -226,6 +226,7 @@ struct WeekStripContent: View {
 
       // 요일 라벨 행 (week/month 공통)
       weekdayHeader
+        .background(Color.white)
         .animation(nil, value: state.expandProgress)
 
       // 서랍형 전환: 월간 그리드만 사용, 클리핑으로 선택된 행만 노출
@@ -233,9 +234,9 @@ struct WeekStripContent: View {
       // progress=1: offset=0 (전체 그리드 정상), height=monthFullHeight (전체 보임)
       monthScrollView
         .frame(height: state.monthFullHeight)  // ScrollView 전체 높이 강제 (모든 행 렌더링)
-        .offset(y: -selectedRowOffset * (1.0 - state.expandProgress))
+        .offset(y: -selectedRowOffset * (1.0 - state.expandProgress * state.expandProgress))
         .frame(height: state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress, alignment: .top)
-        .clipped()
+        .clipShape(Rectangle())
     }
     // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
   }
