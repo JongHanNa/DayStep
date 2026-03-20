@@ -222,22 +222,22 @@ struct WeekStripContent: View {
       .padding(.horizontal, 20)
       .padding(.top, 12)
       .padding(.bottom, 12)
-      .transaction { $0.animation = nil }
-      .zIndex(2)
+      .animation(nil, value: state.expandProgress)
 
+      // 요일 라벨 행 (week/month 공통)
       weekdayHeader
-        .frame(height: state.weekdayHeight)
-        .transaction { $0.animation = nil }
-        .zIndex(1)
+        .animation(nil, value: state.expandProgress)
 
+      // 서랍형 전환: 월간 그리드만 사용, 클리핑으로 선택된 행만 노출
+      // progress=0: offset=-selectedRowOffset (선택된 행이 상단), height=weekHeight (1행만 보임)
+      // progress=1: offset=0 (전체 그리드 정상), height=monthFullHeight (전체 보임)
       monthScrollView
         .compositingGroup()
         .frame(height: state.monthFullHeight)
-        .offset(y: -selectedRowOffset * (1.0 - state.expandProgress * state.expandProgress))
+        .offset(y: -selectedRowOffset * (1.0 - state.expandProgress))
         .frame(height: state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress, alignment: .top)
         .clipped()
     }
-    .clipped()
     // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
   }
 

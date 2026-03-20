@@ -138,18 +138,6 @@ export default function CleaningScreen() {
     return `오늘(${dayName}요일): ${categories.join(', ')}`;
   }, [zoneFocus, digitalTasks, belongingsTasks, todayZone]);
 
-  // 현재 포커스 태스크가 어느 섹션에 속하는지
-  const focusSectionLabel = useMemo(() => {
-    if (!focusTask) return null;
-    if (dailyRoutine.some(t => t.id === focusTask.id)) return '매일 할 일';
-    if (
-      zoneFocus.some(t => t.id === focusTask.id) ||
-      digitalTasks.some(t => t.id === focusTask.id) ||
-      belongingsTasks.some(t => t.id === focusTask.id)
-    ) return todaySectionLabel;
-    return null;
-  }, [focusTask, dailyRoutine, zoneFocus, digitalTasks, belongingsTasks, todaySectionLabel]);
-
   // 큐 태스크 (포커스 제외), 섹션 분리 — 전체 탭 통합
   const queueSections = useMemo((): TaskQueueSection[] => {
     if (!focusTask) return [];
@@ -263,18 +251,6 @@ export default function CleaningScreen() {
             {/* 포커스 카드 */}
             {focusTask && (
               <View style={{paddingHorizontal: 16, marginBottom: 8}}>
-                {/* 섹션 라벨 */}
-                {focusSectionLabel && (
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: '600',
-                      color: '#6B7280',
-                      marginBottom: 6,
-                    }}>
-                    {focusSectionLabel}
-                  </Text>
-                )}
                 <FocusCard
                   task={focusTask}
                   onStart={handleSessionStart}
