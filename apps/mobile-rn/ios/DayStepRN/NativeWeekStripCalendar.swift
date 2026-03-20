@@ -236,7 +236,8 @@ struct WeekStripContent: View {
         .frame(height: state.monthFullHeight)  // ScrollView 전체 높이 강제 (모든 행 렌더링)
         .offset(y: -selectedRowOffset * (1.0 - state.expandProgress * state.expandProgress))
         .frame(height: state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress, alignment: .top)
-        .clipShape(Rectangle())
+        .compositingGroup()
+        .clipped()
     }
     // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
   }
