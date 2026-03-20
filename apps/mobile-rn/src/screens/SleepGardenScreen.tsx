@@ -58,12 +58,18 @@ export default function SleepGardenScreen() {
   // 화면 포커스 시 스크린타임 권한 상태 동기화 + 연동 팝업
   useFocusEffect(
     useCallback(() => {
-      if (!isScreenTimeAvailable()) return;
+      const available = isScreenTimeAvailable();
+      console.log('[SleepGarden] isScreenTimeAvailable:', available);
+      if (!available) {
+        console.log('[SleepGarden] ⚠️ Screen time NOT available, modal will NOT show');
+        return;
+      }
 
       // 반응형 구독 대신 getState()로 직접 읽기 — 재실행 루프 방지
       const {screenTimeLinkEnabled: linked, setScreenTimeLinkEnabled: setLinked} =
         useSleepStore.getState();
       const status = getAuthorizationStatus();
+      console.log('[SleepGarden] authStatus:', status, 'linked:', linked);
 
       // 1) approved → 연동 상태 보장, 모달 불필요
       if (status === 'approved') {
@@ -78,8 +84,8 @@ export default function SleepGardenScreen() {
         return;
       }
 
-      // 3) notDetermined + 이미 연동됨 → 콜드 스타트 초기화 지연, 무시
-      if (linked) return;
+      // 3) notDetermined + 이미 연동됨 → 상태 불일치, 연동 리셋 후 재안내
+      if (linked) setLinked(false);
 
       // 4) notDetermined + 미연동 → 최초 연동 안내 모달
       setShowScreenTimeModal(true);

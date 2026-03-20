@@ -451,9 +451,13 @@ export const useSleepStore = create<SleepStoreState>()(
         );
 
         // 스크린타임 연동 활성 시 shield 적용
+        console.log('[Sleep] startSleepSession - screenTimeLinkEnabled:', screenTimeLinkEnabled);
         if (screenTimeLinkEnabled) {
-          await shieldAllExceptAllowed();
+          console.log('[Sleep] Calling shieldAllExceptAllowed...');
+          shieldAllExceptAllowed();
+          console.log('[Sleep] Calling scheduleAutoUnshield...');
           await scheduleAutoUnshield(expected);
+          console.log('[Sleep] Shield setup complete');
         }
 
         set({

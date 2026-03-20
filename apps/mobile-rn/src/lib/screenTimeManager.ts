@@ -18,6 +18,7 @@ import {
   stopMonitoring,
   configureActions,
   isAvailable,
+  userDefaultsGet,
   AuthorizationStatus,
 } from 'react-native-device-activity';
 
@@ -52,10 +53,13 @@ export function getAuthorizationStatus(): AuthStatus {
  * ManagedSettingsStore — 모든 앱 차단 (허용 앱 제외)
  */
 export function shieldAllExceptAllowed(): void {
+  console.log('[ScreenTime] shieldAllExceptAllowed called, isAvailable:', isAvailable());
   if (!isAvailable()) return;
 
   try {
     enableBlockAllMode('sleep-session');
+    const isBlocking = userDefaultsGet<boolean>('isBlockingAll');
+    console.log('[ScreenTime] enableBlockAllMode done, isBlockingAll:', isBlocking);
   } catch (error) {
     console.error('[ScreenTime] shieldAllExceptAllowed error:', error);
   }
@@ -98,11 +102,17 @@ export async function scheduleAutoUnshield(wakeTime: Date): Promise<void> {
       'sleep-session',
       {
         intervalStart: {
+          year: now.getFullYear(),
+          month: now.getMonth() + 1, // JS 0-indexed → DateComponents 1-indexed
+          day: now.getDate(),
           hour: now.getHours(),
           minute: now.getMinutes(),
           second: 0,
         },
         intervalEnd: {
+          year: wakeTime.getFullYear(),
+          month: wakeTime.getMonth() + 1,
+          day: wakeTime.getDate(),
           hour: wakeTime.getHours(),
           minute: wakeTime.getMinutes(),
           second: 0,
@@ -162,5 +172,7 @@ export function clearCleaningShield(): void {
  * 스크린타임 기능 사용 가능 여부
  */
 export function isScreenTimeAvailable(): boolean {
-  return isAvailable();
+  const available = isAvailable();
+  console.log('[ScreenTime] isScreenTimeAvailable:', available);
+  return available;
 }

@@ -28,6 +28,13 @@
 		A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A41F7D8C2F500BD800A4C1D8 /* DayStepWidgetModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */; };
 		A41F7D8D2F500BD800A4C1D8 /* DayStepWidgetModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */; };
+		A43C01082F6CB890001C082C /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C01072F6CB890001C082C /* DeviceActivity.framework */; };
+		A43C01102F6CB891001C082C /* ActivityMonitorExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A43C011D2F6CB8BC001C082C /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */; };
+		A43C011F2F6CB8BC001C082C /* ManagedSettingsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C011E2F6CB8BC001C082C /* ManagedSettingsUI.framework */; };
+		A43C01272F6CB8BC001C082C /* ShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A43C01332F6CB8DF001C082C /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */; };
+		A43C013B2F6CB8DF001C082C /* ShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C01322F6CB8DF001C082C /* ShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */; };
 		AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */; };
 		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
@@ -44,14 +51,14 @@
 		E1F2A3B4C5D6E7F8A9B0C1D2 /* NativeWeekStripCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */; };
 		E4762033124F21875BA5CD8A /* NativeGroupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B5E30421766026F915B4B0 /* NativeGroupSection.swift */; };
 		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */; };
+		EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */; };
 		EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E89E96ED34AC96B9B503807 /* ExpoModulesProvider.swift */; };
 		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
 		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
 		F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */; };
 		FA1B2C3D4E5F6A7B8C9D0E1F /* NativeSleepGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */; };
 		FA3D4E5F6A7B8C9D0E1F2A3B /* NativeSleepGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */; };
-		EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */; };
-		EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +69,27 @@
 			remoteGlobalIDString = A41F7D6C2F500A4C00A4C1D8;
 			remoteInfo = DayStepCalendarWidgetExtension;
 		};
+		A43C010E2F6CB891001C082C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A43C01052F6CB890001C082C;
+			remoteInfo = ActivityMonitorExtension;
+		};
+		A43C01252F6CB8BC001C082C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A43C011A2F6CB8BC001C082C;
+			remoteInfo = ShieldConfiguration;
+		};
+		A43C01392F6CB8DF001C082C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A43C01312F6CB8DF001C082C;
+			remoteInfo = ShieldAction;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -71,6 +99,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				A43C01272F6CB8BC001C082C /* ShieldConfiguration.appex in Embed Foundation Extensions */,
+				A43C013B2F6CB8DF001C082C /* ShieldAction.appex in Embed Foundation Extensions */,
+				A43C01102F6CB891001C082C /* ActivityMonitorExtension.appex in Embed Foundation Extensions */,
 				A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -112,6 +143,12 @@
 		A41F7D892F500A6D00A4C1D8 /* DayStepCalendarWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DayStepCalendarWidgetExtension.entitlements; sourceTree = "<group>"; };
 		A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = DayStepWidgetModule.m; path = DayStepRN/DayStepWidgetModule.m; sourceTree = "<group>"; };
 		A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepWidgetModule.swift; path = DayStepRN/DayStepWidgetModule.swift; sourceTree = "<group>"; };
+		A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ActivityMonitorExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A43C01072F6CB890001C082C /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
+		A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
+		A43C011E2F6CB8BC001C082C /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
+		A43C01322F6CB8DF001C082C /* ShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeWeekStripCalendarBridge.m; path = DayStepRN/NativeWeekStripCalendarBridge.m; sourceTree = "<group>"; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
 		B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeMissionCard.swift; path = DayStepRN/NativeMissionCard.swift; sourceTree = "<group>"; };
@@ -125,12 +162,12 @@
 		DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMultiDayTimeGrid.swift; path = DayStepRN/NativeMultiDayTimeGrid.swift; sourceTree = "<group>"; };
 		DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMultiDayTimeGridBridge.m; path = DayStepRN/NativeMultiDayTimeGridBridge.m; sourceTree = "<group>"; };
 		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
+		EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleaningGarden.swift; path = DayStepRN/NativeCleaningGarden.swift; sourceTree = "<group>"; };
+		EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleaningGardenBridge.m; path = DayStepRN/NativeCleaningGardenBridge.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeWeekStripCalendar.swift; path = DayStepRN/NativeWeekStripCalendar.swift; sourceTree = "<group>"; };
 		FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeSleepGarden.swift; path = DayStepRN/NativeSleepGarden.swift; sourceTree = "<group>"; };
 		FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeSleepGardenBridge.m; path = DayStepRN/NativeSleepGardenBridge.m; sourceTree = "<group>"; };
-		EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleaningGarden.swift; path = DayStepRN/NativeCleaningGarden.swift; sourceTree = "<group>"; };
-		EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleaningGardenBridge.m; path = DayStepRN/NativeCleaningGardenBridge.m; sourceTree = "<group>"; };
 		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -141,6 +178,27 @@
 				Info.plist,
 			);
 			target = A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */;
+		};
+		A43C01132F6CB891001C082C /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A43C01052F6CB890001C082C /* ActivityMonitorExtension */;
+		};
+		A43C01282F6CB8BC001C082C /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A43C011A2F6CB8BC001C082C /* ShieldConfiguration */;
+		};
+		A43C013C2F6CB8DF001C082C /* Exceptions for "ShieldAction" folder in "ShieldAction" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A43C01312F6CB8DF001C082C /* ShieldAction */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -155,6 +213,42 @@
 			explicitFolders = (
 			);
 			path = DayStepCalendarWidget;
+			sourceTree = "<group>";
+		};
+		A43C01092F6CB890001C082C /* ActivityMonitorExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A43C01132F6CB891001C082C /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ActivityMonitorExtension;
+			sourceTree = "<group>";
+		};
+		A43C01202F6CB8BC001C082C /* ShieldConfiguration */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A43C01282F6CB8BC001C082C /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ShieldConfiguration;
+			sourceTree = "<group>";
+		};
+		A43C01342F6CB8DF001C082C /* ShieldAction */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A43C013C2F6CB8DF001C082C /* Exceptions for "ShieldAction" folder in "ShieldAction" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ShieldAction;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -175,6 +269,31 @@
 			files = (
 				A41F7D712F500A4C00A4C1D8 /* SwiftUI.framework in Frameworks */,
 				A41F7D6F2F500A4C00A4C1D8 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01032F6CB890001C082C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A43C01082F6CB890001C082C /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01182F6CB8BC001C082C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A43C011D2F6CB8BC001C082C /* ManagedSettings.framework in Frameworks */,
+				A43C011F2F6CB8BC001C082C /* ManagedSettingsUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C012F2F6CB8DF001C082C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A43C01332F6CB8DF001C082C /* ManagedSettings.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -236,6 +355,9 @@
 				A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */,
 				A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */,
 				A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */,
+				A43C01072F6CB890001C082C /* DeviceActivity.framework */,
+				A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */,
+				A43C011E2F6CB8BC001C082C /* ManagedSettingsUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -256,6 +378,9 @@
 				13B07FAE1A68108700A75B9A /* DayStepRN */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */,
+				A43C01092F6CB890001C082C /* ActivityMonitorExtension */,
+				A43C01202F6CB8BC001C082C /* ShieldConfiguration */,
+				A43C01342F6CB8DF001C082C /* ShieldAction */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -271,6 +396,9 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* DevDayStep.app */,
 				A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */,
+				A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */,
+				A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */,
+				A43C01322F6CB8DF001C082C /* ShieldAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -321,6 +449,9 @@
 			);
 			dependencies = (
 				A41F7D812F500A4E00A4C1D8 /* PBXTargetDependency */,
+				A43C010F2F6CB891001C082C /* PBXTargetDependency */,
+				A43C01262F6CB8BC001C082C /* PBXTargetDependency */,
+				A43C013A2F6CB8DF001C082C /* PBXTargetDependency */,
 			);
 			name = DayStepRN;
 			productName = DayStepRN;
@@ -347,6 +478,66 @@
 			productReference = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		A43C01052F6CB890001C082C /* ActivityMonitorExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A43C01142F6CB891001C082C /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */;
+			buildPhases = (
+				A43C01022F6CB890001C082C /* Sources */,
+				A43C01032F6CB890001C082C /* Frameworks */,
+				A43C01042F6CB890001C082C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A43C01092F6CB890001C082C /* ActivityMonitorExtension */,
+			);
+			name = ActivityMonitorExtension;
+			productName = ActivityMonitorExtension;
+			productReference = A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A43C011A2F6CB8BC001C082C /* ShieldConfiguration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A43C01292F6CB8BC001C082C /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */;
+			buildPhases = (
+				A43C01172F6CB8BC001C082C /* Sources */,
+				A43C01182F6CB8BC001C082C /* Frameworks */,
+				A43C01192F6CB8BC001C082C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A43C01202F6CB8BC001C082C /* ShieldConfiguration */,
+			);
+			name = ShieldConfiguration;
+			productName = ShieldConfiguration;
+			productReference = A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A43C01312F6CB8DF001C082C /* ShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A43C013D2F6CB8DF001C082C /* Build configuration list for PBXNativeTarget "ShieldAction" */;
+			buildPhases = (
+				A43C012E2F6CB8DF001C082C /* Sources */,
+				A43C012F2F6CB8DF001C082C /* Frameworks */,
+				A43C01302F6CB8DF001C082C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A43C01342F6CB8DF001C082C /* ShieldAction */,
+			);
+			name = ShieldAction;
+			productName = ShieldAction;
+			productReference = A43C01322F6CB8DF001C082C /* ShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -360,6 +551,15 @@
 						LastSwiftMigration = 2620;
 					};
 					A41F7D6C2F500A4C00A4C1D8 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A43C01052F6CB890001C082C = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A43C011A2F6CB8BC001C082C = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A43C01312F6CB8DF001C082C = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -379,6 +579,9 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* DayStepRN */,
 				A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */,
+				A43C01052F6CB890001C082C /* ActivityMonitorExtension */,
+				A43C011A2F6CB8BC001C082C /* ShieldConfiguration */,
+				A43C01312F6CB8DF001C082C /* ShieldAction */,
 			);
 		};
 /* End PBXProject section */
@@ -395,6 +598,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A41F7D6B2F500A4C00A4C1D8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01042F6CB890001C082C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01192F6CB8BC001C082C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01302F6CB8DF001C082C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -554,6 +778,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A43C01022F6CB890001C082C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01172F6CB8BC001C082C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C012E2F6CB8DF001C082C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -561,6 +806,21 @@
 			isa = PBXTargetDependency;
 			target = A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */;
 			targetProxy = A41F7D802F500A4E00A4C1D8 /* PBXContainerItemProxy */;
+		};
+		A43C010F2F6CB891001C082C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A43C01052F6CB890001C082C /* ActivityMonitorExtension */;
+			targetProxy = A43C010E2F6CB891001C082C /* PBXContainerItemProxy */;
+		};
+		A43C01262F6CB8BC001C082C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A43C011A2F6CB8BC001C082C /* ShieldConfiguration */;
+			targetProxy = A43C01252F6CB8BC001C082C /* PBXContainerItemProxy */;
+		};
+		A43C013A2F6CB8DF001C082C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A43C01312F6CB8DF001C082C /* ShieldAction */;
+			targetProxy = A43C01392F6CB8DF001C082C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -594,6 +854,7 @@
 				PRODUCT_NAME = DevDayStep;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "DayStepRN/DayStepRN-Bridging-Header.h";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = "group.com.daystep.app";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -627,6 +888,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app;
 				PRODUCT_NAME = DayStep;
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = "group.com.daystep.app";
 				SWIFT_OBJC_BRIDGING_HEADER = "DayStepRN/DayStepRN-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -880,6 +1142,291 @@
 			};
 			name = Release;
 		};
+		A43C01112F6CB891001C082C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ActivityMonitorExtension/ActivityMonitorExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ActivityMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.ActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A43C01122F6CB891001C082C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ActivityMonitorExtension/ActivityMonitorExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ActivityMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A43C012A2F6CB8BC001C082C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldConfiguration/ShieldConfiguration.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A43C012B2F6CB8BC001C082C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldConfiguration/ShieldConfiguration.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A43C013E2F6CB8DF001C082C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldAction/ShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A43C013F2F6CB8DF001C082C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldAction/ShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -906,6 +1453,33 @@
 			buildConfigurations = (
 				A41F7D852F500A4E00A4C1D8 /* Debug */,
 				A41F7D862F500A4E00A4C1D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A43C01142F6CB891001C082C /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A43C01112F6CB891001C082C /* Debug */,
+				A43C01122F6CB891001C082C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A43C01292F6CB8BC001C082C /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A43C012A2F6CB8BC001C082C /* Debug */,
+				A43C012B2F6CB8BC001C082C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A43C013D2F6CB8DF001C082C /* Build configuration list for PBXNativeTarget "ShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A43C013E2F6CB8DF001C082C /* Debug */,
+				A43C013F2F6CB8DF001C082C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

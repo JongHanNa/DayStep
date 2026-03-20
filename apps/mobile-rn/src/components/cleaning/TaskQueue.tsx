@@ -4,7 +4,7 @@
 import React from 'react';
 import {View, Text} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
-import {Check} from 'lucide-react-native';
+import {Check, Zap} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {FREQUENCY_LABELS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
@@ -81,7 +81,10 @@ export function TaskQueue({sections, onSelectTask, onCompleteTask}: TaskQueuePro
                   <Text style={{fontSize: 11, color: '#9CA3AF'}}>
                     {FREQUENCY_LABELS[task.frequency]}
                   </Text>
-                  <Text style={{fontSize: 11, color: '#9CA3AF'}}>⚡{task.energyCost}</Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 2}}>
+                    <Zap size={11} color="#9CA3AF" />
+                    <Text style={{fontSize: 11, color: '#9CA3AF'}}>{task.energyCost}</Text>
+                  </View>
                   <Text style={{fontSize: 11, color: '#9CA3AF'}}>
                     {task.estimatedMinutes}분
                   </Text>

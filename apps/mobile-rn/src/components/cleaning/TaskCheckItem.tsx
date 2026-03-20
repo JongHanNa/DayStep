@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import {View, Text} from 'react-native';
+import {Zap} from 'lucide-react-native';
 import {FREQUENCY_LABELS, TAB_LABELS} from '@/constants/cleaning-data';
 import type {CleaningTask} from '@/constants/cleaning-data';
 
@@ -31,7 +32,10 @@ export function TaskCheckItem({task}: TaskCheckItemProps) {
       </Text>
 
       {/* 에너지 코스트 */}
-      <Text style={{fontSize: 11, color: '#9CA3AF'}}>⚡{task.energyCost}</Text>
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 2}}>
+        <Zap size={11} color="#9CA3AF" />
+        <Text style={{fontSize: 11, color: '#9CA3AF'}}>{task.energyCost}</Text>
+      </View>
 
       {/* 예상시간 */}
       <Text style={{fontSize: 11, color: '#9CA3AF'}}>

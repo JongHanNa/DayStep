@@ -603,10 +603,17 @@ export const useCleaningStore = create<CleaningStoreState>()(
     {
       name: 'cleaning-store',
       storage: createJSONStorage(() => zustandMMKVStorage),
-      version: 3,
+      version: 4,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           // 기존 저장 데이터에 subtasks가 없음 → 기본 태스크를 최신으로 교체
+          const customTasks = (persistedState.tasks ?? []).filter(
+            (t: any) => t.isCustom,
+          );
+          persistedState.tasks = [...ALL_DEFAULT_TASKS, ...customTasks];
+        }
+        if (version < 4) {
+          // v4: energyCost 1 태스크에 subtasks 추가 반영
           const customTasks = (persistedState.tasks ?? []).filter(
             (t: any) => t.isCustom,
           );

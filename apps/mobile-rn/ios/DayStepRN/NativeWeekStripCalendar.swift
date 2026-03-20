@@ -1,8 +1,9 @@
 /**
- * NativeWeekStripCalendar — 주간 스트립 캘린더 (Apple Calendar 스타일)
- * 상단 월 레이블 + "오늘" 버튼, 하단 가로 스크롤 주간 그리드
+ * NativeWeekStripCalendar — 주간/월간 스트립 캘린더 (Apple Calendar 스타일)
+ * 상단 월 레이블 + "오늘" 버튼, 하단 가로 스크롤 주간/월간 그리드
  *
  * 패턴: ObservableObject + setupOnce() (NativeCleanupAccordion 참조)
+ * 드래그: UIKit UIPanGestureRecognizer (SwiftUI ScrollView 충돌 방지)
  */
 
 import Foundation
@@ -11,9 +12,17 @@ import UIKit
 
 // MARK: - Data Models
 
-struct WeekData: Identifiable {
-  let id: String          // 주 시작일 "yyyy-MM-dd"
-  let dates: [Date]       // 7일 (일~토)
+struct MonthGridCell: Identifiable {
+  let id: String      // "yyyy-MM-dd"
+  let date: Date
+  let day: Int
+  let isCurrentMonth: Bool
+  let weekdayIndex: Int  // 0=일, 6=토
+}
+
+struct MonthPageData: Identifiable {
+  let id: String          // "yyyy-MM"
+  let rows: [[MonthGridCell]]
 }
 
 // MARK: - Observable State
@@ -21,9 +30,12 @@ struct WeekData: Identifiable {
 class WeekStripState: ObservableObject {
   @Published var selectedDate: Date = Date()
   @Published var primaryColor: String = "#6366F1"
-  @Published var weeks: [WeekData] = []
-  @Published var currentWeekId: String = ""
   @Published var displayMonth: String = ""
+  @Published var isExpanded: Bool = false
+  @Published var expandProgress: CGFloat = 0  // 0=주간, 1=월간
+  @Published var isDragging: Bool = false
+  @Published var months: [MonthPageData] = []
+  @Published var currentMonthId: String = ""
 
   private let calendar: Calendar = {
     var cal = Calendar(identifier: .gregorian)
@@ -38,51 +50,106 @@ class WeekStripState: ObservableObject {
     return df
   }()
 
-  func generateWeeks() {
-    let today = calendar.startOfDay(for: Date())
-
-    // 오늘이 속한 주의 일요일 찾기
-    let weekday = calendar.component(.weekday, from: today)
-    guard let thisSunday = calendar.date(byAdding: .day, value: -(weekday - 1), to: today) else { return }
-
-    var result: [WeekData] = []
-    for offset in -52...52 {
-      guard let weekStart = calendar.date(byAdding: .weekOfYear, value: offset, to: thisSunday) else { continue }
-      var dates: [Date] = []
-      for d in 0..<7 {
-        if let date = calendar.date(byAdding: .day, value: d, to: weekStart) {
-          dates.append(date)
-        }
-      }
-      let id = dateFormatter.string(from: weekStart)
-      result.append(WeekData(id: id, dates: dates))
-    }
-    weeks = result
-    updateCurrentWeek(for: selectedDate)
-  }
-
-  func updateCurrentWeek(for date: Date) {
-    let startOfDate = calendar.startOfDay(for: date)
-    let weekday = calendar.component(.weekday, from: startOfDate)
-    guard let sunday = calendar.date(byAdding: .day, value: -(weekday - 1), to: startOfDate) else { return }
-    currentWeekId = dateFormatter.string(from: sunday)
-    updateDisplayMonth(for: date)
-  }
+  private let monthIdFormatter: DateFormatter = {
+    let df = DateFormatter()
+    df.dateFormat = "yyyy-MM"
+    return df
+  }()
 
   func updateDisplayMonth(for date: Date) {
     let month = calendar.component(.month, from: date)
     displayMonth = "\(month)월"
   }
 
-  func weekId(for date: Date) -> String {
-    let startOfDate = calendar.startOfDay(for: date)
-    let weekday = calendar.component(.weekday, from: startOfDate)
-    guard let sunday = calendar.date(byAdding: .day, value: -(weekday - 1), to: startOfDate) else { return "" }
-    return dateFormatter.string(from: sunday)
+  func monthId(for date: Date) -> String {
+    return monthIdFormatter.string(from: date)
   }
 
   func dateString(from date: Date) -> String {
     return dateFormatter.string(from: date)
+  }
+
+  /// 현재 월의 행 수 (5 또는 6)
+  var currentMonthRowCount: Int {
+    guard let monthPage = months.first(where: { $0.id == currentMonthId }) else { return 5 }
+    return monthPage.rows.count
+  }
+
+  /// 현재 월 그리드에서 선택된 주가 몇 번째 행인지 (0-based)
+  var selectedWeekRowIndex: Int {
+    guard let monthPage = months.first(where: { $0.id == currentMonthId }) else { return 0 }
+    let selectedStr = dateFormatter.string(from: selectedDate)
+    for (index, row) in monthPage.rows.enumerated() {
+      if row.contains(where: { $0.id == selectedStr }) {
+        return index
+      }
+    }
+    return 0
+  }
+
+  /// 선택된 날짜 기준 ±12개월 MonthPageData 배열 생성
+  func generateMonths(for date: Date) {
+    let year = calendar.component(.year, from: date)
+    let month = calendar.component(.month, from: date)
+    guard let baseDate = calendar.date(from: DateComponents(year: year, month: month, day: 1)) else { return }
+
+    var result: [MonthPageData] = []
+    for offset in -12...12 {
+      guard let monthDate = calendar.date(byAdding: .month, value: offset, to: baseDate) else { continue }
+      let rows = buildMonthGrid(for: monthDate)
+      let id = monthIdFormatter.string(from: monthDate)
+      result.append(MonthPageData(id: id, rows: rows))
+    }
+    months = result
+    currentMonthId = monthIdFormatter.string(from: baseDate)
+  }
+
+  /// 단일 월의 그리드 행 생성 (5-6주 x 7일)
+  private func buildMonthGrid(for date: Date) -> [[MonthGridCell]] {
+    let year = calendar.component(.year, from: date)
+    let month = calendar.component(.month, from: date)
+
+    guard let firstOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+          let range = calendar.range(of: .day, in: .month, for: firstOfMonth) else { return [] }
+    let lastDay = range.count
+    guard let lastOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: lastDay)) else { return [] }
+
+    // 1일이 속한 주의 일요일
+    let firstWeekday = calendar.component(.weekday, from: firstOfMonth)
+    guard let firstSunday = calendar.date(byAdding: .day, value: -(firstWeekday - 1), to: firstOfMonth) else { return [] }
+
+    // 말일이 속한 주의 토요일
+    let lastWeekday = calendar.component(.weekday, from: lastOfMonth)
+    guard let lastSaturday = calendar.date(byAdding: .day, value: (7 - lastWeekday), to: lastOfMonth) else { return [] }
+
+    var rows: [[MonthGridCell]] = []
+    var currentSunday = firstSunday
+
+    while currentSunday <= lastSaturday {
+      var row: [MonthGridCell] = []
+      for d in 0..<7 {
+        guard let cellDate = calendar.date(byAdding: .day, value: d, to: currentSunday) else { continue }
+        let dayNum = calendar.component(.day, from: cellDate)
+        let dateStr = dateFormatter.string(from: cellDate)
+        let cellMonth = calendar.component(.month, from: cellDate)
+        let cellYear = calendar.component(.year, from: cellDate)
+        let isCurrentMonth = (cellMonth == month && cellYear == year)
+
+        row.append(MonthGridCell(
+          id: dateStr,
+          date: cellDate,
+          day: dayNum,
+          isCurrentMonth: isCurrentMonth,
+          weekdayIndex: d
+        ))
+      }
+      rows.append(row)
+
+      guard let nextSunday = calendar.date(byAdding: .day, value: 7, to: currentSunday) else { break }
+      currentSunday = nextSunday
+    }
+
+    return rows
   }
 }
 
@@ -93,6 +160,8 @@ struct WeekStripContent: View {
   @ObservedObject var state: WeekStripState
 
   var onDateSelect: ((String) -> Void)?
+  var onExpandChange: ((Bool) -> Void)?
+  var onHeightChange: (() -> Void)?
 
   private let calendar: Calendar = {
     var cal = Calendar(identifier: .gregorian)
@@ -104,6 +173,20 @@ struct WeekStripContent: View {
   private let dayLabels = ["일", "월", "화", "수", "목", "금", "토"]
   private let today = Calendar.current.startOfDay(for: Date())
 
+  private let weekHeight: CGFloat = 44  // 40 + padding 4
+  private let rowHeight: CGFloat = 40   // 38 cell + 2 spacing
+
+  /// 현재 월의 전체 높이 계산
+  private var monthFullHeight: CGFloat {
+    let rowCount = CGFloat(state.currentMonthRowCount)
+    return rowCount * 38 + (rowCount - 1) * 2 + 4  // cell(38) + spacing(2) + bottom padding(4)
+  }
+
+  /// 선택된 주 행의 Y offset (그리드 내 위치)
+  private var selectedRowOffset: CGFloat {
+    CGFloat(state.selectedWeekRowIndex) * rowHeight
+  }
+
   var body: some View {
     VStack(spacing: 0) {
       // 상단: 월 레이블 + 오늘 버튼
@@ -114,104 +197,155 @@ struct WeekStripContent: View {
 
         Spacer()
 
-        let todayWeekId = state.weekId(for: today)
-        let isOnTodayWeek = state.currentWeekId == todayWeekId
-          && calendar.isDate(state.selectedDate, inSameDayAs: today)
+        let isOnToday = calendar.isDate(state.selectedDate, inSameDayAs: today)
 
         Button(action: {
           let todayStr = state.dateString(from: today)
           state.selectedDate = today
-          state.updateCurrentWeek(for: today)
+          state.updateDisplayMonth(for: today)
+          state.generateMonths(for: today)
           onDateSelect?(todayStr)
         }) {
           Text("오늘")
             .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(isOnTodayWeek ? Color(hex: "#9CA3AF") : Color(hex: state.primaryColor))
+            .foregroundColor(isOnToday ? Color(hex: "#9CA3AF") : Color(hex: state.primaryColor))
         }
-        .disabled(isOnTodayWeek)
+        .disabled(isOnToday)
       }
       .padding(.horizontal, 20)
       .padding(.top, 12)
-      .padding(.bottom, 16)
+      .padding(.bottom, 12)
 
-      // 하단: 주간 스크롤
-      ScrollView(.horizontal, showsIndicators: false) {
-        LazyHStack(spacing: 0) {
-          ForEach(state.weeks) { week in
-            weekView(week: week)
-              .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
-              .id(week.id)
-          }
-        }
-        .scrollTargetLayout()
-      }
-      .scrollTargetBehavior(.paging)
-      .scrollPosition(id: Binding(
-        get: { state.currentWeekId },
-        set: { newId in
-          if let id = newId, id != state.currentWeekId {
-            state.currentWeekId = id
-            // 스크롤 시 월 레이블 업데이트 (가운데 날짜 기준)
-            if let week = state.weeks.first(where: { $0.id == id }),
-               week.dates.count > 3 {
-              state.updateDisplayMonth(for: week.dates[3])
-            }
-          }
-        }
-      ))
-      .frame(height: 60)
-      .padding(.bottom, 4)
+      // 요일 라벨 행 (week/month 공통)
+      weekdayHeader
+
+      // 서랍형 전환: 월간 그리드만 사용, 클리핑으로 선택된 행만 노출
+      // progress=0: offset=-selectedRowOffset (선택된 행이 상단), height=weekHeight (1행만 보임)
+      // progress=1: offset=0 (전체 그리드 정상), height=monthFullHeight (전체 보임)
+      monthScrollView
+        .offset(y: -selectedRowOffset * (1.0 - state.expandProgress))
+        .frame(height: weekHeight + (monthFullHeight - weekHeight) * state.expandProgress)
+        .clipped()
     }
+    // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
   }
 
-  private func weekView(week: WeekData) -> some View {
+  // MARK: - Weekday Header (공통)
+
+  private var weekdayHeader: some View {
     HStack(spacing: 0) {
-      ForEach(Array(week.dates.enumerated()), id: \.offset) { index, date in
-        let isToday = calendar.isDate(date, inSameDayAs: today)
-        let isSelected = calendar.isDate(date, inSameDayAs: state.selectedDate)
-        let day = calendar.component(.day, from: date)
+      ForEach(Array(dayLabels.enumerated()), id: \.offset) { index, label in
+        Text(label)
+          .font(.system(size: 11, weight: .semibold))
+          .foregroundColor(weekdayColor(index: index))
+          .frame(maxWidth: .infinity)
+      }
+    }
+    .padding(.horizontal, 8)
+    .padding(.bottom, 6)
+  }
 
-        Button(action: {
-          state.selectedDate = date
-          onDateSelect?(state.dateString(from: date))
-        }) {
-          VStack(spacing: 4) {
-            // 요일 레이블
-            Text(dayLabels[index])
-              .font(.system(size: 11, weight: .medium))
-              .foregroundColor(dayLabelColor(index: index, isToday: isToday))
+  // MARK: - Month Scroll View (가로 페이징, 각 페이지 = 1개월 그리드)
 
-            // 일자
-            ZStack {
-              if isToday {
-                Circle()
-                  .fill(Color(hex: state.primaryColor))
-                  .frame(width: 34, height: 34)
-              } else if isSelected {
-                Circle()
-                  .fill(Color(hex: state.primaryColor).opacity(0.15))
-                  .frame(width: 34, height: 34)
-              }
-
-              Text("\(day)")
-                .font(.system(size: 15, weight: isToday || isSelected ? .bold : .regular))
-                .foregroundColor(
-                  isToday ? .white :
-                  isSelected ? Color(hex: state.primaryColor) :
-                  dayNumberColor(index: index)
-                )
-            }
-            .frame(width: 34, height: 34)
+  private var monthScrollView: some View {
+    ScrollView(.horizontal, showsIndicators: false) {
+      LazyHStack(spacing: 0) {
+        ForEach(state.months) { monthPage in
+          monthPageView(monthPage: monthPage)
+            .containerRelativeFrame(.horizontal, count: 1, spacing: 0)
+            .id(monthPage.id)
+        }
+      }
+      .scrollTargetLayout()
+    }
+    .scrollTargetBehavior(.paging)
+    .scrollPosition(id: Binding(
+      get: { state.currentMonthId },
+      set: { newId in
+        if let id = newId, id != state.currentMonthId {
+          state.currentMonthId = id
+          // "yyyy-MM" → 월 레이블 갱신
+          if let monthPage = state.months.first(where: { $0.id == id }),
+             let firstRow = monthPage.rows.first,
+             let midCell = firstRow.first(where: { $0.isCurrentMonth }) {
+            state.updateDisplayMonth(for: midCell.date)
           }
         }
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity)
+      }
+    ))
+    .scrollDisabled(state.expandProgress < 0.5)
+  }
+
+  /// 단일 월 페이지 (VStack 그리드)
+  private func monthPageView(monthPage: MonthPageData) -> some View {
+    VStack(spacing: 2) {
+      ForEach(Array(monthPage.rows.enumerated()), id: \.offset) { _, row in
+        HStack(spacing: 0) {
+          ForEach(row) { cell in
+            monthDayCellView(cell: cell)
+              .frame(maxWidth: .infinity)
+          }
+        }
       }
     }
     .padding(.horizontal, 8)
   }
 
-  private func dayLabelColor(index: Int, isToday: Bool) -> Color {
+  private func monthDayCellView(cell: MonthGridCell) -> some View {
+    let isToday = calendar.isDate(cell.date, inSameDayAs: today)
+    let isSelected = calendar.isDate(cell.date, inSameDayAs: state.selectedDate)
+
+    return Button(action: {
+      state.selectedDate = cell.date
+      state.updateDisplayMonth(for: cell.date)
+      onDateSelect?(state.dateString(from: cell.date))
+
+      // 다른 달 날짜 탭 시 월 페이지 갱신
+      let tappedMonthId = state.monthId(for: cell.date)
+      if tappedMonthId != state.currentMonthId {
+        state.currentMonthId = tappedMonthId
+      }
+
+      // 날짜 선택 후 주간 모드로 축소
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+          state.isExpanded = false
+          state.expandProgress = 0
+        }
+        onExpandChange?(false)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+          onHeightChange?()
+        }
+      }
+    }) {
+      ZStack {
+        if isToday {
+          Circle()
+            .fill(Color(hex: state.primaryColor))
+            .frame(width: 34, height: 34)
+        } else if isSelected {
+          Circle()
+            .fill(Color(hex: state.primaryColor).opacity(0.15))
+            .frame(width: 34, height: 34)
+        }
+
+        Text("\(cell.day)")
+          .font(.system(size: 15, weight: isToday || isSelected ? .bold : .regular))
+          .foregroundColor(
+            isToday ? .white :
+            !cell.isCurrentMonth ? Color(hex: "#D1D5DB") :
+            isSelected ? Color(hex: state.primaryColor) :
+            dayNumberColor(index: cell.weekdayIndex)
+          )
+      }
+      .frame(width: 40, height: 38)
+    }
+    .buttonStyle(.plain)
+  }
+
+  // MARK: - Color Helpers
+
+  private func weekdayColor(index: Int) -> Color {
     if index == 0 { return Color(hex: "#EF4444") } // 일: 빨강
     if index == 6 { return Color(hex: "#3B82F6") } // 토: 파랑
     return Color(hex: "#9CA3AF")
@@ -226,11 +360,12 @@ struct WeekStripContent: View {
 
 // MARK: - UIView Wrapper
 
-class NativeWeekStripCalendarUIView: UIView {
+class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate {
 
   // RN Event Blocks
   @objc var onDateSelect: RCTDirectEventBlock?
   @objc var onHeightChange: RCTDirectEventBlock?
+  @objc var onExpandChange: RCTDirectEventBlock?
 
   private let weekState = WeekStripState()
   private var hostingController: UIHostingController<AnyView>?
@@ -247,7 +382,12 @@ class NativeWeekStripCalendarUIView: UIView {
   @objc func setSelectedDate(_ value: NSString) {
     guard let date = dateFormatter.date(from: value as String) else { return }
     weekState.selectedDate = date
-    weekState.updateCurrentWeek(for: date)
+    weekState.updateDisplayMonth(for: date)
+    // 월이 바뀌면 monthId도 갱신
+    let newMonthId = weekState.monthId(for: date)
+    if newMonthId != weekState.currentMonthId {
+      weekState.currentMonthId = newMonthId
+    }
     setupOnce()
   }
 
@@ -263,6 +403,73 @@ class NativeWeekStripCalendarUIView: UIView {
     onHeightChange?(["height": size.height])
   }
 
+  // MARK: - UIPanGestureRecognizer Handler
+
+  /// 드래그 가능한 높이 (월간 전체 - 주간 높이, 감도 기준)
+  private var expandableHeight: CGFloat { 150.0 }
+
+  @objc private func handleVerticalPan(_ gesture: UIPanGestureRecognizer) {
+    let translation = gesture.translation(in: self)
+    let velocity = gesture.velocity(in: self)
+
+    switch gesture.state {
+    case .began:
+      weekState.isDragging = true
+
+    case .changed:
+      let ty = translation.y
+      if weekState.isExpanded {
+        // 축소 중: 위로 드래그 → progress 1→0
+        let progress = max(0, 1.0 - (-ty / expandableHeight))
+        weekState.expandProgress = min(1.0, progress)
+      } else {
+        // 확장 중: 아래로 드래그 → progress 0→1
+        let progress = min(1.0, ty / expandableHeight)
+        weekState.expandProgress = max(0, progress)
+      }
+
+    case .ended, .cancelled:
+      weekState.isDragging = false
+
+      // velocity + progress threshold로 스냅 결정
+      let shouldExpand: Bool
+      if weekState.isExpanded {
+        // 현재 확장 → 축소 여부: progress < 0.6 또는 빠른 위 방향 velocity
+        shouldExpand = weekState.expandProgress > 0.6 && velocity.y > -500
+      } else {
+        // 현재 축소 → 확장 여부: progress > 0.4 또는 빠른 아래 방향 velocity
+        shouldExpand = weekState.expandProgress > 0.4 || velocity.y > 500
+      }
+
+      withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+        weekState.expandProgress = shouldExpand ? 1.0 : 0.0
+        weekState.isExpanded = shouldExpand
+      }
+      onExpandChange?(["expanded": shouldExpand])
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        self?.emitHeight()
+      }
+
+    default:
+      break
+    }
+  }
+
+  // UIGestureRecognizerDelegate — 수직 방향 우세 시에만 pan 인식 시작
+  override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+    guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
+    let v = pan.velocity(in: self)
+    return abs(v.y) > abs(v.x)  // 수직 우세
+  }
+
+  // ScrollView와 동시 인식 허용
+  func gestureRecognizer(
+    _ gestureRecognizer: UIGestureRecognizer,
+    shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+  ) -> Bool {
+    return true
+  }
+
   // MARK: - Setup Once
 
   private func setupOnce() {
@@ -270,13 +477,21 @@ class NativeWeekStripCalendarUIView: UIView {
     hasSetUp = true
     backgroundColor = .clear
 
-    weekState.generateWeeks()
+    weekState.generateMonths(for: weekState.selectedDate)
 
     if #available(iOS 17.0, *) {
       let swiftUIView = WeekStripContent(
         state: weekState,
         onDateSelect: { [weak self] dateString in
           self?.onDateSelect?(["date": dateString])
+        },
+        onExpandChange: { [weak self] expanded in
+          self?.onExpandChange?(["expanded": expanded])
+        },
+        onHeightChange: { [weak self] in
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            self?.emitHeight()
+          }
         }
       )
 
@@ -292,6 +507,11 @@ class NativeWeekStripCalendarUIView: UIView {
         hc.view.topAnchor.constraint(equalTo: topAnchor),
         hc.view.bottomAnchor.constraint(equalTo: bottomAnchor),
       ])
+
+      // UIPanGestureRecognizer 추가 (수직 드래그 → expand/collapse)
+      let pan = UIPanGestureRecognizer(target: self, action: #selector(handleVerticalPan(_:)))
+      pan.delegate = self
+      hc.view.addGestureRecognizer(pan)
 
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
         self?.emitHeight()

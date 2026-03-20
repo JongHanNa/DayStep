@@ -359,6 +359,9 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
             onHeightChange={(e) => {
               calendarHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
             }}
+            onExpandChange={() => {
+              // 확장/축소 시 높이가 onHeightChange로 자동 업데이트됨
+            }}
             style={StyleSheet.absoluteFill}
           />
         </Animated.View>
