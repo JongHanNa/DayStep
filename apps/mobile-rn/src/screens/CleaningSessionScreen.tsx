@@ -12,6 +12,7 @@ import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useCleaningStore} from '@/stores/cleaningStore';
 import {useTheme} from '@/theme';
+import {hexWithOpacity} from '@/lib/todoUtils';
 
 const RING_SIZE = 280;
 
@@ -126,14 +127,18 @@ export default function CleaningSessionScreen() {
     }
   }, [abandonCleaningSession, resetTimer, navigation, haptic]);
 
+  useEffect(() => {
+    if (!focusTask) {
+      navigation.goBack();
+    }
+  }, [focusTask, navigation]);
+
   if (!focusTask) {
-    navigation.goBack();
     return null;
   }
 
   return (
     <ScreenContainer
-      gradientColors={['#FEF3C7', '#FDE68A', '#F5F5F4']}
       statusBarStyle="dark-content"
       edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.container}>
@@ -145,15 +150,17 @@ export default function CleaningSessionScreen() {
 
         {/* 중앙: TimerRing */}
         <View style={styles.ringContainer}>
-          <TimerRing
-            progress={progress}
-            size={RING_SIZE}
-            strokeWidth={10}
-            color={primaryColor}
-            isRunning={isTimerRunning}
-          />
-          <View style={[styles.centerOverlay, {width: RING_SIZE, height: RING_SIZE}]}>
-            <Text style={styles.timerText}>{formatTime(timerSeconds)}</Text>
+          <View>
+            <TimerRing
+              progress={progress}
+              size={RING_SIZE}
+              strokeWidth={10}
+              color={primaryColor}
+              isRunning={isTimerRunning}
+            />
+            <View style={[styles.centerOverlay, {width: RING_SIZE, height: RING_SIZE}]}>
+              <Text style={styles.timerText}>{formatTime(timerSeconds)}</Text>
+            </View>
           </View>
         </View>
 
@@ -208,12 +215,12 @@ export default function CleaningSessionScreen() {
               onPress={isTimerRunning ? pauseTimer : resumeTimer}
               style={[
                 styles.primaryBtn,
-                {backgroundColor: isTimerRunning ? '#FEF3C7' : primaryColor},
+                {backgroundColor: isTimerRunning ? hexWithOpacity(primaryColor, 0.15) : primaryColor},
               ]}>
               {isTimerRunning ? (
                 <>
-                  <Pause size={18} color="#D97706" />
-                  <Text style={[styles.btnText, {color: '#D97706'}]}>일시정지</Text>
+                  <Pause size={18} color={primaryColor} />
+                  <Text style={[styles.btnText, {color: primaryColor}]}>일시정지</Text>
                 </>
               ) : (
                 <>
@@ -251,7 +258,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingTop: 40,
+    paddingTop: 20,
     paddingHorizontal: 20,
   },
   category: {
@@ -288,7 +295,7 @@ const styles = StyleSheet.create({
   // Subtasks
   subtaskContainer: {
     paddingHorizontal: 32,
-    marginBottom: 16,
+    marginBottom: 24,
   },
   allDoneText: {
     fontSize: 13,
@@ -318,7 +325,7 @@ const styles = StyleSheet.create({
   // Controls
   bottomControls: {
     alignItems: 'center',
-    paddingBottom: 60,
+    paddingBottom: 32,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -342,7 +349,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 14,
-    backgroundColor: '#10B981',
+    backgroundColor: '#22C55E',
     alignItems: 'center',
     justifyContent: 'center',
   },

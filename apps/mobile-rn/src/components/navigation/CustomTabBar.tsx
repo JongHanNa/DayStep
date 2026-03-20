@@ -243,7 +243,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isSleepActive = activeHomeScreen === 'SleepSession' || activeMoreScreen === 'SleepSession';
   const isSleepGoal = activeHomeScreen === 'SleepGoal' || activeMoreScreen === 'SleepGoal';
   const isScreenTimeApps = activeHomeScreen === 'ScreenTimeApps' || activeMoreScreen === 'ScreenTimeApps';
-  if (isSleepActive || isSleepGoal || isScreenTimeApps) {
+  const isCleaningSession = activeHomeScreen === 'CleaningSession' || activeMoreScreen === 'CleaningSession';
+  if (isSleepActive || isSleepGoal || isScreenTimeApps || isCleaningSession) {
     return null;
   }
 

@@ -222,18 +222,22 @@ struct WeekStripContent: View {
       .padding(.horizontal, 20)
       .padding(.top, 12)
       .padding(.bottom, 12)
-      .animation(nil, value: state.expandProgress)
+      .transaction { $0.animation = nil }
+      .zIndex(2)
 
       weekdayHeader
         .frame(height: state.weekdayHeight)
-        .animation(nil, value: state.expandProgress)
+        .transaction { $0.animation = nil }
+        .zIndex(1)
 
       monthScrollView
+        .compositingGroup()
         .frame(height: state.monthFullHeight)
         .offset(y: -selectedRowOffset * (1.0 - state.expandProgress * state.expandProgress))
         .frame(height: state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress, alignment: .top)
         .clipped()
     }
+    .clipped()
     // .gesture() 제거 — UIKit UIPanGestureRecognizer에서 처리
   }
 

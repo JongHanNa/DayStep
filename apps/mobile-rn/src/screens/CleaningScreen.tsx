@@ -195,11 +195,12 @@ export default function CleaningScreen() {
   // 세션 시작 핸들러 (타이머 시작 + 세션 시작 + 전체화면 진입)
   const handleSessionStart = useCallback(() => {
     if (!focusTask) return;
+    setFocusTask(focusTask.id);
     startTimer(focusTask.estimatedMinutes * 60);
     startCleaningSession(focusTask.id);
     haptic.light();
     navigation.navigate('CleaningSession' as never);
-  }, [focusTask, startTimer, startCleaningSession, haptic, navigation]);
+  }, [focusTask, setFocusTask, startTimer, startCleaningSession, haptic, navigation]);
 
   const handleGardenViewModeChange = useCallback((mode: 'day' | 'week' | 'month' | 'year') => {
     setCurrentViewMode(mode);
