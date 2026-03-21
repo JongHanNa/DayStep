@@ -117,3 +117,48 @@ export const layout = {
   tabBarHeight: 80,
   headerHeight: 56,
 } as const;
+
+// ============================================
+// Breakpoints (iPad/태블릿 반응형)
+// ============================================
+export const breakpoints = {
+  phone: 0,
+  tablet: 768,
+  tabletLandscape: 1024,
+} as const;
+
+// ============================================
+// Responsive Layout (브레이크포인트별 레이아웃 값)
+// ============================================
+export const responsiveLayout = {
+  phone: {
+    screenPadding: spacing.lg,       // 16
+    contentMaxWidth: 0,              // 0 = 제한 없음
+    columns: 2,
+    ringSize: 280,
+    tabBarHorizontalInset: 16,
+    sectionGap: spacing['2xl'],      // 24
+    cardPadding: spacing.lg,         // 16
+    peekWidth: 40,
+  },
+  tablet: {
+    screenPadding: spacing['3xl'],   // 32
+    contentMaxWidth: 720,
+    columns: 3,
+    ringSize: 360,
+    tabBarHorizontalInset: 80,
+    sectionGap: spacing['3xl'],      // 32
+    cardPadding: spacing.xl,         // 20
+    peekWidth: 80,
+  },
+  tabletLandscape: {
+    screenPadding: spacing['4xl'],   // 40
+    contentMaxWidth: 960,
+    columns: 4,
+    ringSize: 400,
+    tabBarHorizontalInset: 120,
+    sectionGap: spacing['4xl'],      // 40
+    cardPadding: spacing['2xl'],     // 24
+    peekWidth: 80,
+  },
+} as const;

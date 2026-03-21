@@ -11,11 +11,14 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import {Clock, ChevronLeft, ChevronRight} from 'lucide-react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AnimatedPressable, AnimatedCard} from '@/components/core';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
 import {hexWithOpacity} from '@/lib/todoUtils';
 import {ADHD_TOPICS, READING_TIMES} from '@/constants/adhd-understanding-data';
+
+const TAB_BAR_HEIGHT = 56;
 
 function ProgressDots({
   current,
@@ -53,6 +56,7 @@ function ProgressDots({
 
 export function CardReaderView() {
   const {primaryColor} = useTheme();
+  const insets = useSafeAreaInsets();
   const [currentChapter, setCurrentChapter] = useState(0);
 
   const topic = ADHD_TOPICS[currentChapter];
@@ -123,7 +127,7 @@ export function CardReaderView() {
       </ScrollView>
 
       {/* 하단 네비게이션 */}
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, {paddingBottom: 16 + TAB_BAR_HEIGHT + insets.bottom}]}>
         <AnimatedPressable
           onPress={goPrev}
           hapticType="light"
@@ -254,8 +258,7 @@ const styles = StyleSheet.create({
   bottomNav: {
     flexDirection: 'row',
     gap: 12,
-    paddingVertical: 16,
-    paddingBottom: 32,
+    paddingTop: 16,
   },
   navBtn: {
     flexDirection: 'row',

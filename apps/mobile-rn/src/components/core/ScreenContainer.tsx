@@ -3,10 +3,11 @@
  * SafeArea + 그라디언트 배경 래퍼 — 모든 화면의 기본 컨테이너
  */
 import React from 'react';
-import {StyleSheet, ViewStyle, StyleProp, StatusBar} from 'react-native';
+import {StyleSheet, View, ViewStyle, StyleProp, StatusBar} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {GradientBackground, gradientPresets} from './GradientBackground';
 import {useSettingsStore} from '@/stores/settingsStore';
+import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
 
 type GradientPreset = keyof typeof gradientPresets;
 
@@ -38,6 +39,15 @@ export function ScreenContainer({
   const effectiveGradient = backgroundPreset;
   const preset = effectiveGradient ? gradientPresets[effectiveGradient] : null;
   const colors = gradientColors ?? preset?.colors;
+  const {contentMaxWidth} = useResponsiveLayout();
+
+  const innerContent = contentMaxWidth > 0 ? (
+    <View style={[styles.flex, {alignItems: 'center'}]}>
+      <View style={[styles.flex, {width: '100%', maxWidth: contentMaxWidth}]}>
+        {children}
+      </View>
+    </View>
+  ) : children;
 
   return (
     <>
@@ -49,14 +59,14 @@ export function ScreenContainer({
           end={preset?.end}
           style={styles.flex}>
           <SafeAreaView edges={edges} style={[styles.flex, style]}>
-            {children}
+            {innerContent}
           </SafeAreaView>
         </GradientBackground>
       ) : (
         <SafeAreaView
           edges={edges}
           style={[styles.flex, {backgroundColor}, style]}>
-          {children}
+          {innerContent}
         </SafeAreaView>
       )}
     </>

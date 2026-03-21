@@ -15,6 +15,7 @@ import {Crown} from 'lucide-react-native';
 import {useTheme} from '@/theme';
 import {NativeGroupSectionNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
+import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
 
 export interface FeatureItem {
   id: string;
@@ -58,6 +59,8 @@ export function GroupSection({
   enterDelay = 0,
 }: GroupSectionProps) {
   const {primaryColor} = useTheme();
+  const {columns: responsiveColumns} = useResponsiveLayout();
+  const effectiveColumns = numColumns === 2 ? responsiveColumns : numColumns;
   const animatedHeight = useSharedValue(300);
 
   const heightStyle = useAnimatedStyle(() => ({
@@ -149,7 +152,7 @@ export function GroupSection({
             entering={FadeInDown.delay(
               enterDelay + 50 + index * 60,
             ).duration(350)}
-            style={{width: '48%'}}>
+            style={{width: `${Math.floor(100 / effectiveColumns) - 2}%` as any}}>
             <AnimatedPressable
               onPress={item.onPress}
               hapticType="light"

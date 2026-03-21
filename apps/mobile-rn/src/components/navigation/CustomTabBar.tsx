@@ -36,6 +36,7 @@ import {
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useSettingsStore} from '@/stores/settingsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
 import {Canvas, Path, Skia} from '@shopify/react-native-skia';
 // MorePanel 높이 상수 (iOS 25- JS 폴백용)
 const MORE_PANEL_CONTENT_HEIGHT = 200;
@@ -110,6 +111,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isTimerActive = timerState.isRunning || timerState.isPaused;
   const plannerViewMode = useSettingsStore(s => s.plannerViewMode);
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
+  const {tabBarHorizontalInset, isTablet} = useResponsiveLayout();
   const [morePanelVisible, setMorePanelVisible] = useState(false);
   const [panelContentHeight, setPanelContentHeight] = useState(MORE_PANEL_CONTENT_HEIGHT);
   const [shouldRenderPanel, setShouldRenderPanel] = useState(false);
@@ -173,7 +175,9 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
   // 글래스 필 위치 계산
   const {width: screenWidth} = useWindowDimensions();
-  const tabBarInnerWidth = screenWidth - 32; // container left:16 + right:16
+  const tabBarInnerWidth = isTablet
+    ? Math.min(screenWidth - tabBarHorizontalInset * 2, 600)
+    : screenWidth - tabBarHorizontalInset * 2;
   const tabWidth = tabBarInnerWidth / TAB_COUNT;
   const pillWidth = tabWidth - 12; // 탭 셀보다 약간 좁게
 
@@ -317,7 +321,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
         <Animated.View
           style={[
             styles.container,
-            {bottom: tabBarBottom},
+            {bottom: tabBarBottom, left: tabBarHorizontalInset, right: tabBarHorizontalInset},
+            isTablet && {maxWidth: 600, alignSelf: 'center', left: 0, right: 0},
             animatedNativeStyle,
             // 네이티브 glassEffect가 자체 깊이감 제공 → RN shadow 불필요
             {shadowOpacity: 0, elevation: 0},
@@ -358,7 +363,8 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
       <Animated.View
         style={[
           styles.container,
-          {bottom: tabBarBottom},
+          {bottom: tabBarBottom, left: tabBarHorizontalInset, right: tabBarHorizontalInset},
+          isTablet && {maxWidth: 600, alignSelf: 'center', left: 0, right: 0},
           animatedContainerStyle,
         ]}>
         {/* GlassBackground: 항상 expandedHeight 고정, bottom:0 고정 → 리사이즈 없음 */}
@@ -525,8 +531,6 @@ function TabButton({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 16,
-    right: 16,
     borderRadius: 32,
     overflow: 'hidden',
     shadowColor: '#000',

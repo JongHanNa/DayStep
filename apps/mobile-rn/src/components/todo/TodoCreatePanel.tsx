@@ -23,7 +23,7 @@ import {
   Keyboard,
   AppState,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import BottomSheet, {
   BottomSheetView,
@@ -74,6 +74,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     ref,
   ) {
     const {primaryColor} = useTheme();
+    const {width: screenWidth} = useWindowDimensions();
     const bottomSheetRef = useRef<BottomSheet>(null);
     const titleInputRef = useRef<any>(null);
     const pendingFocusRef = useRef(false);
@@ -238,7 +239,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
             onClose={() => setActivePop('none')}
             anchorPosition={popAnchor}
             horizontalAlign="left"
-            width={Math.min(Dimensions.get('window').width - 32, 320)}>
+            width={Math.min(screenWidth - 32, 320)}>
             <InlineIconPicker
               selectedIcon={form.icon}
               onIconChange={v => updateField('icon', v)}

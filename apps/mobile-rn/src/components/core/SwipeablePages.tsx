@@ -4,23 +4,25 @@
  * — 옆 페이지 peek 노출 + DnD 제스처 충돌 없음
  */
 import React, {useState, useCallback, useRef, useImperativeHandle, forwardRef, useMemo} from 'react';
-import {View, ScrollView, StyleSheet, Dimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent} from 'react-native';
+import {View, ScrollView, StyleSheet, useWindowDimensions, LayoutChangeEvent, NativeSyntheticEvent, NativeScrollEvent} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
 import {useTheme} from '@/theme';
+import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+/** @deprecated 외부 참조용 — 런타임에서는 useResponsiveLayout().peekWidth 사용 */
 export const PEEK_WIDTH = 40;
-export const PAGE_WIDTH = SCREEN_WIDTH - PEEK_WIDTH;
+/** @deprecated 외부 참조용 — 런타임에서는 동적 계산 사용 */
+export const PAGE_WIDTH = 0; // DndContext에서 import하므로 유지, 실제 값은 동적
 
-/** 비균일 snap offsets: 페이지 0은 0, 페이지 i≥1은 i*PAGE_WIDTH - PEEK_WIDTH */
-function computeSnapOffsets(pageCount: number): number[] {
+/** 비균일 snap offsets: 페이지 0은 0, 페이지 i≥1은 i*pageWidth - peekWidth */
+function computeSnapOffsets(pageCount: number, pageWidth: number, peekWidth: number): number[] {
   const offsets: number[] = [];
   for (let i = 0; i < pageCount; i++) {
-    offsets.push(i === 0 ? 0 : i * PAGE_WIDTH - PEEK_WIDTH);
+    offsets.push(i === 0 ? 0 : i * pageWidth - peekWidth);
   }
   return offsets;
 }
@@ -55,10 +57,13 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
   const [containerHeight, setContainerHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const {primaryColor} = useTheme();
+  const {width: screenWidth} = useWindowDimensions();
+  const {peekWidth} = useResponsiveLayout();
 
+  const pageWidth = screenWidth - peekWidth;
   const pages = React.Children.toArray(children);
   const pageCount = pages.length;
-  const snapOffsets = useMemo(() => computeSnapOffsets(pageCount), [pageCount]);
+  const snapOffsets = useMemo(() => computeSnapOffsets(pageCount, pageWidth, peekWidth), [pageCount, pageWidth, peekWidth]);
 
   const scrollPositionRef = useRef(snapOffsets[initialPage] ?? 0);
 
@@ -144,10 +149,10 @@ export const SwipeablePages = forwardRef<SwipeablePagesRef, SwipeablePagesProps>
           scrollEventThrottle={16}
           onScroll={handleScroll}
           onMomentumScrollEnd={handleMomentumScrollEnd}
-          contentContainerStyle={{paddingRight: PEEK_WIDTH}}
+          contentContainerStyle={{paddingRight: peekWidth}}
           style={{height: scrollViewHeight}}>
           {pages.map((page, index) => (
-            <View key={index} style={[styles.page, {width: PAGE_WIDTH}]}>
+            <View key={index} style={[styles.page, {width: pageWidth}]}>
               {page as React.ReactNode}
             </View>
           ))}

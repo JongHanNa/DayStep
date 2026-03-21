@@ -52,16 +52,17 @@ export function getAuthorizationStatus(): AuthStatus {
 /**
  * ManagedSettingsStore — 모든 앱 차단 (허용 앱 제외)
  */
-export function shieldAllExceptAllowed(): void {
+export async function shieldAllExceptAllowed(): Promise<void> {
   console.log('[ScreenTime] shieldAllExceptAllowed called, isAvailable:', isAvailable());
   if (!isAvailable()) return;
 
   try {
+    await _requestAuth('individual'); // 이미 인증 시 즉시 resolve, 미인증 시 시스템 프롬프트
     enableBlockAllMode('sleep-session');
     const isBlocking = userDefaultsGet<boolean>('isBlockingAll');
     console.log('[ScreenTime] enableBlockAllMode done, isBlockingAll:', isBlocking);
   } catch (error) {
-    console.error('[ScreenTime] shieldAllExceptAllowed error:', error);
+    console.error('[ScreenTime] shieldAllExceptAllowed error (auth or shield):', error);
   }
 }
 

@@ -258,6 +258,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
 
   private let state = WeekStripState()
   private var hasSetUp = false
+  private var hasPerformedInitialLayout = false
 
   // UI Components
   private let headerView = UIView()
@@ -606,6 +607,12 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
 
     // Grid container + scroll
     layoutGrid()
+
+    // 첫 유효 레이아웃 후 UI 스타일 + 스크롤 위치 재적용
+    if hasSetUp && !hasPerformedInitialLayout {
+      hasPerformedInitialLayout = true
+      updateUI()
+    }
   }
 
   private func layoutGrid() {
@@ -853,9 +860,8 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     state.currentWeekIndex = pageIndex
     let week = state.weeks[pageIndex]
 
-    // 새 주에서 선택 날짜와 같은 요일의 날짜를 선택, 또는 첫 번째 셀
-    let selectedWeekday = state.calendar.component(.weekday, from: state.selectedDate)
-    let newCell = week.first(where: { $0.weekdayIndex == selectedWeekday - 1 }) ?? week.first!
+    // 해당 주의 일요일(첫 번째 셀) 선택
+    let newCell = week.first!
 
     state.selectedDate = newCell.date
     state.updateDisplayMonth(for: newCell.date)
@@ -877,10 +883,12 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     let newMonthId = state.months[pageIndex].id
     if newMonthId != state.currentMonthId {
       state.currentMonthId = newMonthId
+      // 해당 달의 1일을 선택
       if let monthPage = state.months.first(where: { $0.id == newMonthId }),
-         let firstRow = monthPage.rows.first,
-         let midCell = firstRow.first(where: { $0.isCurrentMonth }) {
-        state.updateDisplayMonth(for: midCell.date)
+         let firstDayCell = monthPage.rows.flatMap({ $0 }).first(where: { $0.isCurrentMonth && $0.day == 1 }) {
+        state.selectedDate = firstDayCell.date
+        state.updateDisplayMonth(for: firstDayCell.date)
+        onDateSelect?(["date": firstDayCell.id])
       }
       updateUI()
     }

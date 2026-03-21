@@ -34,6 +34,7 @@ import {FocusPickerModal} from '@/components/execution/FocusPickerModal';
 import {FocusStatsModal} from '@/components/execution/FocusStatsModal';
 import type {FocusPickerResult} from '@/components/execution/FocusPickerModal';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useTheme} from '@/theme';
@@ -44,7 +45,6 @@ import {fixedColors} from '@/theme/colors';
 // ============================================
 
 const QUICK_FOCUS_SECONDS = 20 * 60;
-const RING_SIZE = 280;
 
 // ============================================
 // Celebration Overlay
@@ -129,6 +129,7 @@ export default function ExecutionScreen() {
   const insets = useSafeAreaInsets();
   const haptic = useHaptic();
   const {primaryColor} = useTheme();
+  const {ringSize: RING_SIZE} = useResponsiveLayout();
 
   // Stores
   const {

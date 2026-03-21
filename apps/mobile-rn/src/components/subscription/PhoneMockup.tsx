@@ -3,7 +3,7 @@
  * 부드럽게 위아래로 떠다니는(bobbing) 애니메이션 적용
  */
 import React, {useEffect} from 'react';
-import {View, Dimensions, StyleSheet} from 'react-native';
+import {View, useWindowDimensions, StyleSheet} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,8 +13,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
 interface PhoneMockupProps {
   children: React.ReactNode;
   width?: number;
@@ -22,8 +20,10 @@ interface PhoneMockupProps {
 
 export function PhoneMockup({
   children,
-  width = SCREEN_WIDTH * 0.55,
+  width: widthProp,
 }: PhoneMockupProps) {
+  const {width: screenWidth} = useWindowDimensions();
+  const width = widthProp ?? screenWidth * 0.55;
   const height = width * 2;
   const translateY = useSharedValue(0);
 

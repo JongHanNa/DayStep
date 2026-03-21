@@ -6,6 +6,10 @@ module.exports = {
   ],
   presets: [require('nativewind/preset')],
   theme: {
+    screens: {
+      tablet: '768px',
+      'tablet-landscape': '1024px',
+    },
     extend: {
       colors: {
         // DayStep brand colors

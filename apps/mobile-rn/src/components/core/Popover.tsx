@@ -9,13 +9,12 @@ import {
   Pressable,
   View,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   type ViewStyle,
 } from 'react-native';
 import Animated, {FadeIn, FadeOut} from 'react-native-reanimated';
 import {shadows, radius} from '@/theme/tokens';
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 const CARD_MARGIN = 8;
 
 interface PopoverProps {
@@ -36,11 +35,12 @@ export function Popover({
   width = 200,
   horizontalAlign = 'right',
 }: PopoverProps) {
+  const {width: screenW, height: screenH} = useWindowDimensions();
+
   if (!visible) return null;
 
   // 항상 앵커 위에 표시
   const showAbove = true;
-  const screenW = Dimensions.get('window').width;
 
   const cardStyle: ViewStyle = {
     position: 'absolute',
@@ -49,7 +49,7 @@ export function Popover({
       ? {left: Math.min(anchorPosition.x, screenW - width - 8)}
       : {right: screenW - (anchorPosition.x + anchorPosition.width)}),
     ...(showAbove
-      ? {bottom: SCREEN_HEIGHT - anchorPosition.y + CARD_MARGIN}
+      ? {bottom: screenH - anchorPosition.y + CARD_MARGIN}
       : {top: anchorPosition.y + anchorPosition.height + CARD_MARGIN}),
   };
 

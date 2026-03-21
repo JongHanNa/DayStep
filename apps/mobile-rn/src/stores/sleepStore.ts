@@ -454,7 +454,7 @@ export const useSleepStore = create<SleepStoreState>()(
         console.log('[Sleep] startSleepSession - screenTimeLinkEnabled:', screenTimeLinkEnabled);
         if (screenTimeLinkEnabled) {
           console.log('[Sleep] Calling shieldAllExceptAllowed...');
-          shieldAllExceptAllowed();
+          await shieldAllExceptAllowed();
           console.log('[Sleep] Calling scheduleAutoUnshield...');
           await scheduleAutoUnshield(expected);
           console.log('[Sleep] Shield setup complete');
@@ -537,10 +537,10 @@ export const useSleepStore = create<SleepStoreState>()(
 
         // --- 스크린타임 연동 활성 시 강화된 복구 로직 ---
         if (screenTimeLinkEnabled) {
-          const authStatus = await getAuthorizationStatus();
-          const permissionRevoked = authStatus !== 'approved';
+          const authStatus = getAuthorizationStatus(); // 동기 함수
+          const permissionRevoked = authStatus === 'denied';
 
-          // Case 1: 권한 해제 → 포기 처리
+          // Case 1: 명시적 권한 거부 → 포기 처리 (notDetermined는 제외)
           if (permissionRevoked) {
             await clearShield();
             set({screenTimeLinkEnabled: false});
@@ -558,6 +558,15 @@ export const useSleepStore = create<SleepStoreState>()(
             }
             set({sessionState: {...DEFAULT_SESSION}});
             return;
+          }
+
+          // Case 1.5: notDetermined (iOS 알려진 이슈) → shield 재적용 시도
+          if (authStatus !== 'approved') {
+            try {
+              await shieldAllExceptAllowed(); // 인증 재확인 + shield 재적용
+            } catch {
+              // 인증 실패 시 무시 (세션은 유지)
+            }
           }
 
           // Case 2: 기상시간 경과 + 권한 유지 → 정상 수면 완료
