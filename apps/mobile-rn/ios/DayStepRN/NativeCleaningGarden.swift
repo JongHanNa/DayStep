@@ -35,6 +35,24 @@ class CleaningGardenState: ObservableObject {
   @Published var selectedDate: String = ""
   @Published var primaryColor: String = "#D97706"
   @Published var parsedDays: [String: [CleaningTreeInfo]] = [:]
+  @Published var dayOffset: Int = 0
+  @Published var weekOffset: Int = 0
+  @Published var monthOffset: Int = 0
+  @Published var yearOffset: Int = 0
+
+  func resetOffsets() {
+    dayOffset = 0
+    weekOffset = 0
+    monthOffset = 0
+    yearOffset = 0
+  }
+
+  /// 여러 날짜의 트리를 집계, 25개 초과 시 duration 내림차순 상위 25개
+  func aggregatedTrees(for dates: [String]) -> [CleaningTreeInfo] {
+    let all = dates.flatMap { parsedDays[$0] ?? [] }
+    if all.count <= 25 { return all }
+    return Array(all.sorted { $0.durationSeconds > $1.durationSeconds }.prefix(25))
+  }
 
   func dayStatus(for date: String, today: String) -> String {
     let trees = parsedDays[date] ?? []
@@ -251,21 +269,27 @@ struct CleaningTreeCanvasView: View {
 struct IsometricGardenView: View {
   @ObservedObject var state: CleaningGardenState
   let todayStr: String
+  let calendar: Calendar
+  let dateFormatter: DateFormatter
+  var onMonthChange: ((Int, Int) -> Void)?
 
   private let gridSize = 5
   private let tileWidth: CGFloat = 52
   private var tileHeight: CGFloat { tileWidth * 0.5 }
 
   private var gardenWidth: CGFloat { tileWidth * CGFloat(gridSize) }
-  private var gardenHeight: CGFloat { tileHeight * CGFloat(gridSize) + 90 }  // +90 나무 높이 여유
+  private var gardenHeight: CGFloat { tileHeight * CGFloat(gridSize) + 90 }
+
+  /// 현재 뷰모드+오프셋에 해당하는 날짜 범위의 트리
+  private var trees: [CleaningTreeInfo] {
+    let dates = datesForCurrentPeriod()
+    return state.aggregatedTrees(for: dates)
+  }
 
   var body: some View {
-    let dateStr = state.selectedDate.isEmpty ? todayStr : state.selectedDate
-    let trees = state.parsedDays[dateStr] ?? []
-
     VStack(spacing: 12) {
-      // 날짜 헤더
-      dateHeader(dateStr: dateStr)
+      // 날짜 헤더 (< 버튼만)
+      dateHeaderWithNav
 
       // 아이소메트릭 그리드
       ZStack {
@@ -276,10 +300,8 @@ struct IsometricGardenView: View {
             let tree = index < trees.count ? trees[index] : nil
 
             ZStack {
-              // 타일 마름모
               isometricTile(row: row, col: col, hasTree: tree != nil)
 
-              // 나무 (타일 위에 배치)
               if let t = tree {
                 CleaningTreeCanvasView(
                   durationSeconds: t.durationSeconds,
@@ -296,33 +318,192 @@ struct IsometricGardenView: View {
       }
       .frame(width: gardenWidth + 20, height: gardenHeight)
 
-      // 완료 수 표시
-      let completedCount = trees.filter { $0.outcome == "completed" }.count
+      // 완료 수 텍스트
+      completedText
+    }
+  }
+
+  // MARK: - 완료 수 텍스트
+
+  private var completedText: some View {
+    let completedCount = trees.filter { $0.outcome == "completed" }.count
+    let currentOffset: Int = {
+      switch state.viewMode {
+      case "day": return state.dayOffset
+      case "week": return state.weekOffset
+      case "month": return state.monthOffset
+      case "year": return state.yearOffset
+      default: return 0
+      }
+    }()
+
+    return Group {
       if completedCount > 0 {
-        Text("오늘 \(completedCount)개 완료")
-          .font(.system(size: 15, weight: .semibold))
-          .foregroundColor(Color(hex: state.primaryColor))
+        let prefix: String = {
+          if currentOffset == 0 {
+            switch state.viewMode {
+            case "day": return "오늘"
+            case "week": return "이번 주"
+            case "month": return "이번 달"
+            case "year": return "올해"
+            default: return ""
+            }
+          }
+          return ""
+        }()
+        if prefix.isEmpty {
+          Text("\(completedCount)개 완료")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundColor(Color(hex: state.primaryColor))
+        } else {
+          Text("\(prefix) \(completedCount)개 완료")
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundColor(Color(hex: state.primaryColor))
+        }
       } else {
-        Text("아직 완료한 태스크가 없습니다")
+        Text("완료한 태스크가 없습니다")
           .font(.system(size: 14))
           .foregroundColor(Color(hex: "#9CA3AF"))
       }
     }
   }
 
-  private func dateHeader(dateStr: String) -> some View {
+  // MARK: - 날짜 헤더 + < 버튼
+
+  private var dateHeaderWithNav: some View {
+    HStack {
+      Button(action: { navigateBack() }) {
+        Image(systemName: "chevron.left")
+          .font(.system(size: 14, weight: .semibold))
+          .foregroundColor(Color(hex: "#6B7280"))
+      }
+      Text(headerLabel)
+        .font(.system(size: 18, weight: .bold))
+        .foregroundColor(Color(hex: "#1F2937"))
+        .padding(.leading, 4)
+      Spacer()
+    }
+    .padding(.horizontal, 16)
+  }
+
+  private var headerLabel: String {
+    let today = Date()
     let df = DateFormatter()
-    df.dateFormat = "yyyy-MM-dd"
-    let dateLabel: String = {
-      guard let date = df.date(from: dateStr) else { return dateStr }
-      let displayDF = DateFormatter()
-      displayDF.dateFormat = "M월 d일 EEEE"
-      displayDF.locale = Locale(identifier: "ko_KR")
-      return displayDF.string(from: date)
+    df.locale = Locale(identifier: "ko_KR")
+
+    switch state.viewMode {
+    case "day":
+      guard let date = calendar.date(byAdding: .day, value: state.dayOffset, to: today) else { return "" }
+      df.dateFormat = "yyyy년 M월 d일"
+      let label = df.string(from: date)
+      return state.dayOffset == 0 ? "\(label) (오늘)" : label
+    case "week":
+      guard let weekDate = calendar.date(byAdding: .weekOfYear, value: state.weekOffset, to: today),
+            let sunday = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weekDate)),
+            let saturday = calendar.date(byAdding: .day, value: 6, to: sunday) else { return "" }
+      df.dateFormat = "M월 d일"
+      return "\(df.string(from: sunday))~\(df.string(from: saturday))"
+    case "month":
+      guard let monthDate = calendar.date(byAdding: .month, value: state.monthOffset, to: today) else { return "" }
+      df.dateFormat = "yyyy년 M월"
+      return df.string(from: monthDate)
+    case "year":
+      guard let yearDate = calendar.date(byAdding: .year, value: state.yearOffset, to: today) else { return "" }
+      df.dateFormat = "yyyy년"
+      return df.string(from: yearDate)
+    default:
+      return ""
+    }
+  }
+
+  private func navigateBack() {
+    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+      switch state.viewMode {
+      case "day":
+        state.dayOffset -= 1
+        checkMonthBoundary(for: .day, offset: state.dayOffset)
+      case "week":
+        state.weekOffset -= 1
+        checkMonthBoundary(for: .week, offset: state.weekOffset)
+      case "month":
+        state.monthOffset -= 1
+        checkMonthBoundary(for: .month, offset: state.monthOffset)
+      case "year":
+        state.yearOffset -= 1
+        notifyYearChange(offset: state.yearOffset)
+      default:
+        break
+      }
+    }
+  }
+
+  private enum NavUnit { case day, week, month }
+
+  private func checkMonthBoundary(for unit: NavUnit, offset: Int) {
+    let today = Date()
+    let targetDate: Date? = {
+      switch unit {
+      case .day: return calendar.date(byAdding: .day, value: offset, to: today)
+      case .week: return calendar.date(byAdding: .weekOfYear, value: offset, to: today)
+      case .month: return calendar.date(byAdding: .month, value: offset, to: today)
+      }
     }()
-    return Text(dateLabel)
-      .font(.system(size: 18, weight: .bold))
-      .foregroundColor(Color(hex: "#1F2937"))
+    guard let date = targetDate else { return }
+    let year = calendar.component(.year, from: date)
+    let month = calendar.component(.month, from: date)
+    onMonthChange?(year, month)
+  }
+
+  private func notifyYearChange(offset: Int) {
+    let today = Date()
+    guard let date = calendar.date(byAdding: .year, value: offset, to: today) else { return }
+    let year = calendar.component(.year, from: date)
+    // 년 뷰: year + month=1 로 알림 → RN에서 1년 범위 fetch
+    onMonthChange?(year, 0)
+  }
+
+  // MARK: - 기간별 날짜 목록
+
+  private func datesForCurrentPeriod() -> [String] {
+    let today = Date()
+    switch state.viewMode {
+    case "day":
+      guard let date = calendar.date(byAdding: .day, value: state.dayOffset, to: today) else { return [] }
+      return [dateFormatter.string(from: date)]
+    case "week":
+      guard let weekDate = calendar.date(byAdding: .weekOfYear, value: state.weekOffset, to: today),
+            let sunday = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weekDate))
+      else { return [] }
+      return (0..<7).compactMap { day in
+        guard let d = calendar.date(byAdding: .day, value: day, to: sunday) else { return nil }
+        return dateFormatter.string(from: d)
+      }
+    case "month":
+      guard let monthDate = calendar.date(byAdding: .month, value: state.monthOffset, to: today),
+            let firstOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: monthDate)),
+            let range = calendar.range(of: .day, in: .month, for: firstOfMonth)
+      else { return [] }
+      return range.compactMap { day in
+        guard let d = calendar.date(byAdding: .day, value: day - 1, to: firstOfMonth) else { return nil }
+        return dateFormatter.string(from: d)
+      }
+    case "year":
+      guard let yearDate = calendar.date(byAdding: .year, value: state.yearOffset, to: today) else { return [] }
+      let year = calendar.component(.year, from: yearDate)
+      var dates: [String] = []
+      for month in 1...12 {
+        guard let firstOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
+              let range = calendar.range(of: .day, in: .month, for: firstOfMonth)
+        else { continue }
+        for day in range {
+          guard let d = calendar.date(byAdding: .day, value: day - 1, to: firstOfMonth) else { continue }
+          dates.append(dateFormatter.string(from: d))
+        }
+      }
+      return dates
+    default:
+      return []
+    }
   }
 
   /// 그리드(row, col) → 화면좌표
@@ -416,27 +597,13 @@ struct CleaningGardenContent: View {
         .padding(.top, 8)
         .padding(.bottom, 12)
 
-      Group {
-        switch state.viewMode {
-        case "day":
-          IsometricGardenView(state: state, todayStr: todayStr)
-        case "week":
-          CleaningWeekView(state: state, calendar: calendar, dateFormatter: dateFormatter, todayStr: todayStr, onDateSelect: onDateSelect, onMonthChange: onMonthChange)
-        case "year":
-          CleaningYearView(state: state, calendar: calendar, dateFormatter: dateFormatter, todayStr: todayStr, onDateSelect: { date in
-            state.viewMode = "month"
-            onViewModeChange?("month")
-            onDateSelect?(date)
-          }, onMonthChange: onMonthChange)
-        default: // month
-          CleaningMonthView(state: state, calendar: calendar, dateFormatter: dateFormatter, todayStr: todayStr, onDateSelect: { date in
-            state.viewMode = "day"
-            onViewModeChange?("day")
-            state.selectedDate = date
-            onDateSelect?(date)
-          }, onMonthChange: onMonthChange)
-        }
-      }
+      IsometricGardenView(
+        state: state,
+        todayStr: todayStr,
+        calendar: calendar,
+        dateFormatter: dateFormatter,
+        onMonthChange: onMonthChange
+      )
 
       legendView
         .padding(.top, 8)
@@ -453,6 +620,7 @@ struct CleaningGardenContent: View {
         Button(action: {
           withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             state.viewMode = viewModeKeys[index]
+            state.resetOffsets()
             onViewModeChange?(viewModeKeys[index])
           }
         }) {

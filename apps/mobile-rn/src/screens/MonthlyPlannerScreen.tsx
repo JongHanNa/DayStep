@@ -107,7 +107,7 @@ export default function MonthlyPlannerScreen() {
           <AnimatedPressable
             onPress={() => navigation.navigate('Planner')}
             style={{padding: 6}}>
-            <CalendarRange size={22} color={primaryColor} />
+            <CalendarRange size={22} color="#6B7280" />
           </AnimatedPressable>
         </View>
       </View>

@@ -1119,7 +1119,13 @@ export const useTodoStore = create<TodoState>()(
                 return todo.recurrence_days_of_week?.includes(dayOfWeek) ?? false;
               }
               if (todo.start_time) {
-                return format(parseISO(todo.start_time), 'yyyy-MM-dd') === dateStr;
+                const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (startDate === dateStr) return true;
+                // 크로스데이: start_time < 오늘 && end_time >= 오늘
+                if (todo.end_time && todo.schedule_type === 'timed') {
+                  const endDate = format(parseISO(todo.end_time), 'yyyy-MM-dd');
+                  if (startDate < dateStr && endDate >= dateStr) return true;
+                }
               }
               return false;
             });

@@ -37,6 +37,79 @@ struct MonthCalEventItem: Codable, Identifiable {
   let end: String?
 }
 
+// MARK: - Detail Item (통합 정렬용)
+
+enum DetailItem: Identifiable {
+  case event(MonthCalEventItem)
+  case todo(MonthCalTodoItem)
+
+  // 캐시된 ISO 포매터 (인스턴스 생성 비용 회피)
+  private static let isoFrac: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return f
+  }()
+  private static let isoBasic: ISO8601DateFormatter = {
+    let f = ISO8601DateFormatter()
+    f.formatOptions = [.withInternetDateTime]
+    return f
+  }()
+  private static let kstCalendar: Calendar = {
+    var cal = Calendar(identifier: .gregorian)
+    cal.timeZone = TimeZone(identifier: "Asia/Seoul")!
+    return cal
+  }()
+
+  static func parseISO(_ str: String) -> Date? {
+    isoFrac.date(from: str) ?? isoBasic.date(from: str)
+  }
+
+  var id: String {
+    switch self {
+    case .event(let e): return "e_\(e.id)"
+    case .todo(let t): return "t_\(t.id)"
+    }
+  }
+
+  /// 정렬 우선순위: 0=크로스데이/종일, 1=언제든지, 2=시간지정
+  var sortPriority: Int {
+    switch self {
+    case .event(let e):
+      return e.isAllDay ? 0 : 2
+    case .todo(let t):
+      if t.scheduleType != "anytime",
+         let start = t.startTime, !start.isEmpty,
+         let end = t.endTime, !end.isEmpty,
+         DetailItem.checkCrossDay(start: start, end: end) {
+        return 0
+      }
+      if t.scheduleType == "anytime" { return 1 }
+      return 2
+    }
+  }
+
+  /// 크로스데이 판별 (static)
+  static func checkCrossDay(start: String, end: String) -> Bool {
+    guard let startDate = parseISO(start),
+          let endDate = parseISO(end) else { return false }
+    return !kstCalendar.isDate(startDate, inSameDayAs: endDate)
+  }
+
+  /// 정렬용 시간 추출 (nil이면 맨 뒤로)
+  var sortTime: Date? {
+    switch self {
+    case .event(let e):
+      if e.isAllDay { return nil }
+      guard let s = e.start, !s.isEmpty else { return nil }
+      return DetailItem.parseISO(s)
+    case .todo(let t):
+      if t.scheduleType == "anytime" { return nil }
+      guard let s = t.startTime, !s.isEmpty else { return nil }
+      return DetailItem.parseISO(s)
+    }
+  }
+}
+
 // MARK: - Observable State
 
 class MonthCalendarState: ObservableObject {
@@ -333,78 +406,104 @@ struct MonthCalendarContent: View {
           .frame(maxWidth: .infinity)
           .padding(.vertical, 16)
       } else {
-        // 이벤트 목록
-        ForEach(events) { event in
-          HStack(spacing: 10) {
-            Circle()
-              .fill(Color(hex: event.color))
-              .frame(width: 8, height: 8)
-
-            Text(event.title)
-              .font(.system(size: 14))
-              .foregroundColor(Color(hex: "#374151"))
-              .lineLimit(1)
-
-            Spacer()
-
-            Text(event.isAllDay ? "종일" : formatEventTime(event))
-              .font(.system(size: 12))
-              .foregroundColor(Color(hex: "#9CA3AF"))
+        // 이벤트 + 할일 통합 정렬 (priority → 시간순)
+        let items: [DetailItem] = events.map { .event($0) } + todos.map { .todo($0) }
+        // 사전 계산으로 정렬 시 반복 연산 방지
+        let decorated = items.map { ($0, $0.sortPriority, $0.sortTime) }
+        let sorted = decorated.sorted { a, b in
+          if a.1 != b.1 { return a.1 < b.1 }
+          switch (a.2, b.2) {
+          case (nil, nil): return false
+          case (nil, _): return false
+          case (_, nil): return true
+          case (let t1?, let t2?): return t1 < t2
           }
-          .padding(.horizontal, 16)
-          .padding(.vertical, 8)
-        }
+        }.map { $0.0 }
 
-        // 할일 목록
-        ForEach(todos) { todo in
-          Button(action: {
-            onNavigateToPlanner?(dateStr)
-          }) {
+        ForEach(sorted) { item in
+          switch item {
+          case .event(let event):
             HStack(spacing: 10) {
               Circle()
-                .fill(Color(hex: todo.color ?? state.primaryColor))
+                .fill(Color(hex: event.color))
                 .frame(width: 8, height: 8)
 
-              Text(todo.title)
+              Text(event.title)
                 .font(.system(size: 14))
                 .foregroundColor(Color(hex: "#374151"))
                 .lineLimit(1)
 
               Spacer()
 
-              // 시간 또는 반복 정보
-              if let time = todo.startTime, !time.isEmpty {
-                if let endTime = todo.endTime, !endTime.isEmpty {
-                  if isCrossDay(start: time, end: endTime) {
-                    // 크로스데이: 날짜 + 시간
-                    Text("\(formatShortDate(time) ?? "") \(formatTime(time)) - \(formatShortDate(endTime) ?? "") \(formatTime(endTime))")
-                      .font(.system(size: 12))
-                      .foregroundColor(Color(hex: "#9CA3AF"))
-                  } else {
-                    // 같은 날: 시간만
-                    Text("\(formatTime(time)) - \(formatTime(endTime))")
-                      .font(.system(size: 12))
-                      .foregroundColor(Color(hex: "#9CA3AF"))
-                  }
-                } else {
-                  Text(formatTime(time))
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(hex: "#9CA3AF"))
-                }
-              } else if let pattern = todo.recurrencePattern, !pattern.isEmpty, pattern != "none" {
-                Image(systemName: "repeat")
-                  .font(.system(size: 11))
-                  .foregroundColor(Color(hex: "#9CA3AF"))
-              }
-
-              Image(systemName: "chevron.right")
-                .font(.system(size: 11))
-                .foregroundColor(Color(hex: "#CBD5E1"))
+              Text(event.isAllDay ? "종일" : formatEventTime(event))
+                .font(.system(size: 12))
+                .foregroundColor(Color(hex: "#9CA3AF"))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+
+          case .todo(let todo):
+            Button(action: {
+              onNavigateToPlanner?(dateStr)
+            }) {
+              HStack(spacing: 10) {
+                Circle()
+                  .fill(Color(hex: todo.color ?? state.primaryColor))
+                  .frame(width: 8, height: 8)
+
+                Text(todo.title)
+                  .font(.system(size: 14))
+                  .foregroundColor(Color(hex: "#374151"))
+                  .lineLimit(1)
+
+                Spacer()
+
+                // 크로스데이
+                if todo.scheduleType != "anytime",
+                   let time = todo.startTime, !time.isEmpty,
+                   let endTime = todo.endTime, !endTime.isEmpty,
+                   isCrossDay(start: time, end: endTime) {
+                  HStack(spacing: 4) {
+                    repeatIcon(for: todo)
+                    Text("\(formatShortDate(time) ?? "") \(formatTime(time)) - \(formatShortDate(endTime) ?? "") \(formatTime(endTime))")
+                      .font(.system(size: 12))
+                      .foregroundColor(Color(hex: "#9CA3AF"))
+                  }
+                }
+                // 언제든지
+                else if todo.scheduleType == "anytime" {
+                  HStack(spacing: 4) {
+                    repeatIcon(for: todo)
+                    Text("언제든지")
+                      .font(.system(size: 12))
+                      .foregroundColor(Color(hex: "#9CA3AF"))
+                  }
+                }
+                // 시간 지정
+                else if let time = todo.startTime, !time.isEmpty {
+                  HStack(spacing: 4) {
+                    repeatIcon(for: todo)
+                    if let endTime = todo.endTime, !endTime.isEmpty {
+                      Text("\(formatTime(time)) - \(formatTime(endTime))")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#9CA3AF"))
+                    } else {
+                      Text(formatTime(time))
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#9CA3AF"))
+                    }
+                  }
+                }
+
+                Image(systemName: "chevron.right")
+                  .font(.system(size: 11))
+                  .foregroundColor(Color(hex: "#CBD5E1"))
+              }
+              .padding(.horizontal, 16)
+              .padding(.vertical, 8)
+            }
+            .buttonStyle(.plain)
           }
-          .buttonStyle(.plain)
         }
       }
     }
@@ -474,20 +573,20 @@ struct MonthCalendarContent: View {
     return df.string(from: date)
   }
 
+  /// 반복 아이콘 (반복 할일인 경우에만 표시)
+  @ViewBuilder
+  private func repeatIcon(for todo: MonthCalTodoItem) -> some View {
+    if let pattern = todo.recurrencePattern, pattern != "none", !pattern.isEmpty {
+      Image(systemName: "repeat")
+        .font(.system(size: 11))
+        .foregroundColor(Color(hex: "#9CA3AF"))
+    }
+  }
+
   /// start_time과 end_time의 날짜가 다른지 판별 (KST 기준)
   private func isCrossDay(start: String?, end: String?) -> Bool {
     guard let s = start, let e = end else { return false }
-    let isoFormatter = ISO8601DateFormatter()
-    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    let isoFormatterBasic = ISO8601DateFormatter()
-    isoFormatterBasic.formatOptions = [.withInternetDateTime]
-
-    guard let startDate = isoFormatter.date(from: s) ?? isoFormatterBasic.date(from: s),
-          let endDate = isoFormatter.date(from: e) ?? isoFormatterBasic.date(from: e) else { return false }
-
-    var cal = Calendar(identifier: .gregorian)
-    cal.timeZone = TimeZone(identifier: "Asia/Seoul")!
-    return !cal.isDate(startDate, inSameDayAs: endDate)
+    return DetailItem.checkCrossDay(start: s, end: e)
   }
 
   /// 이벤트 시간 포맷 (시작 - 종료)

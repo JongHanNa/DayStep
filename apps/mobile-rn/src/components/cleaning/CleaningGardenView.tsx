@@ -65,12 +65,17 @@ export function CleaningGardenView({onViewModeChange}: CleaningGardenViewProps) 
 
   const handleMonthChange = useCallback((e: {nativeEvent: {year: number; month: number}}) => {
     const {year, month} = e.nativeEvent;
-    const monthStart = startOfMonth(new Date(year, month - 1));
-    const monthEnd = endOfMonth(monthStart);
-    fetchCleaningRecords(
-      format(monthStart, 'yyyy-MM-dd'),
-      format(monthEnd, 'yyyy-MM-dd'),
-    );
+    if (month === 0) {
+      // 년 뷰: 1년 전체 fetch
+      fetchCleaningRecords(`${year}-01-01`, `${year}-12-31`);
+    } else {
+      const monthStart = startOfMonth(new Date(year, month - 1));
+      const monthEnd = endOfMonth(monthStart);
+      fetchCleaningRecords(
+        format(monthStart, 'yyyy-MM-dd'),
+        format(monthEnd, 'yyyy-MM-dd'),
+      );
+    }
   }, [fetchCleaningRecords]);
 
   if (Platform.OS !== 'ios' || !NativeCleaningGardenNative) {
