@@ -106,11 +106,8 @@ export function MissionCard({
           backgroundColor: '#FFFFFF',
           borderRadius: 16,
           padding: 16,
-          shadowColor: '#000',
-          shadowOffset: {width: 0, height: 2},
-          shadowOpacity: 0.06,
-          shadowRadius: 8,
-          elevation: 3,
+          borderWidth: 1,
+          borderColor: '#F3F4F6',
         }}>
         <View className="flex-row items-center mb-3">
           <Target size={20} color={primaryColor} />

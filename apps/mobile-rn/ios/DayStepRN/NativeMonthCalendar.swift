@@ -96,17 +96,22 @@ enum DetailItem: Identifiable {
   }
 
   /// 정렬용 시간 추출 (nil이면 맨 뒤로)
+  /// 날짜 무시, 시간(시:분:초)만 비교하여 반복 할일의 생성일 차이 문제 해결
   var sortTime: Date? {
+    let parsed: Date?
     switch self {
     case .event(let e):
       if e.isAllDay { return nil }
       guard let s = e.start, !s.isEmpty else { return nil }
-      return DetailItem.parseISO(s)
+      parsed = DetailItem.parseISO(s)
     case .todo(let t):
       if t.scheduleType == "anytime" { return nil }
       guard let s = t.startTime, !s.isEmpty else { return nil }
-      return DetailItem.parseISO(s)
+      parsed = DetailItem.parseISO(s)
     }
+    guard let date = parsed else { return nil }
+    let comps = DetailItem.kstCalendar.dateComponents([.hour, .minute, .second], from: date)
+    return DetailItem.kstCalendar.date(from: comps)
   }
 }
 
