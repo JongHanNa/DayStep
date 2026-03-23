@@ -14,7 +14,6 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
-import {Flame} from 'lucide-react-native';
 import type {Note} from '@/stores/noteStore';
 import {LiquidGlassFuelCardNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
@@ -78,9 +77,8 @@ export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
         />
         <View style={styles.cardContent}>
           <View className="flex-row items-center mb-3">
-            <Flame size={22} color={primaryColor} />
             <Text
-              className="text-lg font-semibold ml-2"
+              className="text-lg font-semibold"
               style={{color: primaryColor}}>
               나의 원동력
             </Text>

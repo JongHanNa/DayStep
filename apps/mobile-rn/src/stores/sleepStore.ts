@@ -9,7 +9,8 @@ import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage, storage} from '@/lib/mmkv';
 import {format, startOfMonth, endOfMonth, differenceInMinutes, subDays, addDays} from 'date-fns';
-import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield, cancelAutoUnshield, getAuthorizationStatus} from '@/lib/screenTimeManager';
+import {shieldAllExceptAllowed, clearShield, scheduleAutoUnshield, cancelAutoUnshield, getAuthorizationStatus, scheduleDailyAutoShield, cancelDailyAutoShield} from '@/lib/screenTimeManager';
+import {userDefaultsGet} from 'react-native-device-activity';
 
 // ============================================
 // Types
@@ -413,9 +414,17 @@ export const useSleepStore = create<SleepStoreState>()(
           import('@/lib/notifications').then(({scheduleSleepBedtimeNotification}) =>
             scheduleSleepBedtimeNotification(time),
           );
+          if (get().screenTimeLinkEnabled) {
+            scheduleDailyAutoShield(time, get().wakeGoalTime);
+          }
         }
       },
-      setWakeGoalTime: (time) => set({wakeGoalTime: time}),
+      setWakeGoalTime: (time) => {
+        set({wakeGoalTime: time});
+        if (get().autoSleepEnabled && get().screenTimeLinkEnabled) {
+          scheduleDailyAutoShield(get().sleepGoalTime, time);
+        }
+      },
       setScreenTimeLinkEnabled: (v) => set({screenTimeLinkEnabled: v}),
       setAutoSleepEnabled: (v) => {
         set({autoSleepEnabled: v});
@@ -426,6 +435,12 @@ export const useSleepStore = create<SleepStoreState>()(
             cancelSleepBedtimeNotification();
           }
         });
+        // 자동 수면 차단 스케줄 등록/해제
+        if (v && get().screenTimeLinkEnabled) {
+          scheduleDailyAutoShield(get().sleepGoalTime, get().wakeGoalTime);
+        } else {
+          cancelDailyAutoShield();
+        }
       },
 
       getGoalDurationMinutes: () => {
@@ -453,6 +468,8 @@ export const useSleepStore = create<SleepStoreState>()(
         // 스크린타임 연동 활성 시 shield 적용
         console.log('[Sleep] startSleepSession - screenTimeLinkEnabled:', screenTimeLinkEnabled);
         if (screenTimeLinkEnabled) {
+          // 수동 세션 동안은 daily 자동 차단 비활성화 (충돌 방지)
+          cancelDailyAutoShield();
           console.log('[Sleep] Calling shieldAllExceptAllowed...');
           await shieldAllExceptAllowed();
           console.log('[Sleep] Calling scheduleAutoUnshield...');
@@ -471,7 +488,7 @@ export const useSleepStore = create<SleepStoreState>()(
       },
 
       completeSleepSession: async () => {
-        const {sessionState, insertRecord} = get();
+        const {sessionState, insertRecord, autoSleepEnabled, screenTimeLinkEnabled, sleepGoalTime, wakeGoalTime} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
         // 스크린타임 차단 해제 + DeviceActivity 모니터 취소
@@ -496,10 +513,15 @@ export const useSleepStore = create<SleepStoreState>()(
         }
 
         set({sessionState: {...DEFAULT_SESSION}});
+
+        // 수동 세션 종료 후 daily 자동 차단 재등록
+        if (autoSleepEnabled && screenTimeLinkEnabled) {
+          scheduleDailyAutoShield(sleepGoalTime, wakeGoalTime);
+        }
       },
 
       abandonSleepSession: async () => {
-        const {sessionState, insertRecord} = get();
+        const {sessionState, insertRecord, autoSleepEnabled, screenTimeLinkEnabled, sleepGoalTime, wakeGoalTime} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
         // 스크린타임 차단 해제 + DeviceActivity 모니터 취소
@@ -523,11 +545,48 @@ export const useSleepStore = create<SleepStoreState>()(
         }
 
         set({sessionState: {...DEFAULT_SESSION}});
+
+        // 수동 세션 포기 후 daily 자동 차단 재등록
+        if (autoSleepEnabled && screenTimeLinkEnabled) {
+          scheduleDailyAutoShield(sleepGoalTime, wakeGoalTime);
+        }
       },
 
       /** 앱 재시작 시 크래시 복구 */
       recoverSession: async () => {
-        const {sessionState, screenTimeLinkEnabled, insertRecord} = get();
+        const {sessionState, screenTimeLinkEnabled, autoSleepEnabled, sleepGoalTime, wakeGoalTime, insertRecord} = get();
+
+        // 자동 차단 스케줄 복원 (앱 재시작 시)
+        if (autoSleepEnabled && screenTimeLinkEnabled) {
+          scheduleDailyAutoShield(sleepGoalTime, wakeGoalTime);
+        }
+
+        // extension이 자동으로 차단을 시작했는지 확인 (세션 idle 상태에서)
+        if (sessionState.status === 'idle' && autoSleepEnabled && screenTimeLinkEnabled) {
+          try {
+            const isBlocking = userDefaultsGet<boolean>('isBlockingAll');
+            if (isBlocking) {
+              const now = new Date();
+              const [wh, wm] = wakeGoalTime.split(':').map(Number);
+              const expected = new Date(now);
+              expected.setHours(wh, wm, 0, 0);
+              if (expected <= now) expected.setDate(expected.getDate() + 1);
+
+              set({
+                sessionState: {
+                  status: 'running',
+                  startedAt: now.toISOString(),
+                  expectedWakeTime: expected.toISOString(),
+                  goalDurationMinutes: calcGoalMinutes(sleepGoalTime, wakeGoalTime),
+                },
+              });
+              return;
+            }
+          } catch {
+            // userDefaultsGet 실패 시 무시
+          }
+        }
+
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
         const now = new Date();

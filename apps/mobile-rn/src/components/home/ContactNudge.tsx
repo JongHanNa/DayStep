@@ -99,8 +99,7 @@ export function ContactNudge({
       className="mx-4">
       {/* 헤더 */}
       <View className="flex-row items-center mb-3">
-        <HeartHandshake size={22} color={primaryColor} />
-        <Text className="text-lg font-semibold text-gray-800 ml-2">
+        <Text className="text-lg font-semibold text-gray-800">
           연락할 사람
         </Text>
         {recommendations.length > 0 && (

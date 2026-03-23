@@ -49,10 +49,6 @@ struct LiquidGlassFuelCardContent: View {
       }
     }) {
       HStack(spacing: 12) {
-        Image(systemName: "flame.fill")
-          .foregroundColor(Color(hex: state.primaryColor))
-          .font(.system(size: 22))
-
         VStack(alignment: .leading, spacing: 2) {
           Text("나의 원동력")
             .font(.system(size: 18, weight: .semibold))
@@ -83,9 +79,6 @@ struct LiquidGlassFuelCardContent: View {
   private var expandedPanel: some View {
     VStack(alignment: .leading, spacing: 12) {
       HStack {
-        Image(systemName: "flame.fill")
-          .foregroundColor(Color(hex: state.primaryColor))
-          .font(.system(size: 22))
         Text("나의 원동력")
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(Color(hex: state.primaryColor))

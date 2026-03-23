@@ -169,6 +169,72 @@ export function clearCleaningShield(): void {
   }
 }
 
+// ============================================
+// 자동 수면 차단 (백그라운드 daily 스케줄)
+// ============================================
+
+/**
+ * 매일 반복 자동 차단 스케줄 등록
+ * - sleepTime에 enableBlockAllMode (차단 시작)
+ * - wakeTime에 disableBlockAllMode + resetBlocks (차단 해제)
+ * repeats: true + hour/minute만 전달 → 매일 반복
+ */
+export async function scheduleDailyAutoShield(
+  sleepTime: string, // "HH:mm"
+  wakeTime: string, // "HH:mm"
+): Promise<void> {
+  if (!isAvailable()) return;
+
+  try {
+    // 수면 시간에 차단 시작
+    configureActions({
+      activityName: 'daily-sleep',
+      callbackName: 'intervalDidStart',
+      actions: [{type: 'enableBlockAllMode'}],
+    });
+
+    // 기상 시간에 차단 해제
+    configureActions({
+      activityName: 'daily-sleep',
+      callbackName: 'intervalDidEnd',
+      actions: [
+        {type: 'disableBlockAllMode'},
+        {type: 'resetBlocks'},
+      ],
+    });
+
+    const [sh, sm] = sleepTime.split(':').map(Number);
+    const [wh, wm] = wakeTime.split(':').map(Number);
+
+    await startMonitoring(
+      'daily-sleep',
+      {
+        intervalStart: {hour: sh, minute: sm, second: 0},
+        intervalEnd: {hour: wh, minute: wm, second: 0},
+        repeats: true,
+      },
+      [],
+    );
+
+    console.log(`[ScreenTime] scheduleDailyAutoShield: ${sleepTime} → ${wakeTime}`);
+  } catch (error) {
+    console.error('[ScreenTime] scheduleDailyAutoShield error:', error);
+  }
+}
+
+/**
+ * 자동 수면 차단 스케줄 해제
+ */
+export function cancelDailyAutoShield(): void {
+  if (!isAvailable()) return;
+  try {
+    stopMonitoring(['daily-sleep']);
+    console.log('[ScreenTime] cancelDailyAutoShield: stopped');
+  } catch (error) {
+    console.error('[ScreenTime] cancelDailyAutoShield error:', error);
+  }
+}
+
 /**
  * 스크린타임 기능 사용 가능 여부
  */

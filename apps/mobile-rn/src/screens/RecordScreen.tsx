@@ -26,6 +26,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import {ScreenContainer, AnimatedCard, AnimatedPressable, GlassBackground} from '@/components/core';
+import {supabase} from '@/lib/supabase';
 import {
   ChevronLeft,
   ChevronDown,
@@ -286,12 +287,26 @@ export default function RecordScreen() {
     loadPeople,
     loadRecommendations,
     addPerson,
+    updatePerson,
     deletePerson,
     addInteraction,
     getRecentNotesPerPerson,
     getRelationshipStats,
   } = useCherishedPeopleStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
+
+  // 필터 상태
+  const [filterRelationship, setFilterRelationship] = useState<string | null>(null);
+  const [filterRole, setFilterRole] = useState<string | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
+
+  // 관계/역할/부서 마스터 목록 + 사람-매핑 (정션 테이블 기반)
+  const [relationships, setRelationships] = useState<{id: string; name: string; color: string}[]>([]);
+  const [roles, setRoles] = useState<{id: string; name: string}[]>([]);
+  const [departments, setDepartments] = useState<{id: string; name: string}[]>([]);
+  const [personRelationshipMap, setPersonRelationshipMap] = useState<Map<string, string[]>>(new Map());
+  const [personRoleMap, setPersonRoleMap] = useState<Map<string, string[]>>(new Map());
+  const [personDepartmentMap, setPersonDepartmentMap] = useState<Map<string, string[]>>(new Map());
 
   // Bottom sheet refs
   const addPersonSheetRef = useRef<AddPersonBottomSheetRef>(null);
@@ -329,6 +344,77 @@ export default function RecordScreen() {
           needsAttention: s.needsAttention,
         });
       });
+
+      // 관계/역할/부서 마스터 + 매핑 로드
+      (async () => {
+        try {
+          // 관계
+          const {data: rels} = await supabase
+            .from('relationships')
+            .select('id, name, color')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .order('name');
+          if (rels) setRelationships(rels);
+
+          const {data: relLinks} = await supabase
+            .from('person_relationships')
+            .select('person_id, relationship_id')
+            .eq('user_id', user.id);
+          if (relLinks) {
+            const map = new Map<string, string[]>();
+            relLinks.forEach((l: {person_id: string; relationship_id: string}) => {
+              const existing = map.get(l.person_id) || [];
+              map.set(l.person_id, [...existing, l.relationship_id]);
+            });
+            setPersonRelationshipMap(map);
+          }
+
+          // 역할
+          const {data: roleList} = await supabase
+            .from('roles')
+            .select('id, name')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .order('name');
+          if (roleList) setRoles(roleList);
+
+          const {data: roleLinks} = await supabase
+            .from('person_roles')
+            .select('person_id, role_id')
+            .eq('user_id', user.id);
+          if (roleLinks) {
+            const map = new Map<string, string[]>();
+            roleLinks.forEach((l: {person_id: string; role_id: string}) => {
+              const existing = map.get(l.person_id) || [];
+              map.set(l.person_id, [...existing, l.role_id]);
+            });
+            setPersonRoleMap(map);
+          }
+
+          // 부서
+          const {data: depts} = await supabase
+            .from('departments')
+            .select('id, name')
+            .eq('user_id', user.id);
+          if (depts) setDepartments(depts);
+
+          const {data: deptLinks} = await supabase
+            .from('person_departments')
+            .select('person_id, department_id')
+            .eq('user_id', user.id);
+          if (deptLinks) {
+            const map = new Map<string, string[]>();
+            deptLinks.forEach((l: {person_id: string; department_id: string}) => {
+              const existing = map.get(l.person_id) || [];
+              map.set(l.person_id, [...existing, l.department_id]);
+            });
+            setPersonDepartmentMap(map);
+          }
+        } catch (err) {
+          console.error('[RecordScreen] Failed to load filter data:', err);
+        }
+      })();
     }
   }, [user?.id]);
 
@@ -349,20 +435,56 @@ export default function RecordScreen() {
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // 관심 필요 사람 (recommendations에서)
-  const attentionPeople = useMemo(() => recommendations.slice(0, 5), [recommendations]);
+  // 사용 중인 관계/역할 (필터 칩에 표시할 것만)
+  const usedRelationships = useMemo(() => {
+    const usedIds = new Set<string>();
+    personRelationshipMap.forEach(ids => ids.forEach(id => usedIds.add(id)));
+    return relationships.filter(r => usedIds.has(r.id));
+  }, [relationships, personRelationshipMap]);
 
-  // 최근 활동 사람 (recommendations에 없는 나머지, 마지막 연락 기준 정렬)
+  const usedRoles = useMemo(() => {
+    const usedIds = new Set<string>();
+    personRoleMap.forEach(ids => ids.forEach(id => usedIds.add(id)));
+    return roles.filter(r => usedIds.has(r.id));
+  }, [roles, personRoleMap]);
+
+  // 필터 매칭 함수 (ID 기반)
+  const matchesFilter = useCallback((person: CherishedPerson) => {
+    if (filterRelationship) {
+      const personRelIds = personRelationshipMap.get(person.id) || [];
+      if (!personRelIds.includes(filterRelationship)) return false;
+    }
+    if (filterRole) {
+      const personRoleIds = personRoleMap.get(person.id) || [];
+      if (!personRoleIds.includes(filterRole)) return false;
+    }
+    if (filterDepartment) {
+      const personDepts = personDepartmentMap.get(person.id) || [];
+      if (!personDepts.includes(filterDepartment)) return false;
+    }
+    return true;
+  }, [filterRelationship, filterRole, filterDepartment, personRelationshipMap, personRoleMap, personDepartmentMap]);
+
+  const hasActiveFilter = filterRelationship || filterRole || filterDepartment;
+
+  // 관심 필요 사람 (recommendations에서 + 필터 적용)
+  const attentionPeople = useMemo(() =>
+    recommendations.filter(rec => matchesFilter(rec.person)).slice(0, 5),
+    [recommendations, matchesFilter],
+  );
+
+  // 최근 활동 사람 (recommendations에 없는 나머지, 마지막 연락 기준 정렬 + 필터 적용)
   const recentActivityPeople = useMemo(() => {
-    const attentionIds = new Set(attentionPeople.map(r => r.person.id));
+    const attentionIds = new Set(recommendations.slice(0, 5).map(r => r.person.id));
     return [...people]
       .filter(p => !attentionIds.has(p.id))
+      .filter(matchesFilter)
       .sort((a, b) => {
         const aDate = a.last_interaction_at ? new Date(a.last_interaction_at).getTime() : 0;
         const bDate = b.last_interaction_at ? new Date(b.last_interaction_at).getTime() : 0;
         return bDate - aDate;
       });
-  }, [people, attentionPeople]);
+  }, [people, recommendations, matchesFilter]);
 
   const handleSelectPerson = useCallback((person: CherishedPerson) => {
     setSelectedPerson(person);
@@ -442,27 +564,39 @@ export default function RecordScreen() {
     return {hasNews, hasGratitude};
   }, [notesPerPerson]);
 
-  const handleDeletePerson = useCallback((person: CherishedPerson) => {
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: ['취소', '삭제'],
-        destructiveButtonIndex: 1,
-        cancelButtonIndex: 0,
-        title: `${person.name}`,
-        message: '이 사람과 관련된 모든 기록이 함께 삭제됩니다.',
-      },
-      (buttonIndex) => {
-        if (buttonIndex === 1) {
-          deletePerson(user!.id, person.id).then(success => {
-            if (success) {
-              loadRecommendations(user!.id);
-              getRecentNotesPerPerson(user!.id).then(setNotesPerPerson);
-            }
-          });
-        }
-      },
-    );
-  }, [user?.id, deletePerson, loadRecommendations, getRecentNotesPerPerson]);
+  const personMenuItems = useMemo(() => [
+    {title: '기록하기', key: 'record'},
+    {title: '정보 수정', key: 'edit'},
+    {title: '삭제', key: 'delete'},
+  ], []);
+
+  const handlePersonMenuSelect = useCallback((key: string, person: CherishedPerson) => {
+    if (key === 'record') {
+      handleSelectPerson(person);
+    } else if (key === 'edit') {
+      addPersonSheetRef.current?.openEdit(person);
+    } else if (key === 'delete') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['취소', '삭제'],
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 0,
+          title: person.name,
+          message: '이 사람과 관련된 모든 기록이 함께 삭제됩니다.',
+        },
+        (idx) => {
+          if (idx === 1) {
+            deletePerson(user!.id, person.id).then(success => {
+              if (success) {
+                loadRecommendations(user!.id);
+                getRecentNotesPerPerson(user!.id).then(setNotesPerPerson);
+              }
+            });
+          }
+        },
+      );
+    }
+  }, [user?.id, handleSelectPerson, deletePerson, loadRecommendations, getRecentNotesPerPerson]);
 
   // ── Step 3: 완료 ──
   if (step === 'completed') {
@@ -673,6 +807,146 @@ export default function RecordScreen() {
           </View>
         </View>
 
+        {/* 필터 칩 (비검색 모드에서만) */}
+        {!searchQuery && (usedRelationships.length > 0 || usedRoles.length > 0 || departments.length > 0) && (
+          <Animated.View entering={FadeIn.duration(300)} className="mb-3">
+            {/* 관계 필터 */}
+            {usedRelationships.length > 0 && (
+              <View className="mb-1.5">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, gap: 6}}>
+                  <AnimatedPressable
+                    onPress={() => setFilterRelationship(null)}
+                    hapticType="light"
+                    scaleValue={0.95}
+                    style={[
+                      filterChipStyles.chip,
+                      !filterRelationship
+                        ? {backgroundColor: primaryColor}
+                        : {backgroundColor: 'white'},
+                    ]}>
+                    <Text style={[
+                      filterChipStyles.chipText,
+                      {color: !filterRelationship ? 'white' : '#6B7280'},
+                    ]}>
+                      관계 전체
+                    </Text>
+                  </AnimatedPressable>
+                  {usedRelationships.map(rel => (
+                    <AnimatedPressable
+                      key={rel.id}
+                      onPress={() => setFilterRelationship(filterRelationship === rel.id ? null : rel.id)}
+                      hapticType="light"
+                      scaleValue={0.95}
+                      style={[
+                        filterChipStyles.chip,
+                        filterRelationship === rel.id
+                          ? {backgroundColor: primaryColor}
+                          : {backgroundColor: 'white'},
+                      ]}>
+                      <Text style={[
+                        filterChipStyles.chipText,
+                        {color: filterRelationship === rel.id ? 'white' : '#6B7280'},
+                      ]}>
+                        {rel.name}
+                      </Text>
+                    </AnimatedPressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* 역할 필터 */}
+            {usedRoles.length > 0 && (
+              <View className="mb-1.5">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, gap: 6}}>
+                  <AnimatedPressable
+                    onPress={() => setFilterRole(null)}
+                    hapticType="light"
+                    scaleValue={0.95}
+                    style={[
+                      filterChipStyles.chip,
+                      !filterRole
+                        ? {backgroundColor: primaryColor}
+                        : {backgroundColor: 'white'},
+                    ]}>
+                    <Text style={[
+                      filterChipStyles.chipText,
+                      {color: !filterRole ? 'white' : '#6B7280'},
+                    ]}>
+                      역할 전체
+                    </Text>
+                  </AnimatedPressable>
+                  {usedRoles.map(role => (
+                    <AnimatedPressable
+                      key={role.id}
+                      onPress={() => setFilterRole(filterRole === role.id ? null : role.id)}
+                      hapticType="light"
+                      scaleValue={0.95}
+                      style={[
+                        filterChipStyles.chip,
+                        filterRole === role.id
+                          ? {backgroundColor: primaryColor}
+                          : {backgroundColor: 'white'},
+                      ]}>
+                      <Text style={[
+                        filterChipStyles.chipText,
+                        {color: filterRole === role.id ? 'white' : '#6B7280'},
+                      ]}>
+                        {role.name}
+                      </Text>
+                    </AnimatedPressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* 부서 필터 */}
+            {departments.length > 0 && (
+              <View className="mb-1.5">
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, gap: 6}}>
+                  <AnimatedPressable
+                    onPress={() => setFilterDepartment(null)}
+                    hapticType="light"
+                    scaleValue={0.95}
+                    style={[
+                      filterChipStyles.chip,
+                      !filterDepartment
+                        ? {backgroundColor: primaryColor}
+                        : {backgroundColor: 'white'},
+                    ]}>
+                    <Text style={[
+                      filterChipStyles.chipText,
+                      {color: !filterDepartment ? 'white' : '#6B7280'},
+                    ]}>
+                      부서 전체
+                    </Text>
+                  </AnimatedPressable>
+                  {departments.map(dept => (
+                    <AnimatedPressable
+                      key={dept.id}
+                      onPress={() => setFilterDepartment(filterDepartment === dept.id ? null : dept.id)}
+                      hapticType="light"
+                      scaleValue={0.95}
+                      style={[
+                        filterChipStyles.chip,
+                        filterDepartment === dept.id
+                          ? {backgroundColor: primaryColor}
+                          : {backgroundColor: 'white'},
+                      ]}>
+                      <Text style={[
+                        filterChipStyles.chipText,
+                        {color: filterDepartment === dept.id ? 'white' : '#6B7280'},
+                      ]}>
+                        {dept.name}
+                      </Text>
+                    </AnimatedPressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </Animated.View>
+        )}
+
         {/* 검색 중일 때: 필터링된 결과 */}
         {searchQuery ? (
           <View className="px-4 mb-4">
@@ -681,31 +955,34 @@ export default function RecordScreen() {
                 검색 결과 ({filteredPeople.length})
               </Text>
               {filteredPeople.map(person => (
-                <AnimatedPressable
-                  key={person.id}
-                  onPress={() => handleSelectPerson(person)}
-                  onLongPress={() => handleDeletePerson(person)}
-                  hapticType="light"
-                  scaleValue={0.97}
-                  className="flex-row items-center py-3 border-b border-gray-50">
-                  <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-3">
-                    <Text className="text-gray-600 font-bold text-sm">
-                      {person.name.charAt(0)}
-                    </Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-sm text-gray-800">{person.name}</Text>
-                    {person.nickname && (
-                      <Text className="text-xs text-gray-400">{person.nickname}</Text>
-                    )}
-                  </View>
-                  <Text className="text-xs text-gray-400 mr-2">{getPersonMeta(person)}</Text>
-                  <ChevronLeft
-                    size={16}
-                    color="#9CA3AF"
-                    style={{transform: [{rotate: '180deg'}]}}
+                <View key={person.id} className="flex-row items-center py-3 border-b border-gray-50">
+                  <AnimatedPressable
+                    onPress={() => handleSelectPerson(person)}
+                    hapticType="light"
+                    scaleValue={0.97}
+                    className="flex-1 flex-row items-center">
+                    <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center mr-3">
+                      <Text className="text-gray-600 font-bold text-sm">
+                        {person.name.charAt(0)}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-sm text-gray-800">{person.name}</Text>
+                      {person.nickname && (
+                        <Text className="text-xs text-gray-400">{person.nickname}</Text>
+                      )}
+                    </View>
+                    <Text className="text-xs text-gray-400 mr-2">{getPersonMeta(person)}</Text>
+                  </AnimatedPressable>
+                  <LiquidGlassMenu
+                    systemIconName="ellipsis"
+                    iconColor="#9CA3AF"
+                    size={32}
+                    menuItems={personMenuItems}
+                    onSelect={(key) => handlePersonMenuSelect(key, person)}
+                    fallbackIcon={<MoreHorizontal size={16} color="#9CA3AF" />}
                   />
-                </AnimatedPressable>
+                </View>
               ))}
               {/* 항상 "새로 추가" 행 표시 */}
               {searchQuery.trim().length > 0 && (
@@ -739,41 +1016,46 @@ export default function RecordScreen() {
                     const person = rec.person;
                     const personNotes = notesPerPerson.get(person.id) ?? [];
                     return (
-                      <AnimatedPressable
+                      <View
                         key={person.id}
-                        onPress={() => handleSelectPerson(person)}
-                        onLongPress={() => handleDeletePerson(person)}
-                        hapticType="light"
-                        scaleValue={0.97}
                         style={[
                           recordStyles.activityCard,
                           {backgroundColor: hexWithOpacity(primaryColor, 0.06)},
                         ]}>
                         <View className="flex-row items-center">
-                          <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center mr-3">
-                            <Text className="text-amber-600 font-bold text-sm">
-                              {person.name.charAt(0)}
-                            </Text>
-                          </View>
-                          <View className="flex-1">
-                            <Text className="text-sm font-medium text-gray-800">
-                              {person.name}
-                            </Text>
-                            <Text className="text-xs text-gray-400 mt-0.5">
-                              {rec.daysSinceContact >= 999
-                                ? '아직 기록 없음'
-                                : `${rec.daysSinceContact}일째 연락 없음`}
-                            </Text>
-                          </View>
-                          <ChevronLeft
-                            size={16}
-                            color="#9CA3AF"
-                            style={{transform: [{rotate: '180deg'}]}}
+                          <AnimatedPressable
+                            onPress={() => handleSelectPerson(person)}
+                            hapticType="light"
+                            scaleValue={0.97}
+                            className="flex-1 flex-row items-center">
+                            <View className="w-10 h-10 rounded-full bg-amber-50 items-center justify-center mr-3">
+                              <Text className="text-amber-600 font-bold text-sm">
+                                {person.name.charAt(0)}
+                              </Text>
+                            </View>
+                            <View className="flex-1">
+                              <Text className="text-sm font-medium text-gray-800">
+                                {person.name}
+                              </Text>
+                              <Text className="text-xs text-gray-400 mt-0.5">
+                                {rec.daysSinceContact >= 999
+                                  ? '아직 기록 없음'
+                                  : `${rec.daysSinceContact}일째 연락 없음`}
+                              </Text>
+                            </View>
+                          </AnimatedPressable>
+                          <LiquidGlassMenu
+                            systemIconName="ellipsis"
+                            iconColor="#9CA3AF"
+                            size={32}
+                            menuItems={personMenuItems}
+                            onSelect={(key) => handlePersonMenuSelect(key, person)}
+                            fallbackIcon={<MoreHorizontal size={16} color="#9CA3AF" />}
                           />
                         </View>
                         {/* 인라인 소식/감사 프리뷰 */}
                         <NotePreview notes={personNotes} />
-                      </AnimatedPressable>
+                      </View>
                     );
                   })}
                 </Animated.View>
@@ -803,40 +1085,44 @@ export default function RecordScreen() {
 
                   return (
                     <View key={person.id} style={recordStyles.activityCard}>
-                      <AnimatedPressable
-                        onPress={() => handleSelectPerson(person)}
-                        onLongPress={() => handleDeletePerson(person)}
-                        hapticType="light"
-                        scaleValue={0.97}
-                        className="flex-row items-center">
-                        <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
-                          <Text className="text-gray-600 font-bold text-sm">
-                            {person.name.charAt(0)}
-                          </Text>
-                        </View>
-                        <View className="flex-1">
-                          <View className="flex-row items-center">
-                            <Text className="text-sm font-medium text-gray-800">
-                              {person.name}
+                      <View className="flex-row items-center">
+                        <AnimatedPressable
+                          onPress={() => handleSelectPerson(person)}
+                          hapticType="light"
+                          scaleValue={0.97}
+                          className="flex-1 flex-row items-center">
+                          <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-3">
+                            <Text className="text-gray-600 font-bold text-sm">
+                              {person.name.charAt(0)}
                             </Text>
-                            {/* 소식/감사 dot */}
-                            {hasNews && (
-                              <View className="w-2 h-2 rounded-full bg-blue-500 ml-1.5" />
-                            )}
-                            {hasGratitude && (
-                              <View className="w-2 h-2 rounded-full bg-green-500 ml-1" />
-                            )}
                           </View>
-                          <Text className="text-xs text-gray-400 mt-0.5">
-                            {getPersonMeta(person)}
-                          </Text>
-                        </View>
-                        <ChevronLeft
-                          size={16}
-                          color="#9CA3AF"
-                          style={{transform: [{rotate: '180deg'}]}}
+                          <View className="flex-1">
+                            <View className="flex-row items-center">
+                              <Text className="text-sm font-medium text-gray-800">
+                                {person.name}
+                              </Text>
+                              {/* 소식/감사 dot */}
+                              {hasNews && (
+                                <View className="w-2 h-2 rounded-full bg-blue-500 ml-1.5" />
+                              )}
+                              {hasGratitude && (
+                                <View className="w-2 h-2 rounded-full bg-green-500 ml-1" />
+                              )}
+                            </View>
+                            <Text className="text-xs text-gray-400 mt-0.5">
+                              {getPersonMeta(person)}
+                            </Text>
+                          </View>
+                        </AnimatedPressable>
+                        <LiquidGlassMenu
+                          systemIconName="ellipsis"
+                          iconColor="#9CA3AF"
+                          size={32}
+                          menuItems={personMenuItems}
+                          onSelect={(key) => handlePersonMenuSelect(key, person)}
+                          fallbackIcon={<MoreHorizontal size={16} color="#9CA3AF" />}
                         />
-                      </AnimatedPressable>
+                      </View>
 
                       {/* 확장 토글 (기록이 있을 때만) */}
                       {personNotes.length > 0 && (
@@ -886,7 +1172,23 @@ export default function RecordScreen() {
       <AddPersonBottomSheet
         ref={addPersonSheetRef}
         onPersonAdded={handlePersonAdded}
+        onPersonUpdated={() => {
+          if (user?.id) {
+            loadPeople(user.id);
+            loadRecommendations(user.id);
+            getRecentNotesPerPerson(user.id).then(setNotesPerPerson);
+          }
+        }}
+        onPersonDeleted={() => {
+          if (user?.id) {
+            loadPeople(user.id);
+            loadRecommendations(user.id);
+            getRecentNotesPerPerson(user.id).then(setNotesPerPerson);
+          }
+        }}
         addPerson={addPerson}
+        updatePerson={updatePerson}
+        deletePerson={deletePerson}
         userId={user?.id}
       />
       <RelationshipStatsModal ref={statsSheetRef} />
@@ -938,5 +1240,17 @@ const recordStyles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+});
+
+const filterChipStyles = StyleSheet.create({
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

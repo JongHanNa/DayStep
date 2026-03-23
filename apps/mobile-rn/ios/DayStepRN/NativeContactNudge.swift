@@ -53,10 +53,6 @@ struct ContactNudgeContent: View {
     VStack(alignment: .leading, spacing: 12) {
       // 헤더
       HStack(spacing: 8) {
-        Image(systemName: "heart.circle.fill")
-          .font(.system(size: 22))
-          .foregroundColor(Color(hex: state.primaryColor))
-
         Text("연락할 사람")
           .font(.system(size: 18, weight: .semibold))
           .foregroundColor(Color(hex: "#1F2937"))
