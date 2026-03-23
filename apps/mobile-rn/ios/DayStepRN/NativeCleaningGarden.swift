@@ -368,19 +368,46 @@ struct IsometricGardenView: View {
     }
   }
 
-  // MARK: - 날짜 헤더 + < 버튼
+  // MARK: - 날짜 헤더 + < > 버튼
+
+  private var currentOffset: Int {
+    switch state.viewMode {
+    case "day": return state.dayOffset
+    case "week": return state.weekOffset
+    case "month": return state.monthOffset
+    case "year": return state.yearOffset
+    default: return 0
+    }
+  }
 
   private var dateHeaderWithNav: some View {
     HStack {
+      Spacer()
+
       Button(action: { navigateBack() }) {
         Image(systemName: "chevron.left")
           .font(.system(size: 14, weight: .semibold))
           .foregroundColor(Color(hex: "#6B7280"))
       }
+
       Text(headerLabel)
         .font(.system(size: 18, weight: .bold))
         .foregroundColor(Color(hex: "#1F2937"))
-        .padding(.leading, 4)
+        .padding(.horizontal, 8)
+
+      if currentOffset < 0 {
+        Button(action: { navigateForward() }) {
+          Image(systemName: "chevron.right")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(Color(hex: "#6B7280"))
+        }
+      } else {
+        // > 버튼 자리만큼 투명 공간 확보 (좌우 대칭)
+        Image(systemName: "chevron.right")
+          .font(.system(size: 14, weight: .semibold))
+          .foregroundColor(.clear)
+      }
+
       Spacer()
     }
     .padding(.horizontal, 16)
@@ -430,6 +457,27 @@ struct IsometricGardenView: View {
         checkMonthBoundary(for: .month, offset: state.monthOffset)
       case "year":
         state.yearOffset -= 1
+        notifyYearChange(offset: state.yearOffset)
+      default:
+        break
+      }
+    }
+  }
+
+  private func navigateForward() {
+    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+      switch state.viewMode {
+      case "day":
+        state.dayOffset += 1
+        checkMonthBoundary(for: .day, offset: state.dayOffset)
+      case "week":
+        state.weekOffset += 1
+        checkMonthBoundary(for: .week, offset: state.weekOffset)
+      case "month":
+        state.monthOffset += 1
+        checkMonthBoundary(for: .month, offset: state.monthOffset)
+      case "year":
+        state.yearOffset += 1
         notifyYearChange(offset: state.yearOffset)
       default:
         break

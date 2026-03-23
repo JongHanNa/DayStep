@@ -35,6 +35,7 @@ import CleaningSessionScreen from '../screens/CleaningSessionScreen';
 import SleepGoalScreen from '../screens/SleepGoalScreen';
 import ScreenTimeAppsScreen from '../screens/ScreenTimeAppsScreen';
 import SleepADHDInfoScreen from '../screens/SleepADHDInfoScreen';
+import CleaningADHDInfoScreen from '../screens/CleaningADHDInfoScreen';
 
 /** MonthlyPlanner 리다이렉트: Planner 탭으로 이동 + viewMode='monthlyPlanner' */
 function MonthlyPlannerRedirect() {
@@ -74,6 +75,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Cleaning" component={CleaningScreen} />
       <HomeStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
       <HomeStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
+      <HomeStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -104,6 +106,7 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="Cleaning" component={CleaningScreen} />
       <MoreStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
       <MoreStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
+      <MoreStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
     </MoreStack.Navigator>
   );
 }

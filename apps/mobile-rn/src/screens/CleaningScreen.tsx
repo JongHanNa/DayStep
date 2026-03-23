@@ -7,9 +7,10 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View, Text, ScrollView, Modal} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
-import {Settings, List, X, Minus, Plus} from 'lucide-react-native';
+import {List, X, Minus, Plus, MoreHorizontal} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {LiquidGlassButton} from '@/components/native';
+import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {EnergySelector} from '@/components/cleaning/EnergySelector';
 import {FocusCard} from '@/components/cleaning/FocusCard';
 import {TaskQueue} from '@/components/cleaning/TaskQueue';
@@ -31,6 +32,11 @@ const TABS: {key: CleaningTab; label: string}[] = [
 ];
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+const CLEANING_MENU_ITEMS = [
+  {title: '청소/정리와 ADHD', key: 'cleaningADHDInfo'},
+  {title: '청소 설정', key: 'settings'},
+];
 
 export default function CleaningScreen() {
   const navigation = useNavigation();
@@ -190,6 +196,14 @@ export default function CleaningScreen() {
     navigation.navigate('CleaningSession' as never);
   }, [focusTask, setFocusTask, startTimer, startCleaningSession, haptic, navigation]);
 
+  const handleMenuSelect = useCallback((key: string) => {
+    if (key === 'cleaningADHDInfo') {
+      navigation.navigate('CleaningADHDInfo' as never);
+    } else if (key === 'settings') {
+      setSettingsModalVisible(true);
+    }
+  }, [navigation]);
+
   const handleGardenViewModeChange = useCallback((mode: 'day' | 'week' | 'month' | 'year') => {
     setCurrentViewMode(mode);
   }, []);
@@ -219,15 +233,15 @@ export default function CleaningScreen() {
             onPress={() => setTaskListModalVisible(true)}
           />
 
-          <View />
+          <View style={{flex: 1}} />
 
-          <LiquidGlassButton
-            systemIconName="gearshape"
-            fallbackIcon={<Settings size={16} color="#6B7280" />}
-            iconColor="#6B7280"
+          <LiquidGlassMenu
+            systemIconName="ellipsis.circle"
+            iconColor="#9CA3AF"
             size={40}
-            iconSize={16}
-            onPress={() => setSettingsModalVisible(true)}
+            menuItems={CLEANING_MENU_ITEMS}
+            onSelect={handleMenuSelect}
+            fallbackIcon={<MoreHorizontal size={18} color="#9CA3AF" />}
           />
         </Animated.View>
 
