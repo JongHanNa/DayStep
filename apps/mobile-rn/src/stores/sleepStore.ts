@@ -474,8 +474,9 @@ export const useSleepStore = create<SleepStoreState>()(
         const {sessionState, insertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
-        // 스크린타임 차단 해제 (항상 호출 — 안전)
+        // 스크린타임 차단 해제 + DeviceActivity 모니터 취소
         await clearShield();
+        cancelAutoUnshield();
 
         const now = new Date();
         const startedAt = new Date(sessionState.startedAt);
@@ -501,8 +502,9 @@ export const useSleepStore = create<SleepStoreState>()(
         const {sessionState, insertRecord} = get();
         if (sessionState.status !== 'running' || !sessionState.startedAt) return;
 
-        // 스크린타임 차단 해제 (항상 호출 — 안전)
+        // 스크린타임 차단 해제 + DeviceActivity 모니터 취소
         await clearShield();
+        cancelAutoUnshield();
 
         const now = new Date();
         const startedAt = new Date(sessionState.startedAt);
