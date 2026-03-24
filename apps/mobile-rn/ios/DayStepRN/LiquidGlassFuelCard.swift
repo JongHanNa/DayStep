@@ -71,6 +71,7 @@ struct LiquidGlassFuelCardContent: View {
       .padding(16)
     }
     .buttonStyle(.plain)
+    .clipShape(RoundedRectangle(cornerRadius: 16))
     .glassEffect(in: .rect(cornerRadius: 16))
     .glassEffectID("fuelcard", in: morphNamespace)
   }
@@ -116,6 +117,7 @@ struct LiquidGlassFuelCardContent: View {
       }
     }
     .padding(16)
+    .clipShape(RoundedRectangle(cornerRadius: 20))
     .glassEffect(in: .rect(cornerRadius: 20))
     .glassEffectID("fuelcard", in: morphNamespace)
   }

@@ -6,7 +6,7 @@ extension View {
   func cleanupCardStyle() -> some View {
     self
       .background(Color.white)
-      .cornerRadius(14)
+      .clipShape(RoundedRectangle(cornerRadius: 14))
       .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
   }
 }

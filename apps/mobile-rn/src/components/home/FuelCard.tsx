@@ -33,6 +33,7 @@ export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
   const heightStyle = useAnimatedStyle(() => ({
     height: animatedHeight.value,
     overflow: 'hidden' as const,
+    borderRadius: 20,
   }));
 
   // iOS 26+: 네이티브 Liquid Glass morph 카드
