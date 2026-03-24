@@ -509,6 +509,8 @@ function TabButton({
       scaleValue={0.9}
       testID={`tab_${tabName}`}
       accessibilityIdentifier={`tab_${tabName}`}
+      accessible={true}
+      accessibilityRole="button"
       style={styles.tabButton}>
       <Animated.View style={[styles.tabContent, animatedStyle]}>
         {isTimerActive ? (

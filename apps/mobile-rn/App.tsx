@@ -1,6 +1,6 @@
 import './global.css';
 import React, {useEffect} from 'react';
-import {AppState, StatusBar, useColorScheme} from 'react-native';
+import {AppState, LogBox, StatusBar, useColorScheme} from 'react-native';
 import {SafeAreaProvider, initialWindowMetrics} from 'react-native-safe-area-context';
 import {NavigationContainer, DefaultTheme, createNavigationContainerRef} from '@react-navigation/native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -12,6 +12,12 @@ import {setupNotificationChannel} from './src/lib/notifications';
 import {reloadWidgetTimelines} from './src/lib/widgetBridge';
 import {useSleepStore} from './src/stores/sleepStore';
 import {storage} from './src/lib/mmkv';
+
+// UI Test 모드: LogBox 완전 비활성화 (스크린샷에 경고 배너 제거)
+// uitest_mode (일회용, authStore 초기화 전) 또는 uitest_active (초기화 후)
+if (storage.getBoolean('uitest_mode') || storage.getBoolean('uitest_active')) {
+  LogBox.ignoreAllLogs(true);
+}
 
 const navigationRef = createNavigationContainerRef<any>();
 

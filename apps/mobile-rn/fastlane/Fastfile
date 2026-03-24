@@ -5,4 +5,28 @@ platform :ios do
   lane :screenshots do
     capture_screenshots
   end
+
+  desc "마케팅 스크린샷 자동 생성 (캡처 + 렌더링)"
+  lane :marketing do
+    # 1. Simulator에서 원본 스크린샷 캡처
+    capture_screenshots
+
+    # 2. 캡처된 원본을 marketing render 입력 폴더로 복사
+    source_dir = File.expand_path("./fastlane/screenshots/ko")
+    dest_dir = File.expand_path("./screenshots/screenshots")
+
+    FileUtils.mkdir_p(dest_dir)
+
+    Dir.glob("#{source_dir}/*.png").each do |file|
+      FileUtils.cp(file, dest_dir)
+      UI.message("📋 복사: #{File.basename(file)}")
+    end
+
+    # 3. Playwright로 마케팅 이미지 렌더링
+    sh("node ../screenshots/marketing/render.js")
+
+    UI.success("🎉 마케팅 스크린샷 생성 완료!")
+    UI.message("📁 원본: #{source_dir}")
+    UI.message("📁 마케팅: #{File.expand_path('./screenshots/marketing/output')}")
+  end
 end

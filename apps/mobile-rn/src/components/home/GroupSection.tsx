@@ -157,6 +157,10 @@ export function GroupSection({
               onPress={item.onPress}
               hapticType="light"
               scaleValue={0.97}
+              testID={`feature_${item.id}`}
+              accessibilityIdentifier={`feature_${item.id}`}
+              accessible={true}
+              accessibilityRole="button"
               style={{
                 backgroundColor: '#FFFFFF',
                 borderRadius: 14,

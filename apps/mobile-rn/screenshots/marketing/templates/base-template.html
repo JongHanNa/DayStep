@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1284px;
+    height: 2778px;
+    overflow: hidden;
+    font-family: -apple-system, 'Apple SD Gothic Neo', 'SF Pro Display', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .slide {
+    width: 1284px;
+    height: 2778px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ═══════════════════════════════════
+     배경 장식 요소
+     ═══════════════════════════════════ */
+
+  /* 메인 글로우 */
+  .glow {
+    position: absolute;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    filter: blur(160px);
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow.top-right { top: -200px; right: -250px; }
+  .glow.top-left { top: -200px; left: -250px; }
+  .glow.bottom-left { bottom: 400px; left: -250px; }
+  .glow.bottom-right { bottom: 400px; right: -250px; }
+
+  /* 보조 글로우 */
+  .glow-secondary {
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+    bottom: 200px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* 장식 원 */
+  .deco-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.06);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .deco-circle.c1 { width: 1000px; height: 1000px; top: -300px; right: -400px; }
+  .deco-circle.c2 { width: 600px; height: 600px; bottom: 500px; left: -200px; }
+  .deco-circle.c3 { width: 400px; height: 400px; top: 800px; right: -100px; border-color: rgba(255,255,255,0.04); }
+
+  /* 부드러운 blob 장식 */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob.b1 {
+    width: 200px; height: 200px;
+    top: 350px; left: 60px;
+    background: rgba(255,255,255,0.04);
+    filter: blur(40px);
+  }
+  .blob.b2 {
+    width: 150px; height: 150px;
+    top: 500px; right: 80px;
+    background: rgba(255,255,255,0.03);
+    filter: blur(30px);
+  }
+
+  /* ═══════════════════════════════════
+     텍스트 영역
+     ═══════════════════════════════════ */
+
+  .text-area {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    width: 100%;
+    padding-top: 180px;
+  }
+
+  .title {
+    font-size: 80px;
+    font-weight: 800;
+    color: white;
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: -2.5px;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.15);
+  }
+
+  .subtitle {
+    font-size: 34px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+    margin-top: 30px;
+    line-height: 1.55;
+    letter-spacing: -0.5px;
+  }
+
+  /* ═══════════════════════════════════
+     iPhone 기기 목업
+     ═══════════════════════════════════ */
+
+  .device-wrapper {
+    position: relative;
+    z-index: 1;
+    margin-top: 60px;
+    display: flex;
+    justify-content: center;
+    /* 살짝 3D 기울기 — 슬라이드별로 다르게 적용 가능 */
+    transform: perspective(2000px) rotateY(var(--rotate-y, 0deg)) rotateX(var(--rotate-x, 0deg));
+  }
+
+  .device-frame {
+    position: relative;
+    width: 940px;
+    /* iPhone 비율 유지 */
+    background: #1a1a1a;
+    border-radius: 68px;
+    padding: 18px;
+    box-shadow:
+      /* 외곽 하이라이트 */
+      0 0 0 1px rgba(255,255,255,0.1),
+      /* 주 그림자 */
+      0 50px 120px rgba(0,0,0,0.4),
+      0 20px 50px rgba(0,0,0,0.3),
+      /* 앰비언트 */
+      0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  /* 다이나믹 아일랜드 */
+  .dynamic-island {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160px;
+    height: 44px;
+    background: #000;
+    border-radius: 22px;
+    z-index: 5;
+  }
+
+  /* 스크린 영역 */
+  .device-screen {
+    width: 100%;
+    border-radius: 52px;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+  }
+
+  .device-screen img {
+    width: 100%;
+    display: block;
+  }
+
+  /* 스크린 반사 효과 */
+  .screen-glare {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 52px;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0.08) 0%,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0) 100%
+    );
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* ═══════════════════════════════════
+     바닥 리플렉션
+     ═══════════════════════════════════ */
+  .reflection {
+    position: absolute;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 80px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0,0,0,0.15) 0%,
+      rgba(0,0,0,0) 70%
+    );
+    z-index: 0;
+  }
+
+  /* ═══════════════════════════════════
+     하단 앱 브랜딩
+     ═══════════════════════════════════ */
+  .brand-footer {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+  }
+
+  .brand-name {
+    font-size: 26px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+  <div class="slide" id="slide">
+    <!-- 배경 장식 -->
+    <div class="glow" id="glow"></div>
+    <div class="glow-secondary" id="glowSecondary"></div>
+    <div class="deco-circle c1"></div>
+    <div class="deco-circle c2"></div>
+    <div class="deco-circle c3"></div>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+
+    <!-- 프로모션 텍스트 -->
+    <div class="text-area">
+      <h1 class="title" id="title"></h1>
+      <p class="subtitle" id="subtitle"></p>
+    </div>
+
+    <!-- iPhone 기기 목업 -->
+    <div class="device-wrapper" id="deviceWrapper">
+      <div class="device-frame">
+        <div class="dynamic-island"></div>
+        <div class="device-screen">
+          <img id="screenshot" src="" alt="screenshot" />
+          <div class="screen-glare"></div>
+        </div>
+      </div>
+      <div class="reflection"></div>
+    </div>
+
+    <!-- 하단 브랜딩 -->
+    <div class="brand-footer">
+      <div class="brand-dot"></div>
+      <span class="brand-name">DayStep</span>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+
+    // 배경 그라데이션
+    const slide = document.getElementById('slide');
+    const bgStart = params.get('bgStart') || '#3B82F6';
+    const bgEnd = params.get('bgEnd') || '#1D4ED8';
+    slide.style.background = `linear-gradient(165deg, ${bgStart} 0%, ${bgEnd} 100%)`;
+
+    // 글로우
+    const glow = document.getElementById('glow');
+    glow.style.background = params.get('glow') || '#60A5FA';
+    const glowPos = params.get('glowPosition') || 'top-right';
+    glow.classList.add(glowPos);
+
+    const glowSecondary = document.getElementById('glowSecondary');
+    glowSecondary.style.background = params.get('glow') || '#60A5FA';
+
+    // 텍스트
+    document.getElementById('title').innerHTML =
+      (params.get('title') || '').replace(/\\n/g, '<br>');
+    document.getElementById('subtitle').innerHTML =
+      (params.get('subtitle') || '').replace(/\\n/g, '<br>');
+
+    // 스크린샷
+    const screenshotSrc = params.get('screenshot') || '';
+    if (screenshotSrc) {
+      document.getElementById('screenshot').src = screenshotSrc;
+    }
+
+    // 3D 회전 (슬라이드별 미세 변형)
+    const rotateY = params.get('rotateY') || '0';
+    const rotateX = params.get('rotateX') || '1';
+    const wrapper = document.getElementById('deviceWrapper');
+    wrapper.style.setProperty('--rotate-y', rotateY + 'deg');
+    wrapper.style.setProperty('--rotate-x', rotateX + 'deg');
+  </script>
+</body>
+</html>

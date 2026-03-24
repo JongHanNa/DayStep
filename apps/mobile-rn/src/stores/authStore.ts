@@ -5,7 +5,7 @@
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
-import {zustandMMKVStorage, sessionStorage} from '@/lib/mmkv';
+import {zustandMMKVStorage, sessionStorage, storage} from '@/lib/mmkv';
 import type {Session, User, AuthChangeEvent} from '@supabase/supabase-js';
 
 interface AuthState {
@@ -69,6 +69,15 @@ export const useAuthStore = create<AuthState>()(
       initialize: async () => {
         try {
           set({initializing: true, error: null});
+
+          // UI Test 모드: AppDelegate에서 --uitesting 플래그 감지 시 MMKV에 저장
+          const isUITestMode = storage.getBoolean('uitest_mode') === true;
+          if (isUITestMode) {
+            set({isAuthenticated: true, initializing: false});
+            storage.remove('uitest_mode'); // 일회용 플래그 삭제
+            storage.set('uitest_active', true); // 앱 전역 참조용 (모달 억제 등)
+            return;
+          }
 
           // 1. 기존 세션 복원 (10초 타임아웃: 만료 세션의 refreshSession hang 방지)
           const sessionPromise = supabase.auth.getSession();

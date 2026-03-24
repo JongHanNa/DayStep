@@ -51,18 +51,13 @@ class AppDelegate: ExpoAppDelegate {
     return super.application(app, open: url, options: options)
   }
 
-  /// UI Test용 인증 세션을 MMKV에 주입
-  /// UITEST_SESSION 환경변수: JSON 문자열 (Supabase 세션)
-  /// UITEST_SESSION_KEY 환경변수: MMKV 키 이름 (예: "sb-xxxxx-auth-token")
+  /// UI Test 모드: MMKV에 uitest_mode 플래그 저장
+  /// authStore에서 이 플래그를 읽어 인증을 건너뜀
   private func injectUITestSession() {
-    guard let sessionJSON = ProcessInfo.processInfo.environment["UITEST_SESSION"],
-          let sessionKey = ProcessInfo.processInfo.environment["UITEST_SESSION_KEY"] else {
-      return
-    }
-
     MMKV.initialize(rootDir: nil)
-    guard let mmkv = MMKV(mmapID: "daystep-session") else { return }
-    mmkv.set(sessionJSON, forKey: sessionKey)
+    // daystep-rn (Zustand용 MMKV)에 플래그 저장
+    guard let mmkv = MMKV(mmapID: "daystep-rn") else { return }
+    mmkv.set(true, forKey: "uitest_mode")
   }
 }
 

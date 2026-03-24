@@ -1,0 +1,74 @@
+[
+  {
+    "id": "01_home",
+    "title": "하루를 한눈에",
+    "subtitle": "진행률, 미션, 영감까지\n오늘의 나를 위한 대시보드",
+    "screenshotPatterns": ["01_Home.png", "01_home.png"],
+    "bgStart": "#3B82F6",
+    "bgEnd": "#1D4ED8",
+    "glow": "#60A5FA",
+    "glowPosition": "top-right",
+    "rotateY": "-3",
+    "rotateX": "1"
+  },
+  {
+    "id": "02_execute",
+    "title": "집중이 어려운\n당신을 위해",
+    "subtitle": "ADHD에 최적화된 포모도로 타이머로\n몰입의 즐거움을 느껴보세요",
+    "screenshotPatterns": ["03_Execute.png", "03_execute.png"],
+    "bgStart": "#7C3AED",
+    "bgEnd": "#4C1D95",
+    "glow": "#A78BFA",
+    "glowPosition": "top-left",
+    "rotateY": "3",
+    "rotateX": "1"
+  },
+  {
+    "id": "03_planner",
+    "title": "계획은 심플하게",
+    "subtitle": "월간 · 주간 · 일간 뷰를\n자유롭게 전환",
+    "screenshotPatterns": ["02_Planner.png", "02_planner.png"],
+    "bgStart": "#2563EB",
+    "bgEnd": "#1E40AF",
+    "glow": "#93C5FD",
+    "glowPosition": "bottom-left",
+    "rotateY": "-2",
+    "rotateX": "2"
+  },
+  {
+    "id": "04_sleep",
+    "title": "수면 정원을\n가꿔보세요",
+    "subtitle": "매일 기록하면 나무가 자라요\n건강한 수면 습관",
+    "screenshotPatterns": ["04_SleepGarden.png", "04_sleep.png", "04_notes.png"],
+    "bgStart": "#1E1B4B",
+    "bgEnd": "#312E81",
+    "glow": "#818CF8",
+    "glowPosition": "top-right",
+    "rotateY": "2",
+    "rotateX": "1"
+  },
+  {
+    "id": "05_cleaning",
+    "title": "청소, 작게\n시작해요",
+    "subtitle": "에너지에 맞춘 마이크로태스크로\n부담 없이",
+    "screenshotPatterns": ["05_Cleaning.png", "05_cleaning.png", "05_settings.png"],
+    "bgStart": "#059669",
+    "bgEnd": "#065F46",
+    "glow": "#6EE7B7",
+    "glowPosition": "bottom-right",
+    "rotateY": "-3",
+    "rotateX": "1"
+  },
+  {
+    "id": "06_ai_plan",
+    "title": "AI가 계획을\n도와줘요",
+    "subtitle": "프로젝트를 나누고\n실행 가능한 할일로 변환",
+    "screenshotPatterns": ["06_AIPlan.png", "06_ai_plan.png"],
+    "bgStart": "#F59E0B",
+    "bgEnd": "#D97706",
+    "glow": "#FDE68A",
+    "glowPosition": "top-left",
+    "rotateY": "3",
+    "rotateX": "2"
+  }
+]

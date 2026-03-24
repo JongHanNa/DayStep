@@ -58,6 +58,10 @@ export default function SleepGardenScreen() {
   // 화면 포커스 시 스크린타임 권한 상태 동기화 + 연동 팝업
   useFocusEffect(
     useCallback(() => {
+      // UI Test 모드: 모달 억제 (authStore에서 uitest_active 설정)
+      const {storage: mmkv} = require('../lib/mmkv');
+      if (mmkv.getBoolean('uitest_active')) return;
+
       const available = isScreenTimeAvailable();
       console.log('[SleepGarden] isScreenTimeAvailable:', available);
       if (!available) {
