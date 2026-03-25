@@ -40,7 +40,7 @@ interface GroupSectionProps {
 const SF_SYMBOL_MAP: Record<string, string> = {
   'daily-planner': 'calendar',
   'monthly-planner': 'calendar.badge.clock',
-  'ai-plan': 'folder',
+  'projects': 'folder',
   'ai-chat': 'sparkles',
   guide: 'link',
   'data-cleanup': 'trash',

@@ -34,7 +34,7 @@ private func sfSymbolName(for id: String) -> String {
   switch id {
   case "daily-planner": return "calendar"
   case "monthly-planner": return "calendar.badge.clock"
-  case "ai-plan": return "folder"
+  case "projects": return "folder"
   case "ai-chat": return "sparkles"
   case "guide": return "link"
   case "data-cleanup": return "trash"

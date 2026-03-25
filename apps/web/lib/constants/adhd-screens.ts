@@ -30,7 +30,7 @@ export type ADHDSubViewId =
   | 'banner'
   | 'contact'
   | 'activity'
-  | 'ai-plan'
+  | 'projects'
   | 'ai-chat'
   | 'guide'
   | 'timeline'
@@ -218,12 +218,12 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
       help: '타이머 + 방해차단 + 원동력 상기 → 시작의 마찰을 줄여 첫 발을 내딛도록 도움!',
     },
   },
-  'ai-plan': {
-    id: 'ai-plan',
+  'projects': {
+    id: 'projects',
     label: '내 계획 보기',
     icon: FolderKanban,
     shortDescription: '프로젝트 목록과 진행 상황 확인',
-    componentPath: 'screens/ai-plan/AIPlanScreen',
+    componentPath: 'screens/projects/ProjectsScreen',
   },
   'ai-chat': {
     id: 'ai-chat',
@@ -250,7 +250,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'project',
     title: '계획 세우기',
-    screenIds: ['daily-planner', 'timeline', 'ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['daily-planner', 'timeline', 'projects', 'ai-chat', 'guide'],
   },
   {
     id: 'memory',
@@ -287,7 +287,7 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
   {
     id: 'project',
     basePath: '/adhd/project',
-    screenIds: ['ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['projects', 'ai-chat', 'guide'],
   },
 ];
 
@@ -390,7 +390,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         },
       },
       {
-        id: 'ai-plan',
+        id: 'projects',
         label: '내 계획 보기',
         icon: FolderKanban,
         routeGroup: 'project',

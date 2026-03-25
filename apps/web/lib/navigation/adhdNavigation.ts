@@ -16,7 +16,7 @@ export type ADHDRoute = {
 /**
  * ADHD 모드 네비게이션 훅
  *
- * 웹: URL 기반 라우팅 (/adhd/motivation, /adhd/ai-plan 등)
+ * 웹: URL 기반 라우팅 (/adhd/motivation, /adhd/projects 등)
  */
 export function useADHDNavigation() {
   const router = useRouter();
@@ -81,7 +81,7 @@ export function useADHDNavigation() {
     if (tab) {
       goScreen(tab as ADHDSubViewId);
     } else {
-      goScreen('ai-plan'); // 기본값
+      goScreen('projects'); // 기본값
     }
   };
 

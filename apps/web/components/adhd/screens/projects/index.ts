@@ -1,1 +1,1 @@
-export { AIPlanScreen } from './AIPlanScreen';
+export { ProjectsScreen } from './ProjectsScreen';

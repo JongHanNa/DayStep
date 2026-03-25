@@ -139,13 +139,13 @@ export default function HomeScreen() {
         onPress: () => navigation.navigate('Planner', {initialPage: 0}),
       },
       {
-        id: 'ai-plan',
+        id: 'projects',
         icon: <FolderKanban size={20} color={primaryColor} />,
         label: '내 계획 보기',
         description: '프로젝트 목록과 진행 상황 확인',
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
-        onPress: () => navigation.navigate('AIPlan'),
+        onPress: () => navigation.navigate('Projects'),
       },
       {
         id: 'ai-chat',

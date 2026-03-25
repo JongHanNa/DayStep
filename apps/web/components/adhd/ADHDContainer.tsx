@@ -33,7 +33,7 @@ const GenericTabContainer = dynamic(() => import('./containers/GenericTabContain
 // 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
 const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'daily-planner', 'execute'];
 const RELATIONSHIP_SCREEN_IDS: ADHDSubViewId[] = ['record', 'news', 'gratitude'];
-const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
+const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['projects', 'ai-chat', 'guide'];
 
 /**
  * 로딩 스피너 컴포넌트

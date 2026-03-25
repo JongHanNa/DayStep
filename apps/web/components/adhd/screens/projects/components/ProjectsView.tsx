@@ -22,17 +22,17 @@ import { useADHDStore } from '@/state/stores/adhdStore';
 import type { Project, ProjectStatus } from '@/types';
 import ProjectEditModal from '@/components/adhd/modals/ProjectEditModal';
 
-interface AIPlanViewProps {
+interface ProjectsViewProps {
   userId: string;
 }
 
 /**
- * AI 계획 뷰 - 프로젝트 목록 관리
+ * 프로젝트 목록 관리 뷰
  *
- * GenericTabContainer의 ai-plan 탭에서 사용
+ * GenericTabContainer의 projects 탭에서 사용
  * ProjectContainer에서 프로젝트 목록 부분만 추출
  */
-export function AIPlanView({ userId }: AIPlanViewProps) {
+export function ProjectsView({ userId }: ProjectsViewProps) {
   const { loading: authLoading } = useAuth();
 
   const {
@@ -376,4 +376,4 @@ export function AIPlanView({ userId }: AIPlanViewProps) {
   );
 }
 
-export default AIPlanView;
+export default ProjectsView;

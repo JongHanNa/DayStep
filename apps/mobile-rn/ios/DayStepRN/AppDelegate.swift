@@ -58,6 +58,9 @@ class AppDelegate: ExpoAppDelegate {
     // daystep-rn (Zustand용 MMKV)에 플래그 저장
     guard let mmkv = MMKV(mmapID: "daystep-rn") else { return }
     mmkv.set(true, forKey: "uitest_mode")
+
+    // Debug 빌드의 "Downloading..." 배너 비활성화
+    RCTDevLoadingViewSetEnabled(false)
   }
 }
 

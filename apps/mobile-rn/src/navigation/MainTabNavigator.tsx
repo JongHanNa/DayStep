@@ -21,7 +21,7 @@ import NotesScreen from '../screens/NotesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
 // Home Stack / More Stack 공유 화면
-import AIPlanScreen from '../screens/AIPlanScreen';
+import ProjectsScreen from '../screens/ProjectsScreen';
 import AIChatScreen from '../screens/AIChatScreen';
 import GuideScreen from '../screens/GuideScreen';
 import RecordScreen from '../screens/RecordScreen';
@@ -62,7 +62,7 @@ function HomeStackNavigator() {
       }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="MonthlyPlanner" component={MonthlyPlannerRedirect} />
-      <HomeStack.Screen name="AIPlan" component={AIPlanScreen} />
+      <HomeStack.Screen name="Projects" component={ProjectsScreen} />
       <HomeStack.Screen name="AIChat" component={AIChatScreen} />
       <HomeStack.Screen name="Guide" component={GuideScreen} />
       <HomeStack.Screen name="Record" component={RecordScreen} />
@@ -93,7 +93,7 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="MoreLanding" component={SettingsScreen} />
       <MoreStack.Screen name="Settings" component={SettingsScreen} />
       <MoreStack.Screen name="MonthlyPlanner" component={MonthlyPlannerRedirect} />
-      <MoreStack.Screen name="AIPlan" component={AIPlanScreen} />
+      <MoreStack.Screen name="Projects" component={ProjectsScreen} />
       <MoreStack.Screen name="AIChat" component={AIChatScreen} />
       <MoreStack.Screen name="Guide" component={GuideScreen} />
       <MoreStack.Screen name="Record" component={RecordScreen} />

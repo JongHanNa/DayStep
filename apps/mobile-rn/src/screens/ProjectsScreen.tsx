@@ -1,5 +1,5 @@
 /**
- * AIPlan Screen — 내 계획 보기
+ * Projects Screen — 내 계획 보기
  * 오케스트레이터: 컴포넌트 조합만 담당
  */
 import React, {useEffect, useCallback, useMemo, useRef} from 'react';
@@ -19,7 +19,7 @@ import {
 } from '@/components/project';
 import type {ProjectFormSheetRef} from '@/components/project';
 
-export default function AIPlanScreen() {
+export default function ProjectsScreen() {
   const user = useAuthStore(s => s.user);
   const {
     projects,

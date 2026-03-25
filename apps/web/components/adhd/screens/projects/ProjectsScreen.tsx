@@ -1,8 +1,8 @@
 'use client';
 
-import { AIPlanView } from './components';
+import { ProjectsView } from './components';
 
-interface AIPlanScreenProps {
+interface ProjectsScreenProps {
   userId: string;
   onExit?: () => void;
 }
@@ -12,8 +12,7 @@ interface AIPlanScreenProps {
  * screens/ 아키텍처에서 사용하는 독립적인 화면 컴포넌트
  *
  * 프로젝트 목록 관리 UI를 표시
- * AIPlanView를 직접 사용
  */
-export function AIPlanScreen({ userId }: AIPlanScreenProps) {
-  return <AIPlanView userId={userId} />;
+export function ProjectsScreen({ userId }: ProjectsScreenProps) {
+  return <ProjectsView userId={userId} />;
 }

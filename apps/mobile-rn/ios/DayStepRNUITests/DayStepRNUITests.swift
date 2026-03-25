@@ -144,17 +144,17 @@ final class DayStepRNUITests: XCTestCase {
     app.swipeDown() // 스크롤 맨 위로 복귀
     sleep(1)
 
-    if let aiPlanButton = findElement("feature_ai-plan") {
-      aiPlanButton.tap()
+    if let projectsButton = findElement("feature_projects") {
+      projectsButton.tap()
       sleep(3)
-      saveScreenshot("06_AIPlan")
+      saveScreenshot("06_Projects")
     } else {
       app.swipeUp()
       sleep(1)
-      if let aiPlanButton = findElement("feature_ai-plan", timeout: 3) {
-        aiPlanButton.tap()
+      if let projectsButton = findElement("feature_projects", timeout: 3) {
+        projectsButton.tap()
         sleep(3)
-        saveScreenshot("06_AIPlan")
+        saveScreenshot("06_Projects")
       }
     }
   }

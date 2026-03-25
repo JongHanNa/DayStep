@@ -60,7 +60,7 @@ const SF_SYMBOL_MAP: Record<string, string> = {
 
 // HomeStack 내 "More 소속" 화면 목록
 const MORE_SCREENS = new Set([
-  'AIPlan', 'AIChat', 'Guide',
+  'Projects', 'AIChat', 'Guide',
   'Record', 'Cleanup', 'SleepGarden', 'SleepSession',
   'ADHDUnderstanding', 'Cleaning',
 ]);
@@ -68,7 +68,7 @@ const MORE_SCREENS = new Set([
 // iOS 26+ 네이티브 확장 패널용 SF Symbol 매핑
 const MENU_SF_SYMBOLS: Record<string, string> = {
   MoreLanding: 'gearshape',
-  AIPlan: 'list.clipboard',
+  Projects: 'list.clipboard',
   AIChat: 'sparkles',
   Guide: 'message',
   Cleanup: 'trash',
@@ -80,7 +80,7 @@ const MENU_SF_SYMBOLS: Record<string, string> = {
 
 const MENU_LABELS: Record<string, string> = {
   MoreLanding: '설정',
-  AIPlan: '계획보기',
+  Projects: '계획보기',
   AIChat: 'AI계획',
   Guide: 'Claude',
   Cleanup: '정리',
@@ -92,7 +92,7 @@ const MENU_LABELS: Record<string, string> = {
 
 // 네이티브 메뉴 아이템 순서 (MorePanel의 MENU_ITEMS와 동일)
 const MENU_SCREEN_ORDER = [
-  'MoreLanding', 'AIPlan', 'AIChat', 'Guide',
+  'MoreLanding', 'Projects', 'AIChat', 'Guide',
   'Cleanup', 'Cleaning', 'Record', 'SleepGarden',
   'ADHDUnderstanding',
 ];

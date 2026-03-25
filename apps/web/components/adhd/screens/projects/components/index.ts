@@ -1,2 +1,2 @@
-export { AIPlanView } from './AIPlanView';
-export { default as AIPlanViewDefault } from './AIPlanView';
+export { ProjectsView } from './ProjectsView';
+export { default as ProjectsViewDefault } from './ProjectsView';
