@@ -625,40 +625,45 @@ struct IsometricGardenView: View {
         }
       }
 
-      // ── 잔디 위 풀잎 장식 (전체 바닥에 분산) ──
-      // 시드 기반 고정 위치 (매 렌더마다 동일)
-      let grassPositions: [(row: Int, col: Int, side: Int, hScale: CGFloat)] = [
-        (0, 1, 0, 0.9), (0, 3, 1, 1.0), (0, 4, 0, 0.8),
-        (1, 0, 1, 0.85), (1, 2, 0, 1.1), (1, 4, 1, 0.9),
-        (2, 0, 0, 0.95), (2, 1, 1, 1.0), (2, 3, 0, 0.85), (2, 4, 1, 1.05),
-        (3, 0, 0, 0.9), (3, 2, 1, 1.0), (3, 3, 0, 0.95),
-        (4, 0, 1, 0.85), (4, 1, 0, 1.0), (4, 3, 1, 0.9), (4, 4, 0, 0.95),
-      ]
-      let grassColors = [Color(hex: "#4ADE80"), Color(hex: "#22C55E"), Color(hex: "#16A34A")]
-      let bladeW: CGFloat = max(0.8, tileTW * 0.02)
+      // ── 잔디 위 풀잎 장식 (교차선 위에 배치) ──
+      // 아이소메트릭 5x5에서:
+      //   북동↔남서 방향 edge (col 고정, row 이동): 풀잎 2개
+      //   북서↔남동 방향 edge (row 고정, col 이동): 풀잎 1개
+      let gColor = Color(hex: "#3DBE7B").opacity(0.8)
+      let bw: CGFloat = max(0.7, tileTW * 0.018)
+      let bh = tileTH * 0.22
+      let sp = tileTW * 0.035
 
-      for gp in grassPositions {
-        // 타일 중심 좌표 계산
-        let tcx = tw / 2 + CGFloat(gp.col - gp.row) * tileTW / 2
-        let tcy = CGFloat(gs) * tileTH / 2 + CGFloat(gp.col + gp.row) * tileTH / 2 - th / 2 + tileTH / 2
-        // 풀잎 오프셋 (타일 내 위치 변화)
-        let ox: CGFloat = CGFloat(gp.side == 0 ? -1 : 1) * tileTW * 0.15
-        let baseX = tcx + ox
-        let baseY = tcy
-        let bladeH = tileTH * 0.35 * gp.hScale
-        let color = grassColors[(gp.row + gp.col) % 3]
+      func drawBlade(_ cx: CGFloat, _ cy: CGFloat, lean: CGFloat) {
+        var p = Path()
+        p.move(to: CGPoint(x: cx, y: cy))
+        p.addQuadCurve(
+          to: CGPoint(x: cx + lean, y: cy - bh),
+          control: CGPoint(x: cx + lean * 0.6, y: cy - bh * 0.55)
+        )
+        context.stroke(p, with: .color(gColor), lineWidth: bw)
+      }
 
-        // 풀잎 2~3개씩 묶어서
-        for j in 0..<2 {
-          let jOff = CGFloat(j) * tileTW * 0.06 - tileTW * 0.03
-          let lean: CGFloat = CGFloat(j == 0 ? -1 : 1) * tileTW * 0.04
-          var blade = Path()
-          blade.move(to: CGPoint(x: baseX + jOff, y: baseY))
-          blade.addQuadCurve(
-            to: CGPoint(x: baseX + jOff + lean, y: baseY - bladeH),
-            control: CGPoint(x: baseX + jOff + lean * 0.7, y: baseY - bladeH * 0.5)
-          )
-          context.stroke(blade, with: .color(color), lineWidth: bladeW)
+      for row in 0..<gs {
+        for col in 0..<gs {
+          // 타일 중심
+          let tcx = tw / 2 + CGFloat(col - row) * tileTW / 2
+          let tcy = CGFloat(gs) * tileTH / 2 + CGFloat(col + row) * tileTH / 2 - th / 2 + tileTH / 2
+
+          // ── 북동↔남서 edge (타일 우측 변 중앙): 풀잎 2개 ──
+          if col < gs - 1 {
+            let ex = tcx + tileTW / 4   // 우측 변 중앙
+            let ey = tcy + tileTH / 4
+            drawBlade(ex - sp, ey, lean: -sp * 1.5)
+            drawBlade(ex + sp, ey, lean: sp * 1.5)
+          }
+
+          // ── 북서↔남동 edge (타일 하단 변 중앙): 풀잎 1개 ──
+          if row < gs - 1 {
+            let ex = tcx - tileTW / 4   // 좌측 변 중앙
+            let ey = tcy + tileTH / 4
+            drawBlade(ex, ey, lean: sp * 0.3)
+          }
         }
       }
 
