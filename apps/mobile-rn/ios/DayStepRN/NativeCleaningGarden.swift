@@ -145,6 +145,11 @@ struct CleaningTreeCanvasView: View {
       let groundRect = CGRect(x: cx - w * 0.3, y: groundY, width: w * 0.6, height: h * 0.1)
       context.fill(Ellipse().path(in: groundRect), with: .color(groundColor))
 
+      // 잔디 풀잎 장식 (나무 주변)
+      if !isAbandoned && growthLevel >= 1 {
+        drawGrassBlades(context: context, w: w, cx: cx, groundY: groundY)
+      }
+
       if isAbandoned {
         drawWiltedTree(context: context, w: w, h: h, cx: cx, groundY: groundY)
       } else {
@@ -157,6 +162,39 @@ struct CleaningTreeCanvasView: View {
       }
     }
     .frame(width: size, height: size)
+  }
+
+  // MARK: - 잔디 풀잎 장식
+  private func drawGrassBlades(context: GraphicsContext, w: CGFloat, cx: CGFloat, groundY: CGFloat) {
+    let bladeColor = Color(hex: "#4ADE80")
+    let bladeColorDark = Color(hex: "#22C55E")
+    let bladeW = max(1, w * 0.025)
+
+    // 좌측 풀잎들
+    for i in 0..<3 {
+      let offsetX = cx - w * (0.22 + CGFloat(i) * 0.08)
+      let bladeH = w * (0.08 + CGFloat(i) * 0.02)
+      var blade = Path()
+      blade.move(to: CGPoint(x: offsetX, y: groundY + w * 0.02))
+      blade.addQuadCurve(
+        to: CGPoint(x: offsetX - w * 0.03, y: groundY - bladeH),
+        control: CGPoint(x: offsetX - w * 0.05, y: groundY - bladeH * 0.5)
+      )
+      context.stroke(blade, with: .color(i % 2 == 0 ? bladeColor : bladeColorDark), lineWidth: bladeW)
+    }
+
+    // 우측 풀잎들
+    for i in 0..<3 {
+      let offsetX = cx + w * (0.18 + CGFloat(i) * 0.08)
+      let bladeH = w * (0.07 + CGFloat(i) * 0.025)
+      var blade = Path()
+      blade.move(to: CGPoint(x: offsetX, y: groundY + w * 0.02))
+      blade.addQuadCurve(
+        to: CGPoint(x: offsetX + w * 0.03, y: groundY - bladeH),
+        control: CGPoint(x: offsetX + w * 0.04, y: groundY - bladeH * 0.5)
+      )
+      context.stroke(blade, with: .color(i % 2 == 0 ? bladeColorDark : bladeColor), lineWidth: bladeW)
+    }
   }
 
   // MARK: - 씨앗
@@ -584,6 +622,43 @@ struct IsometricGardenView: View {
           tile.addLine(to: CGPoint(x: cx - tileTW / 2, y: cy + tileTH / 2))
           tile.closeSubpath()
           context.fill(tile, with: .color(isEven ? grassLight : grassDark))
+        }
+      }
+
+      // ── 잔디 위 풀잎 장식 (전체 바닥에 분산) ──
+      // 시드 기반 고정 위치 (매 렌더마다 동일)
+      let grassPositions: [(row: Int, col: Int, side: Int, hScale: CGFloat)] = [
+        (0, 1, 0, 0.9), (0, 3, 1, 1.0), (0, 4, 0, 0.8),
+        (1, 0, 1, 0.85), (1, 2, 0, 1.1), (1, 4, 1, 0.9),
+        (2, 0, 0, 0.95), (2, 1, 1, 1.0), (2, 3, 0, 0.85), (2, 4, 1, 1.05),
+        (3, 0, 0, 0.9), (3, 2, 1, 1.0), (3, 3, 0, 0.95),
+        (4, 0, 1, 0.85), (4, 1, 0, 1.0), (4, 3, 1, 0.9), (4, 4, 0, 0.95),
+      ]
+      let grassColors = [Color(hex: "#4ADE80"), Color(hex: "#22C55E"), Color(hex: "#16A34A")]
+      let bladeW: CGFloat = max(0.8, tileTW * 0.02)
+
+      for gp in grassPositions {
+        // 타일 중심 좌표 계산
+        let tcx = tw / 2 + CGFloat(gp.col - gp.row) * tileTW / 2
+        let tcy = CGFloat(gs) * tileTH / 2 + CGFloat(gp.col + gp.row) * tileTH / 2 - th / 2 + tileTH / 2
+        // 풀잎 오프셋 (타일 내 위치 변화)
+        let ox: CGFloat = CGFloat(gp.side == 0 ? -1 : 1) * tileTW * 0.15
+        let baseX = tcx + ox
+        let baseY = tcy
+        let bladeH = tileTH * 0.35 * gp.hScale
+        let color = grassColors[(gp.row + gp.col) % 3]
+
+        // 풀잎 2~3개씩 묶어서
+        for j in 0..<2 {
+          let jOff = CGFloat(j) * tileTW * 0.06 - tileTW * 0.03
+          let lean: CGFloat = CGFloat(j == 0 ? -1 : 1) * tileTW * 0.04
+          var blade = Path()
+          blade.move(to: CGPoint(x: baseX + jOff, y: baseY))
+          blade.addQuadCurve(
+            to: CGPoint(x: baseX + jOff + lean, y: baseY - bladeH),
+            control: CGPoint(x: baseX + jOff + lean * 0.7, y: baseY - bladeH * 0.5)
+          )
+          context.stroke(blade, with: .color(color), lineWidth: bladeW)
         }
       }
 
