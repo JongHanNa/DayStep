@@ -145,11 +145,6 @@ struct CleaningTreeCanvasView: View {
       let groundRect = CGRect(x: cx - w * 0.3, y: groundY, width: w * 0.6, height: h * 0.1)
       context.fill(Ellipse().path(in: groundRect), with: .color(groundColor))
 
-      // 잔디 풀잎 장식 (나무 주변)
-      if !isAbandoned && growthLevel >= 1 {
-        drawGrassBlades(context: context, w: w, cx: cx, groundY: groundY)
-      }
-
       if isAbandoned {
         drawWiltedTree(context: context, w: w, h: h, cx: cx, groundY: groundY)
       } else {
@@ -646,24 +641,19 @@ struct IsometricGardenView: View {
 
       for row in 0..<gs {
         for col in 0..<gs {
-          // 타일 중심
           let tcx = tw / 2 + CGFloat(col - row) * tileTW / 2
           let tcy = CGFloat(gs) * tileTH / 2 + CGFloat(col + row) * tileTH / 2 - th / 2 + tileTH / 2
 
-          // ── 북동↔남서 edge (타일 우측 변 중앙): 풀잎 2개 ──
-          if col < gs - 1 {
-            let ex = tcx + tileTW / 4   // 우측 변 중앙
-            let ey = tcy + tileTH / 4
-            drawBlade(ex - sp, ey, lean: -sp * 1.5)
-            drawBlade(ex + sp, ey, lean: sp * 1.5)
-          }
+          // ── 북동↔남서 edge (타일 우측 변): 풀잎 2개 ──
+          let rex = tcx + tileTW / 4
+          let rey = tcy + tileTH / 4
+          drawBlade(rex - sp, rey, lean: -sp * 1.5)
+          drawBlade(rex + sp, rey, lean: sp * 1.5)
 
-          // ── 북서↔남동 edge (타일 하단 변 중앙): 풀잎 1개 ──
-          if row < gs - 1 {
-            let ex = tcx - tileTW / 4   // 좌측 변 중앙
-            let ey = tcy + tileTH / 4
-            drawBlade(ex, ey, lean: sp * 0.3)
-          }
+          // ── 북서↔남동 edge (타일 좌측 변): 풀잎 1개 ──
+          let lex = tcx - tileTW / 4
+          let ley = tcy + tileTH / 4
+          drawBlade(lex, ley, lean: sp * 0.3)
         }
       }
 
