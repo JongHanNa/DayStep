@@ -644,16 +644,18 @@ struct IsometricGardenView: View {
           let tcx = tw / 2 + CGFloat(col - row) * tileTW / 2
           let tcy = CGFloat(gs) * tileTH / 2 + CGFloat(col + row) * tileTH / 2 - th / 2 + tileTH / 2
 
-          // ── 북동↔남서 edge (타일 우측 변): 풀잎 2개 ──
+          // ── 북동↔남서 edge (타일 우측 변): 풀잎 3개 ──
           let rex = tcx + tileTW / 4
           let rey = tcy + tileTH / 4
           drawBlade(rex - sp, rey, lean: -sp * 1.5)
+          drawBlade(rex, rey, lean: sp * 0.2)
           drawBlade(rex + sp, rey, lean: sp * 1.5)
 
-          // ── 북서↔남동 edge (타일 좌측 변): 풀잎 1개 ──
+          // ── 북서↔남동 edge (타일 좌측 변): 풀잎 2개 ──
           let lex = tcx - tileTW / 4
           let ley = tcy + tileTH / 4
-          drawBlade(lex, ley, lean: sp * 0.3)
+          drawBlade(lex - sp * 0.5, ley, lean: -sp * 1.2)
+          drawBlade(lex + sp * 0.5, ley, lean: sp * 1.2)
         }
       }
 
