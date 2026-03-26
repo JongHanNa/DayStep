@@ -278,7 +278,7 @@ struct IsometricGardenView: View {
   private var tileHeight: CGFloat { tileWidth * 0.5 }
 
   private var gardenWidth: CGFloat { tileWidth * CGFloat(gridSize) }
-  private var gardenHeight: CGFloat { tileHeight * CGFloat(gridSize) + 90 }
+  private var gardenHeight: CGFloat { tileHeight * CGFloat(gridSize) + 110 }
 
   /// 현재 뷰모드+오프셋에 해당하는 날짜 범위의 트리
   private var trees: [CleaningTreeInfo] {
@@ -293,26 +293,27 @@ struct IsometricGardenView: View {
 
       // 아이소메트릭 그리드
       ZStack {
+        // 단일 바닥 (gap 없는 하나의 큰 아이소메트릭 플랫폼)
+        isometricGround
+          .position(x: gardenWidth / 2 + 10, y: CGFloat(gridSize) * tileHeight / 2 + 30 + CGFloat(gridSize) * tileHeight / 2)
+
+        // 나무만 개별 배치
         ForEach(0..<gridSize, id: \.self) { row in
           ForEach(0..<gridSize, id: \.self) { col in
             let index = row * gridSize + col
             let pos = tilePosition(row: row, col: col)
             let tree = index < trees.count ? trees[index] : nil
 
-            ZStack {
-              isometricTile(row: row, col: col, hasTree: tree != nil)
-
-              if let t = tree {
-                CleaningTreeCanvasView(
-                  durationSeconds: t.durationSeconds,
-                  outcome: t.outcome,
-                  tab: t.tab,
-                  size: tileWidth * 0.65
-                )
-                .offset(y: -(tileHeight * 0.45))
-              }
+            if let t = tree {
+              CleaningTreeCanvasView(
+                durationSeconds: t.durationSeconds,
+                outcome: t.outcome,
+                tab: t.tab,
+                size: tileWidth * 0.65
+              )
+              .offset(y: -(tileHeight * 0.45))
+              .position(x: pos.x, y: pos.y)
             }
-            .position(x: pos.x, y: pos.y)
           }
         }
       }
@@ -554,6 +555,91 @@ struct IsometricGardenView: View {
     }
   }
 
+  /// 단일 아이소메트릭 바닥 (고품질: 체크보드 잔디 + 잔디 층 + 흙 층)
+  private var isometricGround: some View {
+    let tw = tileWidth * CGFloat(gridSize)
+    let th = tileHeight * CGFloat(gridSize)
+    let grassDepth: CGFloat = 5
+    let soilDepth: CGFloat = 18
+    let totalDepth = grassDepth + soilDepth
+    let tileTW = tileWidth
+    let tileTH = tileHeight
+    let gs = gridSize
+
+    return Canvas { context, _ in
+      // ── 상면: 타일별 미세 체크보드 (교차 색상으로 잔디 질감) ──
+      let grassLight = Color(hex: "#86EFAC").opacity(0.75)
+      let grassDark  = Color(hex: "#6EE7A0").opacity(0.78)
+
+      for row in 0..<gs {
+        for col in 0..<gs {
+          let isEven = (row + col) % 2 == 0
+          let cx = tw / 2 + CGFloat(col - row) * tileTW / 2
+          let cy = CGFloat(gs) * tileTH / 2 + CGFloat(col + row) * tileTH / 2 - th / 2
+
+          var tile = Path()
+          tile.move(to: CGPoint(x: cx, y: cy))
+          tile.addLine(to: CGPoint(x: cx + tileTW / 2, y: cy + tileTH / 2))
+          tile.addLine(to: CGPoint(x: cx, y: cy + tileTH))
+          tile.addLine(to: CGPoint(x: cx - tileTW / 2, y: cy + tileTH / 2))
+          tile.closeSubpath()
+          context.fill(tile, with: .color(isEven ? grassLight : grassDark))
+        }
+      }
+
+      // ── 좌측면: 잔디 층 ──
+      var leftGrass = Path()
+      leftGrass.move(to: CGPoint(x: 0, y: th / 2))
+      leftGrass.addLine(to: CGPoint(x: tw / 2, y: th))
+      leftGrass.addLine(to: CGPoint(x: tw / 2, y: th + grassDepth))
+      leftGrass.addLine(to: CGPoint(x: 0, y: th / 2 + grassDepth))
+      leftGrass.closeSubpath()
+      context.fill(leftGrass, with: .color(Color(hex: "#4ADE80")))
+
+      // ── 좌측면: 흙 층 ──
+      var leftSoil = Path()
+      leftSoil.move(to: CGPoint(x: 0, y: th / 2 + grassDepth))
+      leftSoil.addLine(to: CGPoint(x: tw / 2, y: th + grassDepth))
+      leftSoil.addLine(to: CGPoint(x: tw / 2, y: th + totalDepth))
+      leftSoil.addLine(to: CGPoint(x: 0, y: th / 2 + totalDepth))
+      leftSoil.closeSubpath()
+      context.fill(leftSoil, with: .color(Color(hex: "#92400E").opacity(0.7)))
+      var leftSoilDark = Path()
+      leftSoilDark.move(to: CGPoint(x: 0, y: th / 2 + grassDepth + soilDepth * 0.6))
+      leftSoilDark.addLine(to: CGPoint(x: tw / 2, y: th + grassDepth + soilDepth * 0.6))
+      leftSoilDark.addLine(to: CGPoint(x: tw / 2, y: th + totalDepth))
+      leftSoilDark.addLine(to: CGPoint(x: 0, y: th / 2 + totalDepth))
+      leftSoilDark.closeSubpath()
+      context.fill(leftSoilDark, with: .color(Color(hex: "#78350F").opacity(0.5)))
+
+      // ── 우측면: 잔디 층 ──
+      var rightGrass = Path()
+      rightGrass.move(to: CGPoint(x: tw, y: th / 2))
+      rightGrass.addLine(to: CGPoint(x: tw / 2, y: th))
+      rightGrass.addLine(to: CGPoint(x: tw / 2, y: th + grassDepth))
+      rightGrass.addLine(to: CGPoint(x: tw, y: th / 2 + grassDepth))
+      rightGrass.closeSubpath()
+      context.fill(rightGrass, with: .color(Color(hex: "#22C55E")))
+
+      // ── 우측면: 흙 층 ──
+      var rightSoil = Path()
+      rightSoil.move(to: CGPoint(x: tw, y: th / 2 + grassDepth))
+      rightSoil.addLine(to: CGPoint(x: tw / 2, y: th + grassDepth))
+      rightSoil.addLine(to: CGPoint(x: tw / 2, y: th + totalDepth))
+      rightSoil.addLine(to: CGPoint(x: tw, y: th / 2 + totalDepth))
+      rightSoil.closeSubpath()
+      context.fill(rightSoil, with: .color(Color(hex: "#A16207").opacity(0.6)))
+      var rightSoilDark = Path()
+      rightSoilDark.move(to: CGPoint(x: tw, y: th / 2 + grassDepth + soilDepth * 0.6))
+      rightSoilDark.addLine(to: CGPoint(x: tw / 2, y: th + grassDepth + soilDepth * 0.6))
+      rightSoilDark.addLine(to: CGPoint(x: tw / 2, y: th + totalDepth))
+      rightSoilDark.addLine(to: CGPoint(x: tw, y: th / 2 + totalDepth))
+      rightSoilDark.closeSubpath()
+      context.fill(rightSoilDark, with: .color(Color(hex: "#78350F").opacity(0.4)))
+    }
+    .frame(width: tw, height: th + totalDepth)
+  }
+
   /// 그리드(row, col) → 화면좌표
   private func tilePosition(row: Int, col: Int) -> CGPoint {
     let centerX = (gardenWidth + 20) / 2
@@ -576,11 +662,8 @@ struct IsometricGardenView: View {
       top.addLine(to: CGPoint(x: tw / 2, y: th))    // 하
       top.addLine(to: CGPoint(x: 0, y: th / 2))     // 좌
       top.closeSubpath()
-      let grassColor = hasTree
-        ? Color(hex: "#4ADE80").opacity(0.8)
-        : Color(hex: "#86EFAC").opacity(0.5)
+      let grassColor = Color(hex: "#86EFAC").opacity(0.7)
       context.fill(top, with: .color(grassColor))
-      context.stroke(top, with: .color(Color(hex: "#22C55E").opacity(0.3)), lineWidth: 0.5)
 
       let depth: CGFloat = 8
 
