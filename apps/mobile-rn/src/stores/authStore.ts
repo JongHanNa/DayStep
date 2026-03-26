@@ -73,9 +73,24 @@ export const useAuthStore = create<AuthState>()(
           // UI Test 모드: AppDelegate에서 --uitesting 플래그 감지 시 MMKV에 저장
           const isUITestMode = storage.getBoolean('uitest_mode') === true;
           if (isUITestMode) {
-            set({isAuthenticated: true, initializing: false});
             storage.remove('uitest_mode'); // 일회용 플래그 삭제
             storage.set('uitest_active', true); // 앱 전역 참조용 (모달 억제 등)
+            // 마케팅 데모 계정으로 실제 로그인 (DB 데이터 로드를 위해)
+            try {
+              const {data, error} = await supabase.auth.signInWithPassword({
+                email: 'demo@daystep.app',
+                password: 'DayStep2026!',
+              });
+              if (data?.session) {
+                set({user: data.session.user, session: data.session, isAuthenticated: true, initializing: false});
+                return;
+              }
+              console.warn('[Auth] UITest signIn failed:', error?.message);
+            } catch (e) {
+              console.warn('[Auth] UITest signIn error:', e);
+            }
+            // 로그인 실패 시 기존 방식 폴백
+            set({isAuthenticated: true, initializing: false});
             return;
           }
 

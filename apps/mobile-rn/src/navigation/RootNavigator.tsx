@@ -162,8 +162,10 @@ function AuthenticatedApp() {
     })();
   }, [user?.id, subLoading, hasActiveSubscription, setTrialEligible]);
 
-  // 자격 확인 후 모달 표시
+  // 자격 확인 후 모달 표시 (UITest 모드에서는 억제)
+  const isUITestActive = require('@/lib/mmkv').storage.getBoolean('uitest_active');
   useEffect(() => {
+    if (isUITestActive) return; // UITest: 페이월 억제
     if (
       isTrialEligible &&
       !hasSeenTrialOffer &&
@@ -174,7 +176,7 @@ function AuthenticatedApp() {
       const timer = setTimeout(() => setShowTrialModal(true), 1500);
       return () => clearTimeout(timer);
     }
-  }, [isTrialEligible, hasSeenTrialOffer, hasActiveSubscription, subLoading]);
+  }, [isTrialEligible, hasSeenTrialOffer, hasActiveSubscription, subLoading, isUITestActive]);
 
   const handleTrialClose = useCallback(() => {
     setShowTrialModal(false);

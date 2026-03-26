@@ -98,7 +98,7 @@ final class DayStepRNUITests: XCTestCase {
 
     if let sleepButton = findElement("feature_sleep") {
       sleepButton.tap()
-      sleep(3)
+      sleep(8) // 수면 기록 fetch 대기 (Supabase 쿼리 + 네이티브 렌더링)
       saveScreenshot("04_SleepGarden")
       app.swipeRight()
       sleep(1)
@@ -138,7 +138,7 @@ final class DayStepRNUITests: XCTestCase {
       }
     }
 
-    // ─── 6. AI 계획 (Home → 서브스크린) ───
+    // ─── 6. Projects (Home → 서브스크린) ───
     firstTab.tap()
     sleep(1)
     app.swipeDown() // 스크롤 맨 위로 복귀
@@ -148,6 +148,8 @@ final class DayStepRNUITests: XCTestCase {
       projectsButton.tap()
       sleep(3)
       saveScreenshot("06_Projects")
+      app.swipeRight()
+      sleep(1)
     } else {
       app.swipeUp()
       sleep(1)
@@ -155,6 +157,66 @@ final class DayStepRNUITests: XCTestCase {
         projectsButton.tap()
         sleep(3)
         saveScreenshot("06_Projects")
+        app.swipeRight()
+        sleep(1)
+      }
+    }
+
+    // ─── 7. ADHD 이해하기 (Home → 서브스크린) ───
+    firstTab.tap()
+    sleep(1)
+    app.swipeDown()
+    sleep(1)
+
+    if let adhdButton = findElement("feature_adhd-understanding") {
+      adhdButton.tap()
+      sleep(3)
+      saveScreenshot("07_ADHD")
+      app.swipeRight()
+      sleep(1)
+    } else {
+      app.swipeUp()
+      sleep(1)
+      if let adhdButton = findElement("feature_adhd-understanding", timeout: 3) {
+        adhdButton.tap()
+        sleep(3)
+        saveScreenshot("07_ADHD")
+        app.swipeRight()
+        sleep(1)
+      }
+    }
+
+    // ─── 8. 연료/원동력 노트 (Notes 탭) ───
+    if let notesTab = findElement("tab_Notes") {
+      notesTab.tap()
+      sleep(2)
+    }
+    saveScreenshot("08_Notes")
+
+    // ─── 9. 리플렉션/아이젠하워 (Planner 2페이지) ───
+    if let plannerTab = findElement("tab_Planner") {
+      plannerTab.tap()
+      sleep(2)
+      app.swipeLeft() // 2페이지(리플렉션)로 이동
+      sleep(2)
+    }
+    saveScreenshot("09_Reflection")
+
+    // ─── 10. 타임블록킹 주간뷰 (Planner 뷰 전환) ───
+    // Planner 탭 재진입 (1페이지 상태 보장)
+    if let plannerTab2 = findElement("tab_Planner") {
+      plannerTab2.tap()
+      sleep(2)
+    }
+    // LiquidGlassMenu 트리거 → ActionSheet에서 "주" 선택
+    if let viewMenu = findElement("planner_view_menu", timeout: 10) {
+      viewMenu.tap()
+      sleep(1)
+      let weekButton = app.sheets.buttons["주"]
+      if weekButton.waitForExistence(timeout: 5) {
+        weekButton.tap()
+        sleep(3)
+        saveScreenshot("10_TimeBlock")
       }
     }
   }

@@ -219,6 +219,7 @@ export default function PlannerScreen() {
         menuItems={MENU_ITEMS}
         onSelect={handleMenuSelect}
         fallbackIcon={<Calendar size={18} color="#6B7280" />}
+        testID="planner_view_menu"
       />
     </View>
   );

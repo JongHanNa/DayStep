@@ -37,6 +37,7 @@ export default function SleepGardenScreen() {
     setScreenTimeLinkEnabled,
     sessionState,
     fetchMonthRecords,
+    records,
     getGardenData,
     getStreak,
     getGoalDurationMinutes,
@@ -46,7 +47,8 @@ export default function SleepGardenScreen() {
   } = useSleepStore();
 
   const [showScreenTimeModal, setShowScreenTimeModal] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const isUITest = require('../lib/mmkv').storage.getBoolean('uitest_active');
+  const [viewMode, setViewMode] = useState<ViewMode>(isUITest ? 'day' : 'month');
 
   // 네이티브 컴포넌트 높이 애니메이션 (absoluteFill 패턴)
   const gardenHeight = useSharedValue(450);
@@ -122,7 +124,7 @@ export default function SleepGardenScreen() {
     }
   }, []); // 최초 마운트 시만
 
-  const gardenData = useMemo(() => getGardenData(), [getGardenData]);
+  const gardenData = useMemo(() => getGardenData(), [getGardenData, records]);
   const streak = getStreak();
   const goalMinutes = getGoalDurationMinutes();
   const goalHours = Math.floor(goalMinutes / 60);

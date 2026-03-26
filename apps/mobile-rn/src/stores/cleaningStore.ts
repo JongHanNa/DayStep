@@ -258,6 +258,21 @@ export const useCleaningStore = create<CleaningStoreState>()(
             ...todayCompletions,
             {taskId, date: today, completedAt: new Date().toISOString()},
           ];
+
+          // DB에도 기록 (Quick Complete → cleaning_records)
+          const task = get().tasks.find(t => t.id === taskId);
+          if (task) {
+            get().insertCleaningRecord({
+              date: today,
+              task_id: taskId,
+              task_title: task.title,
+              tab: task.tab,
+              category: task.category,
+              duration_seconds: task.estimatedMinutes * 60,
+              session_outcome: 'completed',
+              energy_level: get().energyLevel,
+            });
+          }
         }
         set({completions});
       },

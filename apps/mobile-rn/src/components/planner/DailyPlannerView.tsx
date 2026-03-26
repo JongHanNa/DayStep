@@ -380,6 +380,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
             menuItems={menuItems}
             onSelect={onMenuSelect}
             fallbackIcon={<Calendar size={18} color="#9CA3AF" />}
+            testID="planner_view_menu"
           />
         </View>
       </View>

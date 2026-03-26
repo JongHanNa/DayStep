@@ -36,6 +36,8 @@ interface LiquidGlassMenuProps {
   onSelect: (key: string) => void;
   /** iOS 25- 폴백 시 렌더링할 아이콘 */
   fallbackIcon?: React.ReactNode;
+  /** XCUITest용 식별자 */
+  testID?: string;
 }
 
 export function LiquidGlassMenu({
@@ -45,6 +47,7 @@ export function LiquidGlassMenu({
   menuItems,
   onSelect,
   fallbackIcon,
+  testID,
 }: LiquidGlassMenuProps): React.ReactElement {
   if (isIOS26Plus) {
     return (
@@ -64,6 +67,10 @@ export function LiquidGlassMenu({
   // iOS 25- 폴백: ActionSheetIOS
   return (
     <AnimatedPressable
+      testID={testID}
+      accessibilityIdentifier={testID}
+      accessible={true}
+      accessibilityRole="button"
       onPress={() => {
         const options = [...menuItems.map(item => item.title), '취소'];
         ActionSheetIOS.showActionSheetWithOptions(
