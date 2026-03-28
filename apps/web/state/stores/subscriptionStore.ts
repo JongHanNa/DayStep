@@ -7,6 +7,8 @@ import {
   calculateDaysRemainingInTrial,
   checkActiveSubscription,
   checkInTrial,
+  isInGracePeriod as checkGracePeriod,
+  gracePeriodDaysRemaining as calcGraceDays,
 } from '@daystep/shared-core';
 
 export type { SubscriptionStatus, Platform, SubscriptionInfo };
@@ -31,18 +33,18 @@ interface SubscriptionState {
   isInTrial: boolean;
   daysRemainingInTrial: number | null;
   subscriptionExpiresAt: Date | null;
-  isTrialEligible: boolean;
 
-  // 트라이얼 제안 UI 상태
-  hasSeenTrialOffer: boolean;
+  // Grace period (신규 가입 7일 Pro 화면 접근)
+  userCreatedAt: string | null;
+  isInGracePeriod: boolean;
+  gracePeriodDaysRemaining: number;
 
   // Actions
   setSubscriptionInfo: (info: SubscriptionInfo | null) => void;
   setCustomerInfo: (info: CustomerInfo | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setHasSeenTrialOffer: (seen: boolean) => void;
-  setTrialEligible: (eligible: boolean) => void;
+  setUserCreatedAt: (createdAt: string) => void;
   updateComputedStates: () => void;
   reset: () => void;
 }
@@ -62,10 +64,11 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         isInTrial: false,
         daysRemainingInTrial: null,
         subscriptionExpiresAt: null,
-        isTrialEligible: false,
 
-        // 트라이얼 제안 UI 상태
-        hasSeenTrialOffer: false,
+        // Grace period
+        userCreatedAt: null,
+        isInGracePeriod: false,
+        gracePeriodDaysRemaining: 0,
 
         // Actions
         setSubscriptionInfo: (info: SubscriptionInfo | null) => {
@@ -91,12 +94,12 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           set({ error });
         },
 
-        setHasSeenTrialOffer: (seen: boolean) => {
-          set({ hasSeenTrialOffer: seen });
-        },
-
-        setTrialEligible: (eligible: boolean) => {
-          set({ isTrialEligible: eligible });
+        setUserCreatedAt: (createdAt: string) => {
+          set({
+            userCreatedAt: createdAt,
+            isInGracePeriod: checkGracePeriod(createdAt),
+            gracePeriodDaysRemaining: calcGraceDays(createdAt),
+          });
         },
 
         /**
@@ -104,7 +107,13 @@ export const useSubscriptionStore = create<SubscriptionState>()(
          * subscriptionInfo 또는 customerInfo 변경 시 호출
          */
         updateComputedStates: () => {
-          const { subscriptionInfo, customerInfo } = get();
+          const { subscriptionInfo, customerInfo, userCreatedAt } = get();
+
+          // Grace period 갱신
+          const graceUpdate = {
+            isInGracePeriod: checkGracePeriod(userCreatedAt),
+            gracePeriodDaysRemaining: calcGraceDays(userCreatedAt),
+          };
 
           if (!subscriptionInfo) {
             set({
@@ -112,6 +121,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               isInTrial: false,
               daysRemainingInTrial: null,
               subscriptionExpiresAt: null,
+              ...graceUpdate,
             });
             return;
           }
@@ -150,6 +160,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             isInTrial,
             daysRemainingInTrial,
             subscriptionExpiresAt,
+            ...graceUpdate,
           });
 
           console.log('💳 계산된 구독 상태:', {
@@ -171,8 +182,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             isInTrial: false,
             daysRemainingInTrial: null,
             subscriptionExpiresAt: null,
-            isTrialEligible: false,
-            hasSeenTrialOffer: false,
+            userCreatedAt: null,
+            isInGracePeriod: false,
+            gracePeriodDaysRemaining: 0,
           });
         },
       }),
@@ -180,7 +192,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         name: 'subscription-store',
         partialize: (state) => ({
           subscriptionInfo: state.subscriptionInfo,
-          hasSeenTrialOffer: state.hasSeenTrialOffer,
+          userCreatedAt: state.userCreatedAt,
           // customerInfo는 민감 정보이므로 persist에서 제외
         }),
         // persist 복원 완료 후 계산된 상태 업데이트

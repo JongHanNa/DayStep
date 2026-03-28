@@ -108,7 +108,6 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
     daysRemainingInTrial,
     subscriptionExpiresAt,
     isLoading,
-    isTrialEligible,
     purchasePackage,
     restoreSubscription,
     syncSubscription,
@@ -994,21 +993,6 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
       {/* ===== 비구독 상태 ===== */}
       {!hasActiveSubscription && (
         <>
-          {/* 트라이얼 배너 */}
-          {isTrialEligible && (
-            <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-                  <Crown className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground">7일 무료 체험</p>
-                  <p className="text-xs text-muted-foreground">모든 Pro 기능을 무료로 체험해보세요. 아래에서 플랜을 선택하고 시작할 수 있습니다.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* 섹션 1 — Pro 기능 살펴보기 (Free vs Pro 비교 테이블) */}
           <details open className="group rounded-xl border bg-card text-card-foreground shadow-sm">
             <summary className="flex items-center gap-3 cursor-pointer p-4 select-none list-none [&::-webkit-details-marker]:hidden">
@@ -1153,7 +1137,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5 mr-2" />
-                      {isTrialEligible ? '7일 무료 체험 시작' : 'Pro 구독 시작하기'}
+                      Pro 구독 시작하기
                     </>
                   )}
                 </Button>
@@ -1172,7 +1156,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                   ) : (
                     <>
                       <Sparkles className="w-5 h-5 mr-2" />
-                      {isTrialEligible ? '7일 무료 체험 시작' : 'Pro 구독 시작하기'}
+                      Pro 구독 시작하기
                     </>
                   )}
                 </Button>

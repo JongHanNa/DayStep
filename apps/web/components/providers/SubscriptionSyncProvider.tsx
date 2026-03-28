@@ -16,7 +16,7 @@ export function SubscriptionSyncProvider({ children }: { children: React.ReactNo
     syncSubscription,
     linkUserToRevenueCat,
     unlinkUserFromRevenueCat,
-    isNative,
+    setUserCreatedAt,
     paymentsEnabled,
   } = useSubscription();
 
@@ -45,6 +45,11 @@ export function SubscriptionSyncProvider({ children }: { children: React.ReactNo
         // 로그인: Revenue Cat 연결 + 구독 정보 동기화
         console.log('💳 [SubscriptionSync] 로그인 감지 - 구독 동기화 시작');
 
+        // Grace period: user.created_at 기반 7일 Pro 화면 접근
+        if (user?.created_at) {
+          setUserCreatedAt(user.created_at);
+        }
+
         linkUserToRevenueCat(currentUserId)
           .then(() => {
             console.log('💳 [SubscriptionSync] Revenue Cat 연결 완료');
@@ -70,10 +75,12 @@ export function SubscriptionSyncProvider({ children }: { children: React.ReactNo
     }
   }, [
     user?.id,
+    user?.created_at,
     isAuthenticated,
     paymentsEnabled,
     linkUserToRevenueCat,
     unlinkUserFromRevenueCat,
+    setUserCreatedAt,
   ]);
 
   // 이 Provider는 UI를 렌더링하지 않음 (동기화 로직만 처리)

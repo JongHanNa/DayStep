@@ -39,8 +39,6 @@ import {ArrowLeft, Crown, Check, X} from 'lucide-react-native';
 
 interface SubscriptionViewProps {
   onBack: () => void;
-  /** 트라이얼 모드: CTA 텍스트 및 배지를 7일 무료 체험으로 변경 */
-  trialMode?: boolean;
 }
 
 // ─── 사용량 비교 테이블 데이터 (단일 소스: @daystep/shared-core) ──────
@@ -127,14 +125,13 @@ function formatDate(dateStr: string | null | undefined): string {
 
 // ─── 메인 컴포넌트 ───────────────────────────────────
 
-export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewProps) {
+export function SubscriptionView({onBack}: SubscriptionViewProps) {
   const {primaryColor, colors} = useTheme();
   const {user} = useAuthStore();
   const {
     subscriptionInfo,
     hasActiveSubscription,
     isInTrial,
-    isTrialEligible,
     daysRemainingInTrial,
     loading,
     error,
@@ -324,7 +321,7 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
           <Crown size={18} color="#FFFFFF" strokeWidth={2} />
         )}
         <Text style={styles.ctaBtnText}>
-          {purchasing ? '처리 중...' : offeringsLoading ? '불러오는 중...' : (!monthlyPkg && !annualPkg) ? '구독 상품 로딩 실패' : trialMode ? '7일 무료 체험 시작' : '구독하기'}
+          {purchasing ? '처리 중...' : offeringsLoading ? '불러오는 중...' : (!monthlyPkg && !annualPkg) ? '구독 상품 로딩 실패' : '구독하기'}
         </Text>
       </View>
     </AnimatedPressable>
@@ -427,14 +424,6 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
           style={{flex: 1}}
           contentContainerStyle={[styles.paywallScroll, {paddingBottom: 16}]}
           showsVerticalScrollIndicator={false}>
-          {/* ── 트라이얼 배너 ── */}
-          {(trialMode || isTrialEligible) && (
-            <View style={styles.trialBanner}>
-              <Text style={[styles.trialBannerText, {color: fixedColors.premiumGold}]}>✨ 7일 무료 체험</Text>
-              <Text style={styles.trialBannerSub}>모든 Pro 기능을 무료로 체험해보세요</Text>
-            </View>
-          )}
-
           {/* ── 히어로 ── */}
           <View style={styles.heroSection}>
             {/* 골드 왕관 원형 */}
@@ -607,18 +596,10 @@ export function SubscriptionView({onBack, trialMode = false}: SubscriptionViewPr
                 <Crown size={18} color="#FFFFFF" strokeWidth={2} />
               )}
               <Text style={styles.ctaBtnText}>
-                {purchasing ? '처리 중...' : offeringsLoading ? '불러오는 중...' : (!monthlyPkg && !annualPkg) ? '구독 상품 로딩 실패' : trialMode ? '7일 무료 체험 시작' : '구독하기'}
+                {purchasing ? '처리 중...' : offeringsLoading ? '불러오는 중...' : (!monthlyPkg && !annualPkg) ? '구독 상품 로딩 실패' : '구독하기'}
               </Text>
             </View>
           </AnimatedPressable>
-
-          {/* 트라이얼 면책 조항 */}
-          {trialMode && (
-            <Text style={styles.trialDisclaimer}>
-              7일 무료 체험 후 선택한 플랜의 요금이 자동으로 청구됩니다.
-              체험 기간 중 언제든지 설정에서 취소할 수 있습니다.
-            </Text>
-          )}
 
           {/* ── 하단 링크 ── */}
           <View style={styles.footerLinks}>

@@ -52,7 +52,7 @@ export default function PlannerScreen() {
   const {selectedDate, setSelectedDate, todos, fetchTodosForDateRange} = useTodoStore();
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
-  const isTrialEligible = useSubscriptionStore(s => s.isTrialEligible);
+  const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
   const [showPaywallModal, setShowPaywallModal] = useState(false);
 
   const handleUpgrade = useCallback(() => {
@@ -234,7 +234,7 @@ export default function PlannerScreen() {
           />
         );
       case 'monthlyPlanner':
-        if (!hasActiveSubscription) {
+        if (!hasActiveSubscription && !isInGracePeriod) {
           return (
             <MonthlyPremiumUpsell
               onUpgrade={handleUpgrade}
@@ -349,7 +349,6 @@ export default function PlannerScreen() {
         <SafeAreaProvider>
           <SubscriptionView
             onBack={() => setShowPaywallModal(false)}
-            trialMode={isTrialEligible}
           />
         </SafeAreaProvider>
       </Modal>

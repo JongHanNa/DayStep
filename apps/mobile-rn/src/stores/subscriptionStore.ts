@@ -14,6 +14,8 @@ import {
   calculateDaysRemainingInTrial,
   checkActiveSubscription,
   checkInTrial,
+  isInGracePeriod as checkGracePeriod,
+  gracePeriodDaysRemaining as calcGraceDays,
 } from '@daystep/shared-core';
 
 export type {SubscriptionStatus, Platform, SubscriptionInfo};
@@ -27,17 +29,17 @@ interface SubscriptionState {
   hasActiveSubscription: boolean;
   isInTrial: boolean;
   daysRemainingInTrial: number | null;
-  isTrialEligible: boolean;
   _recentPurchase: boolean; // RevenueCat 구매 직후 플래그 (MMKV 미저장)
 
-  // 트라이얼 제안 UI 상태
-  hasSeenTrialOffer: boolean;
+  // Grace period (신규 가입 7일 Pro 화면 접근)
+  userCreatedAt: string | null;
+  isInGracePeriod: boolean;
+  gracePeriodDaysRemaining: number;
 
   // 액션
   fetchSubscription: (userId: string) => Promise<void>;
   applyRevenueCatPurchase: (entitlements: Record<string, any>) => void;
-  setHasSeenTrialOffer: (seen: boolean) => void;
-  setTrialEligible: (eligible: boolean) => void;
+  setUserCreatedAt: (createdAt: string) => void;
   updateComputedStates: () => void;
   reset: () => void;
   clearError: () => void;
@@ -52,9 +54,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       hasActiveSubscription: false,
       isInTrial: false,
       daysRemainingInTrial: null,
-      isTrialEligible: false,
       _recentPurchase: false,
-      hasSeenTrialOffer: false,
+      userCreatedAt: null,
+      isInGracePeriod: false,
+      gracePeriodDaysRemaining: 0,
 
       fetchSubscription: async (userId: string) => {
         try {
@@ -141,23 +144,29 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         });
       },
 
-      setHasSeenTrialOffer: (seen: boolean) => {
-        set({hasSeenTrialOffer: seen});
-      },
-
-      setTrialEligible: (eligible: boolean) => {
-        set({isTrialEligible: eligible});
+      setUserCreatedAt: (createdAt: string) => {
+        set({
+          userCreatedAt: createdAt,
+          isInGracePeriod: checkGracePeriod(createdAt),
+          gracePeriodDaysRemaining: calcGraceDays(createdAt),
+        });
       },
 
       updateComputedStates: () => {
-        const {subscriptionInfo} = get();
+        const {subscriptionInfo, userCreatedAt} = get();
+
+        // Grace period 갱신
+        const graceUpdate = {
+          isInGracePeriod: checkGracePeriod(userCreatedAt),
+          gracePeriodDaysRemaining: calcGraceDays(userCreatedAt),
+        };
 
         if (!subscriptionInfo) {
           set({
             hasActiveSubscription: false,
             isInTrial: false,
             daysRemainingInTrial: null,
-            isTrialEligible: true,
+            ...graceUpdate,
           });
           return;
         }
@@ -169,6 +178,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           ),
           isInTrial: checkInTrial(subscriptionInfo.status, subscriptionInfo.trialEndDate),
           daysRemainingInTrial: calculateDaysRemainingInTrial(subscriptionInfo.trialEndDate),
+          ...graceUpdate,
         });
       },
 
@@ -180,9 +190,10 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           hasActiveSubscription: false,
           isInTrial: false,
           daysRemainingInTrial: null,
-          isTrialEligible: false,
           _recentPurchase: false,
-          hasSeenTrialOffer: false,
+          userCreatedAt: null,
+          isInGracePeriod: false,
+          gracePeriodDaysRemaining: 0,
         });
       },
 
@@ -193,7 +204,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       storage: createJSONStorage(() => zustandMMKVStorage),
       partialize: (state) => ({
         subscriptionInfo: state.subscriptionInfo,
-        hasSeenTrialOffer: state.hasSeenTrialOffer,
+        userCreatedAt: state.userCreatedAt,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {

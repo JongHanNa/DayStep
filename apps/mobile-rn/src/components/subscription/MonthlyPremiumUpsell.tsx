@@ -11,7 +11,6 @@ import {AnimatedPressable} from '@/components/core';
 import {LiquidGlassMenu} from '@/components/native';
 import {PhoneMockup} from './PhoneMockup';
 import {MiniCalendarPreview} from './MiniCalendarPreview';
-import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {useTheme} from '@/theme';
 import {fixedColors} from '@/theme/colors';
 import {Calendar} from 'lucide-react-native';
@@ -27,10 +26,9 @@ export function MonthlyPremiumUpsell({
   menuItems,
   onMenuSelect,
 }: MonthlyPremiumUpsellProps) {
-  const isTrialEligible = useSubscriptionStore(s => s.isTrialEligible);
   const {primaryColor} = useTheme();
 
-  const ctaText = isTrialEligible ? '7일 무료 체험 시작' : 'Pro로 업그레이드';
+  const ctaText = 'Pro 구독하기';
 
   return (
     <View style={styles.root}>

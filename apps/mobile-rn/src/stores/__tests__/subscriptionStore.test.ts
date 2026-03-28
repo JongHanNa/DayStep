@@ -122,7 +122,7 @@ describe('subscriptionStore', () => {
       expect(state.hasActiveSubscription).toBe(false);
       expect(state.isInTrial).toBe(false);
       expect(state.daysRemainingInTrial).toBeNull();
-      expect(state.isTrialEligible).toBe(true);
+      expect(state.isInGracePeriod).toBe(false);
     });
   });
 
@@ -141,7 +141,7 @@ describe('subscriptionStore', () => {
       expect(state.hasActiveSubscription).toBe(false);
       expect(state.isInTrial).toBe(false);
       expect(state.error).toBeNull();
-      expect(state.hasSeenTrialOffer).toBe(false);
+      expect(state.userCreatedAt).toBeNull();
     });
   });
 });

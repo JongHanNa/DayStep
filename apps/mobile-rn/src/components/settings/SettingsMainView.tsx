@@ -13,10 +13,11 @@ import {
   User,
   Palette,
   Bell,
-  CreditCard,
   LogOut,
   ShieldCheck,
   Calendar,
+  ChevronRight,
+  Crown,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
@@ -32,6 +33,9 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const {isConnected, connectGoogleCalendar, disconnectGoogleCalendar} =
     useCalendarStore();
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
+  const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
+  const gracePeriodDaysRemaining = useSubscriptionStore(s => s.gracePeriodDaysRemaining);
+  const userCreatedAt = useSubscriptionStore(s => s.userCreatedAt);
   const [isAdmin, setIsAdmin] = useState(false);
   const isGoogleUser = user?.app_metadata?.providers?.includes('google') ?? false;
   const avatarUrl = user?.user_metadata?.avatar_url;
@@ -97,7 +101,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* 계정 정보 카드 */}
-      <AnimatedCard enterDelay={0} style={styles.accountCard}>
+      <AnimatedCard enterDelay={0} style={styles.accountCard} onPress={() => onNavigate('account')}>
         <View style={styles.avatarContainer}>
           {avatarUrl ? (
             <Image source={{uri: avatarUrl}} style={styles.avatarImage} />
@@ -106,28 +110,53 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
               <User size={24} color={primaryColor} strokeWidth={1.5} />
             </View>
           )}
-          {hasActiveSubscription && (
-            <View style={styles.crownBadge}>
-              <Text style={styles.crownEmoji}>👑</Text>
-            </View>
-          )}
+          <View style={[
+            styles.crownBadge,
+            !hasActiveSubscription && styles.crownBadgeInactive,
+          ]}>
+            <Crown
+              size={10}
+              color={hasActiveSubscription ? '#92400E' : '#FFFFFF'}
+              strokeWidth={2.5}
+              fill={hasActiveSubscription ? '#FCD34D' : 'none'}
+            />
+          </View>
         </View>
         <View style={styles.accountInfo}>
           <Text style={styles.accountName}>{displayName}</Text>
           <Text style={styles.accountEmail}>{user?.email ?? ''}</Text>
         </View>
+        <ChevronRight size={18} color="#9CA3AF" />
       </AnimatedCard>
 
-      {/* 구독 관리 */}
-      <View style={[styles.section, {marginTop: 16}]}>
-        <SettingsRow
-          icon={CreditCard}
-          iconColor={primaryColor}
-          title="구독 관리"
-          showChevron
-          onPress={() => onNavigate('subscription')}
-        />
-      </View>
+      {/* Grace Period 진행 중 배너 */}
+      {isInGracePeriod && !hasActiveSubscription && gracePeriodDaysRemaining > 0 && (
+        <AnimatedCard enterDelay={100} style={styles.graceBanner}>
+          <View style={[styles.graceDot, {backgroundColor: primaryColor}]} />
+          <View style={styles.graceBannerContent}>
+            <Text style={styles.graceBannerTitle}>Pro 체험 중</Text>
+            <Text style={styles.graceBannerSub}>
+              {gracePeriodDaysRemaining}일 남음
+            </Text>
+          </View>
+        </AnimatedCard>
+      )}
+
+      {/* Grace Period 만료 배너 */}
+      {!isInGracePeriod && !hasActiveSubscription && !!userCreatedAt && (
+        <AnimatedCard
+          enterDelay={100}
+          style={styles.graceExpiredBanner}
+          onPress={() => onNavigate('subscription')}>
+          <View style={styles.graceExpiredContent}>
+            <Text style={styles.graceExpiredTitle}>Pro 체험이 종료되었어요</Text>
+            <Text style={styles.graceExpiredSub}>
+              구독하고 모든 기능을 이용해보세요
+            </Text>
+          </View>
+          <Text style={styles.graceExpiredArrow}>›</Text>
+        </AnimatedCard>
+      )}
 
       {/* 앱 설정 */}
       <Text style={styles.sectionTitle}>앱 설정</Text>
@@ -236,18 +265,19 @@ const styles = StyleSheet.create({
   },
   crownBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    top: -3,
+    right: -3,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: '#FCD34D',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
   },
-  crownEmoji: {
-    fontSize: 10,
-    lineHeight: 14,
+  crownBadgeInactive: {
+    backgroundColor: '#D1D5DB',
   },
   accountInfo: {
     flex: 1,
@@ -285,5 +315,59 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F3F4F6',
     marginLeft: 60,
+  },
+  graceBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  graceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  graceBannerContent: {
+    flex: 1,
+  },
+  graceBannerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  graceBannerSub: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  graceExpiredBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+  },
+  graceExpiredContent: {
+    flex: 1,
+  },
+  graceExpiredTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  graceExpiredSub: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  graceExpiredArrow: {
+    fontSize: 20,
+    color: '#9CA3AF',
+    marginLeft: 8,
   },
 });

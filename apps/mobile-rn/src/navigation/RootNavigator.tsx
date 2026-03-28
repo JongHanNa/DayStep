@@ -2,36 +2,27 @@
  * Root Navigator
  * 인증 상태 기반 분기: Login ↔ Main
  */
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, Modal, View} from 'react-native';
+import React, {useCallback, useEffect, useRef} from 'react';
+import {ActivityIndicator, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {useAuthStore} from '@/stores/authStore';
 import {
   initRevenueCat,
   loginRevenueCat,
   logoutRevenueCat,
-  purchaseSelectedPackage,
 } from '@/lib/revenueCat';
-import Purchases from 'react-native-purchases';
 import {useRealtimeSync} from '@/hooks/useRealtimeSync';
 import {useSettingsSync} from '@/hooks/useSettingsSync';
 import {useCleaningSettingsSync} from '@/hooks/useCleaningSettingsSync';
 import {useSleepSettingsSync} from '@/hooks/useSleepSettingsSync';
 import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
-import {supabase} from '@/lib/supabase';
-import {TrialOfferModal} from '@/components/subscription/TrialOfferModal';
-import {scheduleTrialExpiryReminder} from '@/lib/notifications';
-import Config from 'react-native-config';
 import {useTheme} from '@/theme';
 import {useSleepStore, useSleepStoreHydrated} from '@/stores/sleepStore';
 import {useBedtimeMonitor} from '@/hooks/useBedtimeMonitor';
 import {BedtimeModal} from '@/components/sleep/BedtimeModal';
 import {useNavigation} from '@react-navigation/native';
 
-const TRIAL_DAYS = parseInt(Config.TRIAL_DAYS || '7', 10);
-import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 
@@ -110,120 +101,6 @@ function AuthenticatedApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── 7일 무료 체험 제안 로직 ──
-  const {user} = useAuthStore();
-  const {
-    isTrialEligible,
-    hasSeenTrialOffer,
-    hasActiveSubscription,
-    loading: subLoading,
-    setHasSeenTrialOffer,
-    setTrialEligible,
-    fetchSubscription,
-    applyRevenueCatPurchase,
-  } = useSubscriptionStore();
-
-  const [showTrialModal, setShowTrialModal] = useState(false);
-  const [showTrialPaywall, setShowTrialPaywall] = useState(false);
-  const trialChecked = useRef(false);
-
-  // 트라이얼 자격 확인 (1회)
-  useEffect(() => {
-    if (
-      !user?.id ||
-      subLoading ||
-      hasActiveSubscription ||
-      trialChecked.current
-    ) {
-      return;
-    }
-
-    trialChecked.current = true;
-
-    // subscription_history에서 trial_started 이벤트 확인
-    (async () => {
-      try {
-        const {data} = await supabase
-          .from('subscription_history')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('event_type', 'trial_started')
-          .limit(1)
-          .maybeSingle();
-
-        if (data) {
-          setTrialEligible(false);
-        } else {
-          setTrialEligible(true);
-        }
-      } catch (err) {
-        console.error('[Trial] eligibility check error:', err);
-      }
-    })();
-  }, [user?.id, subLoading, hasActiveSubscription, setTrialEligible]);
-
-  // 자격 확인 후 모달 표시 (UITest 모드에서는 억제)
-  const isUITestActive = require('@/lib/mmkv').storage.getBoolean('uitest_active');
-  useEffect(() => {
-    if (isUITestActive) return; // UITest: 페이월 억제
-    if (
-      isTrialEligible &&
-      !hasSeenTrialOffer &&
-      !hasActiveSubscription &&
-      !subLoading &&
-      trialChecked.current
-    ) {
-      const timer = setTimeout(() => setShowTrialModal(true), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [isTrialEligible, hasSeenTrialOffer, hasActiveSubscription, subLoading, isUITestActive]);
-
-  const handleTrialClose = useCallback(() => {
-    setShowTrialModal(false);
-    setShowTrialPaywall(false);
-    setHasSeenTrialOffer(true);
-  }, [setHasSeenTrialOffer]);
-
-  const handleTrialShowDetails = useCallback(() => {
-    setShowTrialModal(false);
-    setShowTrialPaywall(true);
-  }, []);
-
-  const handleTrialStart = useCallback(async (
-    plan: 'monthly' | 'yearly' = 'yearly',
-    reminderEnabled: boolean = false,
-  ) => {
-    // App Store가 Introductory Offer를 자동 처리
-    // 선택된 플랜에 따라 패키지 결정
-    try {
-      const offerings = await Purchases.getOfferings();
-      const pkg = plan === 'yearly'
-        ? (offerings.current?.annual ?? offerings.current?.monthly)
-        : (offerings.current?.monthly ?? offerings.current?.annual);
-      if (!pkg) return;
-
-      const result = await purchaseSelectedPackage(pkg);
-      if (result.success) {
-        const active = result.customerInfo.entitlements.active;
-        if (active && Object.keys(active).length > 0) {
-          applyRevenueCatPurchase(active);
-        }
-        if (user?.id) {
-          setTimeout(() => fetchSubscription(user.id), 5000);
-        }
-
-        // 알림 스케줄링
-        if (reminderEnabled) {
-          scheduleTrialExpiryReminder(TRIAL_DAYS);
-        }
-      }
-    } catch (err) {
-      console.error('[Trial] purchase error:', err);
-    }
-
-    handleTrialClose();
-  }, [user?.id, applyRevenueCatPurchase, fetchSubscription, handleTrialClose]);
-
   return (
     <>
       <MainTabNavigator />
@@ -233,21 +110,6 @@ function AuthenticatedApp() {
         onSnooze={onSnooze}
         onSkipTonight={onSkipTonight}
       />
-      <TrialOfferModal
-        visible={showTrialModal}
-        onClose={handleTrialClose}
-        onStartTrial={handleTrialStart}
-        onShowDetails={handleTrialShowDetails}
-      />
-      <Modal
-        visible={showTrialPaywall}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handleTrialClose}>
-        <SafeAreaProvider>
-          <SubscriptionView onBack={handleTrialClose} trialMode />
-        </SafeAreaProvider>
-      </Modal>
     </>
   );
 }
@@ -274,7 +136,7 @@ export default function RootNavigator() {
     initRevenueCat();
   }, []);
 
-  // 인증 상태 변경 시 RevenueCat 로그인/로그아웃
+  // 인증 상태 변경 시 RevenueCat 로그인/로그아웃 + Grace Period 설정
   const applyRevenueCatPurchase = useSubscriptionStore(
     s => s.applyRevenueCatPurchase,
   );
@@ -289,6 +151,10 @@ export default function RootNavigator() {
           }
         }
       });
+      // Grace period: user.created_at 기반 7일 Pro 화면 접근
+      if (user.created_at) {
+        useSubscriptionStore.getState().setUserCreatedAt(user.created_at);
+      }
       wasAuthenticated.current = true;
     } else if (!isAuthenticated && wasAuthenticated.current) {
       logoutRevenueCat();

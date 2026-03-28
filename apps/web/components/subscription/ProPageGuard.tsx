@@ -11,9 +11,9 @@ export function ProPageGuard({
   children: React.ReactNode;
 }) {
   const screen = SCREEN_REGISTRY[screenId];
-  const { hasActiveSubscription } = useSubscription();
+  const { hasActiveSubscription, isInGracePeriod } = useSubscription();
 
-  if (screen?.isPro && !hasActiveSubscription) {
+  if (screen?.isPro && !hasActiveSubscription && !isInGracePeriod) {
     return (
       <div className="container max-w-2xl mx-auto px-4 py-6">
         <Paywall
