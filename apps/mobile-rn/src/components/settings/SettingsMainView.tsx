@@ -36,6 +36,12 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
   const gracePeriodDaysRemaining = useSubscriptionStore(s => s.gracePeriodDaysRemaining);
   const userCreatedAt = useSubscriptionStore(s => s.userCreatedAt);
+  const graceChecked = useSubscriptionStore(s => s.graceChecked);
+  // 설정 화면 진입 시 grace period 재계산
+  useEffect(() => {
+    useSubscriptionStore.getState().updateComputedStates();
+  }, []);
+
   const [isAdmin, setIsAdmin] = useState(false);
   const isGoogleUser = user?.app_metadata?.providers?.includes('google') ?? false;
   const avatarUrl = user?.user_metadata?.avatar_url;
@@ -130,7 +136,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       </AnimatedCard>
 
       {/* Grace Period 진행 중 배너 */}
-      {isInGracePeriod && !hasActiveSubscription && gracePeriodDaysRemaining > 0 && (
+      {graceChecked && isInGracePeriod && !hasActiveSubscription && gracePeriodDaysRemaining > 0 && (
         <AnimatedCard enterDelay={100} style={styles.graceBanner}>
           <View style={[styles.graceDot, {backgroundColor: primaryColor}]} />
           <View style={styles.graceBannerContent}>
@@ -143,7 +149,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       )}
 
       {/* Grace Period 만료 배너 */}
-      {!isInGracePeriod && !hasActiveSubscription && !!userCreatedAt && (
+      {graceChecked && !isInGracePeriod && !hasActiveSubscription && (
         <AnimatedCard
           enterDelay={100}
           style={styles.graceExpiredBanner}

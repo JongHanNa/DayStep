@@ -3,7 +3,7 @@
  * 인증 상태 기반 분기: Login ↔ Main
  */
 import React, {useCallback, useEffect, useRef} from 'react';
-import {ActivityIndicator, View} from 'react-native';
+import {ActivityIndicator, AppState, View} from 'react-native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {useAuthStore} from '@/stores/authStore';
 import {
@@ -17,6 +17,7 @@ import {useCleaningSettingsSync} from '@/hooks/useCleaningSettingsSync';
 import {useSleepSettingsSync} from '@/hooks/useSleepSettingsSync';
 import {usePlanLimitsStore} from '@/stores/planLimitsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {supabase} from '@/lib/supabase';
 import {useTheme} from '@/theme';
 import {useSleepStore, useSleepStoreHydrated} from '@/stores/sleepStore';
 import {useBedtimeMonitor} from '@/hooks/useBedtimeMonitor';
@@ -64,6 +65,21 @@ function AuthenticatedApp() {
     onStartSleep();
     navigation.navigate('Main', {screen: 'Home', params: {screen: 'SleepSession'}});
   }, [onStartSleep, navigation]);
+
+  // 앱 포그라운드 복귀 시 grace period 재계산
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (nextState) => {
+      if (nextState === 'active') {
+        // auth.users에서 최신 created_at 가져와 grace period 갱신
+        const {data} = await supabase.auth.getUser();
+        if (data?.user?.created_at) {
+          useSubscriptionStore.getState().setUserCreatedAt(data.user.created_at);
+        }
+        useSubscriptionStore.getState().updateComputedStates();
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   // plan_limits fetch + Realtime 구독 (인증 완료 시 1회)
   const {fetchLimits, subscribeLimits, unsubscribeLimits} = usePlanLimitsStore();

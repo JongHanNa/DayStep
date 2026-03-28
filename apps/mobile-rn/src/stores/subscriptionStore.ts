@@ -35,6 +35,7 @@ interface SubscriptionState {
   userCreatedAt: string | null;
   isInGracePeriod: boolean;
   gracePeriodDaysRemaining: number;
+  graceChecked: boolean; // auth에서 최신 created_at을 가져왔는지 여부
 
   // 액션
   fetchSubscription: (userId: string) => Promise<void>;
@@ -58,6 +59,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       userCreatedAt: null,
       isInGracePeriod: false,
       gracePeriodDaysRemaining: 0,
+      graceChecked: false,
 
       fetchSubscription: async (userId: string) => {
         try {
@@ -149,6 +151,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           userCreatedAt: createdAt,
           isInGracePeriod: checkGracePeriod(createdAt),
           gracePeriodDaysRemaining: calcGraceDays(createdAt),
+          graceChecked: true,
         });
       },
 
@@ -194,6 +197,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           userCreatedAt: null,
           isInGracePeriod: false,
           gracePeriodDaysRemaining: 0,
+          graceChecked: false,
         });
       },
 
@@ -204,11 +208,27 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       storage: createJSONStorage(() => zustandMMKVStorage),
       partialize: (state) => ({
         subscriptionInfo: state.subscriptionInfo,
-        userCreatedAt: state.userCreatedAt,
+        // userCreatedAt은 persist하지 않음 — 매번 auth에서 최신 값을 가져옴
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
+          // MMKV에 stale userCreatedAt이 남아있을 수 있으므로 강제 초기화
+          // auth에서 최신 값을 가져올 때까지 grace 배너를 숨김
+          useSubscriptionStore.setState({
+            userCreatedAt: null,
+            isInGracePeriod: false,
+            gracePeriodDaysRemaining: 0,
+            graceChecked: false,
+          });
           state.updateComputedStates();
+          // auth에서 최신 created_at 가져오기
+          import('@/lib/supabase').then(({supabase}) => {
+            supabase.auth.getUser().then(({data}) => {
+              if (data?.user?.created_at) {
+                useSubscriptionStore.getState().setUserCreatedAt(data.user.created_at);
+              }
+            });
+          });
         }
       },
     },
