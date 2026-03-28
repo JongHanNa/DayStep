@@ -2,7 +2,7 @@
  * SettingsMainView — 메인 설정 목록 (섹션별 그룹핑)
  */
 import React, {useCallback, useEffect, useState} from 'react';
-import {View, Text, ScrollView, Alert, StyleSheet, Image} from 'react-native';
+import {View, Text, ScrollView, Alert, StyleSheet, Image, Switch} from 'react-native';
 import {AnimatedCard} from '@/components/core';
 import {SettingsRow} from './SettingsRow';
 import {useSettingsStore} from '@/stores/settingsStore';
@@ -207,6 +207,37 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
               showChevron
               onPress={() => onNavigate('adminPlanLimits')}
             />
+            <View style={styles.divider} />
+            <View style={styles.adminSubRow}>
+              <View style={{flex: 1}}>
+                <Text style={styles.adminSubTitle}>구독 상태 전환</Text>
+                <Text style={styles.adminSubDesc}>
+                  {hasActiveSubscription ? 'Pro 구독 중' : 'Free'}
+                </Text>
+              </View>
+              <Switch
+                value={hasActiveSubscription}
+                onValueChange={async (value) => {
+                  if (!user?.id) return;
+                  try {
+                    const {error} = await supabase.from('users').update({
+                      has_active_subscription: value,
+                      subscription_type: value ? 'pro_monthly' : 'free',
+                    }).eq('id', user.id);
+                    if (error) throw error;
+                    // Store 즉시 갱신
+                    useSubscriptionStore.setState({
+                      hasActiveSubscription: value,
+                    });
+                  } catch (err) {
+                    console.error('[Admin] subscription toggle error:', err);
+                    Alert.alert('오류', '구독 상태 변경에 실패했습니다.');
+                  }
+                }}
+                trackColor={{false: '#D1D5DB', true: primaryColor}}
+                thumbColor="#FFFFFF"
+              />
+            </View>
           </View>
         </>
       )}
@@ -375,5 +406,21 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#9CA3AF',
     marginLeft: 8,
+  },
+  adminSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  adminSubTitle: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1F2937',
+  },
+  adminSubDesc: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
   },
 });
