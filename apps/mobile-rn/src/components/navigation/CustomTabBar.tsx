@@ -252,8 +252,9 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     return null;
   }
 
-  // 월간 캘린더 업셀 화면 시 탭바 숨김
-  const isMonthlyUpsell = focusedRoute.name === 'Planner' && plannerViewMode === 'monthlyPlanner' && !hasActiveSubscription;
+  // 월간 캘린더 업셀 화면 시 탭바 숨김 (grace period 중에는 탭바 유지)
+  const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
+  const isMonthlyUpsell = focusedRoute.name === 'Planner' && plannerViewMode === 'monthlyPlanner' && !hasActiveSubscription && !isInGracePeriod;
   if (isMonthlyUpsell) {
     return null;
   }
