@@ -98,7 +98,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
   }, [scrollViewRef]);
 
   return (
-    <View>
+    <View key={selectedDate}>
       {/* 현재 무슨 기간인지 상기해보기 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
@@ -117,6 +117,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
             className="text-sm text-gray-800"
             style={styles.input}
             multiline
+            scrollEnabled={false}
           />
         </View>
       </View>
@@ -139,6 +140,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
             className="text-sm text-gray-800"
             style={styles.input}
             multiline
+            scrollEnabled={false}
           />
         </View>
       </View>
@@ -162,6 +164,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
               className="text-sm text-gray-800"
               style={styles.input}
               multiline
+              scrollEnabled={false}
             />
           </View>
         </View>
@@ -185,6 +188,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
             className="text-sm text-gray-800"
             style={styles.input}
             multiline
+            scrollEnabled={false}
           />
         </View>
       </View>

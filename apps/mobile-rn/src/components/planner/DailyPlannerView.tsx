@@ -298,9 +298,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
     [],
   );
 
-  const handleReluctantAdd = useCallback(() => {
-    pickerRef.current?.open({type: 'reluctant'});
-  }, []);
+
 
   const handleSkipTodo = useCallback(
     (id: string, reason: 'not_needed' | 'missed') => {
@@ -455,7 +453,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
         </View>
 
         {/* Page 1: 우선순위 매트릭스 + 하기 싫지만 해야 할 일 + 보상/칭찬/감사 */}
-        <PlannerPage2 onMatrixAdd={handleMatrixAdd} onReluctantAdd={handleReluctantAdd} />
+        <PlannerPage2 onMatrixAdd={handleMatrixAdd} />
       </SwipeablePages>
 
       {/* FAB (할일 추가) */}
