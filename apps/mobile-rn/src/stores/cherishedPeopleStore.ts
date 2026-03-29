@@ -21,8 +21,6 @@ export interface CherishedPerson {
   user_id: string;
   name: string;
   nickname?: string;
-  relationships: string[];
-  roles: string[];
   last_interaction_at?: string;
   interaction_count: number;
   created_at: string;
@@ -102,11 +100,7 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           if (error) throw error;
 
           set({
-            people: (data ?? []).map(p => ({
-              ...p,
-              relationships: p.relationships ?? [],
-              roles: p.roles ?? [],
-            })),
+            people: (data ?? []) as CherishedPerson[],
           });
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Load error:', err);
@@ -170,19 +164,13 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
               name: data.name,
               nickname: data.nickname ?? null,
               interaction_count: 0,
-              relationships: [],
-              roles: [],
             })
             .select()
             .single();
 
           if (error) throw error;
 
-          const person = {
-            ...created,
-            relationships: created.relationships ?? [],
-            roles: created.roles ?? [],
-          } as CherishedPerson;
+          const person = created as CherishedPerson;
 
           set(state => ({people: [...state.people, person]}));
           return person;

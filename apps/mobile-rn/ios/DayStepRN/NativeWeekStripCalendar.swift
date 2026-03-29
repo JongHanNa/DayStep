@@ -860,8 +860,9 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     state.currentWeekIndex = pageIndex
     let week = state.weeks[pageIndex]
 
-    // 해당 주의 일요일(첫 번째 셀) 선택
-    let newCell = week.first!
+    // 오늘이 포함된 주면 오늘 선택, 아니면 일요일(첫 번째 셀) 선택
+    let todayStr = state.dateString(from: today)
+    let newCell = week.first(where: { $0.id == todayStr }) ?? week.first!
 
     state.selectedDate = newCell.date
     state.updateDisplayMonth(for: newCell.date)

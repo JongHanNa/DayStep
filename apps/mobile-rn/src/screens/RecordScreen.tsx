@@ -492,9 +492,12 @@ export default function RecordScreen() {
   }, []);
 
   const handlePersonAdded = useCallback((person: CherishedPerson) => {
-    setSelectedPerson(person);
-    setStep('write-news');
-  }, []);
+    if (user?.id) {
+      loadPeople(user.id);
+      loadRecommendations(user.id);
+      getRecentNotesPerPerson(user.id).then(setNotesPerPerson);
+    }
+  }, [user?.id, loadPeople, loadRecommendations, getRecentNotesPerPerson]);
 
   const handleSave = useCallback(async () => {
     if (!user?.id || !selectedPerson) return;
