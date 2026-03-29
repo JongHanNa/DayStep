@@ -111,6 +111,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isTimerActive = timerState.isRunning || timerState.isPaused;
   const plannerViewMode = useSettingsStore(s => s.plannerViewMode);
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
+  const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
   const {tabBarHorizontalInset, isTablet} = useResponsiveLayout();
   const [morePanelVisible, setMorePanelVisible] = useState(false);
   const [panelContentHeight, setPanelContentHeight] = useState(MORE_PANEL_CONTENT_HEIGHT);
@@ -253,7 +254,6 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   }
 
   // 월간 캘린더 업셀 화면 시 탭바 숨김 (grace period 중에는 탭바 유지)
-  const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
   const isMonthlyUpsell = focusedRoute.name === 'Planner' && plannerViewMode === 'monthlyPlanner' && !hasActiveSubscription && !isInGracePeriod;
   if (isMonthlyUpsell) {
     return null;
