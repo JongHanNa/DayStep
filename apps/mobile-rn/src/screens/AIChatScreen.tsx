@@ -13,7 +13,11 @@ import {
   Platform,
   ActivityIndicator,
   Keyboard,
+  Modal,
 } from 'react-native';
+import {storage} from '@/lib/mmkv';
+
+const AI_CONSENT_KEY = 'ai_consent_agreed';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ScreenContainer} from '@/components/core';
@@ -77,6 +81,7 @@ export default function AIChatScreen() {
 
   const [inputText, setInputText] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -98,6 +103,13 @@ export default function AIChatScreen() {
     }
   }, [user?.id, hasActiveSubscription]);
 
+  useEffect(() => {
+    const agreed = storage.getBoolean(AI_CONSENT_KEY);
+    if (!agreed) {
+      setShowConsentModal(true);
+    }
+  }, []);
+
   const handleSend = useCallback(async () => {
     if (!inputText.trim() || !user?.id || isLoading) return;
     const text = inputText.trim();
@@ -118,6 +130,44 @@ export default function AIChatScreen() {
 
   return (
     <ScreenContainer gradient="warmBackground">
+      {/* AI 데이터 처리 동의 모달 */}
+      <Modal
+        visible={showConsentModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConsentModal(false)}>
+        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24}}>
+          <View style={{backgroundColor: 'white', borderRadius: 20, padding: 24, width: '100%'}}>
+            <Text style={{fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12}}>AI 기능 이용 안내</Text>
+            <Text style={{fontSize: 14, color: '#374151', lineHeight: 22, marginBottom: 8}}>
+              AI 기능은 입력하신 메시지를 AI 서비스 제공자(Claude, OpenAI 등)의 서버로 전송하여 응답을 생성합니다.
+            </Text>
+            <Text style={{fontSize: 14, color: '#374151', lineHeight: 22, marginBottom: 8}}>
+              • 전송 데이터: 입력 텍스트, 할일 정보{'\n'}
+              • 목적: AI 기반 일정 계획 및 조언 제공{'\n'}
+              • 보관: DayStep 서버를 통해 전달되며 로그는 30일 후 삭제
+            </Text>
+            <Text style={{fontSize: 13, color: '#6B7280', lineHeight: 20, marginBottom: 20}}>
+              동의하시면 AI 기능을 이용할 수 있습니다. 자세한 내용은 개인정보처리방침을 확인하세요.
+            </Text>
+            <View style={{flexDirection: 'row', gap: 12}}>
+              <TouchableOpacity
+                onPress={() => setShowConsentModal(false)}
+                style={{flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center'}}>
+                <Text style={{fontSize: 15, fontWeight: '600', color: '#6B7280'}}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  storage.set(AI_CONSENT_KEY, true);
+                  setShowConsentModal(false);
+                }}
+                style={{flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: primaryColor}}>
+                <Text style={{fontSize: 15, fontWeight: '600', color: 'white'}}>동의</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"

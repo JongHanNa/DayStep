@@ -9,14 +9,23 @@ import Purchases, {
   PURCHASES_ERROR_CODE,
 } from 'react-native-purchases';
 import Config from 'react-native-config';
+import {Platform} from 'react-native';
 
 /** 앱 시작 시 1회 호출 */
 export function initRevenueCat() {
-  // Config는 native 모듈 → JS 번들 캐시와 무관하게 항상 올바른 값 반환
-  // DayStepRN(Debug) → .env → appl_mUUew..., DayStepProd(Release) → .env.production → appl_Rwbvt...
-  const apiKey = Config.REVENUECAT_IOS_API_KEY;
+  // 플랫폼별 API 키 선택
+  // iOS: appl_..., Android: goog_...
+  const apiKey =
+    Platform.OS === 'ios'
+      ? Config.REVENUECAT_IOS_API_KEY
+      : Config.REVENUECAT_ANDROID_API_KEY;
+
   if (!apiKey) {
-    console.warn('[RevenueCat] REVENUECAT_IOS_API_KEY is not set');
+    console.warn(
+      '[RevenueCat] API key not set for platform:',
+      Platform.OS,
+      '— in-app purchases disabled',
+    );
     return;
   }
 

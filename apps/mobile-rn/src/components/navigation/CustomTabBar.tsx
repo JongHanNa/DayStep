@@ -30,6 +30,7 @@ import type {LucideIcon} from 'lucide-react-native';
 import {
   LiquidGlassTabBarNative,
   isIOS26Plus,
+  isAndroid,
   type NativeTabData,
   type NativeMenuItemData,
 } from '@/components/native';
@@ -104,6 +105,12 @@ const SPRING_CONFIG = {damping: 20, stiffness: 300, mass: 0.8};
 // iOS 26+ 네이티브 탭바 확장 높이
 const NATIVE_COLLAPSED = 56;
 
+// Android 네이티브 탭바: Compose onSizeChanged가 constrained size만 보고하므로
+// JS에서 확장 높이를 미리 계산하여 컨테이너를 직접 제어
+const ANDROID_MENU_HEADER_HEIGHT = 44;
+const ANDROID_MENU_ROW_HEIGHT = 56;
+const ANDROID_MENU_COLUMNS = 5;
+
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const {primaryColor} = useTheme();
@@ -145,6 +152,24 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     }
     // iOS 26+: 네이티브가 자체 애니메이션하므로 여기서 nativeTabBarHeight 건드리지 않음
   }, [morePanelVisible, panelContentHeight, tabBarHeight, panelOpacity]);
+
+  // Android: Compose 뷰가 RN 컨테이너에 의해 클리핑되므로
+  // JS에서 확장 높이를 미리 계산하여 컨테이너를 직접 확장/축소
+  useEffect(() => {
+    if (!isAndroid) return;
+    if (morePanelVisible) {
+      const menuRows = Math.ceil(MENU_SCREEN_ORDER.length / ANDROID_MENU_COLUMNS);
+      const expandedHeight =
+        ANDROID_MENU_HEADER_HEIGHT +
+        menuRows * ANDROID_MENU_ROW_HEIGHT +
+        12 + // 패널 하단 패딩
+        NATIVE_COLLAPSED; // 탭 아이콘 행
+      // 빠르게 확장 → Compose AnimatedVisibility가 내부 시각 애니메이션 처리
+      nativeTabBarHeight.value = withTiming(expandedHeight, {duration: 150, easing: Easing.out(Easing.ease)});
+    } else {
+      nativeTabBarHeight.value = withSpring(NATIVE_COLLAPSED, SPRING_CONFIG);
+    }
+  }, [morePanelVisible, nativeTabBarHeight]);
 
   const animatedContainerStyle = useAnimatedStyle(() => ({
     height: tabBarHeight.value,
@@ -340,6 +365,96 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             onTabPress={handleNativeTabPress}
             onMenuItemPress={handleNativeMenuItemPress}
             onHeightChange={handleNativeHeightChange}
+            style={styles.nativeFill}
+          />
+        </Animated.View>
+      </>
+    );
+  }
+
+  // Android: 네이티브 Compose 탭바 (iOS 26+ 경로와 동일한 핸들러 재사용)
+  if (isAndroid) {
+    const androidTabs: NativeTabData[] = state.routes.map(route => ({
+      name: route.name,
+      sfSymbol: SF_SYMBOL_MAP[route.name] ?? 'circle',
+    }));
+
+    const androidMenuItems: NativeMenuItemData[] = MENU_SCREEN_ORDER.map(screenName => ({
+      label: MENU_LABELS[screenName] ?? screenName,
+      sfSymbol: MENU_SF_SYMBOLS[screenName] ?? 'circle',
+      screenName,
+      isActive:
+        screenName === activeMoreScreen &&
+        state.index === state.routes.findIndex(r => r.name === 'More'),
+    }));
+
+    const handleAndroidTabPress = (event: {nativeEvent: {index: number}}) => {
+      const index = event.nativeEvent.index;
+      const route = state.routes[index];
+      const isFocused = state.index === index;
+
+      if (__DEV__) {
+        console.log('[CustomTabBar] Android onTabPress:', {
+          index,
+          routeName: route?.name,
+          isFocused,
+          currentTabIndex: state.index,
+          morePanelVisible,
+        });
+      }
+
+      if (route?.name === 'More') {
+        setMorePanelVisible(prev => !prev);
+        return;
+      }
+      setMorePanelVisible(false);
+      const navEvent = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (!isFocused && !navEvent.defaultPrevented) {
+        navigation.navigate(route.name);
+      }
+    };
+
+    const handleAndroidMenuItemPress = (event: {nativeEvent: {screenName: string}}) => {
+      handleSelectScreen(event.nativeEvent.screenName);
+      handleClosePanel();
+    };
+
+    // Android: JS에서 morePanelVisible 기반으로 높이를 직접 제어하므로
+    // 네이티브 onHeightChange는 무시 (Compose onSizeChanged가 constrained 높이를 보고하여 충돌 방지)
+    const handleAndroidHeightChange = undefined;
+
+    return (
+      <>
+        {morePanelVisible && (
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleClosePanel} />
+        )}
+        <Animated.View
+          style={[
+            styles.container,
+            {bottom: tabBarBottom, left: tabBarHorizontalInset, right: tabBarHorizontalInset},
+            isTablet && {maxWidth: 600, alignSelf: 'center', left: 0, right: 0},
+            animatedNativeStyle,
+            {shadowOpacity: 0, elevation: 0},
+          ]}>
+          <LiquidGlassTabBarNative
+            tabs={androidTabs}
+            selectedIndex={
+              isHomeShowingMoreScreen
+                ? state.routes.findIndex(r => r.name === 'More')
+                : state.index
+            }
+            primaryColor={primaryColor}
+            timerProgress={isTimerActive ? timerState.progress : -1}
+            isExpanded={morePanelVisible}
+            menuItems={androidMenuItems}
+            showLabels={true}
+            onTabPress={handleAndroidTabPress}
+            onMenuItemPress={handleAndroidMenuItemPress}
+            onHeightChange={handleAndroidHeightChange}
             style={styles.nativeFill}
           />
         </Animated.View>

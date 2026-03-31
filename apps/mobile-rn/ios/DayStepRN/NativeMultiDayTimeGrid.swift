@@ -267,6 +267,7 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
     contentScrollView.showsHorizontalScrollIndicator = false
     contentScrollView.showsVerticalScrollIndicator = true
     contentScrollView.decelerationRate = .fast
+    contentScrollView.isDirectionalLockEnabled = true
     contentScrollView.delegate = self
     contentScrollView.addSubview(gridContentView)
     addSubview(contentScrollView)

@@ -1,4 +1,4 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") 
+pluginManagement { includeBuild("../../../node_modules/@react-native/gradle-plugin")
   def expoPluginsPath = new File(
     providers.exec {
       workingDir(rootDir)
@@ -14,7 +14,7 @@ id("expo-autolinking-settings")
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand(expoAutolinking.rnConfigCommand) }
 rootProject.name = 'DayStepRN'
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+includeBuild('../../../node_modules/@react-native/gradle-plugin')
 expoAutolinking.useExpoModules()
 expoAutolinking.useExpoVersionCatalog()
 includeBuild(expoAutolinking.reactNativeGradlePlugin)

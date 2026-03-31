@@ -20,7 +20,7 @@ import {
   Crown,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
-import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
 
 interface SettingsMainViewProps {
   onNavigate: (view: string) => void;
@@ -225,9 +225,29 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                       subscription_type: value ? 'pro_monthly' : 'free',
                     }).eq('id', user.id);
                     if (error) throw error;
-                    // Store 즉시 갱신
+                    // Store 즉시 갱신 (subscriptionInfo도 함께 업데이트해야 updateComputedStates 재계산 시 유지됨)
                     useSubscriptionStore.setState({
                       hasActiveSubscription: value,
+                      subscriptionInfo: value
+                        ? {
+                            id: 'admin-override',
+                            userId: user.id,
+                            status: 'active' as SubscriptionStatus,
+                            platform: 'ios' as Platform,
+                            productId: 'admin_override',
+                            subscriptionStartDate: new Date().toISOString(),
+                            subscriptionEndDate: null,
+                            trialStartDate: null,
+                            trialEndDate: null,
+                            isLegacyUser: false,
+                            legacyGracePeriodEnd: null,
+                            promoCode: null,
+                            autoRenewEnabled: false,
+                            cancelledAt: null,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                          }
+                        : null,
                     });
                   } catch (err) {
                     console.error('[Admin] subscription toggle error:', err);

@@ -7,3 +7,6 @@ import {Platform} from 'react-native';
 /** iOS 26+ 여부 — Liquid Glass 네이티브 브릿징 활성화 조건 */
 export const isIOS26Plus =
   Platform.OS === 'ios' && parseInt(Platform.Version as string, 10) >= 26;
+
+/** Android 네이티브 탭바 활성화 조건 */
+export const isAndroid = Platform.OS === 'android';

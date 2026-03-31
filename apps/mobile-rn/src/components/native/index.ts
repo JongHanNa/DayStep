@@ -16,4 +16,4 @@ export {NativeSleepActionButton} from './NativeSleepActionButton';
 export {NativeSleepGardenNative} from './NativeSleepGarden';
 export {NativeCleaningGardenNative} from './NativeCleaningGarden';
 export {LiquidGlassButton} from './LiquidGlassButton';
-export {isIOS26Plus} from './utils';
+export {isIOS26Plus, isAndroid} from './utils';
