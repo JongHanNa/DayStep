@@ -1,5 +1,5 @@
 /**
- * FuelDetailBottomSheet — 노트 상세/수정 바텀시트
+ * MotivationDetailBottomSheet — 노트 상세/수정 바텀시트
  * 수정, 핀 토글, 삭제, 연결된 할일 표시
  */
 import React, {
@@ -22,18 +22,18 @@ import {Pin, Trash2, Link2} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
 
-export interface FuelDetailBottomSheetRef {
+export interface MotivationDetailBottomSheetRef {
   open: (note: Note) => void;
   close: () => void;
 }
 
-interface FuelDetailBottomSheetProps {
+interface MotivationDetailBottomSheetProps {
   onUpdate: (id: string, updates: Partial<Pick<Note, 'title' | 'content' | 'emotion_tag'>>) => void;
   onPin: (noteId: string, isPinned: boolean) => void;
   onDelete: (noteId: string) => void;
 }
 
-export const FuelDetailBottomSheet = forwardRef<FuelDetailBottomSheetRef, FuelDetailBottomSheetProps>(
+export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomSheetRef, MotivationDetailBottomSheetProps>(
   ({onUpdate, onPin, onDelete}, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['60%', '85%'], []);

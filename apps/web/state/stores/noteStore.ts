@@ -19,7 +19,7 @@ import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } f
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
 
 // Note 카테고리 타입
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'motivation';
 
 // 원동력 감정 태그 타입
 export type EmotionTag = 'joy' | 'gratitude' | 'awakening' | 'determination';
@@ -41,10 +41,10 @@ export interface Note {
   recurrence_type?: 'single' | 'recurring' | 'instance'; // 노트 반복 타입
   // Second Brain fields
   note_category?: NoteCategory;
-  // Fuel fields (원동력 기능용)
-  is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)
+  // Motivation fields (원동력 기능용)
+  is_processed?: boolean; // 할일로 변환 여부 (motivation 노트용)
   is_banner_pinned?: boolean; // 홈 배너에 고정 여부
-  // Fuel 감정 태그
+  // Motivation 감정 태그
   emotion_tag?: EmotionTag | null;
   // JOIN으로 가져오는 연결 데이터
   todos?: { id: string; title: string }[];
@@ -65,8 +65,8 @@ export interface CreateNoteInput {
   recurrence_type?: 'single' | 'recurring' | 'instance';
   // Second Brain fields
   note_category?: NoteCategory;
-  // Fuel fields (원동력 기능용)
-  is_processed?: boolean; // 할일로 변환 여부 (fuel 노트용)
+  // Motivation fields (원동력 기능용)
+  is_processed?: boolean; // 할일로 변환 여부 (motivation 노트용)
   is_banner_pinned?: boolean; // 홈 배너에 고정 여부
   emotion_tag?: EmotionTag | null; // 원동력 감정 태그
 }
@@ -191,20 +191,20 @@ interface NoteStoreActions {
   reset: () => void;
   refresh: (userId: string) => Promise<void>;
 
-  // Fuel 기능 (원동력/복잡한 머릿속, 정리해줄게)
-  getFuelNotes: (userId: string) => Promise<Note[]>;
-  createFuelNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
-  getUnprocessedFuelNotes: () => Note[];
+  // Motivation 기능 (원동력/복잡한 머릿속, 정리해줄게)
+  getMotivationNotes: (userId: string) => Promise<Note[]>;
+  createMotivationNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
+  getUnprocessedMotivationNotes: () => Note[];
   markNoteAsProcessed: (noteId: string) => Promise<void>;
   // 배너 고정 기능
   setBannerPinned: (noteId: string, isPinned: boolean) => Promise<void>;
-  getBannerPinnedFuelNotes: () => Note[];
+  getBannerPinnedMotivationNotes: () => Note[];
 
-  /** @deprecated Use getFuelNotes instead */
+  /** @deprecated Use getMotivationNotes instead */
   getInboxNotes: (userId: string) => Promise<Note[]>;
-  /** @deprecated Use createFuelNote instead */
+  /** @deprecated Use createMotivationNote instead */
   createInboxNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
-  /** @deprecated Use getUnprocessedFuelNotes instead */
+  /** @deprecated Use getUnprocessedMotivationNotes instead */
   getUnprocessedInboxNotes: () => Note[];
 }
 
@@ -1110,11 +1110,11 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         // ============================================
-        // Fuel 기능 (원동력/복잡한 머릿속, 정리해줄게)
+        // Motivation 기능 (원동력/복잡한 머릿속, 정리해줄게)
         // ============================================
 
-        getFuelNotes: async (userId: string) => {
-          console.log('📝 NoteStore.getFuelNotes:', userId);
+        getMotivationNotes: async (userId: string) => {
+          console.log('📝 NoteStore.getMotivationNotes:', userId);
 
           try {
             set({ loading: true, error: null });
@@ -1139,62 +1139,62 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               return { ...rest, todos };
             });
 
-            // note_category가 'fuel'인 노트만 필터링
-            const fuelNotes = notesWithTodos.filter(
-              (note: Note) => note.note_category === 'fuel'
+            // note_category가 'motivation'인 노트만 필터링
+            const motivationNotes = notesWithTodos.filter(
+              (note: Note) => note.note_category === 'motivation'
             );
 
-            set({ notes: fuelNotes, loading: false });
-            console.log('✅ Fuel 노트 조회 완료:', fuelNotes.length);
-            return fuelNotes;
+            set({ notes: motivationNotes, loading: false });
+            console.log('✅ Motivation 노트 조회 완료:', motivationNotes.length);
+            return motivationNotes;
           } catch (error) {
             set({
               loading: false,
-              error: error instanceof Error ? error.message : 'Fuel 노트 조회 실패',
+              error: error instanceof Error ? error.message : 'Motivation 노트 조회 실패',
             });
             throw error;
           }
         },
 
-        createFuelNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
-          console.log('📝 NoteStore.createFuelNote:', input);
+        createMotivationNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
+          console.log('📝 NoteStore.createMotivationNote:', input);
 
-          // note_category를 'fuel'로 강제 설정
-          const fuelInput: CreateNoteInput = {
+          // note_category를 'motivation'으로 강제 설정
+          const motivationInput: CreateNoteInput = {
             ...input,
-            note_category: 'fuel',
+            note_category: 'motivation',
             // title이 없으면 content 앞 50자를 title로 사용
             title: input.title || input.content.substring(0, 50),
           };
 
-          return get().createNote(fuelInput);
+          return get().createNote(motivationInput);
         },
 
-        getUnprocessedFuelNotes: () => {
+        getUnprocessedMotivationNotes: () => {
           const { notes } = get();
-          // note_category가 'fuel'인 노트 중 연결된 할일이 없는 것들
+          // note_category가 'motivation'인 노트 중 연결된 할일이 없는 것들
           return notes.filter(note =>
-            note.note_category === 'fuel' && (note.todos?.length ?? 0) === 0
+            note.note_category === 'motivation' && (note.todos?.length ?? 0) === 0
           );
         },
 
         // === 하위 호환성을 위한 별칭 (deprecated) ===
-        /** @deprecated Use getFuelNotes instead */
+        /** @deprecated Use getMotivationNotes instead */
         getInboxNotes: async (userId: string) => {
-          console.warn('⚠️ getInboxNotes는 deprecated입니다. getFuelNotes를 사용하세요.');
-          return get().getFuelNotes(userId);
+          console.warn('⚠️ getInboxNotes는 deprecated입니다. getMotivationNotes를 사용하세요.');
+          return get().getMotivationNotes(userId);
         },
 
-        /** @deprecated Use createFuelNote instead */
+        /** @deprecated Use createMotivationNote instead */
         createInboxNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
-          console.warn('⚠️ createInboxNote는 deprecated입니다. createFuelNote를 사용하세요.');
-          return get().createFuelNote(input);
+          console.warn('⚠️ createInboxNote는 deprecated입니다. createMotivationNote를 사용하세요.');
+          return get().createMotivationNote(input);
         },
 
-        /** @deprecated Use getUnprocessedFuelNotes instead */
+        /** @deprecated Use getUnprocessedMotivationNotes instead */
         getUnprocessedInboxNotes: () => {
-          console.warn('⚠️ getUnprocessedInboxNotes는 deprecated입니다. getUnprocessedFuelNotes를 사용하세요.');
-          return get().getUnprocessedFuelNotes();
+          console.warn('⚠️ getUnprocessedInboxNotes는 deprecated입니다. getUnprocessedMotivationNotes를 사용하세요.');
+          return get().getUnprocessedMotivationNotes();
         },
 
         markNoteAsProcessed: async (noteId: string) => {
@@ -1232,11 +1232,11 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        getBannerPinnedFuelNotes: () => {
+        getBannerPinnedMotivationNotes: () => {
           const { notes } = get();
-          // note_category가 'fuel'이고 is_banner_pinned가 true인 노트들
+          // note_category가 'motivation'이고 is_banner_pinned가 true인 노트들
           return notes.filter(note =>
-            note.note_category === 'fuel' && note.is_banner_pinned === true
+            note.note_category === 'motivation' && note.is_banner_pinned === true
           );
         },
       };

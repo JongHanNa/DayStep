@@ -26,8 +26,8 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
   const [isLoading, setIsLoading] = useState(true);
   const [recurrenceInstances, setRecurrenceInstances] = useState<TimelineItem[]>([]);
   const [completions, setCompletions] = useState<{ todo_id: string; completion_date: string }[]>([]);
-  const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
-  const [todoFuelMap, setTodoFuelMap] = useState<Record<string, string[]>>({});
+  const [motivationNotes, setMotivationNotes] = useState<Note[]>([]);
+  const [todoMotivationMap, setTodoMotivationMap] = useState<Record<string, string[]>>({});
   const [pastMonthsLoaded, setPastMonthsLoaded] = useState(1);
   const [futureMonthsLoaded, setFutureMonthsLoaded] = useState(2);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -163,24 +163,24 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
     loadRecurrenceData();
   }, [userId, todos, dateRange.rangeStart, dateRange.rangeEnd]);
 
-  // fuel 노트 로드
+  // motivation 노트 로드
   useEffect(() => {
-    const loadFuelNotes = async () => {
+    const loadMotivationNotes = async () => {
       if (!userId) return;
       try {
         const allNotes = await fetchNotesWithJWT(userId);
-        const fuel = allNotes.filter(n => n.note_category === 'fuel');
-        setFuelNotes(fuel);
+        const motivations = allNotes.filter(n => n.note_category === 'motivation');
+        setMotivationNotes(motivations);
       } catch (error) {
-        console.error('fuel 노트 로드 실패:', error);
+        console.error('motivation 노트 로드 실패:', error);
       }
     };
-    loadFuelNotes();
+    loadMotivationNotes();
   }, [userId]);
 
-  // Todo별 연결된 fuel 정보 로드
+  // Todo별 연결된 motivation 정보 로드
   useEffect(() => {
-    const loadTodoFuelLinks = async () => {
+    const loadTodoMotivationLinks = async () => {
       if (!userId || todos.length === 0) return;
 
       try {
@@ -203,13 +203,13 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
           })
         );
 
-        setTodoFuelMap(map);
+        setTodoMotivationMap(map);
       } catch (error) {
-        console.error('Todo-Fuel 연결 정보 로드 실패:', error);
+        console.error('Todo-Motivation 연결 정보 로드 실패:', error);
       }
     };
 
-    loadTodoFuelLinks();
+    loadTodoMotivationLinks();
   }, [userId, todos]);
 
   // 프로젝트/목표/부서 매핑
@@ -221,13 +221,13 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
     return new Map(departments.map(d => [d.id, { name: d.name, color: d.color, icon: d.icon }]));
   }, [departments]);
 
-  // 연결된 fuel 노트 가져오기
-  const getLinkedFuels = useCallback((item: TimelineItem): Note[] => {
+  // 연결된 motivation 노트 가져오기
+  const getLinkedMotivations = useCallback((item: TimelineItem): Note[] => {
     const todoId = item.isRecurrenceInstance ? item.recurrenceSourceId : item.id;
     if (!todoId) return [];
-    const noteIds = todoFuelMap[todoId] || [];
-    return fuelNotes.filter(note => noteIds.includes(note.id));
-  }, [todoFuelMap, fuelNotes]);
+    const noteIds = todoMotivationMap[todoId] || [];
+    return motivationNotes.filter(note => noteIds.includes(note.id));
+  }, [todoMotivationMap, motivationNotes]);
 
   // 시간 미정 할일 개수 로드
   const loadAnytimeCount = useCallback(async (navigatedMonth: Date) => {
@@ -245,7 +245,7 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
     isLoading,
     recurrenceInstances,
     completions,
-    fuelNotes,
+    motivationNotes,
     currentTime,
     anytimeCount,
     pastMonthsLoaded,
@@ -256,7 +256,7 @@ export function useTimelineData({ userId }: UseTimelineDataParams) {
     projectMap,
     departmentMap,
     // Callbacks
-    getLinkedFuels,
+    getLinkedMotivations,
     loadAnytimeCount,
     // Setters (다른 훅에서 수정 필요)
     setRecurrenceInstances,

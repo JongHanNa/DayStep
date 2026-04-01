@@ -18,7 +18,7 @@ import Animated, {
 import {StyleSheet} from 'react-native';
 import {ScreenContainer, AnimatedCard, SwipeablePages} from '@/components/core';
 import {ProgressRing} from '@/components/home/ProgressRing';
-import {FuelCard} from '@/components/home/FuelCard';
+import {MotivationCard} from '@/components/home/MotivationCard';
 import {MissionCard} from '@/components/home/MissionCard';
 import {GroupSection} from '@/components/home/GroupSection';
 import type {FeatureItem} from '@/components/home/GroupSection';
@@ -88,21 +88,21 @@ export default function HomeScreen() {
   const {primaryColor} = useTheme();
   const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
   const user = useAuthStore(s => s.user);
-  const {notes, fetchFuelNotes, getRandomFuelNote} = useNoteStore();
+  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useNoteStore();
   const {recommendations, loadRecommendations} = useCherishedPeopleStore();
 
   // 화면 포커스 시 todo + 부가 데이터 재조회
   useFocusRefetch(useCallback(() => {
     fetchTodosForDate(selectedDate);
     if (user?.id) {
-      fetchFuelNotes(user.id);
+      fetchMotivationNotes(user.id);
       loadRecommendations(user.id);
     }
-  }, [selectedDate, fetchTodosForDate, user?.id, fetchFuelNotes, loadRecommendations]));
+  }, [selectedDate, fetchTodosForDate, user?.id, fetchMotivationNotes, loadRecommendations]));
 
   const greeting = useMemo(() => getGreeting(), []);
   const today = format(new Date(), 'M월 d일 EEEE', {locale: ko});
-  const fuelNote = useMemo(() => getRandomFuelNote(), [notes]);
+  const motivationNote = useMemo(() => getRandomMotivationNote(), [notes]);
 
   const completedCount = todos.filter(t => t.completed).length;
   const totalCount = todos.length;
@@ -360,7 +360,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}>
           {/* 1. 원동력 카드 */}
           <View className="px-4">
-            <FuelCard note={fuelNote} enterDelay={100} />
+            <MotivationCard note={motivationNote} enterDelay={100} />
           </View>
 
           {/* 2. 연락할 사람 */}

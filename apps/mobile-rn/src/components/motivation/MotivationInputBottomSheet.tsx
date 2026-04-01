@@ -1,5 +1,5 @@
 /**
- * FuelInputBottomSheet — 상세 작성 바텀시트
+ * MotivationInputBottomSheet — 상세 작성 바텀시트
  * 제목, 내용(multiline), 감정태그, 저장
  */
 import React, {
@@ -19,16 +19,16 @@ import {useTheme} from '@/theme';
 import {EMOTION_CONFIG, EMOTION_TAGS} from '@/lib/motivationUtils';
 import type {EmotionTag} from '@/stores/noteStore';
 
-export interface FuelInputBottomSheetRef {
+export interface MotivationInputBottomSheetRef {
   open: () => void;
   close: () => void;
 }
 
-interface FuelInputBottomSheetProps {
+interface MotivationInputBottomSheetProps {
   onSubmit: (input: {content: string; title?: string; emotion_tag?: EmotionTag}) => void;
 }
 
-export const FuelInputBottomSheet = forwardRef<FuelInputBottomSheetRef, FuelInputBottomSheetProps>(
+export const MotivationInputBottomSheet = forwardRef<MotivationInputBottomSheetRef, MotivationInputBottomSheetProps>(
   ({onSubmit}, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['65%'], []);

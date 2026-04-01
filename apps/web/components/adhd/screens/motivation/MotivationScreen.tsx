@@ -12,11 +12,11 @@ import { type EmotionTag, type StatusFilter, calculateStreak, calculateXP, getFi
 import { MotivationHeader } from './components/MotivationHeader';
 import { MotivationInlineInput } from './components/MotivationInlineInput';
 import { MotivationFilterBar } from './components/MotivationFilterBar';
-import { MotivationFuelCard } from './components/MotivationFuelCard';
+import { MotivationCard } from './components/MotivationCard';
 import { MotivationEmptyState } from './components/MotivationEmptyState';
 import {
-  FuelInputModal,
-  FuelDetailModal,
+  MotivationInputModal,
+  MotivationDetailModal,
   DeleteConfirmModal,
   TodoEditModal,
   UsageLimitModal,
@@ -31,15 +31,15 @@ interface MotivationScreenProps {
  * C의 인라인 입력 + A의 감정 태그 + B의 연속 기록/XP
  */
 export function MotivationScreen({ userId }: MotivationScreenProps) {
-  const { goFuel } = useADHDNavigation();
+  const { goMotivation } = useADHDNavigation();
 
   // ============================================
   // 스토어 연결
   // ============================================
-  const { notes, createFuelNote, updateNote, deleteNote, setBannerPinned } = useNoteStore();
+  const { notes, createMotivationNote, updateNote, deleteNote, setBannerPinned } = useNoteStore();
   const { createTodo, updateTodo, deleteTodo } = useTodoStore();
-  const { fuelMode, setFuelDraft, resetFuelDraft, enterExecuteMode } = useADHDStore();
-  const { draftTitle, draftContent } = fuelMode;
+  const { motivationMode, setMotivationDraft, resetMotivationDraft, enterExecuteMode } = useADHDStore();
+  const { draftTitle, draftContent } = motivationMode;
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // ============================================
@@ -53,9 +53,9 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
   // 모달 상태
   // ============================================
   const [isSaving, setIsSaving] = useState(false);
-  const [showFuelInputModal, setShowFuelInputModal] = useState(false);
+  const [showMotivationInputModal, setShowMotivationInputModal] = useState(false);
   const [modalEmotion, setModalEmotion] = useState<EmotionTag | null>(null);
-  const [selectedFuelNote, setSelectedFuelNote] = useState<Note | null>(null);
+  const [selectedMotivationNote, setSelectedMotivationNote] = useState<Note | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
@@ -66,23 +66,23 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
   // ============================================
   // 파생 데이터
   // ============================================
-  const fuelNotes = useMemo(() =>
-    notes.filter(note => note.note_category === 'fuel'),
+  const motivationNotes = useMemo(() =>
+    notes.filter(note => note.note_category === 'motivation'),
     [notes]
   );
 
-  const counts = useMemo(() => getFilterCounts(fuelNotes), [fuelNotes]);
-  const streak = useMemo(() => calculateStreak(fuelNotes), [fuelNotes]);
-  const xp = useMemo(() => calculateXP(fuelNotes), [fuelNotes]);
+  const counts = useMemo(() => getFilterCounts(motivationNotes), [motivationNotes]);
+  const streak = useMemo(() => calculateStreak(motivationNotes), [motivationNotes]);
+  const xp = useMemo(() => calculateXP(motivationNotes), [motivationNotes]);
 
   const convertedCount = useMemo(() =>
-    fuelNotes.filter(n => (n.todos?.length ?? 0) > 0).length,
-    [fuelNotes]
+    motivationNotes.filter(n => (n.todos?.length ?? 0) > 0).length,
+    [motivationNotes]
   );
 
   // 필터링 + 정렬
   const filteredNotes = useMemo(() => {
-    let result = [...fuelNotes];
+    let result = [...motivationNotes];
 
     // 상태 필터
     if (statusFilter === 'pending') {
@@ -114,7 +114,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     });
 
     return result;
-  }, [fuelNotes, statusFilter, emotionFilter, searchQuery]);
+  }, [motivationNotes, statusFilter, emotionFilter, searchQuery]);
 
   // ============================================
   // 핸들러
@@ -124,7 +124,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
   const handleQuickCreate = useCallback(async (content: string, emotionTag?: EmotionTag) => {
     await checkAndProceed('note', async () => {
       try {
-        await createFuelNote({
+        await createMotivationNote({
           content,
           emotion_tag: emotionTag,
         });
@@ -133,7 +133,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
         console.error('원동력 저장 실패:', error);
       }
     });
-  }, [createFuelNote, checkAndProceed, onCreateSuccess]);
+  }, [createMotivationNote, checkAndProceed, onCreateSuccess]);
 
   // 배너 고정 토글
   const handleToggleBannerPin = useCallback(async (note: Note) => {
@@ -165,31 +165,31 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
   }, [userId, checkAndProceed, createTodo, onCreateSuccess]);
 
   // 원동력 항목 클릭 (상세 모달)
-  const handleFuelItemClick = useCallback((note: Note) => {
-    setSelectedFuelNote(note);
+  const handleMotivationItemClick = useCallback((note: Note) => {
+    setSelectedMotivationNote(note);
     setEditTitle(note.title || '');
     setEditContent(note.content);
   }, []);
 
-  const handleCloseFuelDetailModal = useCallback(() => {
-    setSelectedFuelNote(null);
+  const handleCloseMotivationDetailModal = useCallback(() => {
+    setSelectedMotivationNote(null);
     setEditTitle('');
     setEditContent('');
   }, []);
 
-  const handleSaveFuelDetail = useCallback(async () => {
-    if (!selectedFuelNote) return;
+  const handleSaveMotivationDetail = useCallback(async () => {
+    if (!selectedMotivationNote) return;
     try {
       await updateNote({
-        id: selectedFuelNote.id,
+        id: selectedMotivationNote.id,
         title: editTitle.trim() || undefined,
         content: editContent.trim(),
       });
-      handleCloseFuelDetailModal();
+      handleCloseMotivationDetailModal();
     } catch (error) {
       console.error('원동력 수정 실패:', error);
     }
-  }, [selectedFuelNote, editTitle, editContent, updateNote, handleCloseFuelDetailModal]);
+  }, [selectedMotivationNote, editTitle, editContent, updateNote, handleCloseMotivationDetailModal]);
 
   // 삭제
   const handleConfirmDelete = useCallback(async () => {
@@ -231,27 +231,27 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
 
   // 상세 작성 모달 핸들러
   const handleOpenDetailModal = useCallback(() => {
-    resetFuelDraft();
+    resetMotivationDraft();
     setModalEmotion(null);
-    setShowFuelInputModal(true);
-  }, [resetFuelDraft]);
+    setShowMotivationInputModal(true);
+  }, [resetMotivationDraft]);
 
   const handleInspirationQuickTodo = async () => {
     if (!draftContent.trim()) return;
     setIsSaving(true);
     try {
       await checkAndProceed('note', async () => {
-        const note = await createFuelNote({
+        const note = await createMotivationNote({
           title: draftTitle.trim() || undefined,
           content: draftContent.trim(),
           emotion_tag: modalEmotion ?? undefined,
         });
         if (note) {
           onCreateSuccess('note');
-          resetFuelDraft();
+          resetMotivationDraft();
           setModalEmotion(null);
           enterExecuteMode(userId);
-          goFuel('execute');
+          goMotivation('execute');
         }
       });
     } catch (error) {
@@ -266,14 +266,14 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     setIsSaving(true);
     try {
       await checkAndProceed('note', async () => {
-        const note = await createFuelNote({
+        const note = await createMotivationNote({
           title: draftTitle.trim() || undefined,
           content: draftContent.trim(),
           emotion_tag: modalEmotion ?? undefined,
         });
         if (note) {
           onCreateSuccess('note');
-          resetFuelDraft();
+          resetMotivationDraft();
           setModalEmotion(null);
         }
       });
@@ -289,13 +289,13 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     setIsSaving(true);
     try {
       await checkAndProceed('note', async () => {
-        await createFuelNote({
+        await createMotivationNote({
           title: draftTitle.trim() || undefined,
           content: draftContent.trim(),
           emotion_tag: modalEmotion ?? undefined,
         });
         onCreateSuccess('note');
-        resetFuelDraft();
+        resetMotivationDraft();
         setModalEmotion(null);
       });
     } catch (error) {
@@ -329,7 +329,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
         />
 
         {/* 필터 바 */}
-        {fuelNotes.length > 0 && (
+        {motivationNotes.length > 0 && (
           <MotivationFilterBar
             statusFilter={statusFilter}
             emotionFilter={emotionFilter}
@@ -347,13 +347,13 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
         ) : (
           <div className="space-y-1.5 px-4 pb-8">
             {filteredNotes.map(note => (
-              <MotivationFuelCard
+              <MotivationCard
                 key={note.id}
                 note={note}
                 onPin={handleToggleBannerPin}
                 onCreateTodo={handleCreateTodoFromEntry}
                 onDelete={(id) => setDeletingNoteId(id)}
-                onClick={handleFuelItemClick}
+                onClick={handleMotivationItemClick}
               />
             ))}
           </div>
@@ -401,30 +401,30 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
       />
 
       {/* 상세 작성 모달 */}
-      <FuelInputModal
-        open={showFuelInputModal}
+      <MotivationInputModal
+        open={showMotivationInputModal}
         draftTitle={draftTitle}
         draftContent={draftContent}
         isSaving={isSaving}
-        onTitleChange={(title) => setFuelDraft({ title })}
-        onContentChange={(content) => setFuelDraft({ content })}
+        onTitleChange={(title) => setMotivationDraft({ title })}
+        onContentChange={(content) => setMotivationDraft({ content })}
         onQuickTodo={handleInspirationQuickTodo}
         onScheduledTodo={handleInspirationScheduledTodo}
         onSaveOnly={handleInspirationSaveOnly}
-        onClose={() => setShowFuelInputModal(false)}
+        onClose={() => setShowMotivationInputModal(false)}
         selectedEmotion={modalEmotion}
         onEmotionChange={setModalEmotion}
       />
 
       {/* 원동력 상세 모달 */}
-      <FuelDetailModal
-        note={selectedFuelNote}
+      <MotivationDetailModal
+        note={selectedMotivationNote}
         editTitle={editTitle}
         editContent={editContent}
         onTitleChange={setEditTitle}
         onContentChange={setEditContent}
-        onSave={handleSaveFuelDetail}
-        onClose={handleCloseFuelDetailModal}
+        onSave={handleSaveMotivationDetail}
+        onClose={handleCloseMotivationDetailModal}
         onCreateTodo={handleCreateTodoFromEntry}
         onOpenTodoEdit={handleOpenTodoEditModal}
         onOpenTodoDelete={(todoId) => setDeletingTodoId(todoId)}

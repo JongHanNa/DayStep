@@ -100,9 +100,9 @@ export interface NoteTagLinkInsert {
 }
 
 // Note types (manually defined until Supabase types are updated)
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'motivation';
 
-/** @deprecated Use 'fuel' instead of 'inbox' */
+/** @deprecated Use 'motivation' instead of 'inbox' */
 export type LegacyNoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'inbox';
 
 export interface Note {
@@ -123,7 +123,7 @@ export interface Note {
   tags?: NoteTag[];
   // Second Brain fields
   note_category?: NoteCategory;
-  // Fuel 감정 태그
+  // Motivation 감정 태그
   emotion_tag?: string | null;
 }
 

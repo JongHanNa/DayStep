@@ -36,28 +36,28 @@ export function CompletedAllView({
   lastCompletedTodoId,
 }: CompletedAllViewProps) {
   // 원동력 기록 섹션 상태
-  const [showFuelSection, setShowFuelSection] = useState(false);
-  const [fuelMode, setFuelMode] = useState<'select' | 'create'>('select');
+  const [showMotivationSection, setShowMotivationSection] = useState(false);
+  const [motivationMode, setMotivationMode] = useState<'select' | 'create'>('select');
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [newNoteContent, setNewNoteContent] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
 
   // 연결 버튼 활성화 조건
-  const canConnect = fuelMode === 'select' ? !!selectedNoteId : newNoteContent.trim().length > 0;
+  const canConnect = motivationMode === 'select' ? !!selectedNoteId : newNoteContent.trim().length > 0;
 
   // 원동력 연결 처리
-  const handleConnectFuel = async () => {
+  const handleConnectMotivation = async () => {
     if (!lastCompletedTodoId || !canConnect) return;
 
     setIsConnecting(true);
     try {
-      if (fuelMode === 'select' && selectedNoteId) {
+      if (motivationMode === 'select' && selectedNoteId) {
         await onConnectNote(lastCompletedTodoId, selectedNoteId);
-      } else if (fuelMode === 'create' && newNoteContent.trim()) {
+      } else if (motivationMode === 'create' && newNoteContent.trim()) {
         await onConnectNote(lastCompletedTodoId, null, newNoteContent.trim());
       }
       // 연결 후 섹션 닫기
-      setShowFuelSection(false);
+      setShowMotivationSection(false);
       setSelectedNoteId(null);
       setNewNoteContent('');
     } finally {
@@ -94,13 +94,13 @@ export function CompletedAllView({
       {lastCompletedTodoId && (
         <div className="mb-6">
           <button
-            onClick={() => setShowFuelSection(!showFuelSection)}
+            onClick={() => setShowMotivationSection(!showMotivationSection)}
             className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
           >
             <Fuel className="w-5 h-5" />
             <span className="text-sm font-medium">이 실행의 원동력 연결하기</span>
             <span className="text-xs text-amber-500 dark:text-amber-400">(선택)</span>
-            {showFuelSection ? (
+            {showMotivationSection ? (
               <ChevronUp className="w-4 h-4 ml-auto" />
             ) : (
               <ChevronDown className="w-4 h-4 ml-auto" />
@@ -108,7 +108,7 @@ export function CompletedAllView({
           </button>
 
           <AnimatePresence>
-            {showFuelSection && (
+            {showMotivationSection && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -118,8 +118,8 @@ export function CompletedAllView({
                 <div className="mt-4 p-4 bg-base-200 rounded-xl text-left">
                   <MotivationNoteSelector
                     notes={notes}
-                    mode={fuelMode}
-                    onModeChange={setFuelMode}
+                    mode={motivationMode}
+                    onModeChange={setMotivationMode}
                     selectedNoteId={selectedNoteId}
                     onSelectNote={setSelectedNoteId}
                     newContent={newNoteContent}
@@ -132,14 +132,14 @@ export function CompletedAllView({
                   {/* 액션 버튼 */}
                   <div className="flex gap-2 mt-4">
                     <button
-                      onClick={handleConnectFuel}
+                      onClick={handleConnectMotivation}
                       disabled={!canConnect || isConnecting}
                       className="flex-1 btn btn-primary btn-sm rounded-full"
                     >
                       {isConnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : '연결할게'}
                     </button>
                     <button
-                      onClick={() => setShowFuelSection(false)}
+                      onClick={() => setShowMotivationSection(false)}
                       className="btn btn-ghost btn-sm rounded-full text-base-content/50"
                     >
                       건너뛰기

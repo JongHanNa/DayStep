@@ -25,7 +25,7 @@ import {MissedTodoActionPanel} from './MissedTodoActionPanel';
 import {DeferredTodoActionPanel} from './DeferredTodoActionPanel';
 import {Play, XCircle, MinusCircle, Shield, Clock} from 'lucide-react-native';
 
-interface LinkedFuel {
+interface LinkedMotivation {
   id: string;
   title: string;
   content: string;
@@ -43,7 +43,7 @@ interface TodoCardProps {
   onPostpone?: (todo: Todo) => void;
   onDeferComplete?: (todo: Todo) => void;
   onRestoreOriginal?: (todo: Todo) => void;
-  linkedFuels?: LinkedFuel[];
+  linkedMotivations?: LinkedMotivation[];
   isNextUpcoming?: boolean;
 }
 
@@ -59,7 +59,7 @@ export function TodoCard({
   onPostpone,
   onDeferComplete,
   onRestoreOriginal,
-  linkedFuels,
+  linkedMotivations,
   isNextUpcoming,
 }: TodoCardProps) {
   const haptic = useHaptic();
@@ -122,7 +122,7 @@ export function TodoCard({
     && !!(todo as any).original_start_time
     && !todo.completed;
 
-  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
+  const [expandedMotivationId, setExpandedMotivationId] = useState<string | null>(null);
 
   return (
     <Animated.View
@@ -275,22 +275,22 @@ export function TodoCard({
             </View>
           )}
 
-          {/* 연결된 원동력(fuel) 배지 */}
-          {linkedFuels && linkedFuels.length > 0 && (
-            <View style={styles.fuelRow}>
-              {linkedFuels.map(fuel => {
-                const text = fuel.title && fuel.content
-                  ? `${fuel.title} - ${fuel.content}`
-                  : fuel.title || fuel.content;
-                const isExpanded = expandedFuelId === fuel.id;
+          {/* 연결된 원동력(motivation) 배지 */}
+          {linkedMotivations && linkedMotivations.length > 0 && (
+            <View style={styles.motivationRow}>
+              {linkedMotivations.map(motivation => {
+                const text = motivation.title && motivation.content
+                  ? `${motivation.title} - ${motivation.content}`
+                  : motivation.title || motivation.content;
+                const isExpanded = expandedMotivationId === motivation.id;
                 return (
-                  <Animated.View key={fuel.id} layout={Layout.springify()}>
+                  <Animated.View key={motivation.id} layout={Layout.springify()}>
                     <Pressable
-                      onPress={() => setExpandedFuelId(isExpanded ? null : fuel.id)}
-                      style={[styles.fuelBadge, {backgroundColor: hexWithOpacity(primaryColor, 0.15)}]}>
-                      <Text style={styles.fuelIcon}>⚡</Text>
+                      onPress={() => setExpandedMotivationId(isExpanded ? null : motivation.id)}
+                      style={[styles.motivationBadge, {backgroundColor: hexWithOpacity(primaryColor, 0.15)}]}>
+                      <Text style={styles.motivationIcon}>⚡</Text>
                       <Text
-                        style={[styles.fuelText, {color: primaryColor}]}
+                        style={[styles.motivationText, {color: primaryColor}]}
                         numberOfLines={isExpanded ? undefined : 1}>
                         {text}
                       </Text>
@@ -505,11 +505,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
   },
-  fuelRow: {
+  motivationRow: {
     marginTop: 6,
     gap: 4,
   },
-  fuelBadge: {
+  motivationBadge: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: 8,
@@ -517,10 +517,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 2,
   },
-  fuelIcon: {
+  motivationIcon: {
     fontSize: 11,
   },
-  fuelText: {
+  motivationText: {
     fontSize: 11,
     flex: 1,
   },

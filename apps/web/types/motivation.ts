@@ -1,13 +1,13 @@
 // ============================================
-// Fuel (원동력) 시스템 UI 타입 정의
-// (DB는 notes 테이블 사용, note_category='fuel')
+// Motivation (원동력) 시스템 UI 타입 정의
+// (DB는 notes 테이블 사용, note_category='motivation')
 // ============================================
 
 /** 기분 레벨 (UI용, DB에 저장하지 않음) */
 export type MoodLevel = 1 | 2 | 3 | 4 | 5;
 
-/** Fuel 뷰 상태 */
-export type FuelViewState =
+/** Motivation 뷰 상태 */
+export type MotivationViewState =
   | 'select-duration'      // 허브 화면 (시작점)
   | 'distraction-plan'     // 집중 환경 준비 (타이머 시작 전)
   | 'inspiration-input'    // 영감 노트 입력 ("수집→실행" 플로우)
@@ -20,16 +20,16 @@ export type FuelViewState =
   | 'completed'            // 완료
   | 'history';             // 과거 기록
 
-/** Fuel 타이머 시간 옵션 (분) */
-export const FUEL_TIMER_OPTIONS = [5, 10, 15, 20] as const;
-export type FuelTimerDuration = typeof FUEL_TIMER_OPTIONS[number];
+/** Motivation 타이머 시간 옵션 (분) */
+export const MOTIVATION_TIMER_OPTIONS = [5, 10, 15, 20] as const;
+export type MotivationTimerDuration = typeof MOTIVATION_TIMER_OPTIONS[number];
 
 // ============================================
 // 원동력 필드 라벨
 // ============================================
 
 /** 원동력 필드 라벨 */
-export const FUEL_FIELD_LABELS = {
+export const MOTIVATION_FIELD_LABELS = {
   // 메인 필드 (필수)
   content: {
     label: '원동력이 될 무언가',
@@ -39,7 +39,7 @@ export const FUEL_FIELD_LABELS = {
 } as const;
 
 /** 원동력 안내 메시지 (랜덤 표시) */
-export const FUEL_MESSAGES = [
+export const MOTIVATION_MESSAGES = [
   '실행하게 만드는 마음의 원동력을 기록하세요',
   '계획은 있는데 실행이 안 될 때, 마음에 불을 붙여줄 무언가를 기록하세요',
   '마음에 기쁨, 감사, 감동, 각성, 결단을 주는 무언가를 기록하면 마음에 실행력이 생겨요',
@@ -89,42 +89,20 @@ export interface TodoDraft {
 }
 
 // ============================================
-// Fuel 노트 인터페이스 (notes 테이블 기반)
+// Motivation 노트 인터페이스 (notes 테이블 기반)
 // ============================================
 
-/** Fuel 노트 입력 타입 */
-export interface FuelNoteInput {
+/** Motivation 노트 입력 타입 */
+export interface MotivationNoteInput {
   content: string;
   linked_date?: string | null;
   is_pinned?: boolean;
 }
 
-/** Fuel 노트 업데이트 타입 */
-export interface FuelNoteUpdate {
+/** Motivation 노트 업데이트 타입 */
+export interface MotivationNoteUpdate {
   content?: string;
   linked_date?: string | null;
   is_pinned?: boolean;
   is_processed?: boolean; // 할일로 변환 여부
 }
-
-// ============================================
-// 하위 호환성을 위한 별칭 (deprecated)
-// ============================================
-
-/** @deprecated Use FuelViewState instead */
-export type InboxViewState = FuelViewState;
-
-/** @deprecated Use FUEL_TIMER_OPTIONS instead */
-export const INBOX_TIMER_OPTIONS = FUEL_TIMER_OPTIONS;
-
-/** @deprecated Use FuelTimerDuration instead */
-export type InboxTimerDuration = FuelTimerDuration;
-
-/** @deprecated Use FUEL_FIELD_LABELS instead */
-export const INBOX_FIELD_LABELS = FUEL_FIELD_LABELS;
-
-/** @deprecated Use FuelNoteInput instead */
-export type InboxNoteInput = FuelNoteInput;
-
-/** @deprecated Use FuelNoteUpdate instead */
-export type InboxNoteUpdate = FuelNoteUpdate;

@@ -592,7 +592,7 @@ export default function CleanupScreen() {
           .from('notes')
           .select('id, title, content, created_at')
           .eq('user_id', user.id)
-          .eq('note_category', 'fuel')
+          .eq('note_category', 'motivation')
           .order('created_at', {ascending: false}),
 
         supabase

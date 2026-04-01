@@ -11,7 +11,7 @@ import {
   type ADHDSubViewId,
   type ADHDGroupId,
 } from '@/lib/constants/adhd-screens';
-import { FuelQuoteCard, ContactRecommendationScroll, TodayStatusPanel } from './home';
+import { MotivationQuoteCard, ContactRecommendationScroll, TodayStatusPanel } from './home';
 
 // ============================================================================
 // 섹션별 색상 매핑
@@ -133,7 +133,7 @@ function FeatureCard({
 
 export default function HomeTableOfContents() {
   const { user } = useAuth();
-  const { goScreen, goRelationshipInsights, goFuel } = useADHDNavigation();
+  const { goScreen, goRelationshipInsights, goMotivation } = useADHDNavigation();
   const { awakeningSentence } = useADHDStore();
   const stats = useTodoStore((s) => s.stats);
   const fetchTodosIfNeeded = useTodoStore((s) => s.fetchTodosIfNeeded);
@@ -203,9 +203,9 @@ export default function HomeTableOfContents() {
 
         {/* 원동력 인라인 */}
         {user?.id && (
-          <FuelQuoteCard
+          <MotivationQuoteCard
             userId={user.id}
-            onFuelClick={() => goFuel('motivation')}
+            onMotivationClick={() => goMotivation('motivation')}
           />
         )}
 

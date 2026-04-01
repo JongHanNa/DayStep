@@ -3,15 +3,15 @@
 import { FileText, Plus } from 'lucide-react';
 
 // 범용 노트 타입 (noteStore.Note와 domain.Note 모두 호환)
-interface FuelNote {
+interface MotivationNote {
   id: string;
   title?: string;
   content: string;
 }
 
-interface FuelSelectorProps {
+interface MotivationNoteSelectorProps {
   // 노트 데이터
-  notes: FuelNote[];  // 선택 가능한 노트 목록 (이미 연결된 노트 제외됨)
+  notes: MotivationNote[];  // 선택 가능한 노트 목록 (이미 연결된 노트 제외됨)
   notesLoading?: boolean;
 
   // 모드 상태 (외부에서 관리)
@@ -35,7 +35,7 @@ interface FuelSelectorProps {
   showEmptyCreateButton?: boolean;  // 빈 목록에서 "새로 연결하기" 버튼 표시
   showNoteIcon?: boolean;  // 노트 아이콘 표시 여부
   maxHeight?: string;  // 노트 목록 최대 높이
-  immediateSelect?: boolean;  // true면 선택 시 토글 없이 바로 콜백 호출 (LinkedFuelsSection용)
+  immediateSelect?: boolean;  // true면 선택 시 토글 없이 바로 콜백 호출 (LinkedMotivationsSection용)
 }
 
 /**
@@ -47,9 +47,9 @@ interface FuelSelectorProps {
  * 사용처:
  * - ExecutionMode의 Completion 화면
  * - ExecutionMode의 AdhocNoteConnectionView
- * - LinkedFuelsSection의 모달 내부
+ * - LinkedMotivationsSection의 모달 내부
  */
-export default function FuelSelector({
+export default function MotivationNoteSelector({
   notes,
   notesLoading = false,
   mode,
@@ -64,7 +64,7 @@ export default function FuelSelector({
   showNoteIcon = false,
   maxHeight = 'max-h-60',
   immediateSelect = false,
-}: FuelSelectorProps) {
+}: MotivationNoteSelectorProps) {
   // 노트 선택 핸들러
   const handleNoteClick = (noteId: string) => {
     if (immediateSelect) {

@@ -25,7 +25,7 @@ export interface AppSettings {
   todoCompletion: TodoCompletionSettings;
   colorTheme: ColorTheme;
   showDescriptions: boolean;
-  showFuelBadges: boolean;
+  showMotivationBadges: boolean;
   _lastSyncedAt: string | null;
 }
 
@@ -44,7 +44,7 @@ interface SettingsState extends AppSettings {
   setCompletedItemsOpacity: (opacity: number) => void;
   setColorTheme: (theme: ColorTheme) => void;
   setShowDescriptions: (show: boolean) => void;
-  setShowFuelBadges: (show: boolean) => void;
+  setShowMotivationBadges: (show: boolean) => void;
 
   // DB 동기화 액션
   loadFromDB: (settings: Partial<AppSettings>) => void;
@@ -79,8 +79,8 @@ export const useSettingsStore = create<SettingsState>()(
         // 기본값: 설명 표시
         showDescriptions: true,
 
-        // 기본값: Fuel 배지 표시
-        showFuelBadges: true,
+        // 기본값: Motivation 배지 표시
+        showMotivationBadges: true,
 
         // DB 동기화 상태
         _lastSyncedAt: null,
@@ -152,9 +152,9 @@ export const useSettingsStore = create<SettingsState>()(
           set({ showDescriptions: show });
         },
 
-        setShowFuelBadges: (show: boolean) => {
-          console.log('⚙️ Fuel 배지 표시 설정 변경:', show);
-          set({ showFuelBadges: show });
+        setShowMotivationBadges: (show: boolean) => {
+          console.log('⚙️ Motivation 배지 표시 설정 변경:', show);
+          set({ showMotivationBadges: show });
         },
 
         // DB 동기화 액션
@@ -181,7 +181,7 @@ export const useSettingsStore = create<SettingsState>()(
           todoCompletion: state.todoCompletion,
           colorTheme: state.colorTheme,
           showDescriptions: state.showDescriptions,
-          showFuelBadges: state.showFuelBadges,
+          showMotivationBadges: state.showMotivationBadges,
           _lastSyncedAt: state._lastSyncedAt,
         }),
       }
@@ -206,7 +206,7 @@ export function getSettingsForSync(): AppSettings {
     todoCompletion: state.todoCompletion,
     colorTheme: state.colorTheme,
     showDescriptions: state.showDescriptions,
-    showFuelBadges: state.showFuelBadges,
+    showMotivationBadges: state.showMotivationBadges,
     _lastSyncedAt: state._lastSyncedAt,
   };
 }

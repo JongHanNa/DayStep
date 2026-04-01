@@ -1,6 +1,6 @@
 /**
  * SleepInputBottomSheet — 수면 기록 입력 바텀시트
- * forwardRef + useImperativeHandle (FuelInputBottomSheet 패턴)
+ * forwardRef + useImperativeHandle (MotivationInputBottomSheet 패턴)
  */
 import React, {
   forwardRef,

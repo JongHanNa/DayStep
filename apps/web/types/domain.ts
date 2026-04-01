@@ -57,9 +57,9 @@ export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 
 /**
  * 노트 카테고리 (DB note_category 컬럼과 일치)
- * - fuel: 원동력(복잡한 머릿속, 정리해줄게) 기능에서 생성된 노트
+ * - motivation: 원동력(복잡한 머릿속, 정리해줄게) 기능에서 생성된 노트
  */
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'motivation';
 
 /**
  * 노트 (Note)

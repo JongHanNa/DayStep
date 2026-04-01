@@ -14,13 +14,13 @@ interface BannerScreenProps {
  * BannerView를 직접 사용
  */
 export function BannerScreen({ userId }: BannerScreenProps) {
-  const { goRelationshipInsights, goFuel } = useADHDNavigation();
+  const { goRelationshipInsights, goMotivation } = useADHDNavigation();
 
   return (
     <BannerView
       userId={userId}
       onRelationshipInsights={() => goRelationshipInsights()}
-      onFuel={() => goFuel('execute')}
+      onMotivation={() => goMotivation('execute')}
     />
   );
 }

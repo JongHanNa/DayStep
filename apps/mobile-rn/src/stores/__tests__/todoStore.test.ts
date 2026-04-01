@@ -30,7 +30,7 @@ beforeEach(() => {
     todos: [],
     completions: [],
     selectedDate: '2026-03-12',
-    fuelMap: {},
+    motivationMap: {},
     loading: false,
     error: null,
     offlineQueue: [],

@@ -8,7 +8,7 @@ import { type NoteFormData } from '@/components/notes/shared/NoteFormFields';
 import NoteEditModal from '@/components/notes/NoteEditModal';
 import RecurringDeleteDialog from '@/components/todos/RecurringDeleteDialog';
 import RecurringTimeChangeDialog from '@/components/todos/RecurringTimeChangeDialog';
-import LinkedFuelsSection from '@/components/todos/shared/LinkedFuelsSection';
+import LinkedMotivationsSection from '@/components/todos/shared/LinkedMotivationsSection';
 import SubtaskSection from '@/components/todos/SubtaskSection';
 import { useModalStore } from '@/state/stores/modalStore';
 import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
@@ -55,8 +55,8 @@ interface TodoEditModalProps {
   userId?: string;
   onNoteImmediateSave?: (noteIds: string[]) => Promise<void>;
   // 연결된 실행 원동력 섹션용 props
-  fuelNotes?: Note[]; // fuel 카테고리 노트 (실행 원동력)
-  showLinkedFuels?: boolean; // 연결된 원동력 섹션 표시 여부 (기본값: true)
+  motivationNotes?: Note[]; // motivation 카테고리 노트 (실행 원동력)
+  showLinkedMotivations?: boolean; // 연결된 원동력 섹션 표시 여부 (기본값: true)
   // 서브태스크 섹션용 props
   showSubtasks?: boolean; // 세부 단계 섹션 표시 여부 (기본값: true)
 }
@@ -94,12 +94,12 @@ export default function TodoEditModal({
   todoId,
   userId,
   onNoteImmediateSave,
-  fuelNotes = [],
-  showLinkedFuels = true,
+  motivationNotes = [],
+  showLinkedMotivations = true,
   showSubtasks = true,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
-  const { createFuelNote } = useNoteStore();
+  const { createMotivationNote } = useNoteStore();
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 삭제 확인 다이얼로그 상태
@@ -209,8 +209,8 @@ export default function TodoEditModal({
     try {
       const noteIds = await getTodoNotes(todoId);
       if (noteIds.length > 0) {
-        // fuelNotes에서 연결된 노트 찾기
-        const linked = fuelNotes.filter(n => noteIds.includes(n.id));
+        // motivationNotes에서 연결된 노트 찾기
+        const linked = motivationNotes.filter(n => noteIds.includes(n.id));
         setLinkedNotes(linked);
       } else {
         setLinkedNotes([]);
@@ -221,14 +221,14 @@ export default function TodoEditModal({
     } finally {
       setIsLoadingLinkedNotes(false);
     }
-  }, [todoId, open, fuelNotes]);
+  }, [todoId, open, motivationNotes]);
 
   // 모달 열릴 때 연결된 노트 조회
   useEffect(() => {
-    if (open && todoId && showLinkedFuels) {
+    if (open && todoId && showLinkedMotivations) {
       loadLinkedNotes();
     }
-  }, [open, todoId, showLinkedFuels, loadLinkedNotes]);
+  }, [open, todoId, showLinkedMotivations, loadLinkedNotes]);
 
   // 노트 연결 해제
   const handleUnlinkNote = async (noteId: string) => {
@@ -248,7 +248,7 @@ export default function TodoEditModal({
 
     try {
       await addTodoNote(todoId, noteId, userId);
-      const note = fuelNotes.find(n => n.id === noteId);
+      const note = motivationNotes.find(n => n.id === noteId);
       if (note) {
         setLinkedNotes(prev => [...prev, note]);
       }
@@ -262,7 +262,7 @@ export default function TodoEditModal({
     if (!todoId || !userId) return;
 
     try {
-      const newNote = await createFuelNote({
+      const newNote = await createMotivationNote({
         content: content.trim(),
         linked_date: null,
         is_pinned: false,
@@ -276,7 +276,7 @@ export default function TodoEditModal({
           user_id: userId,
           title: newNote.title || content.trim().slice(0, 50),
           content: newNote.content || content.trim(),
-          note_category: 'fuel',
+          note_category: 'motivation',
           is_pinned: false,
           created_at: newNote.created_at || new Date().toISOString(),
           updated_at: newNote.updated_at || new Date().toISOString(),
@@ -400,11 +400,11 @@ export default function TodoEditModal({
           )}
 
           {/* 연결된 실행 원동력 섹션 */}
-          {showLinkedFuels && todoId && userId && (
-            <LinkedFuelsSection
+          {showLinkedMotivations && todoId && userId && (
+            <LinkedMotivationsSection
               todoId={todoId}
               linkedNotes={linkedNotes}
-              allNotes={fuelNotes}
+              allNotes={motivationNotes}
               onUnlink={handleUnlinkNote}
               onLink={handleLinkNote}
               onCreateAndLink={handleCreateAndLinkNote}

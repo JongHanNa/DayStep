@@ -14,9 +14,9 @@ interface TimeSchedulePanelProps {
   projectMap?: Map<string, ProjectMapValue>;
   departmentMap?: Map<string, DepartmentMapValue>;
   highlightProjectId?: string | null;
-  todoFuelMap?: Record<string, {id: string; title: string; content: string}[]>;
-  expandedFuelId?: string | null;
-  onExpandFuel?: (id: string | null) => void;
+  todoMotivationMap?: Record<string, {id: string; title: string; content: string}[]>;
+  expandedMotivationId?: string | null;
+  onExpandMotivation?: (id: string | null) => void;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -38,9 +38,9 @@ export function TimeSchedulePanel({
   projectMap,
   departmentMap,
   highlightProjectId,
-  todoFuelMap,
-  expandedFuelId,
-  onExpandFuel,
+  todoMotivationMap,
+  expandedMotivationId,
+  onExpandMotivation,
   onEditClick,
   onToggle,
   onUnskip,
@@ -64,9 +64,9 @@ export function TimeSchedulePanel({
           projectMap={projectMap}
           departmentMap={departmentMap}
           highlightProjectId={highlightProjectId}
-          todoFuelMap={todoFuelMap}
-          expandedFuelId={expandedFuelId}
-          onExpandFuel={onExpandFuel}
+          todoMotivationMap={todoMotivationMap}
+          expandedMotivationId={expandedMotivationId}
+          onExpandMotivation={onExpandMotivation}
           onEditClick={onEditClick}
           onToggle={onToggle}
           onUnskip={onUnskip}
@@ -86,9 +86,9 @@ export function TimeSchedulePanel({
           projectMap={projectMap}
           departmentMap={departmentMap}
           highlightProjectId={highlightProjectId}
-          todoFuelMap={todoFuelMap}
-          expandedFuelId={expandedFuelId}
-          onExpandFuel={onExpandFuel}
+          todoMotivationMap={todoMotivationMap}
+          expandedMotivationId={expandedMotivationId}
+          onExpandMotivation={onExpandMotivation}
           onEditClick={onEditClick}
           onToggle={onToggle}
           onUnskip={onUnskip}

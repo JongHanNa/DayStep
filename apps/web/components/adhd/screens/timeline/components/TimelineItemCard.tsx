@@ -16,10 +16,10 @@ interface TimelineItemCardProps {
   currentTime: Date;
   projectMap: Map<string, ProjectMapValue>;
   departmentMap: Map<string, DepartmentMapValue>;
-  showFuelBadges: boolean;
-  getLinkedFuels: (item: TimelineItem) => Note[];
-  expandedFuelId: string | null;
-  onExpandFuel: (id: string | null) => void;
+  showMotivationBadges: boolean;
+  getLinkedMotivations: (item: TimelineItem) => Note[];
+  expandedMotivationId: string | null;
+  onExpandMotivation: (id: string | null) => void;
   onToggleComplete: (item: TimelineItem) => void;
   onCancelExclusion: (item: TimelineItem) => void;
   onUnskipTodo: (item: TimelineItem) => void;
@@ -37,10 +37,10 @@ export function TimelineItemCard({
   currentTime,
   projectMap,
   departmentMap,
-  showFuelBadges,
-  getLinkedFuels,
-  expandedFuelId,
-  onExpandFuel,
+  showMotivationBadges,
+  getLinkedMotivations,
+  expandedMotivationId,
+  onExpandMotivation,
   onToggleComplete,
   onCancelExclusion,
   onUnskipTodo,
@@ -317,24 +317,24 @@ export function TimelineItemCard({
         )}
 
         {/* 연결된 실행 원동력 표시 */}
-        {showFuelBadges && (() => {
-          const linkedFuels = getLinkedFuels(item);
-          if (linkedFuels.length === 0) return null;
+        {showMotivationBadges && (() => {
+          const linkedMotivations = getLinkedMotivations(item);
+          if (linkedMotivations.length === 0) return null;
 
           return (
             <div className="flex flex-col gap-1 mt-1.5 overflow-hidden">
-              {linkedFuels.map(fuel => {
-                const text = fuel.title && fuel.content
-                  ? `${fuel.title} - ${fuel.content}`
-                  : fuel.title || fuel.content;
-                const isExpanded = expandedFuelId === fuel.id;
+              {linkedMotivations.map(motivation => {
+                const text = motivation.title && motivation.content
+                  ? `${motivation.title} - ${motivation.content}`
+                  : motivation.title || motivation.content;
+                const isExpanded = expandedMotivationId === motivation.id;
 
                 return (
                   <div
-                    key={fuel.id}
+                    key={motivation.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onExpandFuel(isExpanded ? null : fuel.id);
+                      onExpandMotivation(isExpanded ? null : motivation.id);
                     }}
                     className="inline-flex items-start gap-0.5 px-2 py-0.5 rounded-full text-xs bg-orange-500/20 text-orange-600 dark:text-orange-400 cursor-pointer hover:bg-orange-500/30 transition-all"
                   >

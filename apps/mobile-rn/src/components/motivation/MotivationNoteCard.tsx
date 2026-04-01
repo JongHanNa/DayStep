@@ -1,5 +1,5 @@
 /**
- * FuelNoteCard — 개별 원동력 노트 카드
+ * MotivationNoteCard — 개별 원동력 노트 카드
  * 감정뱃지, 제목/내용, 핀, 날짜. 롱프레스 → 액션시트
  */
 import React, {useCallback} from 'react';
@@ -13,7 +13,7 @@ import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {useTheme} from '@/theme';
 
-interface FuelNoteCardProps {
+interface MotivationNoteCardProps {
   note: Note;
   index: number;
   onPress: (note: Note) => void;
@@ -21,7 +21,7 @@ interface FuelNoteCardProps {
   onDelete: (noteId: string) => void;
 }
 
-export function FuelNoteCard({note, index, onPress, onPin, onDelete}: FuelNoteCardProps) {
+export function MotivationNoteCard({note, index, onPress, onPin, onDelete}: MotivationNoteCardProps) {
   const {primaryColor} = useTheme();
   const emotionConfig = note.emotion_tag ? EMOTION_CONFIG[note.emotion_tag] : null;
   const todoCount = note.todos?.length ?? 0;

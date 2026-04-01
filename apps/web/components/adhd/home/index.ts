@@ -1,3 +1,3 @@
-export { default as FuelQuoteCard } from './FuelQuoteCard';
+export { default as MotivationQuoteCard } from './MotivationQuoteCard';
 export { default as ContactRecommendationScroll } from './ContactRecommendationScroll';
 export { default as TodayStatusPanel } from './TodayStatusPanel';

@@ -65,7 +65,7 @@ export interface MonthTodoSummary {
   color: string | null;
 }
 
-interface LinkedFuel {
+interface LinkedMotivation {
   id: string;
   title: string;
   content: string;
@@ -76,7 +76,7 @@ interface TodoState {
   todos: Todo[];
   completions: TodoCompletion[]; // 반복할일 날짜별 완료 기록
   selectedDate: string; // ISO date string (YYYY-MM-DD)
-  fuelMap: Record<string, LinkedFuel[]>; // todoId → linked fuels
+  motivationMap: Record<string, LinkedMotivation[]>; // todoId → linked motivations
 
   // 로딩 상태
   loading: boolean;
@@ -93,7 +93,7 @@ interface TodoState {
   fetchTodosForDate: (date: string) => Promise<void>;
   fetchTodosForDateRange: (startDate: string, endDate: string) => Promise<Record<string, Todo[]>>;
   fetchTodosForMonthView: (year: number, month: number) => Promise<void>;
-  fetchFuelsForTodos: (todoIds: string[]) => Promise<void>;
+  fetchMotivationsForTodos: (todoIds: string[]) => Promise<void>;
   fetchAllTodos: (userId: string, days?: number) => Promise<Todo[]>;
   createTodo: (input: CreateTodoInput) => Promise<Todo | null>;
   updateTodo: (id: string, updates: Partial<Todo>) => Promise<boolean>;
@@ -152,7 +152,7 @@ export const useTodoStore = create<TodoState>()(
       todos: [],
       completions: [],
       selectedDate: format(new Date(), 'yyyy-MM-dd'),
-      fuelMap: {},
+      motivationMap: {},
       loading: false,
       error: null,
       offlineQueue: [],
@@ -1009,42 +1009,42 @@ export const useTodoStore = create<TodoState>()(
         }
       },
 
-      fetchFuelsForTodos: async (todoIds: string[]) => {
+      fetchMotivationsForTodos: async (todoIds: string[]) => {
         if (todoIds.length === 0) {
-          set({fuelMap: {}});
+          set({motivationMap: {}});
           return;
         }
         try {
-          // 1. todo_notes에서 fuel 카테고리 노트 링크 조회
+          // 1. todo_notes에서 motivation 카테고리 노트 링크 조회
           const {data: links, error: linkErr} = await supabase
             .from('todo_notes')
             .select('todo_id, note_id')
             .in('todo_id', todoIds);
 
           if (linkErr || !links || links.length === 0) {
-            set({fuelMap: {}});
+            set({motivationMap: {}});
             return;
           }
 
-          // 2. 연결된 노트 ID로 fuel 노트만 조회
+          // 2. 연결된 노트 ID로 motivation 노트만 조회
           const noteIds = [...new Set(links.map((l: any) => l.note_id))];
           const {data: notes, error: noteErr} = await supabase
             .from('notes')
             .select('id, title, content, note_category')
             .in('id', noteIds)
-            .eq('note_category', 'fuel');
+            .eq('note_category', 'motivation');
 
           if (noteErr || !notes || notes.length === 0) {
-            set({fuelMap: {}});
+            set({motivationMap: {}});
             return;
           }
 
-          // 3. todoId → fuel notes 매핑 구성
-          const fuelNoteMap = new Map(notes.map((n: any) => [n.id, n]));
-          const map: Record<string, LinkedFuel[]> = {};
+          // 3. todoId → motivation notes 매핑 구성
+          const motivationNoteMap = new Map(notes.map((n: any) => [n.id, n]));
+          const map: Record<string, LinkedMotivation[]> = {};
 
           for (const link of links) {
-            const note = fuelNoteMap.get(link.note_id);
+            const note = motivationNoteMap.get(link.note_id);
             if (!note) continue;
             if (!map[link.todo_id]) map[link.todo_id] = [];
             map[link.todo_id].push({
@@ -1054,9 +1054,9 @@ export const useTodoStore = create<TodoState>()(
             });
           }
 
-          set({fuelMap: map});
+          set({motivationMap: map});
         } catch (err) {
-          console.error('[TodoStore] fetchFuelsForTodos error:', err);
+          console.error('[TodoStore] fetchMotivationsForTodos error:', err);
         }
       },
 
@@ -1169,7 +1169,7 @@ export const useTodoStore = create<TodoState>()(
         todos: state.todos,
         completions: state.completions,
         selectedDate: state.selectedDate,
-        fuelMap: state.fuelMap,
+        motivationMap: state.motivationMap,
         offlineQueue: state.offlineQueue,
       }),
       onRehydrateStorage: () => (state) => {

@@ -101,10 +101,10 @@ function TodoListScreenInner() {
     todos,
     selectedDate,
     loading,
-    fuelMap,
+    motivationMap,
     setSelectedDate,
     fetchTodosForDate,
-    fetchFuelsForTodos,
+    fetchMotivationsForTodos,
     toggleTodoCompletion,
     updateTodo,
     skipTodo,
@@ -168,13 +168,13 @@ function TodoListScreenInner() {
     fetchTodosForDate(selectedDate);
   }, [selectedDate, fetchTodosForDate]));
 
-  // todos 변경 시 fuel 데이터 로드
+  // todos 변경 시 motivation 데이터 로드
   useEffect(() => {
     const todoIds = todos.map(t => t.id).filter(id => !id.startsWith('temp_'));
     if (todoIds.length > 0) {
-      fetchFuelsForTodos(todoIds);
+      fetchMotivationsForTodos(todoIds);
     }
-  }, [todos, fetchFuelsForTodos]);
+  }, [todos, fetchMotivationsForTodos]);
 
   // HomeScreen에서 initialPage param으로 특정 페이지 이동
   useFocusEffect(
@@ -445,7 +445,7 @@ function TodoListScreenInner() {
                   onPostpone={handlePostpone}
                   onDeferComplete={(todo) => handleToggle(todo.id)}
                   onRestoreOriginal={handleRestoreOriginal}
-                  linkedFuels={fuelMap[item.id]}
+                  linkedMotivations={motivationMap[item.id]}
                   isNextUpcoming={item.id === nextUpcomingId}
                 />
               </DraggableTodoChip>

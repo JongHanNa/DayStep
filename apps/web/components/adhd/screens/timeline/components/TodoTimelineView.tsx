@@ -34,7 +34,7 @@ import type { TodoTimelineViewProps, RenderItem, TimelineViewMode, TimelineItem 
  * - 맥락: 프로젝트/목표 배지로 어떤 목표를 위한 건지 표시
  */
 export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineViewProps) {
-  const { showFuelBadges, setShowFuelBadges } = useSettingsStore();
+  const { showMotivationBadges, setShowMotivationBadges } = useSettingsStore();
   const { projects } = useProjectStore();
   const { todos } = useTodoStore();
   const { goScreen } = useADHDNavigation();
@@ -156,9 +156,9 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
           />
         </div>
         <button
-          onClick={() => setShowFuelBadges(!showFuelBadges)}
-          className={`btn btn-ghost btn-sm btn-circle ${showFuelBadges ? 'text-orange-500' : 'text-base-content/40'}`}
-          title={showFuelBadges ? '원동력 숨기기' : '원동력 표시'}
+          onClick={() => setShowMotivationBadges(!showMotivationBadges)}
+          className={`btn btn-ghost btn-sm btn-circle ${showMotivationBadges ? 'text-orange-500' : 'text-base-content/40'}`}
+          title={showMotivationBadges ? '원동력 숨기기' : '원동력 표시'}
         >
           <Zap className="w-4 h-4" />
         </button>
@@ -204,8 +204,8 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
         headerTitle="할일 편집"
         todoId={actions.editingTodo?.id}
         userId={userId}
-        showLinkedFuels={true}
-        fuelNotes={data.fuelNotes}
+        showLinkedMotivations={true}
+        motivationNotes={data.motivationNotes}
         projects={projects}
         onCreateProject={actions.handleCreateProject}
         onProjectImmediateSave={actions.handleProjectImmediateSave}
@@ -284,8 +284,8 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
           userId={userId}
           date={nav.navigatedMonth}
           timelineItems={nav.timelineItems}
-          showFuelBadges={showFuelBadges}
-          getLinkedFuels={data.getLinkedFuels}
+          showMotivationBadges={showMotivationBadges}
+          getLinkedMotivations={data.getLinkedMotivations}
           onEditClick={actions.handleEditClick}
           onToggleComplete={actions.handleToggleComplete}
           onUnskipTodo={actions.handleUnskipTodo}
@@ -484,10 +484,10 @@ export function TodoTimelineView({ userId, viewMode = 'agenda' }: TodoTimelineVi
                               currentTime={data.currentTime}
                               projectMap={data.projectMap}
                               departmentMap={data.departmentMap}
-                              showFuelBadges={showFuelBadges}
-                              getLinkedFuels={data.getLinkedFuels}
-                              expandedFuelId={nav.expandedFuelId}
-                              onExpandFuel={nav.setExpandedFuelId}
+                              showMotivationBadges={showMotivationBadges}
+                              getLinkedMotivations={data.getLinkedMotivations}
+                              expandedMotivationId={nav.expandedMotivationId}
+                              onExpandMotivation={nav.setExpandedMotivationId}
                               onToggleComplete={actions.handleToggleComplete}
                               onCancelExclusion={actions.handleCancelExclusion}
                               onUnskipTodo={actions.handleUnskipTodo}

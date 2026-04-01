@@ -1,7 +1,7 @@
 /**
  * ADHD Screens - 독립적인 화면 컴포넌트들
  *
- * 이 폴더의 컴포넌트들은 그룹(fuel, care, project 등)에 독립적입니다.
+ * 이 폴더의 컴포넌트들은 그룹(motivation, care, project 등)에 독립적입니다.
  * 화면을 다른 그룹으로 이동할 때 여기 파일들은 수정할 필요가 없습니다.
  *
  * 그룹 변경 시: lib/constants/adhd-screens.ts의 UI_GROUPS만 수정하면 됩니다.

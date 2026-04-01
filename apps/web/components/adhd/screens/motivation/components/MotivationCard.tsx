@@ -7,7 +7,7 @@ import { ko } from 'date-fns/locale';
 import type { Note } from '@/state/stores/noteStore';
 import { type EmotionTag, EMOTION_CONFIG, isNoteProcessed } from '../utils';
 
-interface MotivationFuelCardProps {
+interface MotivationCardProps {
   note: Note;
   onPin: (note: Note) => void;
   onCreateTodo: (note: Note) => void;
@@ -15,7 +15,7 @@ interface MotivationFuelCardProps {
   onClick: (note: Note) => void;
 }
 
-export function MotivationFuelCard({ note, onPin, onCreateTodo, onDelete, onClick }: MotivationFuelCardProps) {
+export function MotivationCard({ note, onPin, onCreateTodo, onDelete, onClick }: MotivationCardProps) {
   const processed = isNoteProcessed(note);
   const emotionTag = note.emotion_tag as EmotionTag | null | undefined;
   const emotionConfig = emotionTag ? EMOTION_CONFIG[emotionTag] : null;

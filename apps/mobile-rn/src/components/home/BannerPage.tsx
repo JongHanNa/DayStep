@@ -1,6 +1,6 @@
 /**
  * BannerPage — Home Page 1
- * 원동력(fuel note) 카드 + 관계 리마인더 카드
+ * 원동력(motivation note) 카드 + 관계 리마인더 카드
  * 실제 데이터 연동: noteStore + cherishedPeopleStore
  */
 import React, {useEffect, useMemo} from 'react';
@@ -17,18 +17,18 @@ import {useTheme} from '@/theme';
 export function BannerPage() {
   const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
-  const {notes, fetchFuelNotes, getRandomFuelNote} = useNoteStore();
+  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useNoteStore();
   const {recommendations, loadRecommendations, getRandomRecommendation} =
     useCherishedPeopleStore();
 
   useEffect(() => {
     if (user?.id) {
-      fetchFuelNotes(user.id);
+      fetchMotivationNotes(user.id);
       loadRecommendations(user.id);
     }
   }, [user?.id]);
 
-  const fuelNote = useMemo(() => getRandomFuelNote(), [notes]);
+  const motivationNote = useMemo(() => getRandomMotivationNote(), [notes]);
   const recommendation = useMemo(
     () => getRandomRecommendation(),
     [recommendations],
@@ -61,21 +61,21 @@ export function BannerPage() {
               나의 원동력
             </Text>
           </View>
-          {fuelNote ? (
+          {motivationNote ? (
             <>
-              {fuelNote.title && (
+              {motivationNote.title && (
                 <Text className="text-base font-medium text-amber-900 mb-1">
-                  {fuelNote.title}
+                  {motivationNote.title}
                 </Text>
               )}
               <Text className="text-sm text-amber-800/80 leading-5">
-                {fuelNote.content}
+                {motivationNote.content}
               </Text>
             </>
           ) : (
             <Text className="text-sm text-amber-800/60">
               아직 원동력이 없어요.{'\n'}
-              노트에서 Fuel 모드로 나만의 원동력을 기록해보세요.
+              노트에서 나만의 원동력을 기록해보세요.
             </Text>
           )}
         </GradientBackground>

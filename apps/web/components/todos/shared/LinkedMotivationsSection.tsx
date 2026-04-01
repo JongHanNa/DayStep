@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import type { Note } from '@/types/domain';
 import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
 
-interface LinkedFuelsSectionProps {
+interface LinkedMotivationsSectionProps {
   todoId: string;
   linkedNotes: Note[];
   allNotes: Note[]; // inbox 카테고리 노트만
@@ -23,7 +23,7 @@ interface LinkedFuelsSectionProps {
  * - 연결 해제 (X 버튼)
  * - 새 원동력 추가 (기존 노트 선택 또는 새로 생성)
  */
-export default function LinkedFuelsSection({
+export default function LinkedMotivationsSection({
   todoId,
   linkedNotes,
   allNotes,
@@ -32,7 +32,7 @@ export default function LinkedFuelsSection({
   onCreateAndLink,
   isLoading = false,
   todoColor = '#6b7280',
-}: LinkedFuelsSectionProps) {
+}: LinkedMotivationsSectionProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addMode, setAddMode] = useState<'select' | 'create'>('select');
   const [newContent, setNewContent] = useState('');

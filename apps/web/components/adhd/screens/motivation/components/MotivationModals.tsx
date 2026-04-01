@@ -13,14 +13,14 @@ import type { Note } from '@/state/stores/noteStore';
 import ContentEditorModal from '@/components/notes/ContentEditorModal';
 import MarkdownViewer from '@/components/notes/MarkdownViewer';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
-import { FUEL_FIELD_LABELS, FUEL_MESSAGES } from '@/types/fuel';
+import { MOTIVATION_FIELD_LABELS, MOTIVATION_MESSAGES } from '@/types/motivation';
 import { type EmotionTag, EMOTION_CONFIG, EMOTION_TAGS } from '../utils';
 
 // ============================================
-// Fuel Input Modal (상세 작성)
+// Motivation Input Modal (상세 작성)
 // ============================================
 
-interface FuelInputModalProps {
+interface MotivationInputModalProps {
   open: boolean;
   draftTitle: string;
   draftContent: string;
@@ -35,7 +35,7 @@ interface FuelInputModalProps {
   onEmotionChange: (tag: EmotionTag | null) => void;
 }
 
-export function FuelInputModal({
+export function MotivationInputModal({
   open,
   draftTitle,
   draftContent,
@@ -48,11 +48,11 @@ export function FuelInputModal({
   onClose,
   selectedEmotion,
   onEmotionChange,
-}: FuelInputModalProps) {
+}: MotivationInputModalProps) {
   const [isContentEditorOpen, setIsContentEditorOpen] = useState(false);
 
-  const fuelMessage = useMemo(() =>
-    FUEL_MESSAGES[Math.floor(Math.random() * FUEL_MESSAGES.length)],
+  const motivationMessage = useMemo(() =>
+    MOTIVATION_MESSAGES[Math.floor(Math.random() * MOTIVATION_MESSAGES.length)],
     []
   );
 
@@ -73,7 +73,7 @@ export function FuelInputModal({
         {/* 안내 문구 */}
         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 my-4">
           <p className="text-sm text-amber-700 dark:text-amber-300">
-            {fuelMessage}
+            {motivationMessage}
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export function FuelInputModal({
         {/* 내용 입력 */}
         <div className="mb-4">
           <label className="text-sm font-medium text-base-content/70 mb-1 block">
-            {FUEL_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
+            {MOTIVATION_FIELD_LABELS.content.label} <span className="text-amber-500">*</span>
           </label>
           <div
             className="p-3 rounded-lg bg-base-200 cursor-pointer hover:bg-base-300 transition-colors min-h-[100px]"
@@ -103,7 +103,7 @@ export function FuelInputModal({
             {draftContent ? (
               <MarkdownViewer content={draftContent} className="prose prose-sm max-w-none" />
             ) : (
-              <p className="text-base-content/50">{FUEL_FIELD_LABELS.content.placeholder}</p>
+              <p className="text-base-content/50">{MOTIVATION_FIELD_LABELS.content.placeholder}</p>
             )}
           </div>
 
@@ -112,7 +112,7 @@ export function FuelInputModal({
             content={draftContent}
             onClose={() => setIsContentEditorOpen(false)}
             onChange={onContentChange}
-            placeholder={FUEL_FIELD_LABELS.content.placeholder}
+            placeholder={MOTIVATION_FIELD_LABELS.content.placeholder}
             enableAutoSave={false}
           />
         </div>
@@ -189,10 +189,10 @@ export function FuelInputModal({
 }
 
 // ============================================
-// Fuel Detail Modal (상세 보기/편집)
+// Motivation Detail Modal (상세 보기/편집)
 // ============================================
 
-interface FuelDetailModalProps {
+interface MotivationDetailModalProps {
   note: Note | null;
   editTitle: string;
   editContent: string;
@@ -205,7 +205,7 @@ interface FuelDetailModalProps {
   onOpenTodoDelete: (todoId: string, noteId: string) => void;
 }
 
-export function FuelDetailModal({
+export function MotivationDetailModal({
   note,
   editTitle,
   editContent,
@@ -216,7 +216,7 @@ export function FuelDetailModal({
   onCreateTodo,
   onOpenTodoEdit,
   onOpenTodoDelete,
-}: FuelDetailModalProps) {
+}: MotivationDetailModalProps) {
   const [isEditContentEditorOpen, setIsEditContentEditorOpen] = useState(false);
 
   if (!note) return null;

@@ -24,7 +24,7 @@ import {
 export type ADHDGroupId = 'memory' | 'care' | 'project';
 
 /** 라우트 그룹 ID (실제 URL 경로에 사용되는 그룹) */
-export type ADHDRouteGroupId = 'dashboard' | 'project' | 'fuel' | 'relationship';
+export type ADHDRouteGroupId = 'dashboard' | 'project' | 'motivation' | 'relationship';
 
 export type ADHDSubViewId =
   | 'banner'
@@ -275,8 +275,8 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
     screenIds: ['banner', 'contact', 'activity'],
   },
   {
-    id: 'fuel',
-    basePath: '/adhd/fuel',
+    id: 'motivation',
+    basePath: '/adhd/motivation',
     screenIds: ['motivation', 'timeline', 'daily-planner', 'execute'],
   },
   {
@@ -305,7 +305,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'motivation',
         label: '원동력 새기기',
         icon: Lightbulb,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '원동력 새기기',
           difficulty:
@@ -381,7 +381,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'execute',
         label: '집중 실행하기',
         icon: Target,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '집중 실행하기',
           difficulty:
@@ -411,7 +411,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'timeline',
         label: '일정 계획하기',
         icon: Calendar,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '일정 계획하기',
           difficulty:
@@ -423,7 +423,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'daily-planner',
         label: '하루 계획하기',
         icon: Calendar,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
       },
     ],
   },
@@ -503,7 +503,7 @@ export const getGroupHelpContent = (
 
 /**
  * 라우트 그룹별로 화면 아이템 조회
- * 기존 컴포넌트(ADHDEntryScreen, FuelMode 등)에서 사용
+ * 기존 컴포넌트(ADHDEntryScreen, MotivationMode 등)에서 사용
  */
 export const getItemsByRouteGroup = (
   routeGroupId: ADHDRouteGroupId

@@ -749,7 +749,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
                 title: t.title,
                 isRelationshipTask: t.isRelationshipTask
               }))}
-              notes={allNotes.filter(n => n.note_category === 'fuel')}
+              notes={allNotes.filter(n => n.note_category === 'motivation')}
               onConnectNote={handleConnectNoteFromCompleted}
               lastCompletedTodoId={
                 todayCompletedTodos.length > 0
@@ -823,7 +823,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
           {viewState === 'adhoc-note-connection' && (
             <AdhocNoteConnectionView
               key="adhoc-note-connection"
-              notes={allNotes.filter(n => n.note_category === 'fuel')}
+              notes={allNotes.filter(n => n.note_category === 'motivation')}
               selectedNoteId={selectedNoteId}
               onSelectNote={setSelectedNoteId}
               newNoteContent={newNoteContent}

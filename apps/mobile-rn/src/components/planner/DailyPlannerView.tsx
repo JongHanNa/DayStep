@@ -106,10 +106,10 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
     todos,
     selectedDate,
     loading,
-    fuelMap,
+    motivationMap,
     setSelectedDate,
     fetchTodosForDate,
-    fetchFuelsForTodos,
+    fetchMotivationsForTodos,
     toggleTodoCompletion,
     updateTodo,
     skipTodo,
@@ -170,9 +170,9 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
   useEffect(() => {
     const todoIds = todos.map(t => t.id).filter(id => !id.startsWith('temp_'));
     if (todoIds.length > 0) {
-      fetchFuelsForTodos(todoIds);
+      fetchMotivationsForTodos(todoIds);
     }
-  }, [todos, fetchFuelsForTodos]);
+  }, [todos, fetchMotivationsForTodos]);
 
   useFocusEffect(
     useCallback(() => {
@@ -433,7 +433,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
                   onPostpone={handlePostpone}
                   onDeferComplete={(todo) => handleToggle(todo.id)}
                   onRestoreOriginal={handleRestoreOriginal}
-                  linkedFuels={fuelMap[item.id]}
+                  linkedMotivations={motivationMap[item.id]}
                   isNextUpcoming={item.id === nextUpcomingId}
                 />
               </DraggableTodoChip>

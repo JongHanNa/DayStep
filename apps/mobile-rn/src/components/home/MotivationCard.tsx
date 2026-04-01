@@ -1,5 +1,5 @@
 /**
- * FuelCard — 원동력 인라인 카드
+ * MotivationCard — 원동력 인라인 카드
  * BannerPage.tsx amber 카드를 독립 컴포넌트로 추출
  *
  * iOS 26+: 네이티브 Liquid Glass morph (컴팩트 ↔ 확장 패널 인라인 전환)
@@ -15,17 +15,17 @@ import Animated, {
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import type {Note} from '@/stores/noteStore';
-import {LiquidGlassFuelCardNative, isIOS26Plus} from '@/components/native';
+import {LiquidGlassMotivationCardNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
 
-interface FuelCardProps {
+interface MotivationCardProps {
   note: Note | null;
   enterDelay?: number;
 }
 
-export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
+export function MotivationCard({note, enterDelay = 0}: MotivationCardProps) {
   const {primaryColor} = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
   const animatedHeight = useSharedValue(200);
@@ -41,7 +41,7 @@ export function FuelCard({note, enterDelay = 0}: FuelCardProps) {
     return (
       <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
         <Animated.View style={heightStyle}>
-          <LiquidGlassFuelCardNative
+          <LiquidGlassMotivationCardNative
             primaryColor={primaryColor}
             noteTitle={note?.title ?? ''}
             noteContent={note?.content ?? ''}

@@ -1,6 +1,6 @@
 /**
  * Note Store (Zustand + MMKV)
- * 원동력(fuel) 노트 CRUD + 홈 배너용 조회
+ * 원동력(motivation) 노트 CRUD + 홈 배너용 조회
  */
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
@@ -23,7 +23,7 @@ export interface Note {
   todos?: {id: string; title: string}[];
 }
 
-interface CreateFuelNoteInput {
+interface CreateMotivationNoteInput {
   content: string;
   title?: string;
   emotion_tag?: EmotionTag;
@@ -39,13 +39,13 @@ interface NoteState {
   loading: boolean;
   error: string | null;
 
-  fetchFuelNotes: (userId: string) => Promise<void>;
-  createFuelNote: (input: CreateFuelNoteInput) => Promise<Note | null>;
+  fetchMotivationNotes: (userId: string) => Promise<void>;
+  createMotivationNote: (input: CreateMotivationNoteInput) => Promise<Note | null>;
   updateNote: (id: string, updates: Partial<Pick<Note, 'title' | 'content' | 'emotion_tag'>>) => Promise<boolean>;
   deleteNote: (id: string) => Promise<boolean>;
   setBannerPinned: (noteId: string, isPinned: boolean) => Promise<boolean>;
-  getBannerPinnedFuelNotes: () => Note[];
-  getRandomFuelNote: () => Note | null;
+  getBannerPinnedMotivationNotes: () => Note[];
+  getRandomMotivationNote: () => Note | null;
   clearError: () => void;
 }
 
@@ -56,7 +56,7 @@ export const useNoteStore = create<NoteState>()(
       loading: false,
       error: null,
 
-      fetchFuelNotes: async (userId: string) => {
+      fetchMotivationNotes: async (userId: string) => {
         try {
           set({loading: true, error: null});
 
@@ -64,7 +64,7 @@ export const useNoteStore = create<NoteState>()(
             .from('notes')
             .select('*, todo_notes(todos(id, title))')
             .eq('user_id', userId)
-            .eq('note_category', 'fuel')
+            .eq('note_category', 'motivation')
             .order('created_at', {ascending: false});
 
           if (error) throw error;
@@ -85,7 +85,7 @@ export const useNoteStore = create<NoteState>()(
         }
       },
 
-      createFuelNote: async (input) => {
+      createMotivationNote: async (input) => {
         try {
           set({loading: true, error: null});
 
@@ -97,7 +97,7 @@ export const useNoteStore = create<NoteState>()(
             content: input.content,
             title: input.title ?? undefined,
             emotion_tag: input.emotion_tag ?? undefined,
-            note_category: 'fuel' as const,
+            note_category: 'motivation' as const,
             is_banner_pinned: false,
           };
 
@@ -107,7 +107,7 @@ export const useNoteStore = create<NoteState>()(
             content: input.content,
             title: input.title ?? null,
             emotion_tag: input.emotion_tag ?? null,
-            note_category: 'fuel',
+            note_category: 'motivation',
             is_banner_pinned: false,
           };
 
@@ -221,12 +221,12 @@ export const useNoteStore = create<NoteState>()(
         }
       },
 
-      getBannerPinnedFuelNotes: () => {
+      getBannerPinnedMotivationNotes: () => {
         return get().notes.filter(n => n.is_banner_pinned === true);
       },
 
-      getRandomFuelNote: () => {
-        const pinned = get().getBannerPinnedFuelNotes();
+      getRandomMotivationNote: () => {
+        const pinned = get().getBannerPinnedMotivationNotes();
         const source = pinned.length > 0 ? pinned : get().notes;
         if (source.length === 0) return null;
         return source[Math.floor(Math.random() * source.length)];

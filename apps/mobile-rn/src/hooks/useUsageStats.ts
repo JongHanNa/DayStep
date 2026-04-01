@@ -64,7 +64,7 @@ export function useUsageStats() {
           .from('notes')
           .select('*', {count: 'exact', head: true})
           .eq('user_id', user.id)
-          .eq('note_category', 'fuel'),
+          .eq('note_category', 'motivation'),
       ]);
 
       const {data, error} = usageResult;

@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { useNoteStore, type Note } from '@/state/stores/noteStore';
 
-interface FuelReminderBannerProps {
+interface MotivationReminderBannerProps {
   userId: string;
-  onFuelClick?: (noteId: string) => void;
+  onMotivationClick?: (noteId: string) => void;
 }
 
 /**
@@ -15,11 +15,11 @@ interface FuelReminderBannerProps {
  * ADHDEntryScreen에서 배너에 고정된 원동력이 있을 때 표시
  * 고정된 원동력 중 랜덤으로 하나를 표시
  */
-export default function FuelReminderBanner({
+export default function MotivationReminderBanner({
   userId,
-  onFuelClick,
-}: FuelReminderBannerProps) {
-  const { notes, getBannerPinnedFuelNotes, getFuelNotes } = useNoteStore();
+  onMotivationClick,
+}: MotivationReminderBannerProps) {
+  const { notes, getBannerPinnedMotivationNotes, getMotivationNotes } = useNoteStore();
 
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -28,20 +28,20 @@ export default function FuelReminderBanner({
   // 데이터 로드
   useEffect(() => {
     if (userId) {
-      getFuelNotes(userId);
+      getMotivationNotes(userId);
     }
-  }, [userId, getFuelNotes]);
+  }, [userId, getMotivationNotes]);
 
   // 배너 고정된 노트 중 랜덤 선택
   useEffect(() => {
-    const pinnedNotes = getBannerPinnedFuelNotes();
+    const pinnedNotes = getBannerPinnedMotivationNotes();
     if (pinnedNotes.length > 0) {
       const randomIndex = Math.floor(Math.random() * pinnedNotes.length);
       setSelectedNote(pinnedNotes[randomIndex]);
     } else {
       setSelectedNote(null);
     }
-  }, [notes, getBannerPinnedFuelNotes]);
+  }, [notes, getBannerPinnedMotivationNotes]);
 
   // 배너 닫기
   const handleDismiss = () => {
@@ -49,9 +49,9 @@ export default function FuelReminderBanner({
   };
 
   // 원동력으로 이동
-  const handleFuelClick = () => {
-    if (onFuelClick && selectedNote) {
-      onFuelClick(selectedNote.id);
+  const handleMotivationClick = () => {
+    if (onMotivationClick && selectedNote) {
+      onMotivationClick(selectedNote.id);
     }
   };
 
@@ -112,7 +112,7 @@ export default function FuelReminderBanner({
 
               {/* CTA 버튼 */}
               <button
-                onClick={handleFuelClick}
+                onClick={handleMotivationClick}
                 className="mt-3 btn btn-sm btn-ghost rounded-full text-amber-600 hover:bg-amber-100 border border-amber-200 gap-1"
               >
                 이걸로 할일 만들기

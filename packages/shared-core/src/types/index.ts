@@ -100,10 +100,7 @@ export interface NoteTagLinkInsert {
 }
 
 // Note types (manually defined until Supabase types are updated)
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
-
-/** @deprecated Use 'fuel' instead of 'inbox' */
-export type LegacyNoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'inbox';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'motivation';
 
 export interface Note {
   id: string;

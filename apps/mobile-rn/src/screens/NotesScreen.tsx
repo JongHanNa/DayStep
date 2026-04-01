@@ -12,13 +12,13 @@ import {PinnedBanner} from '@/components/motivation/PinnedBanner';
 import {TimelineSection, type TimelineSectionData} from '@/components/motivation/TimelineSection';
 import {MotivationEmptyState} from '@/components/motivation/MotivationEmptyState';
 import {
-  FuelInputBottomSheet,
-  type FuelInputBottomSheetRef,
-} from '@/components/motivation/FuelInputBottomSheet';
+  MotivationInputBottomSheet,
+  type MotivationInputBottomSheetRef,
+} from '@/components/motivation/MotivationInputBottomSheet';
 import {
-  FuelDetailBottomSheet,
-  type FuelDetailBottomSheetRef,
-} from '@/components/motivation/FuelDetailBottomSheet';
+  MotivationDetailBottomSheet,
+  type MotivationDetailBottomSheetRef,
+} from '@/components/motivation/MotivationDetailBottomSheet';
 import {useNoteStore} from '@/stores/noteStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
@@ -64,8 +64,8 @@ export default function NotesScreen() {
   const {
     notes,
     loading,
-    fetchFuelNotes,
-    createFuelNote,
+    fetchMotivationNotes,
+    createMotivationNote,
     updateNote,
     deleteNote,
     setBannerPinned,
@@ -73,8 +73,8 @@ export default function NotesScreen() {
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
   const {primaryColor} = useTheme();
 
-  const inputSheetRef = useRef<FuelInputBottomSheetRef>(null);
-  const detailSheetRef = useRef<FuelDetailBottomSheetRef>(null);
+  const inputSheetRef = useRef<MotivationInputBottomSheetRef>(null);
+  const detailSheetRef = useRef<MotivationDetailBottomSheetRef>(null);
 
   const [expandedNoteIds, setExpandedNoteIds] = useState<Set<string>>(new Set());
   const [nativeHeight, setNativeHeight] = useState(400);
@@ -82,9 +82,9 @@ export default function NotesScreen() {
   // 초기 로드
   useEffect(() => {
     if (user?.id) {
-      fetchFuelNotes(user.id);
+      fetchMotivationNotes(user.id);
     }
-  }, [user?.id, fetchFuelNotes]);
+  }, [user?.id, fetchMotivationNotes]);
 
   // 파생 데이터
   const pinnedNote = useMemo(
@@ -118,16 +118,16 @@ export default function NotesScreen() {
 
   // 핸들러
   const handleRefresh = useCallback(() => {
-    if (user?.id) fetchFuelNotes(user.id);
-  }, [user?.id, fetchFuelNotes]);
+    if (user?.id) fetchMotivationNotes(user.id);
+  }, [user?.id, fetchMotivationNotes]);
 
   const handleSheetSubmit = useCallback(
     async (input: {content: string; title?: string; emotion_tag?: EmotionTag}) => {
       const allowed = await checkLimit('note');
       if (!allowed) return;
-      createFuelNote(input);
+      createMotivationNote(input);
     },
-    [createFuelNote, checkLimit],
+    [createMotivationNote, checkLimit],
   );
 
   const handleNoteToggle = useCallback((noteId: string) => {
@@ -263,8 +263,8 @@ export default function NotesScreen() {
         <Plus size={26} color="#FFFFFF" strokeWidth={2.5} />
       </AnimatedPressable>
 
-      <FuelInputBottomSheet ref={inputSheetRef} onSubmit={handleSheetSubmit} />
-      <FuelDetailBottomSheet
+      <MotivationInputBottomSheet ref={inputSheetRef} onSubmit={handleSheetSubmit} />
+      <MotivationDetailBottomSheet
         ref={detailSheetRef}
         onUpdate={handleUpdate}
         onPin={handlePin}

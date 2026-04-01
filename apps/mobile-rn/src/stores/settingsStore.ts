@@ -17,7 +17,7 @@ interface SettingsState {
   showDescriptions: boolean;
 
   // ADHD 설정
-  showFuelBadges: boolean;
+  showMotivationBadges: boolean;
 
   // 알림 설정
   notificationsEnabled: boolean;
@@ -37,7 +37,7 @@ interface SettingsState {
   // 액션
   setColorTheme: (theme: ColorTheme) => void;
   setShowDescriptions: (show: boolean) => void;
-  setShowFuelBadges: (show: boolean) => void;
+  setShowMotivationBadges: (show: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setBackgroundPreset: (preset: BackgroundPreset) => void;
   setPlannerViewMode: (mode: PlannerViewMode) => void;
@@ -50,7 +50,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       colorTheme: 'ocean-blue',
       showDescriptions: true,
-      showFuelBadges: true,
+      showMotivationBadges: true,
       notificationsEnabled: true,
       backgroundPreset: 'calmBackground',
       plannerViewMode: 'dailyPlanner',
@@ -59,7 +59,7 @@ export const useSettingsStore = create<SettingsState>()(
 
       setColorTheme: (theme) => set({colorTheme: theme}),
       setShowDescriptions: (show) => set({showDescriptions: show}),
-      setShowFuelBadges: (show) => set({showFuelBadges: show}),
+      setShowMotivationBadges: (show) => set({showMotivationBadges: show}),
       setNotificationsEnabled: (enabled) => set({notificationsEnabled: enabled}),
       setBackgroundPreset: (preset) => set({backgroundPreset: preset}),
       setPlannerViewMode: (mode) => set({plannerViewMode: mode}),
@@ -97,7 +97,7 @@ export function getSettingsForSync() {
   return {
     colorTheme: state.colorTheme,
     showDescriptions: state.showDescriptions,
-    showFuelBadges: state.showFuelBadges,
+    showMotivationBadges: state.showMotivationBadges,
     notificationsEnabled: state.notificationsEnabled,
     backgroundPreset: state.backgroundPreset,
     plannerViewMode: state.plannerViewMode,

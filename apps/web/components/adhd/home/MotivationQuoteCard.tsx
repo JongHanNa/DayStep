@@ -5,9 +5,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
 import { useNoteStore, type Note } from '@/state/stores/noteStore';
 
-interface FuelQuoteCardProps {
+interface MotivationQuoteCardProps {
   userId: string;
-  onFuelClick: (noteId: string) => void;
+  onMotivationClick: (noteId: string) => void;
 }
 
 const CYCLE_INTERVAL = 5000;
@@ -16,8 +16,8 @@ const CYCLE_INTERVAL = 5000;
  * 풀폭 원동력 인용문 카드
  * 배너에 고정된 원동력 노트를 crossfade 순환으로 표시
  */
-export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProps) {
-  const { notes, getBannerPinnedFuelNotes, getFuelNotes } = useNoteStore();
+export default function MotivationQuoteCard({ userId, onMotivationClick }: MotivationQuoteCardProps) {
+  const { notes, getBannerPinnedMotivationNotes, getMotivationNotes } = useNoteStore();
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
@@ -26,16 +26,16 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
   // 데이터 로드
   useEffect(() => {
     if (userId) {
-      getFuelNotes(userId);
+      getMotivationNotes(userId);
     }
-  }, [userId, getFuelNotes]);
+  }, [userId, getMotivationNotes]);
 
   // 고정된 노트 목록 동기화
   useEffect(() => {
-    const pinned = getBannerPinnedFuelNotes();
+    const pinned = getBannerPinnedMotivationNotes();
     setPinnedNotes(pinned);
     setCurrentIndex(0);
-  }, [notes, getBannerPinnedFuelNotes]);
+  }, [notes, getBannerPinnedMotivationNotes]);
 
   // currentIndex 변경 시 expanded 리셋
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function FuelQuoteCard({ userId, onFuelClick }: FuelQuoteCardProp
         <p className="text-sm text-gray-500 dark:text-gray-400">
           고정된 원동력이 없습니다.{' '}
           <button
-            onClick={() => onFuelClick('')}
+            onClick={() => onMotivationClick('')}
             className="text-amber-600 dark:text-amber-400 underline underline-offset-2 hover:text-amber-700"
           >
             설정하기
