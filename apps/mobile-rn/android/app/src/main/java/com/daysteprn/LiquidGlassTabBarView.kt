@@ -184,6 +184,16 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
+    /**
+     * attach 전 onMeasure 가드로 스킵된 초기 measure를 보상.
+     * API 29 등 구버전에서는 attach 후 자동 re-measure가 발생하지 않아
+     * ComposeView가 0 크기로 남는 문제 해결.
+     */
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        requestLayout()
+    }
+
     // Prop setters (RN ViewManager → 여기서 state 갱신)
     fun setTabs(tabs: List<TabItemData>)       { _tabs.value          = tabs }
     fun setMenuItems(items: List<MenuItemData>){ _menuItems.value     = items }
