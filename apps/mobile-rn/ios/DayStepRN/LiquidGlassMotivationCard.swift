@@ -1,5 +1,5 @@
 /**
- * LiquidGlassFuelCard — Phase 2
+ * LiquidGlassMotivationCard — Phase 2
  * iOS 26+: SwiftUI glassEffectID matched geometry morphing (컴팩트 ↔ 확장 패널)
  * iOS 25-: JS 폴백 (기존 LinearGradient 카드) 사용
  *
@@ -12,7 +12,7 @@ import SwiftUI
 import UIKit
 
 // MARK: - Observable State
-class FuelCardState: ObservableObject {
+class MotivationCardState: ObservableObject {
   @Published var isExpanded: Bool = false
   @Published var noteTitle: String = ""
   @Published var noteContent: String = ""
@@ -22,8 +22,8 @@ class FuelCardState: ObservableObject {
 
 // MARK: - SwiftUI View (iOS 26+)
 @available(iOS 26.0, *)
-struct LiquidGlassFuelCardContent: View {
-  @ObservedObject var state: FuelCardState
+struct LiquidGlassMotivationCardContent: View {
+  @ObservedObject var state: MotivationCardState
   // @Namespace는 setupOnce()로 1회만 생성되는 UIHostingController 안에서 유지됨
   @Namespace private var morphNamespace
 
@@ -73,7 +73,7 @@ struct LiquidGlassFuelCardContent: View {
     .buttonStyle(.plain)
     .clipShape(RoundedRectangle(cornerRadius: 16))
     .glassEffect(in: .rect(cornerRadius: 16))
-    .glassEffectID("fuelcard", in: morphNamespace)
+    .glassEffectID("motivationcard", in: morphNamespace)
   }
 
   // MARK: Expanded Panel
@@ -110,7 +110,7 @@ struct LiquidGlassFuelCardContent: View {
           .foregroundColor(Color(hex: state.primaryColor).opacity(0.8))
           .fixedSize(horizontal: false, vertical: true)
       } else {
-        Text("아직 원동력이 없어요.\nNotes에서 원동력을 기록해보세요.")
+        Text("아직 원동력이 없어요.\n원동력 새기기에서 원동력을 기록해보세요.")
           .font(.system(size: 14))
           .foregroundColor(Color(hex: state.primaryColor).opacity(0.6))
           .fixedSize(horizontal: false, vertical: true)
@@ -119,19 +119,19 @@ struct LiquidGlassFuelCardContent: View {
     .padding(16)
     .clipShape(RoundedRectangle(cornerRadius: 20))
     .glassEffect(in: .rect(cornerRadius: 20))
-    .glassEffectID("fuelcard", in: morphNamespace)
+    .glassEffectID("motivationcard", in: morphNamespace)
   }
 }
 
 // MARK: - UIView Wrapper
-class LiquidGlassFuelCardUIView: UIView {
+class LiquidGlassMotivationCardUIView: UIView {
 
   // RN Props
   @objc var onExpand: RCTDirectEventBlock?
   @objc var onCollapse: RCTDirectEventBlock?
   @objc var onHeightChange: RCTDirectEventBlock?
 
-  private let cardState = FuelCardState()
+  private let cardState = MotivationCardState()
   private var hostingController: UIHostingController<AnyView>?
   private var hasSetUp = false
 
@@ -179,11 +179,11 @@ class LiquidGlassFuelCardUIView: UIView {
     backgroundColor = .clear
 
     guard #available(iOS 26.0, *) else {
-      // iOS 25 이하: JS 폴백 (기존 FuelCard 렌더링)
+      // iOS 25 이하: JS 폴백 (기존 MotivationCard 렌더링)
       return
     }
 
-    let swiftUIView = LiquidGlassFuelCardContent(
+    let swiftUIView = LiquidGlassMotivationCardContent(
       state: cardState,
       onExpand: { [weak self] in
         self?.onExpand?([:])
@@ -214,10 +214,10 @@ class LiquidGlassFuelCardUIView: UIView {
 }
 
 // MARK: - RCTViewManager
-@objc(LiquidGlassFuelCardManager)
-class LiquidGlassFuelCardManager: RCTViewManager {
+@objc(LiquidGlassMotivationCardManager)
+class LiquidGlassMotivationCardManager: RCTViewManager {
   override func view() -> UIView! {
-    return LiquidGlassFuelCardUIView()
+    return LiquidGlassMotivationCardUIView()
   }
 
   @objc override static func requiresMainQueueSetup() -> Bool {

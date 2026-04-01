@@ -3,7 +3,7 @@
  * iOS 26+ 네이티브 Liquid Glass MotivationCard morph 컴포넌트
  *
  * requireNativeComponent은 모듈 레벨에서 1회만 호출 (조건부 호출 금지)
- * NOTE: 네이티브 컴포넌트 등록명은 'LiquidGlassFuelCard' 유지 (Swift/ObjC 측과 일치해야 함)
+ * 네이티브 컴포넌트 등록명: 'LiquidGlassMotivationCard' (Swift/ObjC 측과 일치)
  */
 import React from 'react';
 import {requireNativeComponent, type ViewStyle} from 'react-native';
@@ -20,9 +20,9 @@ interface NativeLiquidGlassMotivationCardProps {
   style?: ViewStyle | ViewStyle[];
 }
 
-// 모듈 레벨에서 1회 등록 (네이티브 등록명 'LiquidGlassFuelCard'은 Swift 측과 일치해야 하므로 유지)
+// 모듈 레벨에서 1회 등록
 const NativeLiquidGlassMotivationCard =
-  requireNativeComponent<NativeLiquidGlassMotivationCardProps>('LiquidGlassFuelCard');
+  requireNativeComponent<NativeLiquidGlassMotivationCardProps>('LiquidGlassMotivationCard');
 
 export function LiquidGlassMotivationCardNative(
   props: NativeLiquidGlassMotivationCardProps,

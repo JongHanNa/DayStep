@@ -10,10 +10,10 @@ import {UIManager, requireNativeComponent} from 'react-native';
 interface NativeTimelineAccordionProps {
   timelineData: string;
   primaryColor: string;
-  expandedNoteIds: string[];
-  onNoteToggle: (e: {nativeEvent: {noteId: string}}) => void;
-  onNoteEdit: (e: {nativeEvent: {noteId: string}}) => void;
-  onNoteLongPress: (e: {nativeEvent: {noteId: string; action: string}}) => void;
+  expandedMotivationIds: string[];
+  onMotivationToggle: (e: {nativeEvent: {noteId: string}}) => void;
+  onMotivationEdit: (e: {nativeEvent: {noteId: string}}) => void;
+  onMotivationLongPress: (e: {nativeEvent: {noteId: string; action: string}}) => void;
   onHeightChange: (e: {nativeEvent: {height: number}}) => void;
   style?: any;
 }

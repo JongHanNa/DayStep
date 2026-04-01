@@ -2,7 +2,7 @@
  * NativeProgressCard — iOS 26+ 진행률 카드
  * SwiftUI Circle trim 기반 프로그레스 링 + glass 카드
  *
- * 패턴: ObservableObject + setupOnce() (LiquidGlassFuelCard 참조)
+ * 패턴: ObservableObject + setupOnce() (LiquidGlassMotivationCard 참조)
  */
 
 import Foundation

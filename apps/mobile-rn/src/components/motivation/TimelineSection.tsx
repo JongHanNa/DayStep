@@ -24,20 +24,20 @@ export interface TimelineSectionData {
 
 interface TimelineSectionProps {
   sections: TimelineSectionData[];
-  expandedNoteIds: Set<string>;
+  expandedMotivationIds: Set<string>;
   primaryColor: string;
-  onNoteToggle: (noteId: string) => void;
-  onNoteEdit: (note: Note) => void;
+  onMotivationToggle: (noteId: string) => void;
+  onMotivationEdit: (note: Note) => void;
   onNotePin: (noteId: string, isPinned: boolean) => void;
   onNoteDelete: (noteId: string) => void;
 }
 
 export function TimelineSection({
   sections,
-  expandedNoteIds,
+  expandedMotivationIds,
   primaryColor,
-  onNoteToggle,
-  onNoteEdit,
+  onMotivationToggle,
+  onMotivationEdit,
   onNotePin,
   onNoteDelete,
 }: TimelineSectionProps) {
@@ -52,7 +52,7 @@ export function TimelineSection({
           <View style={styles.railContainer}>
             {/* 세로 레일 */}
             <View style={styles.rail}>
-              {section.notes.map((note, index) => {
+              {section.motivations.map((note, index) => {
                 const emotionColor = note.emotion_tag
                   ? EMOTION_CONFIG[note.emotion_tag]?.color
                   : '#D1D5DB';
@@ -63,7 +63,7 @@ export function TimelineSection({
                       style={[styles.dot, {backgroundColor: emotionColor}]}
                     />
                     {/* 레일 연결선 (마지막 아이템 제외) */}
-                    {index < section.notes.length - 1 && (
+                    {index < section.motivations.length - 1 && (
                       <View style={styles.railLine} />
                     )}
                   </View>
@@ -73,17 +73,17 @@ export function TimelineSection({
 
             {/* 카드들 */}
             <View style={styles.cardsColumn}>
-              {section.notes.map((note, index) => (
+              {section.motivations.map((note, index) => (
                 <Animated.View
                   key={note.id}
                   entering={FadeIn.delay(index * 30).duration(300)}
                   style={styles.cardRow}>
                   <TimelineNoteCard
                     note={note}
-                    isExpanded={expandedNoteIds.has(note.id)}
+                    isExpanded={expandedMotivationIds.has(note.id)}
                     primaryColor={primaryColor}
-                    onToggle={onNoteToggle}
-                    onEdit={onNoteEdit}
+                    onToggle={onMotivationToggle}
+                    onEdit={onMotivationEdit}
                     onPin={onNotePin}
                     onDelete={onNoteDelete}
                   />

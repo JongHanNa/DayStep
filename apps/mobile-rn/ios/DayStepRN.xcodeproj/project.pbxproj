@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		03A711A6634CCE600EF8A599 /* LiquidGlassFuelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */; };
+		03A711A6634CCE600EF8A599 /* LiquidGlassMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */; };
 		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
-		0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */; };
+		0B3C275442CA372D372F51C4 /* LiquidGlassMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */; };
 		117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */; };
 		124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
@@ -122,12 +122,12 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DayStepRN/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = DayStepRN/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassFuelCard.swift; path = DayStepRN/LiquidGlassFuelCard.swift; sourceTree = "<group>"; };
+		1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMotivationCard.swift; path = DayStepRN/LiquidGlassMotivationCard.swift; sourceTree = "<group>"; };
 		228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMenuBridge.m; path = DayStepRN/LiquidGlassMenuBridge.m; sourceTree = "<group>"; };
 		25B5E30421766026F915B4B0 /* NativeGroupSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeGroupSection.swift; path = DayStepRN/NativeGroupSection.swift; sourceTree = "<group>"; };
 		2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassTabBarBridge.m; path = DayStepRN/LiquidGlassTabBarBridge.m; sourceTree = "<group>"; };
 		3E89E96ED34AC96B9B503807 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DayStepRN/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassFuelCardBridge.m; path = DayStepRN/LiquidGlassFuelCardBridge.m; sourceTree = "<group>"; };
+		42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMotivationCardBridge.m; path = DayStepRN/LiquidGlassMotivationCardBridge.m; sourceTree = "<group>"; };
 		4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassBackgroundView.swift; path = DayStepRN/LiquidGlassBackgroundView.swift; sourceTree = "<group>"; };
 		59502988256F1D4368F740C1 /* NativeContactNudge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeContactNudge.swift; path = DayStepRN/NativeContactNudge.swift; sourceTree = "<group>"; };
 		735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassUtils.swift; path = DayStepRN/LiquidGlassUtils.swift; sourceTree = "<group>"; };
@@ -285,8 +285,8 @@
 				735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */,
 				8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */,
 				2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */,
-				1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */,
-				42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */,
+				1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */,
+				42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */,
 				4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */,
 				079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */,
 				BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */,
@@ -754,8 +754,8 @@
 				051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */,
 				63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */,
 				F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */,
-				03A711A6634CCE600EF8A599 /* LiquidGlassFuelCard.swift in Sources */,
-				0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */,
+				03A711A6634CCE600EF8A599 /* LiquidGlassMotivationCard.swift in Sources */,
+				0B3C275442CA372D372F51C4 /* LiquidGlassMotivationCardBridge.m in Sources */,
 				671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */,
 				B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */,
 				AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */,

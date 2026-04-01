@@ -1,9 +1,9 @@
 #import <React/RCTViewManager.h>
 
-// LiquidGlassFuelCard — Phase 2 ObjC Bridge
-// ViewManager 이름: LiquidGlassFuelCardManager → JS requireNativeComponent('LiquidGlassFuelCard')
+// LiquidGlassMotivationCard — Phase 2 ObjC Bridge
+// ViewManager 이름: LiquidGlassMotivationCardManager → JS requireNativeComponent('LiquidGlassMotivationCard')
 
-@interface RCT_EXTERN_MODULE(LiquidGlassFuelCardManager, RCTViewManager)
+@interface RCT_EXTERN_MODULE(LiquidGlassMotivationCardManager, RCTViewManager)
 
 RCT_EXPORT_VIEW_PROPERTY(primaryColor, NSString)
 RCT_EXPORT_VIEW_PROPERTY(noteTitle, NSString)

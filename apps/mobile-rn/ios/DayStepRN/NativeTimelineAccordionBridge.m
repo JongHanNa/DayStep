@@ -6,10 +6,10 @@
 
 RCT_EXPORT_VIEW_PROPERTY(timelineData, NSString)
 RCT_EXPORT_VIEW_PROPERTY(primaryColor, NSString)
-RCT_EXPORT_VIEW_PROPERTY(expandedNoteIds, NSArray)
-RCT_EXPORT_VIEW_PROPERTY(onNoteToggle, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onNoteEdit, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onNoteLongPress, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(expandedMotivationIds, NSArray)
+RCT_EXPORT_VIEW_PROPERTY(onMotivationToggle, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMotivationEdit, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMotivationLongPress, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onHeightChange, RCTDirectEventBlock)
 
 @end

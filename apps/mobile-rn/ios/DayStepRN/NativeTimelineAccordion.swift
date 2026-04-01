@@ -11,7 +11,7 @@ import UIKit
 
 // MARK: - Data Models
 
-struct TimelineNoteData: Codable, Identifiable {
+struct TimelineMotivationData: Codable, Identifiable {
   let id: String
   let title: String
   let content: String
@@ -24,7 +24,7 @@ struct TimelineNoteData: Codable, Identifiable {
 struct TimelineSectionData: Codable, Identifiable {
   let key: String
   let label: String
-  let notes: [TimelineNoteData]
+  let motivations: [TimelineMotivationData]
 
   var id: String { key }
 }
@@ -34,7 +34,7 @@ struct TimelineSectionData: Codable, Identifiable {
 class TimelineAccordionState: ObservableObject {
   @Published var sections: [TimelineSectionData] = []
   @Published var primaryColor: String = "#6366F1"
-  @Published var expandedNoteIds: Set<String> = []
+  @Published var expandedMotivationIds: Set<String> = []
 }
 
 // MARK: - Emotion Color Mapping
@@ -86,10 +86,10 @@ private func formatTimeFromDate(_ date: Date) -> String {
   return df.string(from: date)
 }
 
-// MARK: - Note Card View
+// MARK: - Motivation Card View
 
-struct TimelineNoteCardView: View {
-  let note: TimelineNoteData
+struct TimelineMotivationCardView: View {
+  let note: TimelineMotivationData
   let isExpanded: Bool
   let primaryColor: String
 
@@ -190,9 +190,9 @@ struct TimelineNoteCardView: View {
 struct TimelineAccordionContent: View {
   @ObservedObject var state: TimelineAccordionState
 
-  var onNoteToggle: ((String) -> Void)?
-  var onNoteEdit: ((String) -> Void)?
-  var onNoteLongPress: ((String, String) -> Void)?
+  var onMotivationToggle: ((String) -> Void)?
+  var onMotivationEdit: ((String) -> Void)?
+  var onMotivationLongPress: ((String, String) -> Void)?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
@@ -208,7 +208,7 @@ struct TimelineAccordionContent: View {
           HStack(alignment: .top, spacing: 0) {
             // Rail column
             VStack(spacing: 0) {
-              ForEach(Array(section.notes.enumerated()), id: \.element.id) { index, note in
+              ForEach(Array(section.motivations.enumerated()), id: \.element.id) { index, note in
                 VStack(spacing: 0) {
                   // Dot
                   Circle()
@@ -217,7 +217,7 @@ struct TimelineAccordionContent: View {
                     .padding(.top, 14)
 
                   // Rail line (not for last)
-                  if index < section.notes.count - 1 {
+                  if index < section.motivations.count - 1 {
                     Rectangle()
                       .fill(Color(hex: "#E5E7EB"))
                       .frame(width: 2)
@@ -230,15 +230,15 @@ struct TimelineAccordionContent: View {
 
             // Cards column
             VStack(spacing: 8) {
-              ForEach(section.notes) { note in
-                let isExpanded = state.expandedNoteIds.contains(note.id)
-                TimelineNoteCardView(
+              ForEach(section.motivations) { note in
+                let isExpanded = state.expandedMotivationIds.contains(note.id)
+                TimelineMotivationCardView(
                   note: note,
                   isExpanded: isExpanded,
                   primaryColor: state.primaryColor,
-                  onToggle: onNoteToggle,
-                  onEdit: onNoteEdit,
-                  onLongPress: onNoteLongPress
+                  onToggle: onMotivationToggle,
+                  onEdit: onMotivationEdit,
+                  onLongPress: onMotivationLongPress
                 )
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isExpanded)
               }
@@ -257,9 +257,9 @@ struct TimelineAccordionContent: View {
 class NativeTimelineAccordionUIView: UIView {
 
   // RN Event Blocks
-  @objc var onNoteToggle: RCTDirectEventBlock?
-  @objc var onNoteEdit: RCTDirectEventBlock?
-  @objc var onNoteLongPress: RCTDirectEventBlock?
+  @objc var onMotivationToggle: RCTDirectEventBlock?
+  @objc var onMotivationEdit: RCTDirectEventBlock?
+  @objc var onMotivationLongPress: RCTDirectEventBlock?
   @objc var onHeightChange: RCTDirectEventBlock?
 
   private let timelineState = TimelineAccordionState()
@@ -293,7 +293,7 @@ class NativeTimelineAccordionUIView: UIView {
         ids.insert(str)
       }
     }
-    timelineState.expandedNoteIds = ids
+    timelineState.expandedMotivationIds = ids
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
       self?.emitHeight()
     }
@@ -316,14 +316,14 @@ class NativeTimelineAccordionUIView: UIView {
 
     let swiftUIView = TimelineAccordionContent(
       state: timelineState,
-      onNoteToggle: { [weak self] noteId in
-        self?.onNoteToggle?(["noteId": noteId])
+      onMotivationToggle: { [weak self] noteId in
+        self?.onMotivationToggle?(["motivationId": noteId])
       },
-      onNoteEdit: { [weak self] noteId in
-        self?.onNoteEdit?(["noteId": noteId])
+      onMotivationEdit: { [weak self] noteId in
+        self?.onMotivationEdit?(["motivationId": noteId])
       },
-      onNoteLongPress: { [weak self] noteId, action in
-        self?.onNoteLongPress?(["noteId": noteId, "action": action])
+      onMotivationLongPress: { [weak self] noteId, action in
+        self?.onMotivationLongPress?(["motivationId": noteId, "action": action])
       }
     )
 

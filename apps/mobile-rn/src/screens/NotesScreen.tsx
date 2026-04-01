@@ -76,7 +76,7 @@ export default function NotesScreen() {
   const inputSheetRef = useRef<MotivationInputBottomSheetRef>(null);
   const detailSheetRef = useRef<MotivationDetailBottomSheetRef>(null);
 
-  const [expandedNoteIds, setExpandedNoteIds] = useState<Set<string>>(new Set());
+  const [expandedMotivationIds, setExpandedNoteIds] = useState<Set<string>>(new Set());
   const [nativeHeight, setNativeHeight] = useState(400);
 
   // 초기 로드
@@ -176,13 +176,13 @@ export default function NotesScreen() {
 
   // 네이티브 이벤트 핸들러
   const handleNativeNoteToggle = useCallback(
-    (e: {nativeEvent: {noteId: string}}) => handleNoteToggle(e.nativeEvent.noteId),
+    (e: {nativeEvent: {noteId: string}}) => handleNoteToggle(e.nativeEvent.motivationId),
     [handleNoteToggle],
   );
 
   const handleNativeNoteEdit = useCallback(
     (e: {nativeEvent: {noteId: string}}) => {
-      const note = notes.find(n => n.id === e.nativeEvent.noteId);
+      const note = notes.find(n => n.id === e.nativeEvent.motivationId);
       if (note) handleNoteEdit(note);
     },
     [notes, handleNoteEdit],
@@ -234,20 +234,20 @@ export default function NotesScreen() {
           <NativeTimelineAccordionNative
             timelineData={timelineDataJSON}
             primaryColor={primaryColor}
-            expandedNoteIds={Array.from(expandedNoteIds)}
-            onNoteToggle={handleNativeNoteToggle}
-            onNoteEdit={handleNativeNoteEdit}
-            onNoteLongPress={handleNativeNoteLongPress}
+            expandedMotivationIds={Array.from(expandedMotivationIds)}
+            onMotivationToggle={handleNativeNoteToggle}
+            onMotivationEdit={handleNativeNoteEdit}
+            onMotivationLongPress={handleNativeNoteLongPress}
             onHeightChange={handleNativeHeightChange}
             style={{height: nativeHeight}}
           />
         ) : (
           <TimelineSection
             sections={timelineSections}
-            expandedNoteIds={expandedNoteIds}
+            expandedMotivationIds={expandedMotivationIds}
             primaryColor={primaryColor}
-            onNoteToggle={handleNoteToggle}
-            onNoteEdit={handleNoteEdit}
+            onMotivationToggle={handleNoteToggle}
+            onMotivationEdit={handleNoteEdit}
             onNotePin={handlePin}
             onNoteDelete={handleDelete}
           />

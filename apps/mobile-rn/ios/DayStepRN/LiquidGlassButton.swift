@@ -3,7 +3,7 @@
  * iOS 26+: SwiftUI Button + .glassEffect(in: .circle)
  * iOS 25-: JS 폴백 (RN 래퍼에서 처리)
  *
- * 패턴: LiquidGlassFuelCard.swift 참고 (SwiftUI → UIHostingController → RCTViewManager)
+ * 패턴: LiquidGlassMotivationCard.swift 참고 (SwiftUI → UIHostingController → RCTViewManager)
  */
 
 import Foundation
