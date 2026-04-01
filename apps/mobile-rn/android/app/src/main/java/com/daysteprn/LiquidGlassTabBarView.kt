@@ -146,7 +146,9 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
     init {
         background = ColorDrawable(AndroidColor.TRANSPARENT)
         val composeView = ComposeView(context).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+            setViewCompositionStrategy(
+                ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool
+            )
             setContent {
                 MaterialTheme {
                     LiquidGlassTabBarCompose(
@@ -165,6 +167,21 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
             }
         }
         addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+
+    /**
+     * RN Fabric이 뷰를 윈도우에 attach하기 전에 measure를 호출할 수 있음.
+     * ComposeView가 아직 attach되지 않았으면 measure를 스킵해서 크래시 방지.
+     */
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        if (!isAttachedToWindow) {
+            setMeasuredDimension(
+                MeasureSpec.getSize(widthMeasureSpec),
+                MeasureSpec.getSize(heightMeasureSpec)
+            )
+            return
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
 
     // Prop setters (RN ViewManager → 여기서 state 갱신)
