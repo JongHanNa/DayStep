@@ -1,6 +1,6 @@
 // ============================================
 // Motivation (원동력) 시스템 UI 타입 정의
-// (DB는 notes 테이블 사용, note_category='motivation')
+// (DB는 motivations 테이블 사용, category='motivation')
 // ============================================
 
 /** 기분 레벨 (UI용, DB에 저장하지 않음) */

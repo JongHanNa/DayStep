@@ -276,7 +276,7 @@ export default function TodoEditModal({
           user_id: userId,
           title: newNote.title || content.trim().slice(0, 50),
           content: newNote.content || content.trim(),
-          note_category: 'motivation',
+          category: 'motivation',
           is_pinned: false,
           created_at: newNote.created_at || new Date().toISOString(),
           updated_at: newNote.updated_at || new Date().toISOString(),
@@ -306,7 +306,7 @@ export default function TodoEditModal({
       id: note.id,
       title: note.title,
       content: note.content,
-      note_category: note.note_category,
+      category: note.category,
       linkedAreaOrResource: '', // Area/Resource 시스템 제거됨
       isPinned: note.is_pinned,
       projectIds: [], // N:N 관계로 변경됨

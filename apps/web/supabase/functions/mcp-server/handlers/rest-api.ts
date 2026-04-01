@@ -378,7 +378,7 @@ export async function handleDeleteTodo(
   }
 
   // 관련 데이터 삭제
-  await supabase.from('todo_notes').delete().eq('todo_id', todoId);
+  await supabase.from('todo_motivations').delete().eq('todo_id', todoId);
   await supabase.from('todo_completions').delete().eq('todo_id', todoId);
 
   // 삭제

@@ -119,13 +119,13 @@ export interface Note {
   // Tags are loaded separately for performance
   tags?: NoteTag[];
   // Second Brain fields
-  note_category?: NoteCategory;
+  category?: NoteCategory;
 }
 
 // Note instance types (manually defined until Supabase types are updated)
 export interface NoteInstance {
   id: string;
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -153,7 +153,7 @@ export interface NoteInsert {
 
 // Note instance insert types (manually defined until Supabase types are updated)
 export interface NoteInstanceInsert {
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -326,7 +326,7 @@ export interface CreateTodoInput {
 
 // Note instance types
 export interface CreateNoteInstanceInput {
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string; // YYYY-MM-DD format
   content: string;
@@ -353,13 +353,13 @@ export interface NoteWithInstances {
   updated_at: string;
   is_recurring?: boolean;
   recurrence_type?: 'single' | 'recurring';
-  note_instances?: NoteInstance[];
+  motivation_instances?: NoteInstance[];
 }
 
 // Note instance with original note information
 export interface NoteInstanceWithOriginal {
   id: string;
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -426,7 +426,7 @@ export interface TodoExtendedFields {
 
 // Extended Note type with new fields (기존 Note 타입을 확장하지 않고 새 필드만 문서화)
 export interface NoteExtendedFields {
-  note_category: NoteCategory;
+  category: NoteCategory;
 }
 
 // Statistics types

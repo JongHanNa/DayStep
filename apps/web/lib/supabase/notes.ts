@@ -14,33 +14,33 @@ export async function fetchNotesWithJWT(userId: string): Promise<Note[]> {
   try {
     // todo_notes, note_notes를 JOIN으로 가져오기 위한 select 쿼리
     // project_notes는 테이블이 삭제되어 제거됨
-    const rawNotes = await queryRLSTableWithJWT('notes', [
+    const rawNotes = await queryRLSTableWithJWT('motivations', [
       {
         column: 'user_id',
         operator: 'eq',
         value: userId
       }
     ], {
-      select: '*,todo_notes(todo_id,todos(id,title)),note_notes!note_notes_source_note_id_fkey(target_note_id,target_note:notes!note_notes_target_note_id_fkey(id,title))',
+      select: '*,todo_motivations(todo_id,todos(id,title)),motivation_connections!motivation_connections_source_fkey(target_motivation_id,target_motivation:motivations!motivation_connections_target_fkey(id,title))',
       order: 'created_at.desc'
     });
 
-    // todo_notes, note_notes를 배열로 변환
+    // todo_motivations, motivation_connections를 배열로 변환
     const notes = (rawNotes || []).map((note: any) => {
-      const todos = (note.todo_notes || [])
+      const todos = (note.todo_motivations || [])
         .map((link: any) => link.todos)
         .filter(Boolean);
 
-      const connectedNotes = (note.note_notes || [])
-        .map((link: any) => link.target_note)
+      const connectedMotivations = (note.motivation_connections || [])
+        .map((link: any) => link.target_motivation)
         .filter(Boolean);
 
-      // junction table 필드 제거하고 todos, connectedNotes 추가
-      const { todo_notes, note_notes, ...rest } = note;
+      // junction table 필드 제거하고 todos, connectedMotivations 추가
+      const { todo_motivations, motivation_connections, ...rest } = note;
       return {
         ...rest,
         todos,
-        connectedNotes
+        connectedMotivations
       };
     });
 
@@ -59,10 +59,10 @@ export async function createNoteWithJWT(data: CreateNoteInput & { user_id: strin
   console.log('✏️ JWT 방식으로 노트 생성:', data);
 
   try {
-    const result = await createWithJWT('notes', {
+    const result = await createWithJWT('motivations', {
       ...data,
       title: data.title || '새 노트', // 기본값 추가
-      note_category: data.note_category || 'none', // 기본값
+      category: data.category || 'none', // 기본값
       is_pinned: data.is_pinned || false,
     });
 
@@ -85,7 +85,7 @@ export async function updateNoteWithJWT(
   console.log('🔄 JWT 방식으로 노트 업데이트:', { id, userId, updates });
 
   try {
-    const result = await updateWithJWT('notes', [
+    const result = await updateWithJWT('motivations', [
       { column: 'id', operator: 'eq', value: id },
       { column: 'user_id', operator: 'eq', value: userId }
     ], {
@@ -111,7 +111,7 @@ export async function deleteNoteWithJWT(
   console.log('🗑️ JWT 방식으로 노트 삭제:', { id, userId });
 
   try {
-    await deleteWithJWT('notes', [
+    await deleteWithJWT('motivations', [
       { column: 'id', operator: 'eq', value: id },
       { column: 'user_id', operator: 'eq', value: userId }
     ]);

@@ -7,28 +7,28 @@ import { fetchWithJWT } from './core';
  */
 export async function getNoteNotes(noteId: string): Promise<string[]> {
   try {
-    // 양방향 조회: source_note_id와 target_note_id 모두 검색
+    // 양방향 조회: source_motivation_id와 target_motivation_id 모두 검색
     const [sourceResults, targetResults] = await Promise.all([
       fetchWithJWT(
-        `/note_notes?source_note_id=eq.${noteId}&select=target_note_id`,
+        `/motivation_connections?source_motivation_id=eq.${noteId}&select=target_motivation_id`,
         { method: 'GET' }
       ),
       fetchWithJWT(
-        `/note_notes?target_note_id=eq.${noteId}&select=source_note_id`,
+        `/motivation_connections?target_motivation_id=eq.${noteId}&select=source_motivation_id`,
         { method: 'GET' }
       ),
     ]);
 
     const noteIds: string[] = [];
 
-    // source_note_id로 연결된 노트들
+    // source_motivation_id로 연결된 노트들
     if (Array.isArray(sourceResults)) {
-      noteIds.push(...sourceResults.map((item: any) => item.target_note_id));
+      noteIds.push(...sourceResults.map((item: any) => item.target_motivation_id));
     }
 
-    // target_note_id로 연결된 노트들
+    // target_motivation_id로 연결된 노트들
     if (Array.isArray(targetResults)) {
-      noteIds.push(...targetResults.map((item: any) => item.source_note_id));
+      noteIds.push(...targetResults.map((item: any) => item.source_motivation_id));
     }
 
     // 중복 제거
@@ -51,11 +51,11 @@ export async function linkNoteNote(
   userId: string
 ): Promise<boolean> {
   try {
-    await fetchWithJWT('/note_notes', {
+    await fetchWithJWT('/motivation_connections', {
       method: 'POST',
       body: JSON.stringify({
-        source_note_id: sourceNoteId,
-        target_note_id: targetNoteId,
+        source_motivation_id: sourceNoteId,
+        target_motivation_id: targetNoteId,
       }),
     });
     return true;
@@ -78,11 +78,11 @@ export async function unlinkNoteNote(
     // 양방향 연결 모두 삭제
     await Promise.all([
       fetchWithJWT(
-        `/note_notes?source_note_id=eq.${sourceNoteId}&target_note_id=eq.${targetNoteId}`,
+        `/motivation_connections?source_motivation_id=eq.${sourceNoteId}&target_motivation_id=eq.${targetNoteId}`,
         { method: 'DELETE' }
       ),
       fetchWithJWT(
-        `/note_notes?source_note_id=eq.${targetNoteId}&target_note_id=eq.${sourceNoteId}`,
+        `/motivation_connections?source_motivation_id=eq.${targetNoteId}&target_motivation_id=eq.${sourceNoteId}`,
         { method: 'DELETE' }
       ),
     ]);
@@ -107,10 +107,10 @@ export async function updateNoteNotes(
   try {
     // 1. 기존 연결 모두 삭제 (양방향)
     await Promise.all([
-      fetchWithJWT(`/note_notes?source_note_id=eq.${noteId}`, {
+      fetchWithJWT(`/motivation_connections?source_motivation_id=eq.${noteId}`, {
         method: 'DELETE',
       }),
-      fetchWithJWT(`/note_notes?target_note_id=eq.${noteId}`, {
+      fetchWithJWT(`/motivation_connections?target_motivation_id=eq.${noteId}`, {
         method: 'DELETE',
       }),
     ]);
@@ -119,11 +119,11 @@ export async function updateNoteNotes(
     if (noteIds.length > 0) {
       // 배치 삽입을 위한 데이터 준비
       const insertData = noteIds.map((targetNoteId) => ({
-        source_note_id: noteId,
-        target_note_id: targetNoteId,
+        source_motivation_id: noteId,
+        target_motivation_id: targetNoteId,
       }));
 
-      await fetchWithJWT('/note_notes', {
+      await fetchWithJWT('/motivation_connections', {
         method: 'POST',
         body: JSON.stringify(insertData),
       });

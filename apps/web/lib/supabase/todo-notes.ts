@@ -6,7 +6,7 @@ import { fetchWithJWT, QueryOptions } from './core';
 export async function getTodoNotes(todoId: string): Promise<string[]> {
   try {
     const result = await fetchWithJWT(
-      `/todo_notes?todo_id=eq.${todoId}&select=note_id`,
+      `/todo_motivations?todo_id=eq.${todoId}&select=motivation_id`,
       { method: 'GET' }
     );
 
@@ -14,7 +14,7 @@ export async function getTodoNotes(todoId: string): Promise<string[]> {
       return [];
     }
 
-    return result.map((item: any) => item.note_id);
+    return result.map((item: any) => item.motivation_id);
   } catch (error) {
     console.error('Error fetching todo notes:', error);
     return [];
@@ -26,11 +26,11 @@ export async function getTodoNotes(todoId: string): Promise<string[]> {
  */
 export async function addTodoNote(todoId: string, noteId: string, userId: string): Promise<boolean> {
   try {
-    await fetchWithJWT('/todo_notes', {
+    await fetchWithJWT('/todo_motivations', {
       method: 'POST',
       body: JSON.stringify({
         todo_id: todoId,
-        note_id: noteId,
+        motivation_id: noteId,
         user_id: userId,
       }),
     });
@@ -47,7 +47,7 @@ export async function addTodoNote(todoId: string, noteId: string, userId: string
 export async function removeTodoNote(todoId: string, noteId: string): Promise<boolean> {
   try {
     await fetchWithJWT(
-      `/todo_notes?todo_id=eq.${todoId}&note_id=eq.${noteId}`,
+      `/todo_motivations?todo_id=eq.${todoId}&motivation_id=eq.${noteId}`,
       { method: 'DELETE' }
     );
     return true;
@@ -66,7 +66,7 @@ export async function removeTodoNote(todoId: string, noteId: string): Promise<bo
 export async function updateTodoNotes(todoId: string, noteIds: string[], userId: string): Promise<boolean> {
   try {
     // 1. 기존 연결 모두 삭제
-    await fetchWithJWT(`/todo_notes?todo_id=eq.${todoId}`, {
+    await fetchWithJWT(`/todo_motivations?todo_id=eq.${todoId}`, {
       method: 'DELETE',
     });
 
@@ -75,11 +75,11 @@ export async function updateTodoNotes(todoId: string, noteIds: string[], userId:
       // 배치 삽입을 위한 데이터 준비 (user_id 포함)
       const insertData = noteIds.map((noteId) => ({
         todo_id: todoId,
-        note_id: noteId,
+        motivation_id: noteId,
         user_id: userId,
       }));
 
-      await fetchWithJWT('/todo_notes', {
+      await fetchWithJWT('/todo_motivations', {
         method: 'POST',
         body: JSON.stringify(insertData),
       });
@@ -98,7 +98,7 @@ export async function updateTodoNotes(todoId: string, noteIds: string[], userId:
 export async function getNoteTodos(noteId: string): Promise<string[]> {
   try {
     const result = await fetchWithJWT(
-      `/todo_notes?note_id=eq.${noteId}&select=todo_id`,
+      `/todo_motivations?motivation_id=eq.${noteId}&select=todo_id`,
       { method: 'GET' }
     );
 
@@ -122,7 +122,7 @@ export async function getNoteTodos(noteId: string): Promise<string[]> {
 export async function updateNoteTodos(noteId: string, todoIds: string[], userId: string): Promise<boolean> {
   try {
     // 1. 기존 연결 모두 삭제
-    await fetchWithJWT(`/todo_notes?note_id=eq.${noteId}`, {
+    await fetchWithJWT(`/todo_motivations?motivation_id=eq.${noteId}`, {
       method: 'DELETE',
     });
 
@@ -131,11 +131,11 @@ export async function updateNoteTodos(noteId: string, todoIds: string[], userId:
       // 배치 삽입을 위한 데이터 준비 (user_id 포함)
       const insertData = todoIds.map((todoId) => ({
         todo_id: todoId,
-        note_id: noteId,
+        motivation_id: noteId,
         user_id: userId,
       }));
 
-      await fetchWithJWT('/todo_notes', {
+      await fetchWithJWT('/todo_motivations', {
         method: 'POST',
         body: JSON.stringify(insertData),
       });

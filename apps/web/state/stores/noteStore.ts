@@ -40,7 +40,7 @@ export interface Note {
   is_recurring?: boolean; // 반복 노트 여부
   recurrence_type?: 'single' | 'recurring' | 'instance'; // 노트 반복 타입
   // Second Brain fields
-  note_category?: NoteCategory;
+  category?: NoteCategory;
   // Motivation fields (원동력 기능용)
   is_processed?: boolean; // 할일로 변환 여부 (motivation 노트용)
   is_banner_pinned?: boolean; // 홈 배너에 고정 여부
@@ -64,7 +64,7 @@ export interface CreateNoteInput {
   is_recurring?: boolean;
   recurrence_type?: 'single' | 'recurring' | 'instance';
   // Second Brain fields
-  note_category?: NoteCategory;
+  category?: NoteCategory;
   // Motivation fields (원동력 기능용)
   is_processed?: boolean; // 할일로 변환 여부 (motivation 노트용)
   is_banner_pinned?: boolean; // 홈 배너에 고정 여부
@@ -193,7 +193,7 @@ interface NoteStoreActions {
 
   // Motivation 기능 (원동력/복잡한 머릿속, 정리해줄게)
   getMotivationNotes: (userId: string) => Promise<Note[]>;
-  createMotivationNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
+  createMotivationNote: (input: Omit<CreateNoteInput, 'category'>) => Promise<Note>;
   getUnprocessedMotivationNotes: () => Note[];
   markNoteAsProcessed: (noteId: string) => Promise<void>;
   // 배너 고정 기능
@@ -203,7 +203,7 @@ interface NoteStoreActions {
   /** @deprecated Use getMotivationNotes instead */
   getInboxNotes: (userId: string) => Promise<Note[]>;
   /** @deprecated Use createMotivationNote instead */
-  createInboxNote: (input: Omit<CreateNoteInput, 'note_category'>) => Promise<Note>;
+  createInboxNote: (input: Omit<CreateNoteInput, 'category'>) => Promise<Note>;
   /** @deprecated Use getUnprocessedMotivationNotes instead */
   getUnprocessedInboxNotes: () => Note[];
 }
@@ -688,13 +688,13 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           if (get().isSubscribed) return;
 
           const channel = supabase
-            .channel('notes_changes')
+            .channel('motivations_changes')
             .on(
               'postgres_changes',
               {
                 event: '*',
                 schema: 'public',
-                table: 'notes',
+                table: 'motivations',
                 filter: `user_id=eq.${userId}`,
               },
               (payload) => {
@@ -1093,7 +1093,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
               } else {
                 // 새 인스턴스 생성
                 const result = await createMemoInstanceWithJWT({
-                  original_note_id: noteId,
+                  original_motivation_id: noteId,
                   user_id: userId,
                   instance_date: date,
                   content: modifiedContent,
@@ -1119,29 +1119,29 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           try {
             set({ loading: true, error: null });
 
-            // todo_notes JOIN으로 연결된 할일 정보도 가져옴
-            const rawNotes = await queryRLSTableWithJWT('notes', {
+            // todo_motivations JOIN으로 연결된 할일 정보도 가져옴
+            const rawNotes = await queryRLSTableWithJWT('motivations', {
               column: 'user_id',
               operator: 'eq',
               value: userId
             }, {
-              select: '*,todo_notes(todo_id,todos(id,title))',
+              select: '*,todo_motivations(todo_id,todos(id,title))',
               order: 'created_at.desc'
             });
 
-            // todo_notes를 todos 배열로 변환
+            // todo_motivations를 todos 배열로 변환
             const notesWithTodos = (rawNotes || []).map((note: any) => {
-              const todos = (note.todo_notes || [])
+              const todos = (note.todo_motivations || [])
                 .map((link: any) => link.todos)
                 .filter(Boolean);
 
-              const { todo_notes, ...rest } = note;
+              const { todo_motivations, ...rest } = note;
               return { ...rest, todos };
             });
 
-            // note_category가 'motivation'인 노트만 필터링
+            // category가 'motivation'인 노트만 필터링
             const motivationNotes = notesWithTodos.filter(
-              (note: Note) => note.note_category === 'motivation'
+              (note: Note) => note.category === 'motivation'
             );
 
             set({ notes: motivationNotes, loading: false });
@@ -1156,13 +1156,13 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
           }
         },
 
-        createMotivationNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
+        createMotivationNote: async (input: Omit<CreateNoteInput, 'category'>) => {
           console.log('📝 NoteStore.createMotivationNote:', input);
 
-          // note_category를 'motivation'으로 강제 설정
+          // category를 'motivation'으로 강제 설정
           const motivationInput: CreateNoteInput = {
             ...input,
-            note_category: 'motivation',
+            category: 'motivation',
             // title이 없으면 content 앞 50자를 title로 사용
             title: input.title || input.content.substring(0, 50),
           };
@@ -1172,9 +1172,9 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
         getUnprocessedMotivationNotes: () => {
           const { notes } = get();
-          // note_category가 'motivation'인 노트 중 연결된 할일이 없는 것들
+          // category가 'motivation'인 노트 중 연결된 할일이 없는 것들
           return notes.filter(note =>
-            note.note_category === 'motivation' && (note.todos?.length ?? 0) === 0
+            note.category === 'motivation' && (note.todos?.length ?? 0) === 0
           );
         },
 
@@ -1186,7 +1186,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         /** @deprecated Use createMotivationNote instead */
-        createInboxNote: async (input: Omit<CreateNoteInput, 'note_category'>) => {
+        createInboxNote: async (input: Omit<CreateNoteInput, 'category'>) => {
           console.warn('⚠️ createInboxNote는 deprecated입니다. createMotivationNote를 사용하세요.');
           return get().createMotivationNote(input);
         },
@@ -1234,9 +1234,9 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
 
         getBannerPinnedMotivationNotes: () => {
           const { notes } = get();
-          // note_category가 'motivation'이고 is_banner_pinned가 true인 노트들
+          // category가 'motivation'이고 is_banner_pinned가 true인 노트들
           return notes.filter(note =>
-            note.note_category === 'motivation' && note.is_banner_pinned === true
+            note.category === 'motivation' && note.is_banner_pinned === true
           );
         },
       };

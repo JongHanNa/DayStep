@@ -92,8 +92,8 @@ export interface ProjectNoteRelation {
 
 export interface NoteNoteRelation {
   id: string;
-  source_note_id: string;
-  target_note_id: string;
+  source_motivation_id: string;
+  target_motivation_id: string;
   created_at: string;
 }
 

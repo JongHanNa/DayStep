@@ -14,7 +14,7 @@ export interface Note {
   user_id: string;
   title?: string;
   content: string;
-  note_category?: string;
+  category?: string;
   emotion_tag?: EmotionTag | null;
   is_banner_pinned?: boolean;
   is_pinned?: boolean;
@@ -61,19 +61,19 @@ export const useNoteStore = create<NoteState>()(
           set({loading: true, error: null});
 
           const {data, error} = await supabase
-            .from('notes')
-            .select('*, todo_notes(todos(id, title))')
+            .from('motivations')
+            .select('*, todo_motivations(todos(id, title))')
             .eq('user_id', userId)
-            .eq('note_category', 'motivation')
+            .eq('category', 'motivation')
             .order('created_at', {ascending: false});
 
           if (error) throw error;
 
-          // join 결과 평탄화: todo_notes -> todos
+          // join 결과 평탄화: todo_motivations -> todos
           const notes = (data ?? []).map((n: any) => ({
             ...n,
-            todos: n.todo_notes?.map((tn: any) => tn.todos).filter(Boolean) ?? [],
-            todo_notes: undefined,
+            todos: n.todo_motivations?.map((tn: any) => tn.todos).filter(Boolean) ?? [],
+            todo_motivations: undefined,
           }));
 
           set({notes});
@@ -97,7 +97,7 @@ export const useNoteStore = create<NoteState>()(
             content: input.content,
             title: input.title ?? undefined,
             emotion_tag: input.emotion_tag ?? undefined,
-            note_category: 'motivation' as const,
+            category: 'motivation' as const,
             is_banner_pinned: false,
           };
 
@@ -107,7 +107,7 @@ export const useNoteStore = create<NoteState>()(
             content: input.content,
             title: input.title ?? null,
             emotion_tag: input.emotion_tag ?? null,
-            note_category: 'motivation',
+            category: 'motivation',
             is_banner_pinned: false,
           };
 
@@ -124,7 +124,7 @@ export const useNoteStore = create<NoteState>()(
           set(state => ({notes: [optimisticNote, ...state.notes]}));
 
           const {data, error} = await supabase
-            .from('notes')
+            .from('motivations')
             .insert(dbData)
             .select()
             .single();
@@ -162,7 +162,7 @@ export const useNoteStore = create<NoteState>()(
           }));
 
           const {error} = await supabase
-            .from('notes')
+            .from('motivations')
             .update({...updates, updated_at: new Date().toISOString()})
             .eq('id', id);
 
@@ -183,7 +183,7 @@ export const useNoteStore = create<NoteState>()(
           set(state => ({notes: state.notes.filter(n => n.id !== id)}));
 
           const {error} = await supabase
-            .from('notes')
+            .from('motivations')
             .delete()
             .eq('id', id);
 
@@ -207,7 +207,7 @@ export const useNoteStore = create<NoteState>()(
           }));
 
           const {error} = await supabase
-            .from('notes')
+            .from('motivations')
             .update({is_banner_pinned: isPinned})
             .eq('id', noteId);
 

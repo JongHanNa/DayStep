@@ -15,7 +15,7 @@ export interface NoteFormData {
   id?: string; // 노트 ID (편집 모드에서 사용)
   title: string;
   content: string;
-  note_category: NoteCategory; // DB note_category 컬럼과 일치
+  category: NoteCategory; // DB category 컬럼과 일치
   linkedAreaOrResource?: string; // 'area-{id}' 또는 'resource-{id}'
   isPinned: boolean;
   projectIds?: string[]; // 여러 프로젝트 연결 (N:N)
@@ -121,8 +121,8 @@ export default function NoteFormFields({
         </label>
 
         <select
-          value={note.note_category}
-          onChange={(e) => onChange({ ...note, note_category: e.target.value as NoteCategory })}
+          value={note.category}
+          onChange={(e) => onChange({ ...note, category: e.target.value as NoteCategory })}
           className="select select-bordered w-full bg-base-100"
         >
           <option value="none">선택 안함</option>

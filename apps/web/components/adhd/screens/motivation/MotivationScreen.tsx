@@ -67,7 +67,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
   // 파생 데이터
   // ============================================
   const motivationNotes = useMemo(() =>
-    notes.filter(note => note.note_category === 'motivation'),
+    notes.filter(note => note.category === 'motivation'),
     [notes]
   );
 

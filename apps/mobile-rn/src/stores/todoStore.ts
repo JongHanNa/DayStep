@@ -1017,8 +1017,8 @@ export const useTodoStore = create<TodoState>()(
         try {
           // 1. todo_notes에서 motivation 카테고리 노트 링크 조회
           const {data: links, error: linkErr} = await supabase
-            .from('todo_notes')
-            .select('todo_id, note_id')
+            .from('todo_motivations')
+            .select('todo_id, motivation_id')
             .in('todo_id', todoIds);
 
           if (linkErr || !links || links.length === 0) {
@@ -1027,12 +1027,12 @@ export const useTodoStore = create<TodoState>()(
           }
 
           // 2. 연결된 노트 ID로 motivation 노트만 조회
-          const noteIds = [...new Set(links.map((l: any) => l.note_id))];
+          const noteIds = [...new Set(links.map((l: any) => l.motivation_id))];
           const {data: notes, error: noteErr} = await supabase
-            .from('notes')
-            .select('id, title, content, note_category')
+            .from('motivations')
+            .select('id, title, content, category')
             .in('id', noteIds)
-            .eq('note_category', 'motivation');
+            .eq('category', 'motivation');
 
           if (noteErr || !notes || notes.length === 0) {
             set({motivationMap: {}});
@@ -1044,7 +1044,7 @@ export const useTodoStore = create<TodoState>()(
           const map: Record<string, LinkedMotivation[]> = {};
 
           for (const link of links) {
-            const note = motivationNoteMap.get(link.note_id);
+            const note = motivationNoteMap.get(link.motivation_id);
             if (!note) continue;
             if (!map[link.todo_id]) map[link.todo_id] = [];
             map[link.todo_id].push({

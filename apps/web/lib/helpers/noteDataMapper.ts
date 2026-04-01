@@ -23,7 +23,7 @@ export function mapNoteToNoteForm(
     id: note.id,
     title: note.title || '',
     content: note.content || '',
-    note_category: note.note_category,
+    category: note.category,
     linkedAreaOrResource: '',
     isPinned: note.is_pinned,
     projectIds: note.projects?.map((p) => p.id) || [],

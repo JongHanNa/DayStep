@@ -143,7 +143,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
 
       try {
         const allNotes = await fetchNotesWithJWT(userId);
-        const motivations = allNotes.filter(n => n.note_category === 'motivation');
+        const motivations = allNotes.filter(n => n.category === 'motivation');
         setMotivationNotes(motivations);
       } catch (error) {
         console.error('motivation 노트 로드 실패:', error);
