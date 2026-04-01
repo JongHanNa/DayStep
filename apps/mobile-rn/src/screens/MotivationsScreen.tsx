@@ -19,14 +19,14 @@ import {
   MotivationDetailBottomSheet,
   type MotivationDetailBottomSheetRef,
 } from '@/components/motivation/MotivationDetailBottomSheet';
-import {useNoteStore} from '@/stores/noteStore';
+import {useMotivationStore} from '@/stores/motivationStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {isIOS26Plus, NativeTimelineAccordionNative} from '@/components/native';
 import {useTheme} from '@/theme';
 import {Plus} from 'lucide-react-native';
-import type {Note, EmotionTag} from '@/stores/noteStore';
+import type {Note, EmotionTag} from '@/stores/motivationStore';
 import {
   isToday,
   isYesterday,
@@ -69,7 +69,7 @@ export default function NotesScreen() {
     updateNote,
     deleteNote,
     setBannerPinned,
-  } = useNoteStore();
+  } = useMotivationStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
   const {primaryColor} = useTheme();
 

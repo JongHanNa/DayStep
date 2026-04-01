@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { X, Plus, FileText } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { Note } from '@/types/domain';
-import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
+import MotivationSelector from '@/components/adhd/MotivationSelector';
 
 interface LinkedMotivationsSectionProps {
   todoId: string;
@@ -139,7 +139,7 @@ export default function LinkedMotivationsSection({
               <div className="w-[52px]" /> {/* 균형을 위한 빈 공간 */}
             </div>
 
-            <MotivationNoteSelector
+            <MotivationSelector
               notes={availableNotes}
               mode={addMode}
               onModeChange={setAddMode}

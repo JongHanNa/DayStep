@@ -9,7 +9,7 @@ interface MotivationNote {
   content: string;
 }
 
-interface MotivationNoteSelectorProps {
+interface MotivationSelectorProps {
   // 노트 데이터
   notes: MotivationNote[];  // 선택 가능한 노트 목록 (이미 연결된 노트 제외됨)
   notesLoading?: boolean;
@@ -46,10 +46,10 @@ interface MotivationNoteSelectorProps {
  *
  * 사용처:
  * - ExecutionMode의 Completion 화면
- * - ExecutionMode의 AdhocNoteConnectionView
+ * - ExecutionMode의 AdhocMotivationConnectionView
  * - LinkedMotivationsSection의 모달 내부
  */
-export default function MotivationNoteSelector({
+export default function MotivationSelector({
   notes,
   notesLoading = false,
   mode,
@@ -64,7 +64,7 @@ export default function MotivationNoteSelector({
   showNoteIcon = false,
   maxHeight = 'max-h-60',
   immediateSelect = false,
-}: MotivationNoteSelectorProps) {
+}: MotivationSelectorProps) {
   // 노트 선택 핸들러
   const handleNoteClick = (noteId: string) => {
     if (immediateSelect) {

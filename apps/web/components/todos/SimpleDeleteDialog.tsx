@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import type { Todo } from '@/types';
 
 interface SimpleDeleteDialogProps {
@@ -32,7 +32,7 @@ const SimpleDeleteDialog: React.FC<SimpleDeleteDialogProps> = ({
 }) => {
   const [deleteLinkedNotes, setDeleteLinkedNotes] = useState(false);
   const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
-  const { getLinkedNotesByTaskId } = useNoteStore();
+  const { getLinkedNotesByTaskId } = useMotivationStore();
 
   const hasLinkedNotes = linkedNotes.length > 0;
 

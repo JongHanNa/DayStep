@@ -2,7 +2,7 @@
  * Motivation (원동력) 유틸리티
  * 웹의 motivation/utils.ts 포팅 — Tailwind → hex 컬러
  */
-import type {Note, EmotionTag} from '@/stores/noteStore';
+import type {Note, EmotionTag} from '@/stores/motivationStore';
 import {Heart, HeartHandshake, Zap, Target, type LucideIcon} from 'lucide-react-native';
 
 export type StatusFilter = 'all' | 'pending' | 'processed';

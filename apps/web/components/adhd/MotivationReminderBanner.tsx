@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
-import { useNoteStore, type Note } from '@/state/stores/noteStore';
+import { useMotivationStore, type Note } from '@/state/stores/motivationStore';
 
 interface MotivationReminderBannerProps {
   userId: string;
@@ -19,7 +19,7 @@ export default function MotivationReminderBanner({
   userId,
   onMotivationClick,
 }: MotivationReminderBannerProps) {
-  const { notes, getBannerPinnedMotivationNotes, getMotivationNotes } = useNoteStore();
+  const { notes, getBannerPinnedMotivationNotes, getMotivationNotes } = useMotivationStore();
 
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);

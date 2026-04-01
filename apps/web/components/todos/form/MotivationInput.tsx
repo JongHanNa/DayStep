@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getColorById } from '@/lib/color-palette';
-import NoteEditorModal from '@/components/notes/NoteEditorModal';
-import MarkdownViewer from '@/components/notes/MarkdownViewer';
+import MotivationEditorModal from '@/components/motivations/MotivationEditorModal';
+import MarkdownViewer from '@/components/motivations/MarkdownViewer';
 
 export interface MemoData {
   id: string;
@@ -238,7 +238,7 @@ const NoteInput: React.FC<NoteInputProps> = ({ memos, onMemosChange, selectedCol
       </div>
 
       {/* 마크다운 편집 모달 */}
-      <NoteEditorModal
+      <MotivationEditorModal
         open={markdownEditorOpen}
         onOpenChange={setMarkdownEditorOpen}
         initialContent={editingMemoIndex !== null ? memos[editingMemoIndex]?.content || '' : ''}

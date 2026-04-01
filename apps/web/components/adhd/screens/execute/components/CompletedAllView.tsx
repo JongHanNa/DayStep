@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PartyPopper, Fuel, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
-import type { Note } from '@/state/stores/noteStore';
-import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
+import type { Note } from '@/state/stores/motivationStore';
+import MotivationSelector from '@/components/adhd/MotivationSelector';
 
 interface CompletedTodoForBalance {
   id: string;
@@ -116,7 +116,7 @@ export function CompletedAllView({
                 className="overflow-hidden"
               >
                 <div className="mt-4 p-4 bg-base-200 rounded-xl text-left">
-                  <MotivationNoteSelector
+                  <MotivationSelector
                     notes={notes}
                     mode={motivationMode}
                     onModeChange={setMotivationMode}

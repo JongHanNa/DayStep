@@ -9,9 +9,9 @@ import {
   Save,
   CalendarClock,
 } from 'lucide-react';
-import type { Note } from '@/state/stores/noteStore';
-import ContentEditorModal from '@/components/notes/ContentEditorModal';
-import MarkdownViewer from '@/components/notes/MarkdownViewer';
+import type { Note } from '@/state/stores/motivationStore';
+import ContentEditorModal from '@/components/motivations/ContentEditorModal';
+import MarkdownViewer from '@/components/motivations/MarkdownViewer';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import { MOTIVATION_FIELD_LABELS, MOTIVATION_MESSAGES } from '@/types/motivation';
 import { type EmotionTag, EMOTION_CONFIG, EMOTION_TAGS } from '../utils';

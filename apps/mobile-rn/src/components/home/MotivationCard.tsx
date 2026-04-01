@@ -14,7 +14,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
-import type {Note} from '@/stores/noteStore';
+import type {Note} from '@/stores/motivationStore';
 import {LiquidGlassMotivationCardNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
 import {useTheme} from '@/theme';

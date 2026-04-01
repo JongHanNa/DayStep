@@ -26,7 +26,7 @@ import {ContactNudge} from '@/components/home/ContactNudge';
 import {NativeProgressCardNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
 import {useTodoStore} from '@/stores/todoStore';
-import {useNoteStore} from '@/stores/noteStore';
+import {useMotivationStore} from '@/stores/motivationStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {format} from 'date-fns';
@@ -88,7 +88,7 @@ export default function HomeScreen() {
   const {primaryColor} = useTheme();
   const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
   const user = useAuthStore(s => s.user);
-  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useNoteStore();
+  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useMotivationStore();
   const {recommendations, loadRecommendations} = useCherishedPeopleStore();
 
   // 화면 포커스 시 todo + 부가 데이터 재조회

@@ -41,7 +41,7 @@ import {ScreenContainer} from '@/components/core';
 import {NativeCleanupAccordionNative} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useProjectStore} from '@/stores/projectStore';
-import {useNoteStore} from '@/stores/noteStore';
+import {useMotivationStore} from '@/stores/motivationStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
@@ -517,7 +517,7 @@ export default function CleanupScreen() {
   const {primaryColor} = useTheme();
   const {deleteTodo} = useTodoStore();
   const {deleteProject} = useProjectStore();
-  const {deleteNote} = useNoteStore();
+  const {deleteNote} = useMotivationStore();
   const {deleteInteraction} = useCherishedPeopleStore();
 
   const [loading, setLoading] = useState(true);

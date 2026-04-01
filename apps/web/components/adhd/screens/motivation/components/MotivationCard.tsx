@@ -4,7 +4,7 @@ import React from 'react';
 import { Pin, ListTodo, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import type { Note } from '@/state/stores/noteStore';
+import type { Note } from '@/state/stores/motivationStore';
 import { type EmotionTag, EMOTION_CONFIG, isNoteProcessed } from '../utils';
 
 interface MotivationCardProps {

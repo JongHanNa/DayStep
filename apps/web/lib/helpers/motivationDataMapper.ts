@@ -6,7 +6,7 @@
  */
 
 import type { Note } from '@/types/domain';
-import type { NoteFormData } from '@/components/notes/shared/NoteFormFields';
+import type { NoteFormData } from '@/components/motivations/shared/MotivationFormFields';
 
 /**
  * Note → NoteFormData 변환

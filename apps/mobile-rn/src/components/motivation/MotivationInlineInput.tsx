@@ -7,7 +7,7 @@ import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {EMOTION_CONFIG, EMOTION_TAGS} from '@/lib/motivationUtils';
-import type {EmotionTag} from '@/stores/noteStore';
+import type {EmotionTag} from '@/stores/motivationStore';
 import {Send} from 'lucide-react-native';
 
 interface MotivationInlineInputProps {

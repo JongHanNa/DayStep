@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { useNoteStore, type Note } from '@/state/stores/noteStore';
+import { useMotivationStore, type Note } from '@/state/stores/motivationStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
@@ -36,7 +36,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
   // ============================================
   // 스토어 연결
   // ============================================
-  const { notes, createMotivationNote, updateNote, deleteNote, setBannerPinned } = useNoteStore();
+  const { notes, createMotivationNote, updateNote, deleteNote, setBannerPinned } = useMotivationStore();
   const { createTodo, updateTodo, deleteTodo } = useTodoStore();
   const { motivationMode, setMotivationDraft, resetMotivationDraft, enterExecuteMode } = useADHDStore();
   const { draftTitle, draftContent } = motivationMode;

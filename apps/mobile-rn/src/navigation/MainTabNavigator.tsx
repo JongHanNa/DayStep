@@ -17,7 +17,7 @@ import {useSettingsStore} from '@/stores/settingsStore';
 import HomeScreen from '../screens/HomeScreen';
 import PlannerScreen from '../screens/PlannerScreen';
 import ExecutionScreen from '../screens/ExecutionScreen';
-import NotesScreen from '../screens/NotesScreen';
+import NotesScreen from '../screens/MotivationsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
 // Home Stack / More Stack 공유 화면

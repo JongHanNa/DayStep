@@ -1,5 +1,5 @@
 /**
- * MotivationNoteCard — 개별 원동력 노트 카드
+ * MotivationCard — 개별 원동력 노트 카드
  * 감정뱃지, 제목/내용, 핀, 날짜. 롱프레스 → 액션시트
  */
 import React, {useCallback} from 'react';
@@ -7,13 +7,13 @@ import {View, Text, Alert, StyleSheet} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {EMOTION_CONFIG} from '@/lib/motivationUtils';
-import type {Note} from '@/stores/noteStore';
+import type {Note} from '@/stores/motivationStore';
 import {Pin, Link2} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {useTheme} from '@/theme';
 
-interface MotivationNoteCardProps {
+interface MotivationCardProps {
   note: Note;
   index: number;
   onPress: (note: Note) => void;
@@ -21,7 +21,7 @@ interface MotivationNoteCardProps {
   onDelete: (noteId: string) => void;
 }
 
-export function MotivationNoteCard({note, index, onPress, onPin, onDelete}: MotivationNoteCardProps) {
+export function MotivationCard({note, index, onPress, onPin, onDelete}: MotivationCardProps) {
   const {primaryColor} = useTheme();
   const emotionConfig = note.emotion_tag ? EMOTION_CONFIG[note.emotion_tag] : null;
   const todoCount = note.todos?.length ?? 0;

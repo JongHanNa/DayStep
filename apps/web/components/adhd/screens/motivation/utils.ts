@@ -1,4 +1,4 @@
-import type { Note } from '@/state/stores/noteStore';
+import type { Note } from '@/state/stores/motivationStore';
 
 export type EmotionTag = 'joy' | 'gratitude' | 'awakening' | 'determination';
 

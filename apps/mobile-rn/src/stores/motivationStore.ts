@@ -49,7 +49,7 @@ interface NoteState {
   clearError: () => void;
 }
 
-export const useNoteStore = create<NoteState>()(
+export const useMotivationStore = create<NoteState>()(
   persist(
     (set, get) => ({
       notes: [],

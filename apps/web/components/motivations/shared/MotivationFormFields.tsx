@@ -3,9 +3,9 @@
 import type { NoteCategory, Note } from '@/types/domain';
 import type { Todo } from '@/types';
 import { FileText, StickyNote, Star } from 'lucide-react';
-import CollapsibleNoteSection from '@/components/shared/CollapsibleNoteSection';
+import CollapsibleMotivationSection from '@/components/shared/CollapsibleMotivationSection';
 import CollapsibleTodoSection from '@/components/shared/CollapsibleTodoSection';
-import MarkdownViewer from '@/components/notes/MarkdownViewer';
+import MarkdownViewer from '@/components/motivations/MarkdownViewer';
 
 /**
  * 노트 폼 필드 타입
@@ -23,7 +23,7 @@ export interface NoteFormData {
   noteIds?: string[]; // 여러 노트 연결 (N:N)
 }
 
-interface NoteFormFieldsProps {
+interface MotivationFormFieldsProps {
   note: NoteFormData;
   onChange: (updatedNote: NoteFormData) => void;
   todos?: Todo[]; // 할일 목록 (선택)
@@ -48,7 +48,7 @@ interface NoteFormFieldsProps {
  * - 프로젝트 편집 모달의 노트 편집
  * - 수집 페이지의 노트 추가
  */
-export default function NoteFormFields({
+export default function MotivationFormFields({
   note,
   onChange,
   todos = [],
@@ -65,7 +65,7 @@ export default function NoteFormFields({
   userId,
   onNoteImmediateSave,
   onTodoImmediateSave,
-}: NoteFormFieldsProps) {
+}: MotivationFormFieldsProps) {
   // 순환 참조 방지: 현재 편집 중인 노트 제외
   const availableNotes = currentNoteId
     ? notes.filter(n => n.id !== currentNoteId)
@@ -166,7 +166,7 @@ export default function NoteFormFields({
 
       {/* 연결된 노트 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (
-        <CollapsibleNoteSection
+        <CollapsibleMotivationSection
           selectedNoteIds={note.noteIds || []}
           allNotes={availableNotes}
           onChange={(noteIds) => onChange({ ...note, noteIds })}

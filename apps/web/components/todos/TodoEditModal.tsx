@@ -4,15 +4,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import TodoFormContent from '@/components/todos/TodoFormContent';
 import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
-import { type NoteFormData } from '@/components/notes/shared/NoteFormFields';
-import NoteEditModal from '@/components/notes/NoteEditModal';
+import { type NoteFormData } from '@/components/motivations/shared/MotivationFormFields';
+import MotivationEditModal from '@/components/motivations/MotivationEditModal';
 import RecurringDeleteDialog from '@/components/todos/RecurringDeleteDialog';
 import RecurringTimeChangeDialog from '@/components/todos/RecurringTimeChangeDialog';
 import LinkedMotivationsSection from '@/components/todos/shared/LinkedMotivationsSection';
 import SubtaskSection from '@/components/todos/SubtaskSection';
 import { useModalStore } from '@/state/stores/modalStore';
-import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-motivations';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import type { Note } from '@/types/domain';
@@ -34,7 +34,7 @@ interface TodoEditModalProps {
   occurrenceDate?: string; // 반복 인스턴스의 날짜 (YYYY-MM-DD)
   // 선택적 props (수집 페이지 등에서 사용)
   notes?: Note[];
-  todos?: Todo[]; // NoteEditModal을 위해 추가
+  todos?: Todo[]; // MotivationEditModal을 위해 추가
   projects?: Project[]; // 프로젝트 목록
   onCreateNote?: (title: string) => Promise<Note>;
   onUpdateNote?: (id: string) => Promise<void>;
@@ -99,7 +99,7 @@ export default function TodoEditModal({
   showSubtasks = true,
 }: TodoEditModalProps) {
   const { openModal, closeModal } = useModalStore();
-  const { createMotivationNote } = useNoteStore();
+  const { createMotivationNote } = useMotivationStore();
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
   // 삭제 확인 다이얼로그 상태
@@ -435,7 +435,7 @@ export default function TodoEditModal({
       )}
 
       {/* 노트 편집 모달 */}
-      <NoteEditModal
+      <MotivationEditModal
         open={editingNote !== null && noteForm !== null}
         note={noteForm}
         onClose={() => {

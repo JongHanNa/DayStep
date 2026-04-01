@@ -3,10 +3,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Fuel } from 'lucide-react';
-import type { Note } from '@/state/stores/noteStore';
-import MotivationNoteSelector from '@/components/adhd/MotivationNoteSelector';
+import type { Note } from '@/state/stores/motivationStore';
+import MotivationSelector from '@/components/adhd/MotivationSelector';
 
-interface AdhocNoteConnectionViewProps {
+interface AdhocMotivationConnectionViewProps {
   notes: Note[];
   selectedNoteId: string | null;
   onSelectNote: (noteId: string | null) => void;
@@ -24,7 +24,7 @@ interface AdhocNoteConnectionViewProps {
  *
  * 완료된 할일에 원동력(영감 노트)을 연결합니다.
  */
-export function AdhocNoteConnectionView({
+export function AdhocMotivationConnectionView({
   notes,
   selectedNoteId,
   onSelectNote,
@@ -35,7 +35,7 @@ export function AdhocNoteConnectionView({
   onConnect,
   onSkip,
   isAnimating,
-}: AdhocNoteConnectionViewProps) {
+}: AdhocMotivationConnectionViewProps) {
   // 연결 버튼 활성화 조건
   const canConnect = mode === 'select' ? !!selectedNoteId : newNoteContent.trim().length > 0;
 
@@ -57,7 +57,7 @@ export function AdhocNoteConnectionView({
       </p>
 
       <div className="mb-6 text-left">
-        <MotivationNoteSelector
+        <MotivationSelector
           notes={notes.slice(0, 10)}
           mode={mode}
           onModeChange={onModeChange}
@@ -98,4 +98,4 @@ export function AdhocNoteConnectionView({
   );
 }
 
-export default AdhocNoteConnectionView;
+export default AdhocMotivationConnectionView;

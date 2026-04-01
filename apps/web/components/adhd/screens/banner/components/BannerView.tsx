@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 import MotivationReminderBanner from '@/components/adhd/MotivationReminderBanner';
@@ -23,7 +23,7 @@ interface BannerViewProps {
  */
 export function BannerView({ userId, onRelationshipInsights, onMotivation }: BannerViewProps) {
   const { awakeningSentence } = useADHDStore();
-  const { notes, getBannerPinnedMotivationNotes } = useNoteStore();
+  const { notes, getBannerPinnedMotivationNotes } = useMotivationStore();
   const { recommendations } = useCherishedPeopleStore();
 
   const { hasPinnedMotivation, hasRecommendations } = useMemo(() => {

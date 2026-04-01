@@ -8,7 +8,7 @@ import {View, Text, ScrollView} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {AnimatedCard} from '@/components/core';
 import {GradientBackground} from '@/components/core';
-import {useNoteStore} from '@/stores/noteStore';
+import {useMotivationStore} from '@/stores/motivationStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {Flame, Heart, Sparkles, Phone} from 'lucide-react-native';
@@ -17,7 +17,7 @@ import {useTheme} from '@/theme';
 export function BannerPage() {
   const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
-  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useNoteStore();
+  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useMotivationStore();
   const {recommendations, loadRecommendations, getRandomRecommendation} =
     useCherishedPeopleStore();
 

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
-import { useNoteStore, type Note } from '@/state/stores/noteStore';
+import { useMotivationStore, type Note } from '@/state/stores/motivationStore';
 
 interface MotivationQuoteCardProps {
   userId: string;
@@ -17,7 +17,7 @@ const CYCLE_INTERVAL = 5000;
  * 배너에 고정된 원동력 노트를 crossfade 순환으로 표시
  */
 export default function MotivationQuoteCard({ userId, onMotivationClick }: MotivationQuoteCardProps) {
-  const { notes, getBannerPinnedMotivationNotes, getMotivationNotes } = useNoteStore();
+  const { notes, getBannerPinnedMotivationNotes, getMotivationNotes } = useMotivationStore();
   const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);

@@ -17,7 +17,7 @@ import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {EMOTION_CONFIG, EMOTION_TAGS} from '@/lib/motivationUtils';
-import type {Note, EmotionTag} from '@/stores/noteStore';
+import type {Note, EmotionTag} from '@/stores/motivationStore';
 import {Pin, Trash2, Link2} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';

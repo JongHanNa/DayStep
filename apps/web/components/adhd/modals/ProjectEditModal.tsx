@@ -10,7 +10,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useAuth } from '@/app/context/AuthContext';
 import type { Project, Todo, ProjectStatus } from '@/types';
 import type { Note } from '@/types/domain';
-import { fetchNotesWithJWT } from '@/lib/supabase/notes';
+import { fetchNotesWithJWT } from '@/lib/supabase/motivations';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import SubtaskList from '@/components/todos/SubtaskList';

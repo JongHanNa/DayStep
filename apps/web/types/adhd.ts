@@ -3,7 +3,7 @@
 // ============================================
 
 import type { Todo } from '@/entities/todo/Todo';
-import type { Note } from '@/state/stores/noteStore';
+import type { Note } from '@/state/stores/motivationStore';
 
 // ============================================
 // Execution Mode 타입
@@ -97,7 +97,7 @@ export interface AdhocCaptureViewProps {
 }
 
 /** 노트 연결 뷰 Props */
-export interface AdhocNoteConnectionViewProps {
+export interface AdhocMotivationConnectionViewProps {
   notes: Note[];
   selectedNoteId: string | null;
   onSelectNote: (id: string | null) => void;

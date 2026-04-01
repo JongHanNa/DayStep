@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import type { Todo } from '@/types';
 
 interface RecurringDeleteDialogProps {
@@ -29,7 +29,7 @@ const RecurringDeleteDialog: React.FC<RecurringDeleteDialogProps> = ({
   const [selectedDeleteType, setSelectedDeleteType] = useState<'this' | 'future' | 'all'>('this');
   const [deleteLinkedNotes, setDeleteLinkedNotes] = useState(false);
   const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
-  const { getLinkedNotesByTaskId } = useNoteStore();
+  const { getLinkedNotesByTaskId } = useMotivationStore();
 
   const hasLinkedNotes = linkedNotes.length > 0;
 

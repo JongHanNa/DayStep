@@ -3,7 +3,7 @@
  */
 
 import { fetchWithJWT, queryRLSTableWithJWT, createWithJWT, updateWithJWT, deleteWithJWT, getMaxOrderIndexWithJWT, QueryOptions } from './core';
-import { updateTodoNotes } from './todo-notes';
+import { updateTodoNotes } from './todo-motivations';
 
 /**
  * 특정 날짜 범위의 할일 목록 조회 (성능 최적화)

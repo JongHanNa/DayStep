@@ -127,7 +127,7 @@ export async function deleteNoteWithJWT(
 /**
  * JWT 방식으로 할일에 연결된 노트 조회
  * @deprecated 이 함수는 더 이상 사용되지 않습니다. getTodoNotes() junction table API를 사용하세요.
- * import { getTodoNotes } from '@/lib/supabase/todo-notes';
+ * import { getTodoNotes } from '@/lib/supabase/todo-motivations';
  */
 export async function fetchNotesByTodoWithJWT(todoId: string, userId: string): Promise<Note[]> {
   console.warn('⚠️  fetchNotesByTodoWithJWT는 deprecated되었습니다. getTodoNotes()를 사용하세요.');

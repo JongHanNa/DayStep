@@ -16,7 +16,7 @@ import {
 } from '@/lib/supabaseWebViewHelper';
 import { supabase } from '@/lib/supabase';
 import type { NoteInstance, CreateNoteInstanceInput, UpdateNoteInstanceInput } from '@/types';
-import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-notes';
+import { getTodoNotes, addTodoNote, removeTodoNote } from '@/lib/supabase/todo-motivations';
 
 // Note 카테고리 타입
 export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'motivation';
@@ -79,7 +79,7 @@ export interface UpdateNoteInput extends Partial<CreateNoteInput> {
 /**
  * Note 스토어 상태 타입 정의
  */
-interface NoteStoreState {
+interface MotivationStoreState {
   // 데이터 상태
   notes: Note[];
   selectedNote: Note | null;
@@ -130,7 +130,7 @@ interface NoteStoreState {
 /**
  * Note 스토어 액션 타입 정의
  */
-interface NoteStoreActions {
+interface MotivationStoreActions {
   // 노트 CRUD 작업
   createNote: (input: CreateNoteInput) => Promise<Note>;
   updateNote: (input: UpdateNoteInput) => Promise<Note>;
@@ -168,7 +168,7 @@ interface NoteStoreActions {
   upsertNoteInstance: (noteId: string, date: string, content: string, taskId?: string | null) => Promise<NoteInstance | null>;
 
   // 필터링 및 정렬
-  setFilter: (filter: Partial<NoteStoreState['filters']>) => void;
+  setFilter: (filter: Partial<MotivationStoreState['filters']>) => void;
   getFilteredNotes: () => Note[];
   clearFilters: () => void;
 
@@ -211,7 +211,7 @@ interface NoteStoreActions {
 /**
  * Quick Memo 스토어 생성
  */
-export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
+export const useMotivationStore = create<MotivationStoreState & MotivationStoreActions>()(
   persist(
     (set, get) => {
       return {
@@ -641,7 +641,7 @@ export const useNoteStore = create<NoteStoreState & NoteStoreActions>()(
         },
 
         // 필터링 및 정렬
-        setFilter: (filter: Partial<NoteStoreState['filters']>) => {
+        setFilter: (filter: Partial<MotivationStoreState['filters']>) => {
           set(state => ({
             filters: { ...state.filters, ...filter }
           }));

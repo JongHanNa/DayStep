@@ -22,20 +22,20 @@ import {
   Link,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNoteStore, Note } from '@/state/stores/noteStore';
+import { useMotivationStore, Note } from '@/state/stores/motivationStore';
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-interface FloatingNoteCardProps {
+interface FloatingMotivationCardProps {
   note: Note;
   onClose?: () => void;
   className?: string;
   style?: React.CSSProperties;
 }
 
-const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
+const FloatingMotivationCard: React.FC<FloatingMotivationCardProps> = ({
   note,
   onClose,
   className,
@@ -45,7 +45,7 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Store hooks
-  const { updateNote, unpinNote } = useNoteStore();
+  const { updateNote, unpinNote } = useMotivationStore();
   const { todos } = useTodoStore();
 
   // 로컬 상태
@@ -274,4 +274,4 @@ const FloatingNoteCard: React.FC<FloatingNoteCardProps> = ({
   );
 };
 
-export default FloatingNoteCard;
+export default FloatingMotivationCard;

@@ -5,8 +5,8 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { StickyNote, ChevronDown } from 'lucide-react';
-import { useNoteStore } from '@/state/stores/noteStore';
-import MarkdownViewer from '@/components/notes/MarkdownViewer';
+import { useMotivationStore } from '@/state/stores/motivationStore';
+import MarkdownViewer from '@/components/motivations/MarkdownViewer';
 
 interface LinkedNotesProps {
   taskId: string | null;
@@ -14,7 +14,7 @@ interface LinkedNotesProps {
 
 const LinkedNotes: React.FC<LinkedNotesProps> = ({ taskId }) => {
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
-  const { notes, setSelectedNoteForEdit } = useNoteStore();
+  const { notes, setSelectedNoteForEdit } = useMotivationStore();
 
   // 연결된 노트 상태 관리
   const [linkedNotes, setLinkedNotes] = useState<any[]>([]);
@@ -31,7 +31,7 @@ const LinkedNotes: React.FC<LinkedNotesProps> = ({ taskId }) => {
 
       try {
         setIsLoading(true);
-        const { getNotesByTaskId } = useNoteStore.getState();
+        const { getNotesByTaskId } = useMotivationStore.getState();
         const notes = await getNotesByTaskId(taskId);
         setLinkedNotes(notes);
       } catch (error) {
@@ -61,7 +61,7 @@ const LinkedNotes: React.FC<LinkedNotesProps> = ({ taskId }) => {
   // 노트 내용 변경 핸들러
   const handleNoteContentChange = async (note: any, newContent: string) => {
     try {
-      const { updateNote } = useNoteStore.getState();
+      const { updateNote } = useMotivationStore.getState();
       await updateNote({
         id: note.id,
         content: newContent,

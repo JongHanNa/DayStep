@@ -1,5 +1,5 @@
 /**
- * TimelineNoteCard — 타임라인 개별 노트 카드
+ * TimelineMotivationCard — 타임라인 개별 노트 카드
  * collapsed: content 2줄 + 시간
  * expanded: 전체내용 + 연결할일 + "편집" 버튼
  * emotion은 타임라인 도트 색상으로만 표현 (borderLeft 없음)
@@ -12,9 +12,9 @@ import {LiquidGlassMenu} from '@/components/native';
 import {Link2, MoreHorizontal, Pencil} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
-import type {Note} from '@/stores/noteStore';
+import type {Note} from '@/stores/motivationStore';
 
-interface TimelineNoteCardProps {
+interface TimelineMotivationCardProps {
   note: Note;
   isExpanded: boolean;
   primaryColor: string;
@@ -24,7 +24,7 @@ interface TimelineNoteCardProps {
   onDelete: (noteId: string) => void;
 }
 
-export function TimelineNoteCard({
+export function TimelineMotivationCard({
   note,
   isExpanded,
   primaryColor,
@@ -32,7 +32,7 @@ export function TimelineNoteCard({
   onEdit,
   onPin,
   onDelete,
-}: TimelineNoteCardProps) {
+}: TimelineMotivationCardProps) {
   const timeStr = format(new Date(note.created_at), 'a h:mm', {locale: ko});
   const todoCount = note.todos?.length ?? 0;
 

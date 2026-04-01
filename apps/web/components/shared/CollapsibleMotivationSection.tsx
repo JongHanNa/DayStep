@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { FileText, Search, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import { Note } from '@/types/domain';
 
-interface CollapsibleNoteSectionProps {
+interface CollapsibleMotivationSectionProps {
   selectedNoteIds: string[];
   allNotes: Note[];
   onChange: (noteIds: string[]) => void;
@@ -17,7 +17,7 @@ interface CollapsibleNoteSectionProps {
   onImmediateSave?: (noteIds: string[]) => Promise<void>;
 }
 
-export default function CollapsibleNoteSection({
+export default function CollapsibleMotivationSection({
   selectedNoteIds = [],
   allNotes = [],
   onChange,
@@ -27,7 +27,7 @@ export default function CollapsibleNoteSection({
   todoId,
   userId,
   onImmediateSave,
-}: CollapsibleNoteSectionProps) {
+}: CollapsibleMotivationSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 

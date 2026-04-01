@@ -9,7 +9,7 @@ import {Sparkles} from 'lucide-react-native';
 import {LiquidGlassMenu} from '@/components/native';
 import {hexWithOpacity} from '@/lib/todoUtils';
 import {Pin} from 'lucide-react-native';
-import type {Note} from '@/stores/noteStore';
+import type {Note} from '@/stores/motivationStore';
 
 interface PinnedBannerProps {
   note: Note;

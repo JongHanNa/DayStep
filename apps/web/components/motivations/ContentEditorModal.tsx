@@ -3,9 +3,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useModalStore } from '@/state/stores/modalStore';
-import AdvancedMarkdownEditor, { AdvancedMarkdownEditorRef } from '@/components/notes/AdvancedMarkdownEditor';
-import MarkdownToolbar from '@/components/notes/editor/MarkdownToolbar';
-import { AutoSaveStatus } from '@/components/notes/AutoSaveStatus';
+import AdvancedMarkdownEditor, { AdvancedMarkdownEditorRef } from '@/components/motivations/AdvancedMarkdownEditor';
+import MarkdownToolbar from '@/components/motivations/editor/MarkdownToolbar';
+import { AutoSaveStatus } from '@/components/motivations/AutoSaveStatus';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { ChevronDown, ChevronUp, ChevronLeft, PanelTop } from 'lucide-react';
 

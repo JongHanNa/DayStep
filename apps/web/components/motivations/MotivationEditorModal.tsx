@@ -19,7 +19,7 @@ import { useAutoSave } from '@/hooks/useAutoSave';
 import AdvancedMarkdownEditor from './AdvancedMarkdownEditor';
 import MarkdownViewer from './MarkdownViewer';
 
-interface NoteEditorModalProps {
+interface MotivationEditorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialContent?: string;
@@ -29,7 +29,7 @@ interface NoteEditorModalProps {
   placeholder?: string;
 }
 
-const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
+const MotivationEditorModal: React.FC<MotivationEditorModalProps> = ({
   open,
   onOpenChange,
   initialContent = '',
@@ -375,4 +375,4 @@ const NoteEditorModal: React.FC<NoteEditorModalProps> = ({
   );
 };
 
-export default NoteEditorModal;
+export default MotivationEditorModal;

@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import NoteFormFields, { type NoteFormData } from '@/components/notes/shared/NoteFormFields';
+import MotivationFormFields, { type NoteFormData } from '@/components/motivations/shared/MotivationFormFields';
 import ContentEditorModal from './ContentEditorModal';
 import TodoEditModal from '@/components/todos/TodoEditModal';
 import { type TodoFormData } from '@/components/todos/shared/TodoFormFields';
 import { useModalStore } from '@/state/stores/modalStore';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useAuth } from '@/app/context/AuthContext';
 import type { Note } from '@/types/domain';
 import type { Todo } from '@/types';
 
-interface NoteEditModalProps {
+interface MotivationEditModalProps {
   open: boolean;
   note: NoteFormData | null;
   onClose: () => void;
@@ -30,7 +30,7 @@ interface NoteEditModalProps {
   contentPlaceholder?: string;
 }
 
-export default function NoteEditModal({
+export default function MotivationEditModal({
   open,
   note,
   onClose,
@@ -47,9 +47,9 @@ export default function NoteEditModal({
   onNoteNoteImmediateSave,
   titlePlaceholder = '',
   contentPlaceholder = '',
-}: NoteEditModalProps) {
+}: MotivationEditModalProps) {
   const { openModal, closeModal } = useModalStore();
-  const { updateNote } = useNoteStore();
+  const { updateNote } = useMotivationStore();
   const { user } = useAuth();
   const [isContentEditorOpen, setIsContentEditorOpen] = useState(false);
 
@@ -156,7 +156,7 @@ export default function NoteEditModal({
         <div className="flex-1 overflow-y-auto px-2">
           <div className="py-4">
             {note && (
-              <NoteFormFields
+              <MotivationFormFields
                 note={note}
                 onChange={onChange}
                 todos={todos}

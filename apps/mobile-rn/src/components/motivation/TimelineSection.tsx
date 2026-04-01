@@ -13,8 +13,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import {springs} from '@/theme/animations';
 import {EMOTION_CONFIG} from '@/lib/motivationUtils';
-import {TimelineNoteCard} from './TimelineNoteCard';
-import type {Note} from '@/stores/noteStore';
+import {TimelineMotivationCard} from './TimelineMotivationCard';
+import type {Note} from '@/stores/motivationStore';
 
 export interface TimelineSectionData {
   key: string;
@@ -78,7 +78,7 @@ export function TimelineSection({
                   key={note.id}
                   entering={FadeIn.delay(index * 30).duration(300)}
                   style={styles.cardRow}>
-                  <TimelineNoteCard
+                  <TimelineMotivationCard
                     note={note}
                     isExpanded={expandedMotivationIds.has(note.id)}
                     primaryColor={primaryColor}

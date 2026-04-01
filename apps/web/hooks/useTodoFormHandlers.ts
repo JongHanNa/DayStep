@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { format, addMinutes } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/app/context/AuthContext';
 import { getColorById } from '@/lib/color-palette';
@@ -75,9 +75,9 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
   const updateRecurringTodo = useTodoStore(state => state.updateRecurringTodo);
   const deleteTodo = useTodoStore(state => state.deleteTodo);
   const deleteRecurringTodo = useTodoStore(state => state.deleteRecurringTodo);
-  const createNote = useNoteStore(state => state.createNote);
-  const deleteLinkedNotes = useNoteStore(state => state.deleteLinkedNotes);
-  const getLinkedNotesByTaskId = useNoteStore(state => state.getLinkedNotesByTaskId);
+  const createNote = useMotivationStore(state => state.createNote);
+  const deleteLinkedNotes = useMotivationStore(state => state.deleteLinkedNotes);
+  const getLinkedNotesByTaskId = useMotivationStore(state => state.getLinkedNotesByTaskId);
 
   const isEditMode = !!editingTodo;
 
@@ -608,7 +608,7 @@ export const useTodoFormHandlers = (config: TodoFormHandlersConfig) => {
 
                 // junction table을 사용해 할일과 노트 연결
                 if (createdNote) {
-                  const { linkToTask } = useNoteStore.getState();
+                  const { linkToTask } = useMotivationStore.getState();
                   await linkToTask(createdNote.id, createdTodoId);
                 }
               } catch (noteError) {
