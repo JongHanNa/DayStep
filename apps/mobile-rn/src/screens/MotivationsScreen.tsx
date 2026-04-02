@@ -53,7 +53,7 @@ function groupNotesByDate(notes: Note[]): TimelineSectionData[] {
     else if (isYesterday(d)) label = '어제';
     else label = format(d, 'M월 d일 (EEE)', {locale: ko});
 
-    sections.push({key: dateKey, label, notes: dateNotes});
+    sections.push({key: dateKey, label, motivations: dateNotes});
   }
 
   return sections;
@@ -102,7 +102,7 @@ export default function NotesScreen() {
       timelineSections.map(s => ({
         key: s.key,
         label: s.label,
-        notes: s.notes.map(n => ({
+        motivations: s.motivations.map(n => ({
           id: n.id,
           title: n.title ?? '',
           content: n.content,

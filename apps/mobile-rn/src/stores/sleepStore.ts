@@ -4,6 +4,7 @@
  * 하루 다중 세션 지원 (v2)
  */
 import {useState, useEffect} from 'react';
+import {Platform} from 'react-native';
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
@@ -556,13 +557,13 @@ export const useSleepStore = create<SleepStoreState>()(
       recoverSession: async () => {
         const {sessionState, screenTimeLinkEnabled, autoSleepEnabled, sleepGoalTime, wakeGoalTime, insertRecord} = get();
 
-        // 자동 차단 스케줄 복원 (앱 재시작 시)
-        if (autoSleepEnabled && screenTimeLinkEnabled) {
+        // 자동 차단 스케줄 복원 (앱 재시작 시) — iOS ScreenTime 전용
+        if (Platform.OS === 'ios' && autoSleepEnabled && screenTimeLinkEnabled) {
           scheduleDailyAutoShield(sleepGoalTime, wakeGoalTime);
         }
 
-        // extension이 자동으로 차단을 시작했는지 확인 (세션 idle 상태에서)
-        if (sessionState.status === 'idle' && autoSleepEnabled && screenTimeLinkEnabled) {
+        // extension이 자동으로 차단을 시작했는지 확인 (세션 idle 상태에서) — iOS 전용
+        if (Platform.OS === 'ios' && sessionState.status === 'idle' && autoSleepEnabled && screenTimeLinkEnabled) {
           try {
             const isBlocking = userDefaultsGet<boolean>('isBlockingAll');
             if (isBlocking) {
@@ -597,7 +598,8 @@ export const useSleepStore = create<SleepStoreState>()(
         const isPastWakeTime = expectedWake && now > expectedWake;
 
         // --- 스크린타임 연동 활성 시 강화된 복구 로직 ---
-        if (screenTimeLinkEnabled) {
+        // Android에서는 ScreenTime 미지원이므로 이 분기 진입 방지
+        if (screenTimeLinkEnabled && Platform.OS === 'ios') {
           const authStatus = getAuthorizationStatus(); // 동기 함수
           const permissionRevoked = authStatus === 'denied';
 
@@ -661,6 +663,7 @@ export const useSleepStore = create<SleepStoreState>()(
 
         // --- 스크린타임 미연동: 기존 로직 유지 ---
         if (isPastWakeTime && expectedWake) {
+          // Case A: 기상시간 경과 → 정상 완료 처리
           const recordDate = format(expectedWake, 'yyyy-MM-dd');
           try {
             await insertRecord({
@@ -676,8 +679,41 @@ export const useSleepStore = create<SleepStoreState>()(
           // 자동완료 후 취침 모달 억제
           storage.set('bedtime-skip-date', format(new Date(), 'yyyy-MM-dd'));
           set({sessionState: {...DEFAULT_SESSION}});
+          return;
         }
-        // 아직 진행 중이면 세션 유지 (SleepSessionScreen으로 복귀)
+
+        // Case B: 기상시간 미경과 → 현재 수면 시간대인지 확인
+        // 수면 시간대 밖이면 (예: 낮에 앱 재시작) 세션 자동 포기 처리
+        const [goalH, goalM] = sleepGoalTime.split(':').map(Number);
+        const [wakeH, wakeM] = wakeGoalTime.split(':').map(Number);
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        const goalMinutes = goalH * 60 + goalM;
+        const wakeMinutes = wakeH * 60 + wakeM;
+
+        // 자정 넘김 처리 (예: 23:30→07:00 = 450분)
+        const sleepWindowDuration = (wakeMinutes - goalMinutes + 1440) % 1440;
+        const minutesSinceGoal = (nowMinutes - goalMinutes + 1440) % 1440;
+        const isWithinSleepWindow = minutesSinceGoal <= sleepWindowDuration;
+
+        if (!isWithinSleepWindow) {
+          // 수면 시간대 밖 → 세션 포기 처리 후 리셋
+          const recordDate = format(now, 'yyyy-MM-dd');
+          try {
+            await insertRecord({
+              date: recordDate,
+              sleep_time: startedAt.toISOString(),
+              wake_time: now.toISOString(),
+              mood: 'poor',
+              session_outcome: 'abandoned',
+            });
+          } catch {
+            // 에러 시 세션은 리셋하되 기록은 무시
+          }
+          storage.set('bedtime-skip-date', format(new Date(), 'yyyy-MM-dd'));
+          set({sessionState: {...DEFAULT_SESSION}});
+          return;
+        }
+        // Case C: 수면 시간대 내 → 세션 유지 (SleepSessionScreen으로 복귀)
       },
 
       getGardenData: () => {

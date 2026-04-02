@@ -65,6 +65,15 @@ export default function SleepSessionScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef = useRef(0);
 
+  // 안전한 뒤로가기 (세션 복구로 직접 진입 시 스택이 없을 수 있음)
+  const safeGoBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.reset({index: 0, routes: [{name: 'HomeMain'}]});
+    }
+  }, [navigation]);
+
   // 세션 시작 (idle 상태에서 진입 시)
   useFocusEffect(
     useCallback(() => {
@@ -105,7 +114,7 @@ export default function SleepSessionScreen() {
           const status = await getAuthorizationStatus();
           if (status !== 'approved') {
             await abandonSleepSession();
-            navigation.goBack();
+            safeGoBack();
           }
         } catch {
           // 스크린타임 체크 실패 시 무시 (세션 유지)
@@ -116,7 +125,7 @@ export default function SleepSessionScreen() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [screenTimeLinkEnabled, abandonSleepSession, navigation]);
+  }, [screenTimeLinkEnabled, abandonSleepSession, safeGoBack]);
 
   // progress 계산 (expectedWakeTime 기반)
   useEffect(() => {
@@ -147,7 +156,7 @@ export default function SleepSessionScreen() {
             const status = await getAuthorizationStatus();
             if (status !== 'approved') {
               await abandonSleepSession();
-              navigation.goBack();
+              safeGoBack();
             }
           } catch {
             // 체크 실패 시 무시
@@ -156,7 +165,7 @@ export default function SleepSessionScreen() {
       }
     });
     return () => subscription.remove();
-  }, [screenTimeLinkEnabled, abandonSleepSession, navigation]);
+  }, [screenTimeLinkEnabled, abandonSleepSession, safeGoBack]);
 
   // 남은 시간 계산 (expectedWakeTime 기반)
   const remainingSeconds = sessionState.expectedWakeTime
@@ -166,8 +175,8 @@ export default function SleepSessionScreen() {
   const handleComplete = useCallback(async () => {
     haptic.success();
     await completeSleepSession();
-    navigation.goBack();
-  }, [completeSleepSession, navigation, haptic]);
+    safeGoBack();
+  }, [completeSleepSession, safeGoBack, haptic]);
 
   // Phase 2B: 포기 확인 (iOS: ActionSheet, Android: Alert)
   const showAbandonSheet = useCallback(() => {
@@ -184,7 +193,7 @@ export default function SleepSessionScreen() {
           if (buttonIndex === 1) {
             haptic.warning();
             await abandonSleepSession();
-            navigation.goBack();
+            safeGoBack();
           }
         },
       );
@@ -200,7 +209,7 @@ export default function SleepSessionScreen() {
             onPress: async () => {
               haptic.warning();
               await abandonSleepSession();
-              navigation.goBack();
+              safeGoBack();
             },
           },
         ],

@@ -19,6 +19,9 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           add(LiquidGlassTabBarPackage())
           add(NavigationBarPackage())
+          add(NativeWeekStripCalendarPackage())
+          add(NativeCleanupAccordionPackage())
+          add(NativeSleepGardenPackage())
         },
     )
   }

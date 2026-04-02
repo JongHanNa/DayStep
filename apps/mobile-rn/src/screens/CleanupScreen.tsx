@@ -37,6 +37,7 @@ import {
   Trash2,
   type LucideIcon,
 } from 'lucide-react-native';
+import {Platform} from 'react-native';
 import {ScreenContainer} from '@/components/core';
 import {NativeCleanupAccordionNative} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
@@ -804,7 +805,24 @@ export default function CleanupScreen() {
               groupLabels={groupLabels}
               primaryColor={primaryColor}
             />
-            <Animated.View style={heightStyle}>
+            {Platform.OS === 'ios' ? (
+              <Animated.View style={heightStyle}>
+                <NativeCleanupAccordionNative
+                  accordionData={accordionDataJSON}
+                  primaryColor={primaryColor}
+                  expandedGroups={Array.from(expandedGroups)}
+                  onCategoryPress={e => {
+                    const cat = CATEGORY_MAP[e.nativeEvent.categoryKey as CategoryKey];
+                    if (cat) openSheet(cat);
+                  }}
+                  onGroupToggle={e => toggleGroup(e.nativeEvent.groupIndex)}
+                  onHeightChange={e => {
+                    animatedHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
+                  }}
+                  style={StyleSheet.absoluteFill}
+                />
+              </Animated.View>
+            ) : (
               <NativeCleanupAccordionNative
                 accordionData={accordionDataJSON}
                 primaryColor={primaryColor}
@@ -814,12 +832,10 @@ export default function CleanupScreen() {
                   if (cat) openSheet(cat);
                 }}
                 onGroupToggle={e => toggleGroup(e.nativeEvent.groupIndex)}
-                onHeightChange={e => {
-                  animatedHeight.value = withSpring(e.nativeEvent.height, springs.nativeGlass);
-                }}
-                style={StyleSheet.absoluteFill}
+                onHeightChange={() => {}}
+                style={{alignSelf: 'stretch'}}
               />
-            </Animated.View>
+            )}
           </>
         )}
       </ScrollView>

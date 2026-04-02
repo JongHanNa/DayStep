@@ -221,7 +221,23 @@ export default function SleepGardenScreen() {
 
         {/* 네이티브 수면 정원 */}
         <AnimatedCard enterDelay={200} style={styles.gardenCard}>
-          <Animated.View style={gardenAnimatedStyle}>
+          {Platform.OS === 'ios' ? (
+            <Animated.View style={gardenAnimatedStyle}>
+              <NativeSleepGardenNative
+                viewMode={viewMode}
+                selectedDate={selectedDate}
+                primaryColor={primaryColor}
+                gardenData={gardenDataJson}
+                goalMinutes={goalMinutes}
+                streak={streak}
+                onDateSelect={handleDateSelect}
+                onHeightChange={handleHeightChange}
+                onViewModeChange={handleViewModeChange}
+                onMonthChange={handleMonthChange}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+          ) : (
             <NativeSleepGardenNative
               viewMode={viewMode}
               selectedDate={selectedDate}
@@ -233,9 +249,9 @@ export default function SleepGardenScreen() {
               onHeightChange={handleHeightChange}
               onViewModeChange={handleViewModeChange}
               onMonthChange={handleMonthChange}
-              style={StyleSheet.absoluteFill}
+              style={{alignSelf: 'stretch'}}
             />
-          </Animated.View>
+          )}
         </AnimatedCard>
 
         {/* 목표 요약 바 */}

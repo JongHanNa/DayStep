@@ -19,7 +19,7 @@ import type {Note} from '@/stores/motivationStore';
 export interface TimelineSectionData {
   key: string;
   label: string;
-  notes: Note[];
+  motivations: Note[];
 }
 
 interface TimelineSectionProps {

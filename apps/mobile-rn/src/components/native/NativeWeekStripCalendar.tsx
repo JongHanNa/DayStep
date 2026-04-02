@@ -1,6 +1,9 @@
 /**
  * NativeWeekStripCalendar — 주간 스트립 캘린더 TS 래퍼
  *
+ * iOS: SwiftUI/UIKit 네이티브 컴포넌트
+ * Android: Jetpack Compose 네이티브 컴포넌트
+ *
  * requireNativeComponent는 모듈 레벨에서 1회만 호출
  */
 import React from 'react';
