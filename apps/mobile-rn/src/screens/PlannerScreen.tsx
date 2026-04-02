@@ -4,7 +4,7 @@
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Modal} from 'react-native';
+import {View, Text, StyleSheet, Modal, Platform} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer, gradientPresets} from '@/components/core';
@@ -253,7 +253,24 @@ export default function PlannerScreen() {
         return (
           <View style={{flex: 1}}>
             <View style={{position: 'relative'}}>
-              <Animated.View style={calendarHeightStyle}>
+              {Platform.OS === 'ios' ? (
+                <Animated.View style={calendarHeightStyle}>
+                  <NativeWeekStripCalendarNative
+                    selectedDate={selectedDate}
+                    primaryColor={primaryColor}
+                    gradientColors={calendarGradient.colors}
+                    gradientStartX={calendarGradient.start.x}
+                    gradientStartY={calendarGradient.start.y}
+                    gradientEndX={calendarGradient.end.x}
+                    gradientEndY={calendarGradient.end.y}
+                    onDateSelect={handleDayDateSelect}
+                    onHeightChange={(e) => {
+                      calendarHeight.value = e.nativeEvent.height;
+                    }}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              ) : (
                 <NativeWeekStripCalendarNative
                   selectedDate={selectedDate}
                   primaryColor={primaryColor}
@@ -263,12 +280,10 @@ export default function PlannerScreen() {
                   gradientEndX={calendarGradient.end.x}
                   gradientEndY={calendarGradient.end.y}
                   onDateSelect={handleDayDateSelect}
-                  onHeightChange={(e) => {
-                    calendarHeight.value = e.nativeEvent.height;
-                  }}
-                  style={StyleSheet.absoluteFill}
+                  onHeightChange={() => {}}
+                  style={{alignSelf: 'stretch'}}
                 />
-              </Animated.View>
+              )}
               {menuOverlay}
             </View>
             <View style={{flex: 1, position: 'relative'}}>
