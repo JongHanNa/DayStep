@@ -6,7 +6,7 @@
  * Phase 4: 스크린타임 바이패스 감지
  */
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {View, Text, StyleSheet, AppState, ActionSheetIOS, Platform} from 'react-native';
+import {View, Text, StyleSheet, AppState, ActionSheetIOS, Platform, Alert} from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -169,7 +169,7 @@ export default function SleepSessionScreen() {
     navigation.goBack();
   }, [completeSleepSession, navigation, haptic]);
 
-  // Phase 2B: 네이티브 ActionSheet로 포기 확인
+  // Phase 2B: 포기 확인 (iOS: ActionSheet, Android: Alert)
   const showAbandonSheet = useCallback(() => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -187,6 +187,23 @@ export default function SleepSessionScreen() {
             navigation.goBack();
           }
         },
+      );
+    } else {
+      Alert.alert(
+        '정말 포기할까요?',
+        '수면 기록이 실패로 저장됩니다',
+        [
+          {text: '계속 자기', style: 'cancel'},
+          {
+            text: '포기하기',
+            style: 'destructive',
+            onPress: async () => {
+              haptic.warning();
+              await abandonSleepSession();
+              navigation.goBack();
+            },
+          },
+        ],
       );
     }
   }, [abandonSleepSession, navigation, haptic]);
