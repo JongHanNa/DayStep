@@ -54,6 +54,8 @@ export default function PlannerScreen() {
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
   const [showPaywallModal, setShowPaywallModal] = useState(false);
+  // Android: Compose view 높이를 React state로 추적 (Yoga 레이아웃 동기화)
+  const [androidCalHeight, setAndroidCalHeight] = useState(130);
 
   const handleUpgrade = useCallback(() => {
     setShowPaywallModal(true);
@@ -271,18 +273,25 @@ export default function PlannerScreen() {
                   />
                 </Animated.View>
               ) : (
-                <NativeWeekStripCalendarNative
-                  selectedDate={selectedDate}
-                  primaryColor={primaryColor}
-                  gradientColors={calendarGradient.colors}
-                  gradientStartX={calendarGradient.start.x}
-                  gradientStartY={calendarGradient.start.y}
-                  gradientEndX={calendarGradient.end.x}
-                  gradientEndY={calendarGradient.end.y}
-                  onDateSelect={handleDayDateSelect}
-                  onHeightChange={() => {}}
-                  style={{alignSelf: 'stretch'}}
-                />
+                <View style={{height: androidCalHeight, overflow: 'hidden'}}>
+                  <NativeWeekStripCalendarNative
+                    selectedDate={selectedDate}
+                    primaryColor={primaryColor}
+                    gradientColors={calendarGradient.colors}
+                    gradientStartX={calendarGradient.start.x}
+                    gradientStartY={calendarGradient.start.y}
+                    gradientEndX={calendarGradient.end.x}
+                    gradientEndY={calendarGradient.end.y}
+                    onDateSelect={handleDayDateSelect}
+                    onHeightChange={(e) => {
+                      const h = e.nativeEvent.height;
+                      if (h > 0 && Math.abs(h - androidCalHeight) > 1) {
+                        setAndroidCalHeight(h);
+                      }
+                    }}
+                    style={{alignSelf: 'stretch'}}
+                  />
+                </View>
               )}
               {menuOverlay}
             </View>

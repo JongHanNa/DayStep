@@ -1,0 +1,424 @@
+/**
+ * NativeDayTimeGrid — Android Jetpack Compose 단일 일 시간 그리드
+ * 24시간 세로 스크롤 뷰 + 할일/이벤트 블록 렌더링
+ *
+ * 구조: 종일 섹션(상단) + 시간 그리드(스크롤)
+ */
+package com.daysteprn
+
+import android.content.Context
+import android.view.ViewTreeObserver
+import android.widget.FrameLayout
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import org.json.JSONArray
+import java.text.SimpleDateFormat
+import java.util.*
+
+class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
+
+    var onDateSelectCb: ((String) -> Unit)? = null
+    var onTodoPressCb: ((String) -> Unit)? = null
+    var onHeightChangeCb: ((Double) -> Unit)? = null
+
+    private val composeView = ComposeView(context)
+    private var selectedDate = mutableStateOf(todayStr())
+    private var primaryColorHex = mutableStateOf("#6366F1")
+    private var todoDataJson = mutableStateOf("[]")
+    private var eventDataJson = mutableStateOf("[]")
+
+    init {
+        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        composeView.setContent {
+            DayTimeGridContent()
+        }
+        setupLayoutListener()
+    }
+
+    private fun setupLayoutListener() {
+        viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            private var lastH = 0
+            override fun onGlobalLayout() {
+                val h = measuredHeight
+                if (h != lastH && h > 0) {
+                    lastH = h
+                    onHeightChangeCb?.invoke(h / resources.displayMetrics.density.toDouble())
+                }
+            }
+        })
+    }
+
+    override fun requestLayout() {
+        super.requestLayout()
+        post {
+            measure(
+                MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+            )
+            layout(left, top, right, top + measuredHeight)
+        }
+    }
+
+    fun setSelectedDate(date: String) { selectedDate.value = date }
+    fun setPrimaryColor(hex: String) { primaryColorHex.value = hex }
+    fun setTodoData(json: String) { todoDataJson.value = json }
+    fun setEventData(json: String) { eventDataJson.value = json }
+
+    companion object {
+        private val HOUR_HEIGHT = 60.dp
+        private val TIME_COLUMN_WIDTH = 50.dp
+
+        private fun todayStr(): String {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            return sdf.format(Date())
+        }
+    }
+
+    data class TimeBlock(
+        val id: String,
+        val title: String,
+        val startMinutes: Int,   // -1 = all day
+        val endMinutes: Int,
+        val color: Color,
+        val completed: Boolean,
+        val type: String
+    )
+
+    @Composable
+    private fun DayTimeGridContent() {
+        val date = selectedDate.value
+        val primary = parseColor(primaryColorHex.value)
+        val todoJson = todoDataJson.value
+        val eventJson = eventDataJson.value
+        val today = todayStr()
+        val isToday = date == today
+
+        // Parse data
+        val (allDayBlocks, timedBlocks) = remember(todoJson, eventJson, primary) {
+            parseBlocks(todoJson, eventJson, primary)
+        }
+
+        val scrollState = rememberScrollState()
+
+        // 초기 스크롤: 현재 시간 - 2시간 위치로
+        LaunchedEffect(Unit) {
+            val now = Calendar.getInstance()
+            val scrollHour = (now.get(Calendar.HOUR_OF_DAY) - 2).coerceAtLeast(0)
+            scrollState.scrollTo((scrollHour * HOUR_HEIGHT.value * resources.displayMetrics.density).toInt())
+        }
+
+        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
+            // ─── 종일 섹션 ───
+            if (allDayBlocks.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "종일",
+                        fontSize = 11.sp,
+                        color = Color(0xFF9CA3AF),
+                        modifier = Modifier
+                            .width(TIME_COLUMN_WIDTH)
+                            .padding(end = 6.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                    )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        allDayBlocks.forEach { block ->
+                            AllDayChip(block)
+                        }
+                    }
+                }
+                Box(modifier = Modifier.fillMaxWidth().height(0.5.dp).background(Color(0xFFE5E7EB)))
+            }
+
+            // ─── 시간 그리드 ───
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+            ) {
+                // 시간 라벨 컬럼
+                Column(modifier = Modifier.width(TIME_COLUMN_WIDTH)) {
+                    for (h in 0..23) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(HOUR_HEIGHT),
+                            contentAlignment = Alignment.TopEnd
+                        ) {
+                            Text(
+                                text = String.format("%02d:00", h),
+                                fontSize = 11.sp,
+                                color = Color(0xFF9CA3AF),
+                                modifier = Modifier.padding(end = 6.dp, top = 0.dp)
+                            )
+                        }
+                    }
+                }
+
+                // 콘텐츠 영역
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(HOUR_HEIGHT * 24)
+                        .drawBehind {
+                            // 시간 그리드 라인
+                            for (h in 0..24) {
+                                val y = (HOUR_HEIGHT * h).toPx()
+                                drawLine(
+                                    color = Color(0xFFE5E7EB),
+                                    start = Offset(0f, y),
+                                    end = Offset(size.width, y),
+                                    strokeWidth = 0.5f
+                                )
+                            }
+                            // 현재 시간 인디케이터
+                            if (isToday) {
+                                val now = Calendar.getInstance()
+                                val min = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+                                val y = (min.toFloat() / 60f) * HOUR_HEIGHT.toPx()
+                                drawCircle(
+                                    color = Color(0xFFEF4444),
+                                    radius = 5f,
+                                    center = Offset(0f, y)
+                                )
+                                drawLine(
+                                    color = Color(0xFFEF4444),
+                                    start = Offset(0f, y),
+                                    end = Offset(size.width, y),
+                                    strokeWidth = 1.5f
+                                )
+                            }
+                        }
+                ) {
+                    // 할일 블록 (좌측)
+                    timedBlocks.filter { it.type == "todo" }.forEach { block ->
+                        val topOffset = (block.startMinutes.toFloat() / 60f) * HOUR_HEIGHT.value
+                        val duration = (block.endMinutes - block.startMinutes).coerceAtLeast(20)
+                        val blockHeight = (duration.toFloat() / 60f) * HOUR_HEIGHT.value
+
+                        TimedBlockItem(
+                            block = block,
+                            topOffset = topOffset.dp,
+                            blockHeight = blockHeight.dp,
+                            isLeftAligned = true
+                        )
+                    }
+                    // 이벤트 블록 (우측 오프셋)
+                    timedBlocks.filter { it.type == "event" }.forEach { block ->
+                        val topOffset = (block.startMinutes.toFloat() / 60f) * HOUR_HEIGHT.value
+                        val duration = (block.endMinutes - block.startMinutes).coerceAtLeast(20)
+                        val blockHeight = (duration.toFloat() / 60f) * HOUR_HEIGHT.value
+
+                        TimedBlockItem(
+                            block = block,
+                            topOffset = topOffset.dp,
+                            blockHeight = blockHeight.dp,
+                            isLeftAligned = false
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun AllDayChip(block: TimeBlock) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 2.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(block.color.copy(alpha = 0.12f))
+                .clickable {
+                    if (block.type == "todo") onTodoPressCb?.invoke(block.id)
+                }
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(16.dp)
+                    .background(block.color, RoundedCornerShape(1.5.dp))
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = block.title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = block.color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textDecoration = if (block.completed) TextDecoration.LineThrough else TextDecoration.None
+            )
+        }
+    }
+
+    @Composable
+    private fun TimedBlockItem(
+        block: TimeBlock,
+        topOffset: Dp,
+        blockHeight: Dp,
+        isLeftAligned: Boolean
+    ) {
+        val horizontalPadding = if (isLeftAligned) {
+            PaddingValues(start = 2.dp, end = 48.dp)
+        } else {
+            PaddingValues(start = 48.dp, end = 2.dp)
+        }
+
+        Box(
+            modifier = Modifier
+                .offset(y = topOffset)
+                .fillMaxWidth()
+                .padding(horizontalPadding)
+                .height(blockHeight.coerceAtLeast(24.dp))
+                .clip(RoundedCornerShape(4.dp))
+                .background(block.color.copy(alpha = 0.12f))
+                .border(0.5.dp, block.color.copy(alpha = 0.25f), RoundedCornerShape(4.dp))
+                .clickable {
+                    if (block.type == "todo") onTodoPressCb?.invoke(block.id)
+                }
+        ) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                // 좌측 색상 바
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .background(block.color)
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(start = 6.dp, top = 3.dp, end = 4.dp)
+                ) {
+                    Text(
+                        text = block.title,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = block.color,
+                        maxLines = if (blockHeight < 40.dp) 1 else 3,
+                        overflow = TextOverflow.Ellipsis,
+                        textDecoration = if (block.completed) TextDecoration.LineThrough else TextDecoration.None
+                    )
+                }
+            }
+        }
+    }
+
+    // ─── Helpers ───
+    private fun parseBlocks(
+        todoJson: String,
+        eventJson: String,
+        primary: Color
+    ): Pair<List<TimeBlock>, List<TimeBlock>> {
+        val allDay = mutableListOf<TimeBlock>()
+        val timed = mutableListOf<TimeBlock>()
+
+        // Todos (JSON array)
+        try {
+            val arr = JSONArray(todoJson)
+            for (i in 0 until arr.length()) {
+                val t = arr.getJSONObject(i)
+                val startTime = t.optString("start_time", "")
+                val endTime = t.optString("end_time", "")
+                val startMin = parseTimeToMinutes(startTime)
+                val endMin = if (endTime.isNotEmpty()) parseTimeToMinutes(endTime) else (startMin + 30).coerceAtMost(1440)
+                val color = parseColor(t.optString("project_color", "").ifEmpty { "#6366F1" })
+
+                val block = TimeBlock(
+                    id = t.optString("id"),
+                    title = t.optString("title"),
+                    startMinutes = startMin,
+                    endMinutes = endMin,
+                    color = color,
+                    completed = t.optBoolean("completed", false),
+                    type = "todo"
+                )
+
+                if (startMin < 0) allDay.add(block) else timed.add(block)
+            }
+        } catch (_: Exception) {}
+
+        // Events (JSON array)
+        try {
+            val arr = JSONArray(eventJson)
+            for (i in 0 until arr.length()) {
+                val e = arr.getJSONObject(i)
+                val isAllDay = e.optBoolean("isAllDay", false)
+                val startStr = e.optString("start", "")
+                val endStr = e.optString("end", "")
+
+                val startMin = if (isAllDay) -1 else parseIsoToMinutes(startStr)
+                val endMin = if (isAllDay) -1 else {
+                    val em = parseIsoToMinutes(endStr)
+                    if (em > startMin) em else (startMin + 60).coerceAtMost(1440)
+                }
+                val color = parseColor(e.optString("color", "#4285F4"))
+
+                val block = TimeBlock(
+                    id = e.optString("id"),
+                    title = e.optString("title"),
+                    startMinutes = startMin,
+                    endMinutes = endMin,
+                    color = color,
+                    completed = false,
+                    type = "event"
+                )
+
+                if (isAllDay || startMin < 0) allDay.add(block) else timed.add(block)
+            }
+        } catch (_: Exception) {}
+
+        return Pair(allDay, timed)
+    }
+
+    private fun parseTimeToMinutes(time: String): Int {
+        if (time.isEmpty()) return -1
+        return try {
+            val parts = time.split(":")
+            parts[0].toInt() * 60 + parts.getOrElse(1) { "0" }.toInt()
+        } catch (_: Exception) { -1 }
+    }
+
+    private fun parseIsoToMinutes(iso: String): Int {
+        if (iso.isEmpty()) return 0
+        return try {
+            val tIdx = iso.indexOf('T')
+            if (tIdx >= 0) {
+                val timePart = iso.substring(tIdx + 1).take(5)
+                val parts = timePart.split(":")
+                parts[0].toInt() * 60 + parts[1].toInt()
+            } else { 0 }
+        } catch (_: Exception) { 0 }
+    }
+
+    private fun parseColor(hex: String): Color {
+        return try {
+            Color(android.graphics.Color.parseColor(hex))
+        } catch (_: Exception) {
+            Color(0xFF6366F1)
+        }
+    }
+}

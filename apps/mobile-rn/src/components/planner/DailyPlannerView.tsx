@@ -4,7 +4,7 @@
  * ScreenContainer 없이 내부 컨텐츠만 제공
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Text, View, SectionList, RefreshControl, StyleSheet, Alert} from 'react-native';
+import {Text, View, SectionList, RefreshControl, StyleSheet, Alert, Platform} from 'react-native';
 import {NativeWeekStripCalendarNative} from '@/components/native';
 import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -347,29 +347,55 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
     [postponeTodo, handleFocusTodo, fetchTodosForDate, selectedDate],
   );
 
+  // Android: 네이티브 Compose view의 높이를 React state로 추적 (Yoga 레이아웃 동기화용)
+  const [androidCalHeight, setAndroidCalHeight] = useState(130);
+
   return (
     <View style={{flex: 1}}>
       {/* 주간 스트립 캘린더 + LiquidGlassMenu 오버레이 */}
       <View style={{position: 'relative'}}>
-        <Animated.View style={calendarHeightStyle}>
-          <NativeWeekStripCalendarNative
-            selectedDate={selectedDate}
-            primaryColor={primaryColor}
-            gradientColors={gradient.colors}
-            gradientStartX={gradient.start.x}
-            gradientStartY={gradient.start.y}
-            gradientEndX={gradient.end.x}
-            gradientEndY={gradient.end.y}
-            onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
-            onHeightChange={(e) => {
-              calendarHeight.value = e.nativeEvent.height;
-            }}
-            onExpandChange={() => {
-              // 확장/축소 시 높이가 onHeightChange로 자동 업데이트됨
-            }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
+        {Platform.OS === 'ios' ? (
+          <Animated.View style={calendarHeightStyle}>
+            <NativeWeekStripCalendarNative
+              selectedDate={selectedDate}
+              primaryColor={primaryColor}
+              gradientColors={gradient.colors}
+              gradientStartX={gradient.start.x}
+              gradientStartY={gradient.start.y}
+              gradientEndX={gradient.end.x}
+              gradientEndY={gradient.end.y}
+              onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
+              onHeightChange={(e) => {
+                calendarHeight.value = e.nativeEvent.height;
+              }}
+              onExpandChange={() => {}}
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
+        ) : (
+          /* Android: absoluteFill는 Compose view에서 height 0 순환 문제 발생
+             → 명시적 높이 래퍼 + 네이티브 뷰 자연 사이징으로 해결 */
+          <View style={{height: androidCalHeight, overflow: 'hidden'}}>
+            <NativeWeekStripCalendarNative
+              selectedDate={selectedDate}
+              primaryColor={primaryColor}
+              gradientColors={gradient.colors}
+              gradientStartX={gradient.start.x}
+              gradientStartY={gradient.start.y}
+              gradientEndX={gradient.end.x}
+              gradientEndY={gradient.end.y}
+              onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
+              onHeightChange={(e) => {
+                const h = e.nativeEvent.height;
+                if (h > 0 && Math.abs(h - androidCalHeight) > 1) {
+                  setAndroidCalHeight(h);
+                }
+              }}
+              onExpandChange={() => {}}
+              style={{alignSelf: 'stretch'}}
+            />
+          </View>
+        )}
         <View style={styles.menuOverlay} pointerEvents="box-none">
           <LiquidGlassMenu
             systemIconName="calendar"
