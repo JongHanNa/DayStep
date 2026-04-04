@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.04,
     shadowRadius: 4,
-    elevation: 1,
+    elevation: 0,
   },
   overdueTextOnly: {
     marginTop: 4,

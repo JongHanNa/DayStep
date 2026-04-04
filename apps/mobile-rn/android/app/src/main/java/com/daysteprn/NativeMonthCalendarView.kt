@@ -162,6 +162,7 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
                     modifier = Modifier.clickable {
                         val todayYM = parseYearMonth(today)
                         displayedMonth = todayYM
+                        selectedDateState.value = today
                         onDateSelectCb?.invoke(today)
                         onMonthChangeCb?.invoke(todayYM.first, todayYM.second)
                     }
