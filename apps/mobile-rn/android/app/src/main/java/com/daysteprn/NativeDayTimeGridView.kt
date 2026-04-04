@@ -68,9 +68,16 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     override fun requestLayout() {
         super.requestLayout()
         post {
+            if (!isAttachedToWindow || width <= 0) return@post
+            val parentHeight = (parent as? android.view.View)?.height ?: height
+            val heightSpec = if (parentHeight > 0) {
+                MeasureSpec.makeMeasureSpec(parentHeight, MeasureSpec.AT_MOST)
+            } else {
+                MeasureSpec.makeMeasureSpec(height.coerceAtLeast(1), MeasureSpec.EXACTLY)
+            }
             measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+                heightSpec
             )
             layout(left, top, right, top + measuredHeight)
         }
@@ -397,8 +404,17 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     private fun parseTimeToMinutes(time: String): Int {
         if (time.isEmpty()) return -1
         return try {
-            val parts = time.split(":")
-            parts[0].toInt() * 60 + parts.getOrElse(1) { "0" }.toInt()
+            // ISO 8601: "2026-04-03T14:30:00+09:00" → extract "HH:mm" after 'T'
+            val tIdx = time.indexOf('T')
+            if (tIdx >= 0) {
+                val timePart = time.substring(tIdx + 1).take(5) // "HH:mm"
+                val parts = timePart.split(":")
+                parts[0].toInt() * 60 + parts[1].toInt()
+            } else {
+                // Plain "HH:mm" format
+                val parts = time.split(":")
+                parts[0].toInt() * 60 + parts.getOrElse(1) { "0" }.toInt()
+            }
         } catch (_: Exception) { -1 }
     }
 

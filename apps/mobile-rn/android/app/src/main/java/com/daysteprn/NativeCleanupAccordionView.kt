@@ -117,9 +117,16 @@ class NativeCleanupAccordionView(context: ThemedReactContext) : FrameLayout(cont
         super.requestLayout()
         // Fabric이 레이아웃을 올바르게 반영하도록 post로 measure/layout 강제 실행
         post {
+            if (!isAttachedToWindow || width <= 0) return@post
+            val parentHeight = (parent as? android.view.View)?.height ?: height
+            val heightSpec = if (parentHeight > 0) {
+                MeasureSpec.makeMeasureSpec(parentHeight, MeasureSpec.AT_MOST)
+            } else {
+                MeasureSpec.makeMeasureSpec(height.coerceAtLeast(1), MeasureSpec.EXACTLY)
+            }
             measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                heightSpec,
             )
             layout(left, top, right, top + measuredHeight)
         }

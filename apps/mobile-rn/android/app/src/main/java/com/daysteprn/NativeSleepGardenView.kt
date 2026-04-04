@@ -115,9 +115,16 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
     override fun requestLayout() {
         super.requestLayout()
         post {
+            if (!isAttachedToWindow || width <= 0) return@post
+            val parentHeight = (parent as? android.view.View)?.height ?: height
+            val heightSpec = if (parentHeight > 0) {
+                MeasureSpec.makeMeasureSpec(parentHeight, MeasureSpec.AT_MOST)
+            } else {
+                MeasureSpec.makeMeasureSpec(height.coerceAtLeast(1), MeasureSpec.EXACTLY)
+            }
             measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                heightSpec,
             )
             layout(left, top, right, top + measuredHeight)
         }

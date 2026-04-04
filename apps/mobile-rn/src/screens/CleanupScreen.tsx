@@ -3,8 +3,8 @@
  * 프로그레스 바 + 아코디언 UI
  *
  * 정리 대상:
- * [할일] 종료일 지난 미완료 / 완료된 할일
- * [습관] 반복 종료된 할일
+ * [할일] 전체 비반복 할일 (활성 + 종료일 지난 미완료 + 완료)
+ * [습관] 전체 반복 할일 (활성 + 반복 종료)
  * [프로젝트] 완료·보류 중 프로젝트
  * [원동력] 전체 원동력 노트 (선택 삭제)
  * [관심기록] 90일 이상 지난 기록
@@ -29,7 +29,9 @@ import Animated, {
 import {
   Clock,
   CheckCircle2,
+  CircleDot,
   Repeat,
+  RefreshCw,
   FolderCheck,
   PauseCircle,
   Lightbulb,
@@ -65,8 +67,10 @@ interface GenericItem {
 // ────────────────────────────────────────────────
 
 type CategoryKey =
+  | 'activeTodos'
   | 'pastDue'
   | 'completed'
+  | 'activeHabits'
   | 'pastRecurring'
   | 'completedProjects'
   | 'onHoldProjects'
@@ -86,8 +90,10 @@ interface CategoryGroup {
 
 // 아이콘 매핑
 const CATEGORY_ICON: Record<CategoryKey, LucideIcon> = {
+  activeTodos: CircleDot,
   pastDue: Clock,
   completed: CheckCircle2,
+  activeHabits: RefreshCw,
   pastRecurring: Repeat,
   completedProjects: FolderCheck,
   onHoldProjects: PauseCircle,
@@ -102,6 +108,11 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     groupTitle: '할일',
     categories: [
+      {
+        key: 'activeTodos',
+        title: '활성 할일',
+        description: '현재 진행 중인 할일이에요.',
+      },
       {
         key: 'pastDue',
         title: '종료일 지난 미완료 할일',
@@ -118,8 +129,13 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
     groupTitle: '습관',
     categories: [
       {
+        key: 'activeHabits',
+        title: '활성 습관',
+        description: '현재 반복 중인 습관이에요.',
+      },
+      {
         key: 'pastRecurring',
-        title: '반복 종료된 할일',
+        title: '반복 종료된 습관',
         description: '반복 종료일이 지난 반복 할일이에요. 이제 울리지 않는 루틴이에요.',
       },
     ],
@@ -353,7 +369,7 @@ function CleanupSheet({
         borderRadius: 24,
       }}>
       <BottomSheetScrollView
-        contentContainerStyle={{padding: 24, paddingTop: 8}}
+        contentContainerStyle={{padding: 24, paddingTop: 8, paddingBottom: 100}}
         showsVerticalScrollIndicator={false}>
         {/* Title */}
         <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 8}}>
@@ -488,9 +504,11 @@ function CleanupSheet({
 // ────────────────────────────────────────────────
 
 const ITEM_LABEL: Record<CategoryKey, string> = {
+  activeTodos: '할일',
   pastDue: '할일',
   completed: '할일',
-  pastRecurring: '할일',
+  activeHabits: '습관',
+  pastRecurring: '습관',
   completedProjects: '프로젝트',
   onHoldProjects: '프로젝트',
   allNotes: '원동력',
@@ -504,8 +522,10 @@ const ITEM_LABEL: Record<CategoryKey, string> = {
 type CategorizedData = Record<CategoryKey, GenericItem[]>;
 
 const EMPTY_DATA: CategorizedData = {
+  activeTodos: [],
   pastDue: [],
   completed: [],
+  activeHabits: [],
   pastRecurring: [],
   completedProjects: [],
   onHoldProjects: [],
@@ -540,14 +560,27 @@ export default function CleanupScreen() {
         .slice(0, 10);
 
       const [
+        activeTodosRes,
         pastDueRes,
         completedRes,
+        activeHabitsRes,
         pastRecurringRes,
         completedProjectsRes,
         onHoldProjectsRes,
         notesRes,
         oldInteractionsRes,
       ] = await Promise.all([
+        // 활성 할일: 미완료 + 기한 안 지남 (비반복)
+        supabase
+          .from('todos')
+          .select('id, title, end_time')
+          .eq('user_id', user.id)
+          .eq('recurrence_pattern', 'none')
+          .eq('completed', false)
+          .or(`end_time.is.null,end_time.gte.${now}`)
+          .order('created_at', {ascending: false}),
+
+        // 종료일 지난 미완료 할일 (비반복)
         supabase
           .from('todos')
           .select('id, title, end_time')
@@ -558,6 +591,7 @@ export default function CleanupScreen() {
           .lt('end_time', now)
           .order('end_time', {ascending: true}),
 
+        // 완료된 할일 (비반복)
         supabase
           .from('todos')
           .select('id, title, updated_at')
@@ -566,6 +600,16 @@ export default function CleanupScreen() {
           .eq('completed', true)
           .order('updated_at', {ascending: false}),
 
+        // 활성 습관: 반복 종료 안 됨
+        supabase
+          .from('todos')
+          .select('id, title, recurrence_end_date')
+          .eq('user_id', user.id)
+          .neq('recurrence_pattern', 'none')
+          .or(`recurrence_end_date.is.null,recurrence_end_date.gte.${today}`)
+          .order('created_at', {ascending: false}),
+
+        // 반복 종료된 습관
         supabase
           .from('todos')
           .select('id, title, recurrence_end_date')
@@ -622,6 +666,11 @@ export default function CleanupScreen() {
       };
 
       setCategorized({
+        activeTodos: (activeTodosRes.data ?? []).map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          subtitle: t.end_time ? fmtDate(t.end_time, ' 까지') : '',
+        })),
         pastDue: (pastDueRes.data ?? []).map((t: any) => ({
           id: t.id,
           title: t.title,
@@ -631,6 +680,11 @@ export default function CleanupScreen() {
           id: t.id,
           title: t.title,
           subtitle: fmtDate(t.updated_at, ' 완료'),
+        })),
+        activeHabits: (activeHabitsRes.data ?? []).map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          subtitle: t.recurrence_end_date ? fmtDate(t.recurrence_end_date, ' 까지') : '반복 중',
         })),
         pastRecurring: (pastRecurringRes.data ?? []).map((t: any) => ({
           id: t.id,
@@ -735,8 +789,10 @@ export default function CleanupScreen() {
       if (!user?.id) return;
 
       switch (key) {
+        case 'activeTodos':
         case 'pastDue':
         case 'completed':
+        case 'activeHabits':
         case 'pastRecurring': {
           await Promise.allSettled(ids.map(id => deleteTodo(id)));
           break;

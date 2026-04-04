@@ -92,6 +92,11 @@ export function getMainColorForPreset(preset: BackgroundPreset): string {
 }
 
 /** DB 저장용 설정 추출 (액션 함수 제외) */
+// DEV: expose store for debugging
+if (__DEV__) {
+  (globalThis as any).__settingsStore = useSettingsStore;
+}
+
 export function getSettingsForSync() {
   const state = useSettingsStore.getState();
   return {

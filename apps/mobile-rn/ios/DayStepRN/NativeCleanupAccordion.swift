@@ -39,8 +39,10 @@ class CleanupAccordionState: ObservableObject {
 
 private func sfSymbolName(for key: String) -> String {
   switch key {
+  case "activeTodos": return "circle.dotted"
   case "pastDue": return "clock"
   case "completed": return "checkmark.circle"
+  case "activeHabits": return "arrow.triangle.2.circlepath"
   case "pastRecurring": return "repeat"
   case "completedProjects": return "folder.badge.checkmark"
   case "onHoldProjects": return "pause.circle"

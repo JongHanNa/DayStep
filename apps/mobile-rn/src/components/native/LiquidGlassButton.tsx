@@ -6,7 +6,7 @@
  * requireNativeComponent은 모듈 레벨에서 1회만 호출 (조건부 호출 금지)
  */
 import React from 'react';
-import {requireNativeComponent, View, StyleSheet} from 'react-native';
+import {Platform, requireNativeComponent, View, StyleSheet} from 'react-native';
 import {AnimatedPressable, GlassBackground} from '@/components/core';
 import {isIOS26Plus} from './utils';
 
@@ -19,9 +19,10 @@ interface NativeLiquidGlassButtonProps {
   style?: any;
 }
 
-// 모듈 레벨에서 1회 등록
-const NativeLiquidGlassButton =
-  requireNativeComponent<NativeLiquidGlassButtonProps>('LiquidGlassButton');
+// iOS 전용 네이티브 컴포넌트 — Android에서는 등록하지 않음
+const NativeLiquidGlassButton = Platform.OS === 'ios'
+  ? requireNativeComponent<NativeLiquidGlassButtonProps>('LiquidGlassButton')
+  : null;
 
 interface LiquidGlassButtonProps {
   systemIconName: string;
@@ -42,7 +43,7 @@ export function LiquidGlassButton({
   onPress,
   fallbackIcon,
 }: LiquidGlassButtonProps): React.ReactElement {
-  if (isIOS26Plus) {
+  if (isIOS26Plus && NativeLiquidGlassButton) {
     return (
       <NativeLiquidGlassButton
         systemIconName={systemIconName}

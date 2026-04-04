@@ -24,6 +24,7 @@ class MainApplication : Application(), ReactApplication {
           add(NativeSleepGardenPackage())
           add(NativeDayTimeGridPackage())
           add(NativeMultiDayTimeGridPackage())
+          add(NativeMonthCalendarPackage())
         },
     )
   }
