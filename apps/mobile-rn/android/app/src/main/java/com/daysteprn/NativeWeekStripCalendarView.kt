@@ -91,10 +91,10 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
     var onExpandChangeCallback: ((Boolean) -> Unit)? = null
 
     init {
+        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
         composeView.setContent {
             WeekStripCalendarContent()
         }
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
 
         composeView.viewTreeObserver.addOnGlobalLayoutListener {
             post { requestLayout() }

@@ -93,10 +93,10 @@ class NativeCleanupAccordionView(context: ThemedReactContext) : FrameLayout(cont
     var onHeightChangeCallback: ((Double) -> Unit)? = null
 
     init {
+        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
         composeView.setContent {
             CleanupAccordionContent()
         }
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
 
         // ComposeView 레이아웃 변경 시 RN에 크기 전파
         composeView.viewTreeObserver.addOnGlobalLayoutListener {

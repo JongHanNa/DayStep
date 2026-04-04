@@ -7,10 +7,10 @@
  */
 package com.daysteprn
 
-import android.view.View
 import android.widget.FrameLayout
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,9 +25,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,7 +32,6 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.Nightlight
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +42,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
@@ -58,9 +57,9 @@ import com.facebook.react.uimanager.ThemedReactContext
 import org.json.JSONObject
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.time.DayOfWeek
-import java.time.temporal.WeekFields
+import java.time.format.TextStyle as JavaTextStyle
+import java.util.Locale
 
 // ─── 데이터 모델 ────────────────────────────────
 
@@ -96,19 +95,24 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
     var onViewModeChangeCallback: ((String) -> Unit)? = null
     var onMonthChangeCallback: ((Int, Int) -> Unit)? = null
 
-    init {
-        composeView.setContent {
-            SleepGardenContent()
-        }
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+    private var contentSet = false
 
-        composeView.viewTreeObserver.addOnGlobalLayoutListener {
-            post { requestLayout() }
-        }
+    init {
+        // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        if (!contentSet) {
+            contentSet = true
+            addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+            composeView.setContent {
+                SleepGardenContent()
+            }
+            composeView.viewTreeObserver.addOnGlobalLayoutListener {
+                post { requestLayout() }
+            }
+        }
         requestLayout()
     }
 
@@ -116,15 +120,10 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         super.requestLayout()
         post {
             if (!isAttachedToWindow || width <= 0) return@post
-            val parentHeight = (parent as? android.view.View)?.height ?: height
-            val heightSpec = if (parentHeight > 0) {
-                MeasureSpec.makeMeasureSpec(parentHeight, MeasureSpec.AT_MOST)
-            } else {
-                MeasureSpec.makeMeasureSpec(height.coerceAtLeast(1), MeasureSpec.EXACTLY)
-            }
+            // UNSPECIFIED로 측정하여 ComposeView가 자연 높이를 사용하도록 허용
             measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-                heightSpec,
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
             )
             layout(left, top, right, top + measuredHeight)
         }
@@ -162,6 +161,32 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         } catch (_: Exception) { }
     }
 
+    // ─── 나무 성장 단계 (iOS TreeCanvasView 동등) ───
+    // 0 = seed, 1 = sprout, 2 = small tree, 3 = big tree, -1 = wilted
+
+    private fun growthLevel(sessions: List<SleepSession>): Int {
+        if (sessions.isEmpty()) return -2 // no data
+        val completed = sessions.filter { it.outcome == "completed" }
+        if (completed.isEmpty()) return -1 // wilted (abandoned only)
+        val totalMins = completed.sumOf { it.durationMinutes }
+        val hours = totalMins / 60.0
+        return when {
+            hours >= 7 -> 3  // big tree
+            hours >= 5 -> 2  // small tree
+            hours >= 2 -> 1  // sprout
+            else -> 0        // seed
+        }
+    }
+
+    private fun treeColor(level: Int): Color = when (level) {
+        3 -> Color(0xFF22C55E)   // big tree - bright green
+        2 -> Color(0xFF16A34A)   // small tree - dark green
+        1 -> Color(0xFF84CC16)   // sprout - lime
+        0 -> Color(0xFFFCD34D)   // seed - yellow
+        -1 -> Color(0xFF9CA3AF)  // wilted - gray
+        else -> Color(0xFFF3F4F6) // no data
+    }
+
     // ─── Compose UI ───
 
     @Composable
@@ -178,21 +203,19 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 4.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White)
                 .onGloballyPositioned { coords ->
                     val heightDp = with(density) { coords.size.height.toDp().value.toDouble() }
                     onHeightChangeCallback?.invoke(heightDp)
                 }
+                .padding(vertical = 12.dp)
         ) {
             // 뷰 모드 선택 탭
             ViewModeTabs(viewMode, primaryColor)
 
             Spacer(modifier = Modifier.height(12.dp))
-
-            // 스트릭 표시
-            if (streak > 0) {
-                StreakBadge(streak, primaryColor)
-                Spacer(modifier = Modifier.height(12.dp))
-            }
 
             when (viewMode) {
                 "day" -> DayView(selectedDate, days, goalMins, primaryColor)
@@ -200,6 +223,13 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                 "month" -> MonthView(month, days, goalMins, primaryColor, selectedDate)
                 "year" -> YearView(days, goalMins, primaryColor)
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 레전드 (iOS와 동일)
+            LegendView()
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 
@@ -210,7 +240,9 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color(0xFFF3F4F6)),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             modes.forEach { (mode, label) ->
@@ -222,8 +254,8 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 4.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .padding(3.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .background(bg)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -236,34 +268,56 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                         text = label,
                         fontSize = 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color.White else Color(0xFF9CA3AF),
+                        color = if (isSelected) Color.White else Color(0xFF6B7280),
                     )
                 }
             }
         }
     }
 
+    // ─── 레전드 ───
+
     @Composable
-    private fun StreakBadge(streak: Int, primaryColor: Color) {
+    private fun LegendView() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
         ) {
-            Icon(
-                imageVector = Icons.Default.LocalFireDepartment,
-                contentDescription = "streak",
-                tint = Color(0xFFEF4444),
-                modifier = Modifier.size(18.dp),
+            LegendItem(Color(0xFF22C55E), "7h+")
+            LegendItem(Color(0xFF16A34A), "5-7h")
+            LegendItem(Color(0xFF84CC16), "2-5h")
+            LegendItem(Color(0xFFFCD34D), "~2h")
+            LegendItem(Color(0xFF9CA3AF), "포기")
+            LegendItem(Color(0xFFF3F4F6), "없음")
+        }
+    }
+
+    @Composable
+    private fun LegendItem(color: Color, label: String) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            MiniTreeIcon(color = color, size = 10f)
+            Spacer(modifier = Modifier.width(3.dp))
+            Text(text = label, fontSize = 10.sp, color = Color(0xFF9CA3AF))
+        }
+    }
+
+    @Composable
+    private fun MiniTreeIcon(color: Color, size: Float) {
+        Canvas(modifier = Modifier.size(size.dp)) {
+            // 나무 줄기
+            drawRect(
+                color = Color(0xFF92400E),
+                topLeft = Offset(this.size.width * 0.4f, this.size.height * 0.6f),
+                size = Size(this.size.width * 0.2f, this.size.height * 0.4f),
             )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = "${streak}일 연속 달성",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF374151),
+            // 나무 크라운 (원)
+            drawCircle(
+                color = color,
+                radius = this.size.width * 0.4f,
+                center = Offset(this.size.width * 0.5f, this.size.height * 0.4f),
             )
         }
     }
@@ -277,9 +331,14 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         goalMins: Int,
         primaryColor: Color,
     ) {
+        val date = try { LocalDate.parse(selectedDate) } catch (_: Exception) { LocalDate.now() }
         val sessions = days[selectedDate] ?: emptyList()
-        val totalMins = sessions.sumOf { it.durationMinutes }
-        val hasHealthy = sessions.any { it.isHealthy }
+        val completed = sessions.filter { it.outcome == "completed" }
+        val totalMins = completed.sumOf { it.durationMinutes }
+
+        // 날짜 헤더
+        val dayOfWeek = date.dayOfWeek.getDisplayName(JavaTextStyle.FULL, Locale.KOREAN)
+        val dateLabel = "${date.monthValue}월 ${date.dayOfMonth}일 $dayOfWeek"
 
         Column(
             modifier = Modifier
@@ -287,67 +346,158 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                 .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // 나무 아이콘 (크게)
-            Icon(
-                imageVector = Icons.Default.Park,
-                contentDescription = "tree",
-                tint = if (hasHealthy) primaryColor else Color(0xFFD1D5DB),
-                modifier = Modifier.size(64.dp),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
             Text(
-                text = if (totalMins > 0) "${totalMins / 60}시간 ${totalMins % 60}분" else "기록 없음",
-                fontSize = 20.sp,
+                text = dateLabel,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (totalMins > 0) Color(0xFF1F2937) else Color(0xFF9CA3AF),
+                color = Color(0xFF1F2937),
             )
 
-            if (totalMins > 0) {
-                Spacer(modifier = Modifier.height(4.dp))
-                val percent = (totalMins.toFloat() / goalMins * 100).toInt().coerceAtMost(100)
-                Text(
-                    text = "목표 대비 ${percent}%",
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B7280),
+            Spacer(modifier = Modifier.height(20.dp))
+
+            if (sessions.isEmpty()) {
+                // 빈 상태
+                Icon(
+                    imageVector = Icons.Default.Nightlight,
+                    contentDescription = "no data",
+                    tint = Color(0xFFD1D5DB),
+                    modifier = Modifier.size(48.dp),
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "아직 수면 기록이 없습니다",
+                    fontSize = 14.sp,
+                    color = Color(0xFF9CA3AF),
+                )
+            } else {
+                // 나무 아이콘 행
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    sessions.forEach { session ->
+                        val level = if (session.outcome == "completed") {
+                            when {
+                                session.durationMinutes >= 420 -> 3
+                                session.durationMinutes >= 300 -> 2
+                                session.durationMinutes >= 120 -> 1
+                                else -> 0
+                            }
+                        } else -1
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        ) {
+                            TreeCanvas(level = level, size = 48f)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val h = session.durationMinutes / 60
+                            val m = session.durationMinutes % 60
+                            Text(
+                                text = if (h > 0) "${h}h ${m}m" else "${m}m",
+                                fontSize = 11.sp,
+                                color = Color(0xFF6B7280),
+                            )
+                            if (session.outcome != "completed") {
+                                Text(
+                                    text = "포기",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFFEF4444),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 총 수면 시간
+                if (totalMins > 0) {
+                    Text(
+                        text = "총 ${totalMins / 60}시간 ${totalMins % 60}분",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF374151),
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
 
-            // 세션 목록
-            sessions.forEachIndexed { idx, session ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFF8FAFC))
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Nightlight,
-                        contentDescription = "session",
-                        tint = if (session.isHealthy) primaryColor else Color(0xFFD1D5DB),
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "세션 ${idx + 1}: ${session.durationMinutes}분",
-                        fontSize = 14.sp,
-                        color = Color(0xFF374151),
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        text = if (session.outcome == "completed") "완료" else "포기",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (session.outcome == "completed") primaryColor else Color(0xFFEF4444),
-                    )
+    // ─── 나무 Canvas (iOS TreeCanvasView 동등) ───
+
+    @Composable
+    private fun TreeCanvas(level: Int, size: Float) {
+        val crownColor = treeColor(level)
+        val trunkColor = if (level <= 1) Color(0xFFD97706) else Color(0xFF92400E)
+
+        Canvas(modifier = Modifier.size(size.dp)) {
+            val w = this.size.width
+            val h = this.size.height
+
+            when (level) {
+                -1 -> drawWiltedTree(w, h, crownColor, trunkColor)
+                0 -> drawSeed(w, h, crownColor)
+                1 -> drawSprout(w, h, crownColor, trunkColor)
+                2 -> drawSmallTree(w, h, crownColor, trunkColor)
+                3 -> drawBigTree(w, h, crownColor, trunkColor)
+                else -> {
+                    // no data: gray circle
+                    drawCircle(Color(0xFFF3F4F6), radius = w * 0.3f, center = Offset(w / 2, h / 2))
                 }
-                if (idx < sessions.size - 1) Spacer(modifier = Modifier.height(8.dp))
             }
         }
+    }
+
+    private fun DrawScope.drawSeed(w: Float, h: Float, color: Color) {
+        // 작은 씨앗 타원
+        drawOval(color, topLeft = Offset(w * 0.3f, h * 0.65f), size = Size(w * 0.4f, h * 0.25f))
+        // 작은 싹
+        drawLine(Color(0xFF84CC16), Offset(w * 0.5f, h * 0.65f), Offset(w * 0.5f, h * 0.5f), strokeWidth = 2f)
+    }
+
+    private fun DrawScope.drawSprout(w: Float, h: Float, color: Color, trunk: Color) {
+        // 줄기
+        drawLine(trunk, Offset(w * 0.5f, h * 0.9f), Offset(w * 0.5f, h * 0.45f), strokeWidth = 3f)
+        // 잎 3개
+        drawCircle(color, radius = w * 0.12f, center = Offset(w * 0.35f, h * 0.45f))
+        drawCircle(color, radius = w * 0.14f, center = Offset(w * 0.5f, h * 0.35f))
+        drawCircle(color, radius = w * 0.12f, center = Offset(w * 0.65f, h * 0.45f))
+    }
+
+    private fun DrawScope.drawSmallTree(w: Float, h: Float, color: Color, trunk: Color) {
+        // 줄기
+        drawRect(trunk, topLeft = Offset(w * 0.42f, h * 0.55f), size = Size(w * 0.16f, h * 0.4f))
+        // 크라운 (원)
+        drawCircle(color, radius = w * 0.3f, center = Offset(w * 0.5f, h * 0.38f))
+        // 하이라이트
+        drawCircle(Color.White.copy(alpha = 0.3f), radius = w * 0.12f, center = Offset(w * 0.42f, h * 0.3f))
+    }
+
+    private fun DrawScope.drawBigTree(w: Float, h: Float, color: Color, trunk: Color) {
+        // 줄기
+        drawRect(trunk, topLeft = Offset(w * 0.4f, h * 0.5f), size = Size(w * 0.2f, h * 0.45f))
+        // 가지 (좌/우)
+        drawLine(trunk, Offset(w * 0.45f, h * 0.6f), Offset(w * 0.25f, h * 0.5f), strokeWidth = 3f)
+        drawLine(trunk, Offset(w * 0.55f, h * 0.6f), Offset(w * 0.75f, h * 0.5f), strokeWidth = 3f)
+        // 크라운 3중
+        drawCircle(color, radius = w * 0.28f, center = Offset(w * 0.3f, h * 0.35f))
+        drawCircle(color, radius = w * 0.32f, center = Offset(w * 0.5f, h * 0.25f))
+        drawCircle(color, radius = w * 0.28f, center = Offset(w * 0.7f, h * 0.35f))
+        // 하이라이트
+        drawCircle(Color.White.copy(alpha = 0.3f), radius = w * 0.1f, center = Offset(w * 0.4f, h * 0.2f))
+    }
+
+    private fun DrawScope.drawWiltedTree(w: Float, h: Float, color: Color, trunk: Color) {
+        // 기울어진 줄기
+        drawLine(color = Color(0xFF9CA3AF), start = Offset(w * 0.5f, h * 0.9f), end = Offset(w * 0.45f, h * 0.45f), strokeWidth = 3f)
+        // 시든 크라운
+        drawCircle(color, radius = w * 0.25f, center = Offset(w * 0.42f, h * 0.38f))
+        // 떨어진 잎
+        drawCircle(Color(0xFFD1D5DB), radius = w * 0.06f, center = Offset(w * 0.7f, h * 0.8f))
     }
 
     // ─── Week View ───
@@ -360,58 +510,132 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         primaryColor: Color,
     ) {
         val date = try { LocalDate.parse(selectedDate) } catch (_: Exception) { LocalDate.now() }
-        val weekStart = date.with(WeekFields.of(DayOfWeek.MONDAY, 1).dayOfWeek(), 1)
-        val dayLabels = listOf("월", "화", "수", "목", "금", "토", "일")
+        // 일요일 시작 주
+        val dayOfWeekVal = date.dayOfWeek.value % 7 // 0=Sun, 1=Mon, ..., 6=Sat
+        val weekStart = date.minusDays(dayOfWeekVal.toLong())
+        val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
+        val today = LocalDate.now()
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            for (i in 0..6) {
-                val d = weekStart.plusDays(i.toLong())
-                val dateStr = d.toString()
-                val sessions = days[dateStr] ?: emptyList()
-                val hasHealthy = sessions.any { it.isHealthy }
-                val hasSessions = sessions.isNotEmpty()
-                val isSelected = dateStr == selectedDate
+        // 주 범위 텍스트
+        val weekEnd = weekStart.plusDays(6)
+        val rangeText = "${weekStart.monthValue}/${weekStart.dayOfMonth} - ${weekEnd.monthValue}/${weekEnd.dayOfMonth}"
 
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) primaryColor.copy(alpha = 0.1f) else Color.Transparent)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { onDateSelectCallback?.invoke(dateStr) }
-                        .padding(vertical = 8.dp, horizontal = 2.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = dayLabels[i],
-                        fontSize = 11.sp,
-                        color = Color(0xFF9CA3AF),
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Icon(
-                        imageVector = Icons.Default.Park,
-                        contentDescription = "tree",
-                        tint = when {
-                            hasHealthy -> primaryColor
-                            hasSessions -> Color(0xFFFBBF24)
-                            else -> Color(0xFFE5E7EB)
-                        },
-                        modifier = Modifier.size(28.dp),
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${d.dayOfMonth}",
-                        fontSize = 12.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) primaryColor else Color(0xFF6B7280),
-                    )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // 주 네비게이션
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "이전 주",
+                    tint = Color(0xFF6B7280),
+                    modifier = Modifier.size(28.dp).clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
+                        val prev = date.minusDays(7)
+                        onDateSelectCallback?.invoke(prev.toString())
+                    },
+                )
+                Text(
+                    text = rangeText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1F2937),
+                )
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "다음 주",
+                    tint = Color(0xFF6B7280),
+                    modifier = Modifier.size(28.dp).clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
+                        val next = date.plusDays(7)
+                        onDateSelectCallback?.invoke(next.toString())
+                    },
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                for (i in 0..6) {
+                    val d = weekStart.plusDays(i.toLong())
+                    val dateStr = d.toString()
+                    val sessions = days[dateStr] ?: emptyList()
+                    val level = growthLevel(sessions)
+                    val isToday = d == today
+                    val isSelected = dateStr == selectedDate
+                    val totalMins = sessions.filter { it.outcome == "completed" }.sumOf { it.durationMinutes }
+                    val totalH = if (totalMins > 0) "${totalMins / 60}h" else "-"
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                when {
+                                    isSelected -> primaryColor.copy(alpha = 0.1f)
+                                    isToday -> Color(0xFFF0F9FF)
+                                    else -> Color.Transparent
+                                }
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { onDateSelectCallback?.invoke(dateStr) }
+                            .padding(vertical = 6.dp, horizontal = 2.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = dayLabels[i],
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = when (i) {
+                                0 -> Color(0xFFEF4444) // 일: 빨강
+                                6 -> Color(0xFF3B82F6) // 토: 파랑
+                                else -> Color(0xFF9CA3AF)
+                            },
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // 날짜 원
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .then(
+                                    if (isToday) Modifier.background(primaryColor, CircleShape)
+                                    else Modifier
+                                ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "${d.dayOfMonth}",
+                                fontSize = 11.sp,
+                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isToday) Color.White else Color(0xFF6B7280),
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // 나무 아이콘
+                        TreeCanvas(level = level, size = 24f)
+
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = totalH,
+                            fontSize = 10.sp,
+                            color = Color(0xFF9CA3AF),
+                        )
+                    }
                 }
             }
         }
@@ -427,10 +651,11 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         primaryColor: Color,
         selectedDate: String,
     ) {
-        val dayLabels = listOf("월", "화", "수", "목", "금", "토", "일")
+        val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
         val firstDay = month.atDay(1)
-        val firstDayOfWeek = (firstDay.dayOfWeek.value - 1) // 0=Mon
+        val firstDayOfWeek = firstDay.dayOfWeek.value % 7 // 0=Sun
         val daysInMonth = month.lengthOfMonth()
+        val today = LocalDate.now()
 
         Column(modifier = Modifier.fillMaxWidth()) {
             // 월 네비게이션
@@ -439,7 +664,6 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
@@ -477,22 +701,46 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                             onMonthChangeCallback?.invoke(next.year, next.monthValue)
                         },
                 )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // "오늘" 버튼 (iOS 동등)
+                Text(
+                    text = "오늘",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = primaryColor,
+                    modifier = Modifier
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) {
+                            val todayYM = YearMonth.from(today)
+                            displayMonth.value = todayYM
+                            onDateSelectCallback?.invoke(today.toString())
+                            onMonthChangeCallback?.invoke(todayYM.year, todayYM.monthValue)
+                        }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             // 요일 헤더
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                dayLabels.forEach {
+                dayLabels.forEachIndexed { index, label ->
                     Text(
-                        text = it,
+                        text = label,
                         fontSize = 11.sp,
-                        color = Color(0xFF9CA3AF),
+                        fontWeight = FontWeight.SemiBold,
+                        color = when (index) {
+                            0 -> Color(0xFFEF4444)
+                            6 -> Color(0xFF3B82F6)
+                            else -> Color(0xFF9CA3AF)
+                        },
                         textAlign = TextAlign.Center,
                         modifier = Modifier.weight(1f),
                     )
@@ -501,15 +749,13 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // 월 그리드 (최대 6주 × 7일 = 42 셀)
+            // 월 그리드
             val totalCells = firstDayOfWeek + daysInMonth
             val rows = (totalCells + 6) / 7
 
             for (row in 0 until rows) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     for (col in 0..6) {
@@ -519,42 +765,58 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                             val d = month.atDay(dayNum)
                             val dateStr = d.toString()
                             val sessions = days[dateStr] ?: emptyList()
-                            val hasHealthy = sessions.any { it.isHealthy }
-                            val hasSessions = sessions.isNotEmpty()
+                            val level = growthLevel(sessions)
+                            val isToday = d == today
                             val isSelected = dateStr == selectedDate
 
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .aspectRatio(1f)
-                                    .padding(2.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .aspectRatio(0.85f)
+                                    .padding(1.dp)
+                                    .clip(RoundedCornerShape(6.dp))
                                     .background(
-                                        if (isSelected) primaryColor.copy(alpha = 0.1f)
-                                        else Color.Transparent
+                                        when {
+                                            isSelected -> primaryColor.copy(alpha = 0.1f)
+                                            else -> Color.Transparent
+                                        }
                                     )
                                     .clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
-                                    ) { onDateSelectCallback?.invoke(dateStr) },
+                                    ) {
+                                        onDateSelectCallback?.invoke(dateStr)
+                                        onViewModeChangeCallback?.invoke("day")
+                                    },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        imageVector = Icons.Default.Park,
-                                        contentDescription = null,
-                                        tint = when {
-                                            hasHealthy -> primaryColor
-                                            hasSessions -> Color(0xFFFBBF24)
-                                            else -> Color(0xFFF3F4F6)
-                                        },
-                                        modifier = Modifier.size(16.dp),
-                                    )
-                                    Text(
-                                        text = "$dayNum",
-                                        fontSize = 10.sp,
-                                        color = if (isSelected) primaryColor else Color(0xFF9CA3AF),
-                                    )
+                                    // 나무 아이콘
+                                    TreeCanvas(level = level, size = 14f)
+
+                                    Spacer(modifier = Modifier.height(1.dp))
+
+                                    // 날짜 숫자
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .then(
+                                                if (isToday) Modifier.background(primaryColor, CircleShape)
+                                                else Modifier
+                                            ),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = "$dayNum",
+                                            fontSize = 10.sp,
+                                            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                                            color = when {
+                                                isToday -> Color.White
+                                                isSelected -> primaryColor
+                                                else -> Color(0xFF6B7280)
+                                            },
+                                        )
+                                    }
                                 }
                             }
                         } else {
@@ -566,7 +828,7 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         }
     }
 
-    // ─── Year View (12 months mini) ───
+    // ─── Year View (12 months mini heatmap) ───
 
     @Composable
     private fun YearView(
@@ -575,11 +837,10 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         primaryColor: Color,
     ) {
         val year = LocalDate.now().year
+        val today = LocalDate.now()
 
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         ) {
             Text(
                 text = "${year}년",
@@ -600,20 +861,13 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                         val m = row * 3 + col + 1
                         val ym = YearMonth.of(year, m)
                         val daysInMonth = ym.lengthOfMonth()
-                        var healthyCount = 0
-                        for (d in 1..daysInMonth) {
-                            val dateStr = ym.atDay(d).toString()
-                            val sessions = days[dateStr] ?: emptyList()
-                            if (sessions.any { it.isHealthy }) healthyCount++
-                        }
-                        val ratio = if (daysInMonth > 0) healthyCount.toFloat() / daysInMonth else 0f
 
                         Column(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(4.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFFF8FAFC))
+                                .background(Color(0xFFF9FAFB))
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null,
@@ -622,36 +876,67 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
                                     onViewModeChangeCallback?.invoke("month")
                                     onMonthChangeCallback?.invoke(ym.year, ym.monthValue)
                                 }
-                                .padding(12.dp),
+                                .padding(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
                                 text = "${m}월",
-                                fontSize = 13.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF374151),
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.Park,
-                                contentDescription = null,
-                                tint = when {
-                                    ratio > 0.6f -> primaryColor
-                                    ratio > 0.3f -> Color(0xFFFBBF24)
-                                    ratio > 0f -> Color(0xFFFDE68A)
-                                    else -> Color(0xFFE5E7EB)
-                                },
-                                modifier = Modifier.size(24.dp),
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "${healthyCount}일",
-                                fontSize = 11.sp,
-                                color = Color(0xFF9CA3AF),
-                            )
+
+                            // 미니 히트맵 (7열 격자)
+                            MiniHeatmap(ym, days, primaryColor, today)
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun MiniHeatmap(
+        ym: YearMonth,
+        days: Map<String, List<SleepSession>>,
+        primaryColor: Color,
+        today: LocalDate,
+    ) {
+        val daysInMonth = ym.lengthOfMonth()
+        val firstDayOfWeek = ym.atDay(1).dayOfWeek.value % 7 // 0=Sun
+        val totalCells = firstDayOfWeek + daysInMonth
+        val rows = (totalCells + 6) / 7
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height((rows * 8).dp)
+        ) {
+            val cellW = size.width / 7f
+            val cellH = size.height / rows.toFloat()
+            val dotSize = minOf(cellW, cellH) * 0.7f
+
+            for (dayNum in 1..daysInMonth) {
+                val cellIndex = firstDayOfWeek + dayNum - 1
+                val col = cellIndex % 7
+                val row = cellIndex / 7
+                val cx = col * cellW + cellW / 2
+                val cy = row * cellH + cellH / 2
+
+                val d = ym.atDay(dayNum)
+                val dateStr = d.toString()
+                val sessions = days[dateStr] ?: emptyList()
+                val isToday = d == today
+
+                val color = when {
+                    isToday -> primaryColor
+                    sessions.any { it.isHealthy } -> Color(0xFF22C55E)
+                    sessions.isNotEmpty() -> Color(0xFFD1D5DB)
+                    else -> Color(0xFFF3F4F6)
+                }
+
+                drawCircle(color = color, radius = dotSize / 2, center = Offset(cx, cy))
             }
         }
     }

@@ -49,6 +49,7 @@ export default function SleepGardenScreen() {
   const [showScreenTimeModal, setShowScreenTimeModal] = useState(false);
   const isUITest = require('../lib/mmkv').storage.getBoolean('uitest_active');
   const [viewMode, setViewMode] = useState<ViewMode>(isUITest ? 'day' : 'month');
+  const [androidGardenHeight, setAndroidGardenHeight] = useState(450);
 
   // 네이티브 컴포넌트 높이 애니메이션 (absoluteFill 패턴)
   const gardenHeight = useSharedValue(450);
@@ -168,10 +169,13 @@ export default function SleepGardenScreen() {
   }, [setSelectedDate]);
 
   const handleHeightChange = useCallback((e: {nativeEvent: {height: number}}) => {
-    gardenHeight.value = withSpring(e.nativeEvent.height, {
-      damping: 20,
-      stiffness: 150,
-    });
+    const h = e.nativeEvent.height;
+    if (Platform.OS === 'ios') {
+      gardenHeight.value = withSpring(h, { damping: 20, stiffness: 150 });
+    } else {
+      // Android: 직접 높이 state 업데이트
+      setAndroidGardenHeight(Math.max(h, 100));
+    }
   }, [gardenHeight]);
 
   const handleViewModeChange = useCallback((e: {nativeEvent: {mode: string}}) => {
@@ -220,8 +224,8 @@ export default function SleepGardenScreen() {
         </AnimatedCard>
 
         {/* 네이티브 수면 정원 */}
-        <AnimatedCard enterDelay={200} style={styles.gardenCard}>
-          {Platform.OS === 'ios' ? (
+        {Platform.OS === 'ios' ? (
+          <AnimatedCard enterDelay={200} style={styles.gardenCard}>
             <Animated.View style={gardenAnimatedStyle}>
               <NativeSleepGardenNative
                 viewMode={viewMode}
@@ -237,7 +241,9 @@ export default function SleepGardenScreen() {
                 style={StyleSheet.absoluteFill}
               />
             </Animated.View>
-          ) : (
+          </AnimatedCard>
+        ) : (
+          <View style={[styles.gardenCardAndroid, {height: androidGardenHeight}]}>
             <NativeSleepGardenNative
               viewMode={viewMode}
               selectedDate={selectedDate}
@@ -249,10 +255,10 @@ export default function SleepGardenScreen() {
               onHeightChange={handleHeightChange}
               onViewModeChange={handleViewModeChange}
               onMonthChange={handleMonthChange}
-              style={{alignSelf: 'stretch'}}
+              style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}
             />
-          )}
-        </AnimatedCard>
+          </View>
+        )}
 
         {/* 목표 요약 바 */}
         <AnimatedCard enterDelay={300} style={styles.goalCard}>
@@ -398,6 +404,10 @@ const styles = StyleSheet.create({
   // Garden
   gardenCard: {
     marginBottom: 12,
+  },
+  gardenCardAndroid: {
+    marginBottom: 12,
+    minHeight: 100,
   },
   // Goal
   goalCard: {
