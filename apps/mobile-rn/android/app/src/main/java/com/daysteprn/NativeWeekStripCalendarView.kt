@@ -95,8 +95,64 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         isExpandedState.value = expanded
     }
 
+    private var collapsedHeightPx = 0f
+    private var isCollapsedHeightCaptured = false
+
     fun setExpandProgress(progress: Float) {
-        expandProgressState.value = progress.coerceIn(0f, 1f)
+        val p = progress.coerceIn(0f, 1f)
+        expandProgressState.value = p
+        // 형제 콘텐츠 뷰의 translationY를 직접 설정 (Fabric 우회 → 60fps)
+        updateSiblingTranslationY(p)
+    }
+
+    /**
+     * Android View 계층을 탐색하여 콘텐츠 영역의 translationY를 직접 설정
+     * RN Fabric/Yoga/Reanimated를 완전히 우회
+     *
+     * 로직: 부모를 끝까지 올라가면서 "2개 자식 중 내가 아닌 쪽"을 기록.
+     * 가장 바깥쪽(마지막) 매치가 콘텐츠 뷰 (View F).
+     * 중간 매치(menuOverlay 등)는 덮어써져서 무시됨.
+     */
+    private fun updateSiblingTranslationY(progress: Float) {
+        val density = resources.displayMetrics.density
+
+        // 현재 월의 행 수에 따라 delta 계산
+        val cellHeightDp = 44f
+        val cellSpacingDp = 2f
+        val oneRowHeightDp = cellHeightDp + cellSpacingDp
+
+        val selectedDate = try {
+            java.time.LocalDate.parse(selectedDateStr.value)
+        } catch (_: Exception) {
+            java.time.LocalDate.now()
+        }
+        val yearMonth = java.time.YearMonth.from(selectedDate)
+        val firstOfMonth = yearMonth.atDay(1)
+        val firstDayOffset = firstOfMonth.dayOfWeek.value % 7
+        val totalDays = firstDayOffset + yearMonth.lengthOfMonth() +
+                (6 - yearMonth.atEndOfMonth().dayOfWeek.value % 7)
+        val rowCount = totalDays / 7
+
+        val fullHeightDp = cellHeightDp * rowCount + cellSpacingDp * (rowCount - 1)
+        val deltaHeightDp = fullHeightDp - oneRowHeightDp
+        val deltaHeightPx = deltaHeightDp * density * progress
+
+        // 부모를 최대 10단계까지 올라가며, 2개 자식 중 내가 아닌 쪽을 기록
+        // 마지막(가장 바깥) 매치가 콘텐츠 뷰
+        var v: android.view.View = this
+        var contentView: android.view.View? = null
+        for (depth in 0 until 10) {
+            val parent = v.parent as? android.view.ViewGroup ?: break
+            if (parent.childCount == 2) {
+                val child0 = parent.getChildAt(0)
+                val child1 = parent.getChildAt(1)
+                if (child0 == v) contentView = child1
+                else if (child1 == v) contentView = child0
+            }
+            v = parent
+        }
+
+        contentView?.translationY = deltaHeightPx
     }
 
     override fun onAttachedToWindow() {

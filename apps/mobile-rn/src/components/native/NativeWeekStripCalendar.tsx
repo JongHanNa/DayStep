@@ -26,11 +26,6 @@ interface NativeWeekStripCalendarProps {
   expandProgress?: number;
   /** Android: 부모에서 생성한 SharedValue를 직접 전달 */
   expandProgressValue?: SharedValue<number>;
-  /** Android: 축소/확장 높이를 외부에 노출하기 위한 ref */
-  heightsRef?: React.MutableRefObject<{collapsed: number; expanded: number}>;
-  /** Android: 축소/확장 높이 SharedValue (UI 스레드 애니메이션용) */
-  collapsedHeightValue?: SharedValue<number>;
-  expandedHeightValue?: SharedValue<number>;
   gradientColors?: string[];
   gradientStartX?: number;
   gradientStartY?: number;
@@ -59,22 +54,11 @@ function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
 
   const DRAG_THRESHOLD = 200;
 
-  // 축소/확장 높이 기록 (SharedValue + ref 동시 업데이트)
   const handleHeightChange = useCallback(
     (e: {nativeEvent: {height: number; animated?: boolean}}) => {
-      const h = e.nativeEvent.height;
-      if (h > 0) {
-        if (progress.value < 0.1) {
-          if (props.heightsRef) props.heightsRef.current.collapsed = h;
-          if (props.collapsedHeightValue) props.collapsedHeightValue.value = h;
-        } else if (progress.value > 0.9) {
-          if (props.heightsRef) props.heightsRef.current.expanded = h;
-          if (props.expandedHeightValue) props.expandedHeightValue.value = h;
-        }
-      }
       props.onHeightChange(e);
     },
-    [props.onHeightChange, props.heightsRef, props.collapsedHeightValue, props.expandedHeightValue, progress],
+    [props.onHeightChange],
   );
 
   const handleExpandChange = useCallback(
@@ -128,7 +112,7 @@ function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
     [props.onExpandChange, progress],
   );
 
-  const {style, expandProgressValue: _, heightsRef: __, collapsedHeightValue: ___, expandedHeightValue: ____, ...restProps} = props;
+  const {style, expandProgressValue: _, ...restProps} = props;
 
   return (
     <GestureDetector gesture={panGesture}>

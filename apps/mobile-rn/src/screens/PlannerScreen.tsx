@@ -54,21 +54,9 @@ export default function PlannerScreen() {
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
   const [showPaywallModal, setShowPaywallModal] = useState(false);
-  // Android: 캘린더 확장/축소 — translateY로 60fps 애니메이션
+  // Android: 캘린더 확장/축소 — 네이티브 Kotlin에서 형제 뷰 translationY 직접 제어
   const [androidCalHeight] = useState(130);
-  // SharedValue를 부모에서 생성 → 자식(gesture)과 부모(animatedStyle) 모두 동일 인스턴스 사용
   const androidExpandProgress = useSharedValue(0);
-  const androidCalCollapsedH = useSharedValue(130);
-  const androidCalExpandedH = useSharedValue(350);
-  const androidCalHeightsRef = useRef({collapsed: 130, expanded: 350});
-  // 아래 콘텐츠를 translateY로 밀어내기 (Yoga 안 거침 → 60fps)
-  const androidContentTranslateStyle = useAnimatedStyle(() => {
-    'worklet';
-    const delta = androidCalExpandedH.value - androidCalCollapsedH.value;
-    return {
-      transform: [{translateY: delta * androidExpandProgress.value}],
-    };
-  });
 
   const handleUpgrade = useCallback(() => {
     setShowPaywallModal(true);
@@ -297,20 +285,14 @@ export default function PlannerScreen() {
                     gradientEndY={calendarGradient.end.y}
                     onDateSelect={handleDayDateSelect}
                     expandProgressValue={androidExpandProgress}
-                    heightsRef={androidCalHeightsRef}
-                    collapsedHeightValue={androidCalCollapsedH}
-                    expandedHeightValue={androidCalExpandedH}
-                    onHeightChange={() => {
-                      // 높이 변경은 heightsRef에서 추적
-                      // setState 호출하지 않음 (드래그 중 리렌더링 방지)
-                    }}
+                    onHeightChange={() => {}}
                     style={{alignSelf: 'stretch'}}
                   />
                 </View>
               )}
               {menuOverlay}
             </View>
-            <Animated.View style={[{flex: 1, position: 'relative'}, Platform.OS === 'android' && androidContentTranslateStyle]}>
+            <View style={{flex: 1, position: 'relative'}}>
               <NativeDayTimeGridNative
                 selectedDate={selectedDate}
                 primaryColor={primaryColor}
@@ -321,7 +303,7 @@ export default function PlannerScreen() {
                 onHeightChange={() => {}}
                 style={{flex: 1}}
               />
-            </Animated.View>
+            </View>
           </View>
         );
       case '3day':

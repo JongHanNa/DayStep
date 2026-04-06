@@ -26,6 +26,7 @@ class MainApplication : Application(), ReactApplication {
           add(NativeMultiDayTimeGridPackage())
           add(NativeMonthCalendarPackage())
           add(AppBlockerPackage())
+          add(AnimatedOffsetPackage())
         },
     )
   }
