@@ -1,14 +1,19 @@
 /**
  * NativeWeekStripCalendar — 주간 스트립 캘린더 TS 래퍼
  *
- * iOS: SwiftUI/UIKit 네이티브 컴포넌트
- * Android: Jetpack Compose 네이티브 컴포넌트 + RN 제스처로 확장/축소
- *
- * requireNativeComponent는 모듈 레벨에서 1회만 호출
+ * iOS: SwiftUI/UIKit 네이티브 컴포넌트 (자체 드래그 처리)
+ * Android: Jetpack Compose + Reanimated useAnimatedProps로
+ *          expandProgress(0~1)를 UI 스레드에서 직접 네이티브 뷰에 전달
  */
 import React, {useCallback, useRef, useState} from 'react';
 import {Platform, requireNativeComponent, View} from 'react-native';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedProps,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 
 interface NativeWeekStripCalendarProps {
   selectedDate: string;
@@ -17,6 +22,7 @@ interface NativeWeekStripCalendarProps {
   onHeightChange: (e: {nativeEvent: {height: number; animated?: boolean}}) => void;
   onExpandChange?: (e: {nativeEvent: {expanded: boolean}}) => void;
   isExpanded?: boolean;
+  expandProgress?: number;
   gradientColors?: string[];
   gradientStartX?: number;
   gradientStartY?: number;
@@ -28,12 +34,20 @@ interface NativeWeekStripCalendarProps {
 const NativeWeekStripCalendarView =
   requireNativeComponent<NativeWeekStripCalendarProps>('NativeWeekStripCalendar');
 
+const AnimatedNativeWeekStrip = Animated.createAnimatedComponent(
+  NativeWeekStripCalendarView,
+);
+
 /**
- * Android 전용 래퍼: PanGesture로 수직 드래그 감지 → isExpanded prop 전달
+ * Android 전용 래퍼: useAnimatedProps로 expandProgress를
+ * UI 스레드에서 직접 네이티브 뷰에 전달 (JS bridge 안 거침 → 60fps)
  */
 function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
   const [expanded, setExpanded] = useState(false);
   const expandedRef = useRef(false);
+  const progress = useSharedValue(0);
+
+  const DRAG_THRESHOLD = 200;
 
   const handleExpandChange = useCallback(
     (isExp: boolean) => {
@@ -45,17 +59,34 @@ function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
   );
 
   const panGesture = Gesture.Pan()
-    .activeOffsetY([-15, 15])
-    .failOffsetX([-30, 30])
-    .onEnd(e => {
-      const threshold = 40;
-      if (!expandedRef.current && e.translationY > threshold) {
-        handleExpandChange(true);
-      } else if (expandedRef.current && e.translationY < -threshold) {
-        handleExpandChange(false);
-      }
+    .activeOffsetY([-10, 10])
+    .failOffsetX([-20, 20])
+    .onUpdate(e => {
+      'worklet';
+      const base = expandedRef.current ? 1 : 0;
+      const delta = e.translationY / DRAG_THRESHOLD;
+      progress.value = Math.max(0, Math.min(1, base + delta));
     })
-    .runOnJS(true);
+    .onEnd(e => {
+      'worklet';
+      const velocity = e.velocityY;
+      const current = progress.value;
+
+      let shouldExpand: boolean;
+      if (Math.abs(velocity) > 500) {
+        shouldExpand = velocity > 0;
+      } else {
+        shouldExpand = current > 0.5;
+      }
+
+      progress.value = withTiming(shouldExpand ? 1 : 0, {duration: 250});
+      runOnJS(handleExpandChange)(shouldExpand);
+    });
+
+  // UI 스레드에서 직접 네이티브 prop 업데이트 (setState 없이)
+  const animatedProps = useAnimatedProps(() => ({
+    expandProgress: progress.value,
+  }));
 
   // 네이티브에서 날짜 탭 시 축소 요청
   const handleNativeExpandChange = useCallback(
@@ -63,20 +94,21 @@ function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
       const isExp = e.nativeEvent.expanded;
       expandedRef.current = isExp;
       setExpanded(isExp);
+      progress.value = withTiming(isExp ? 1 : 0, {duration: 250});
       props.onExpandChange?.(e);
     },
-    [props.onExpandChange],
+    [props.onExpandChange, progress],
   );
 
-  // style에서 height/alignSelf 등을 래퍼에도 전달
   const {style, ...restProps} = props;
 
   return (
     <GestureDetector gesture={panGesture}>
       <View style={style}>
-        <NativeWeekStripCalendarView
+        <AnimatedNativeWeekStrip
           {...restProps}
           style={{flex: 1}}
+          animatedProps={animatedProps}
           isExpanded={expanded}
           onExpandChange={handleNativeExpandChange}
         />

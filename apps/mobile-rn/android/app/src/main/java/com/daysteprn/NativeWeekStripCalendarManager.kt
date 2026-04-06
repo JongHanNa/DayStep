@@ -84,6 +84,11 @@ class NativeWeekStripCalendarManager : SimpleViewManager<NativeWeekStripCalendar
         view.setExpanded(expanded)
     }
 
+    @ReactProp(name = "expandProgress", defaultFloat = 0f)
+    fun setExpandProgress(view: NativeWeekStripCalendarView, progress: Float) {
+        view.setExpandProgress(progress)
+    }
+
     override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any> =
         mutableMapOf(
             "topDateSelect"   to mapOf("registrationName" to "onDateSelect"),

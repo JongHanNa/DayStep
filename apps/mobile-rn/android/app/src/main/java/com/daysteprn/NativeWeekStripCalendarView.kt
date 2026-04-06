@@ -13,8 +13,6 @@ package com.daysteprn
 
 import android.widget.FrameLayout
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -85,8 +83,9 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
     var onHeightChangeCallback: ((Double) -> Unit)? = null
     var onExpandChangeCallback: ((Boolean) -> Unit)? = null
 
-    // 확장/축소 상태 — RN에서 isExpanded prop으로 제어
+    // 확장/축소 — RN에서 expandProgress(0~1) + isExpanded로 제어
     private var isExpandedState = mutableStateOf(false)
+    private var expandProgressState = mutableStateOf(0f)
 
     init {
         // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
@@ -94,6 +93,10 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
 
     fun setExpanded(expanded: Boolean) {
         isExpandedState.value = expanded
+    }
+
+    fun setExpandProgress(progress: Float) {
+        expandProgressState.value = progress.coerceIn(0f, 1f)
     }
 
     override fun onAttachedToWindow() {
@@ -204,17 +207,9 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         val today = LocalDate.now()
         val density = LocalDensity.current
 
-        // Expand state — RN에서 isExpanded prop으로 제어
+        // Expand progress — RN에서 실시간 전달 (0.0 ~ 1.0)
+        val effectiveProgress = expandProgressState.value
         val targetExpanded = isExpandedState.value
-        val expandAnimatable = remember { Animatable(0f) }
-        LaunchedEffect(targetExpanded) {
-            val target = if (targetExpanded) 1f else 0f
-            expandAnimatable.animateTo(
-                target,
-                animationSpec = tween(300, easing = FastOutSlowInEasing),
-            )
-        }
-        val effectiveProgress = expandAnimatable.value
 
         // 월 페이저
         val baseYearMonth = remember(selectedDate) { YearMonth.from(selectedDate) }
