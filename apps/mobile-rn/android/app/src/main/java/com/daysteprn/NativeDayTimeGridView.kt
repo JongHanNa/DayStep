@@ -38,18 +38,37 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     var onTodoPressCb: ((String) -> Unit)? = null
     var onHeightChangeCb: ((Double) -> Unit)? = null
 
-    private val composeView = ComposeView(context)
+    private var composeView = ComposeView(context)
+    private var contentSet = false
     private var selectedDate = mutableStateOf(todayStr())
     private var primaryColorHex = mutableStateOf("#6366F1")
     private var todoDataJson = mutableStateOf("[]")
     private var eventDataJson = mutableStateOf("[]")
 
     init {
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-        composeView.setContent {
-            DayTimeGridContent()
+        // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (!contentSet) {
+            contentSet = true
+            composeView = ComposeView(context)
+            addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+            composeView.setContent {
+                DayTimeGridContent()
+            }
+            setupLayoutListener()
         }
-        setupLayoutListener()
+        requestLayout()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        if (contentSet) {
+            removeAllViews()
+            contentSet = false
+        }
     }
 
     private fun setupLayoutListener() {

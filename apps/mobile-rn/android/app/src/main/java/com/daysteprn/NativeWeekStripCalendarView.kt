@@ -27,7 +27,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -79,7 +81,8 @@ data class MonthGridCell(
 
 class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(context) {
 
-    private val composeView = ComposeView(context)
+    private var composeView = ComposeView(context)
+    private var contentSet = false
 
     // Props from RN
     private var selectedDateStr = mutableStateOf(LocalDate.now().toString())
@@ -91,19 +94,31 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
     var onExpandChangeCallback: ((Boolean) -> Unit)? = null
 
     init {
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
-        composeView.setContent {
-            WeekStripCalendarContent()
-        }
-
-        composeView.viewTreeObserver.addOnGlobalLayoutListener {
-            post { requestLayout() }
-        }
+        // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
+        if (!contentSet) {
+            contentSet = true
+            composeView = ComposeView(context)
+            addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+            composeView.setContent {
+                WeekStripCalendarContent()
+            }
+            composeView.viewTreeObserver.addOnGlobalLayoutListener {
+                post { requestLayout() }
+            }
+        }
         requestLayout()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        if (contentSet) {
+            removeAllViews()
+            contentSet = false
+        }
     }
 
     override fun requestLayout() {
@@ -352,26 +367,34 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
                 // 월 페이저
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxSize(),
                 ) { page ->
                     val offset = page - CENTER_MONTH_INDEX
                     val yearMonth = baseYearMonth.plusMonths(offset.toLong())
                     val rows = remember(yearMonth) { buildMonthGrid(yearMonth) }
                     val selectedRowIndex = findSelectedRowIndex(rows, selectedDate)
 
-                    // 선택된 행이 상단에 고정되도록 오프셋
-                    val rowHeightPx = with(density) { (CELL_HEIGHT + CELL_SPACING).toPx() }
-                    val offsetY = -selectedRowIndex * rowHeightPx * (1f - expandProgress)
+                    // 축소 시: 선택된 주만 표시
+                    // 확장 시: 전체 월 표시 (graphicsLayer offset 방식 대신 단순화)
+                    val visibleRows = if (expandProgress < 0.01f) {
+                        // 완전 축소 — 선택된 주만
+                        listOf(rows.getOrElse(selectedRowIndex) { rows.first() })
+                    } else {
+                        rows
+                    }
+                    val visibleOffset = if (expandProgress >= 0.01f) {
+                        val rowHeightPx = with(density) { (CELL_HEIGHT + CELL_SPACING).toPx() }
+                        -selectedRowIndex * rowHeightPx * (1f - expandProgress)
+                    } else 0f
 
                     MonthGridView(
-                        rows = rows,
+                        rows = visibleRows,
                         selectedDate = selectedDate,
                         today = today,
                         primaryColor = primaryColor,
-                        offsetY = offsetY,
+                        offsetY = visibleOffset,
                         onDateTap = { date ->
                             onDateSelectCallback?.invoke(date.toString())
-                            // 월간 상태에서 날짜 탭 시 축소
                             if (isExpanded) {
                                 isExpanded = false
                                 coroutineScope.launch {
@@ -403,6 +426,7 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .wrapContentHeight(unbounded = true)
                 .graphicsLayer { translationY = offsetY },
         ) {
             rows.forEachIndexed { rowIndex, row ->

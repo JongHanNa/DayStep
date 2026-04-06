@@ -40,7 +40,8 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     var onDateRangeChangeCb: ((String, String) -> Unit)? = null
     var onHeightChangeCb: ((Double) -> Unit)? = null
 
-    private val composeView = ComposeView(context)
+    private var composeView = ComposeView(context)
+    private var contentSet = false
     private var dayCount = mutableIntStateOf(3)
     private var centerDate = mutableStateOf(todayStr())
     private var primaryColorHex = mutableStateOf("#6366F1")
@@ -48,11 +49,29 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     private var eventDataJson = mutableStateOf("{}")
 
     init {
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-        composeView.setContent {
-            MultiDayTimeGridContent()
+        // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (!contentSet) {
+            contentSet = true
+            composeView = ComposeView(context)
+            addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+            composeView.setContent {
+                MultiDayTimeGridContent()
+            }
+            setupLayoutListener()
         }
-        setupLayoutListener()
+        requestLayout()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        if (contentSet) {
+            removeAllViews()
+            contentSet = false
+        }
     }
 
     private fun setupLayoutListener() {
