@@ -95,28 +95,100 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         isExpandedState.value = expanded
     }
 
-    // 콘텐츠 형제 뷰 캐시 (매 프레임 탐색 방지)
+    // 콘텐츠 형제 뷰 캐시
     private var cachedContentView: java.lang.ref.WeakReference<android.view.View>? = null
+    // Choreographer 보간: prop 업데이트가 불규칙해도 60fps 보장
+    private var targetTranslationY = 0f
+    private var currentTranslationY = 0f
+    private var isInterpolating = false
 
     fun setExpandProgress(progress: Float) {
         val p = progress.coerceIn(0f, 1f)
         expandProgressState.value = p
 
-        val contentView = getCachedContentView()
-        if (contentView != null) {
-            // 드래그 중: Hardware Layer 활성화 → GPU 텍스처로 캐싱 → 이동 시 재렌더링 없음
-            if (p > 0.01f && p < 0.99f) {
-                if (contentView.layerType != android.view.View.LAYER_TYPE_HARDWARE) {
-                    contentView.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+        val contentView = getCachedContentView() ?: return
+
+        // Hardware Layer 관리
+        if (p > 0.01f && p < 0.99f) {
+            if (contentView.layerType != android.view.View.LAYER_TYPE_HARDWARE) {
+                contentView.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+            }
+        } else {
+            if (contentView.layerType != android.view.View.LAYER_TYPE_NONE) {
+                contentView.setLayerType(android.view.View.LAYER_TYPE_NONE, null)
+            }
+        }
+
+        // 목표 위치 계산
+        targetTranslationY = calculateDeltaPx(p)
+
+        // Choreographer로 매 프레임 보간 시작
+        if (!isInterpolating && p > 0.001f) {
+            isInterpolating = true
+            android.view.Choreographer.getInstance().postFrameCallback(interpolationCallback)
+        }
+
+        // 완전 축소 시 즉시 리셋
+        if (p <= 0.001f) {
+            currentTranslationY = 0f
+            targetTranslationY = 0f
+            contentView.translationY = 0f
+            isInterpolating = false
+        }
+    }
+
+    /**
+     * Choreographer 콜백: 매 프레임(16ms)마다 호출
+     * 현재 위치를 목표 위치로 부드럽게 보간 (lerp)
+     * prop 업데이트가 30fps로 와도 이동은 60fps로 부드럽게
+     */
+    private val interpolationCallback = object : android.view.Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
+            val cv = getCachedContentView()
+            if (cv == null) {
+                isInterpolating = false
+                return
+            }
+
+            // 선형 보간: 0.65 = 빠르게 따라가되 프레임 드롭 보상
+            val diff = targetTranslationY - currentTranslationY
+            if (kotlin.math.abs(diff) < 0.5f) {
+                currentTranslationY = targetTranslationY
+                cv.translationY = targetTranslationY
+                if (targetTranslationY <= 0.5f) {
+                    isInterpolating = false
+                    return
                 }
             } else {
-                // 드래그 끝: Hardware Layer 해제 (GPU 메모리 절약)
-                if (contentView.layerType != android.view.View.LAYER_TYPE_NONE) {
-                    contentView.setLayerType(android.view.View.LAYER_TYPE_NONE, null)
-                }
+                currentTranslationY += diff * 0.65f
+                cv.translationY = currentTranslationY
             }
-            updateSiblingTranslationY(p, contentView)
+
+            android.view.Choreographer.getInstance().postFrameCallback(this)
         }
+    }
+
+    private fun calculateDeltaPx(progress: Float): Float {
+        val density = resources.displayMetrics.density
+        val cellHeightDp = 44f
+        val cellSpacingDp = 2f
+        val oneRowHeightDp = cellHeightDp + cellSpacingDp
+
+        val selectedDate = try {
+            java.time.LocalDate.parse(selectedDateStr.value)
+        } catch (_: Exception) {
+            java.time.LocalDate.now()
+        }
+        val yearMonth = java.time.YearMonth.from(selectedDate)
+        val firstOfMonth = yearMonth.atDay(1)
+        val firstDayOffset = firstOfMonth.dayOfWeek.value % 7
+        val totalDays = firstDayOffset + yearMonth.lengthOfMonth() +
+                (6 - yearMonth.atEndOfMonth().dayOfWeek.value % 7)
+        val rowCount = totalDays / 7
+
+        val fullHeightDp = cellHeightDp * rowCount + cellSpacingDp * (rowCount - 1)
+        val deltaHeightDp = fullHeightDp - oneRowHeightDp
+        return deltaHeightDp * density * progress
     }
 
     private fun getCachedContentView(): android.view.View? {
@@ -142,39 +214,6 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
             v = parent
         }
         return result
-    }
-
-    /**
-     * Android View 계층을 탐색하여 콘텐츠 영역의 translationY를 직접 설정
-     * RN Fabric/Yoga/Reanimated를 완전히 우회
-     *
-     * 로직: 부모를 끝까지 올라가면서 "2개 자식 중 내가 아닌 쪽"을 기록.
-     * 가장 바깥쪽(마지막) 매치가 콘텐츠 뷰 (View F).
-     * 중간 매치(menuOverlay 등)는 덮어써져서 무시됨.
-     */
-    private fun updateSiblingTranslationY(progress: Float, contentView: android.view.View) {
-        val density = resources.displayMetrics.density
-        val cellHeightDp = 44f
-        val cellSpacingDp = 2f
-        val oneRowHeightDp = cellHeightDp + cellSpacingDp
-
-        val selectedDate = try {
-            java.time.LocalDate.parse(selectedDateStr.value)
-        } catch (_: Exception) {
-            java.time.LocalDate.now()
-        }
-        val yearMonth = java.time.YearMonth.from(selectedDate)
-        val firstOfMonth = yearMonth.atDay(1)
-        val firstDayOffset = firstOfMonth.dayOfWeek.value % 7
-        val totalDays = firstDayOffset + yearMonth.lengthOfMonth() +
-                (6 - yearMonth.atEndOfMonth().dayOfWeek.value % 7)
-        val rowCount = totalDays / 7
-
-        val fullHeightDp = cellHeightDp * rowCount + cellSpacingDp * (rowCount - 1)
-        val deltaHeightDp = fullHeightDp - oneRowHeightDp
-        val deltaHeightPx = deltaHeightDp * density * progress
-
-        contentView.translationY = deltaHeightPx
     }
 
     override fun onAttachedToWindow() {
