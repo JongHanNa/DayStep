@@ -37,6 +37,7 @@ import {
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useSettingsStore} from '@/stores/settingsStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {useUIStore} from '@/stores/uiStore';
 import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
 import {Canvas, Path, Skia} from '@shopify/react-native-skia';
 // MorePanel 높이 상수 (iOS 25- JS 폴백용)
@@ -120,6 +121,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const plannerViewMode = useSettingsStore(s => s.plannerViewMode);
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
+  const isBottomSheetOpen = useUIStore(s => s.isBottomSheetOpen);
   const {tabBarHorizontalInset, isTablet} = useResponsiveLayout();
   const [morePanelVisible, setMorePanelVisible] = useState(false);
   const [panelContentHeight, setPanelContentHeight] = useState(MORE_PANEL_CONTENT_HEIGHT);
@@ -279,6 +281,11 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isCleaningSession = activeHomeScreen === 'CleaningSession' || activeMoreScreen === 'CleaningSession';
   if (isSleepActive || isSleepGoal || isScreenTimeApps || isCleaningSession) {
     if (__DEV__) console.warn('[CustomTabBar] HIDDEN: sleep/cleaning session', {activeHomeScreen, activeMoreScreen, isSleepActive, isSleepGoal, isScreenTimeApps, isCleaningSession});
+    return null;
+  }
+
+  // 바텀시트(할일 추가 등) 열림 시 탭바 숨김
+  if (isBottomSheetOpen) {
     return null;
   }
 

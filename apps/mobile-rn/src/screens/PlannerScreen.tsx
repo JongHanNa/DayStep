@@ -273,7 +273,7 @@ export default function PlannerScreen() {
                   />
                 </Animated.View>
               ) : (
-                <View style={{height: androidCalHeight, overflow: 'hidden'}}>
+                <View style={{height: androidCalHeight}}>
                   <NativeWeekStripCalendarNative
                     selectedDate={selectedDate}
                     primaryColor={primaryColor}

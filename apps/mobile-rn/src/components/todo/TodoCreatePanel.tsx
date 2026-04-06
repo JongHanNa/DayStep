@@ -22,9 +22,11 @@ import {
   Text,
   Keyboard,
   AppState,
+  Platform,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
+import {useUIStore} from '@/stores/uiStore';
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
@@ -109,17 +111,23 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
       },
     }));
 
+    const setBottomSheetOpen = useUIStore(s => s.setBottomSheetOpen);
+
     const handleSheetChange = useCallback((index: number) => {
       if (index === -1) {
         Keyboard.dismiss();
         setIsOpen(false);
         setActivePop('none');
         setSheetKey(prev => prev + 1);
-      } else if (index >= 0 && pendingFocusRef.current) {
-        pendingFocusRef.current = false;
-        setTimeout(() => titleInputRef.current?.focus(), 100);
+        setBottomSheetOpen(false);
+      } else if (index >= 0) {
+        setBottomSheetOpen(true);
+        if (pendingFocusRef.current) {
+          pendingFocusRef.current = false;
+          setTimeout(() => titleInputRef.current?.focus(), 100);
+        }
       }
-    }, []);
+    }, [setBottomSheetOpen]);
 
     const handleSavePress = useCallback(() => {
       handleSave(() => {

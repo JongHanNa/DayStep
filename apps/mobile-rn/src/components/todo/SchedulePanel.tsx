@@ -5,7 +5,7 @@
  * TodoCreatePanel 위에 별도 시트로 열림 → create UI를 완전히 덮음
  */
 import React, {useCallback, useMemo, useState, useRef, forwardRef, useImperativeHandle} from 'react';
-import {View, Text, StyleSheet, Pressable, ScrollView, Modal} from 'react-native';
+import {View, Text, StyleSheet, Pressable, ScrollView, Modal, Platform} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable, Popover} from '@/components/core';
 import {useTheme} from '@/theme';
@@ -256,6 +256,69 @@ const calStyles = StyleSheet.create({
 });
 
 // ============================================
+// AndroidDurationPicker — mode="countdown" 대체
+// ============================================
+
+function AndroidDurationPicker({
+  durationSeconds,
+  onChange,
+  primaryColor,
+}: {
+  durationSeconds: number;
+  onChange: (seconds: number) => void;
+  primaryColor: string;
+}) {
+  const totalMins = Math.max(0, Math.floor(durationSeconds / 60));
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+
+  const HOUR_OPTIONS = Array.from({length: 6}, (_, i) => i); // 0~5시간
+  const MIN_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 45];
+
+  return (
+    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, paddingVertical: 16}}>
+      {/* 시간 */}
+      <View style={{alignItems: 'center'}}>
+        <Text style={{fontSize: 12, color: '#9CA3AF', marginBottom: 8}}>시간</Text>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', maxWidth: 120}}>
+          {HOUR_OPTIONS.map(h => (
+            <Pressable
+              key={h}
+              onPress={() => onChange((h * 60 + mins) * 60)}
+              style={{
+                paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
+                backgroundColor: hours === h ? primaryColor : '#F3F4F6',
+              }}>
+              <Text style={{fontSize: 14, fontWeight: '600', color: hours === h ? '#FFF' : '#374151'}}>{h}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <Text style={{fontSize: 18, color: '#9CA3AF', marginTop: 20}}>:</Text>
+
+      {/* 분 */}
+      <View style={{alignItems: 'center'}}>
+        <Text style={{fontSize: 12, color: '#9CA3AF', marginBottom: 8}}>분</Text>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', maxWidth: 160}}>
+          {MIN_OPTIONS.map(m => (
+            <Pressable
+              key={m}
+              onPress={() => onChange((hours * 60 + m) * 60)}
+              style={{
+                paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8,
+                backgroundColor: mins === m ? primaryColor : '#F3F4F6',
+              }}>
+              <Text style={{fontSize: 14, fontWeight: '600', color: mins === m ? '#FFF' : '#374151'}}>{String(m).padStart(2, '0')}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ============================================
 // TimePopoverContent
 // ============================================
 
@@ -280,6 +343,8 @@ function TimePopoverContent({
 
   const [durationPickerVisible, setDurationPickerVisible] = useState(false);
   const [tempDuration, setTempDuration] = useState(durMins * 60); // 초 단위
+  // Android: DateTimePicker는 항상 다이얼로그 → 조건부 렌더링 필요
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
 
   function getDurLabel(mins: number): string {
     if (mins < 60) return `${mins}분`;
@@ -346,21 +411,50 @@ function TimePopoverContent({
         <>
           {/* 시작 시간 */}
           <Text style={popContentStyles.sectionLabel}>시작 시간</Text>
-          <DateTimePicker
-            value={form.startTime}
-            mode="time"
-            display="spinner"
-            onChange={(_: DateTimePickerEvent, date?: Date) => {
-              if (!date) return;
-              if (form.endTime) {
-                const dur = form.endTime.getTime() - form.startTime!.getTime();
-                updateField('endTime', new Date(date.getTime() + dur));
-              }
-              updateField('startTime', date);
-            }}
-            style={popContentStyles.startTimePicker}
-            locale="ko"
-          />
+          {Platform.OS === 'ios' ? (
+            <DateTimePicker
+              value={form.startTime}
+              mode="time"
+              display="spinner"
+              onChange={(_: DateTimePickerEvent, date?: Date) => {
+                if (!date) return;
+                if (form.endTime) {
+                  const dur = form.endTime.getTime() - form.startTime!.getTime();
+                  updateField('endTime', new Date(date.getTime() + dur));
+                }
+                updateField('startTime', date);
+              }}
+              style={popContentStyles.startTimePicker}
+              locale="ko"
+            />
+          ) : (
+            <>
+              <Pressable
+                onPress={() => setShowStartTimePicker(true)}
+                style={popContentStyles.androidTimeBtn}>
+                <Text style={popContentStyles.androidTimeBtnText}>
+                  {format(form.startTime, 'a h:mm', {locale: ko})}
+                </Text>
+              </Pressable>
+              {showStartTimePicker && (
+                <DateTimePicker
+                  value={form.startTime}
+                  mode="time"
+                  display="spinner"
+                  onChange={(event: DateTimePickerEvent, date?: Date) => {
+                    setShowStartTimePicker(false);
+                    if (event.type === 'dismissed' || !date) return;
+                    if (form.endTime) {
+                      const dur = form.endTime.getTime() - form.startTime!.getTime();
+                      updateField('endTime', new Date(date.getTime() + dur));
+                    }
+                    updateField('startTime', date);
+                  }}
+                  locale="ko"
+                />
+              )}
+            </>
+          )}
 
           {/* 소요 시간 */}
           <Text style={popContentStyles.sectionLabel}>소요 시간</Text>
@@ -402,22 +496,30 @@ function TimePopoverContent({
             />
             <View style={popContentStyles.durationModal}>
               <Text style={popContentStyles.durationModalTitle}>소요 시간</Text>
-              <DateTimePicker
-                mode="countdown"
-                display="spinner"
-                value={new Date(0)}
-                minuteInterval={5}
-                countDownDuration={tempDuration}
-                locale="ko"
-                onChange={(_: DateTimePickerEvent, date?: Date) => {
-                  if (date) {
-                    const hours = date.getHours();
-                    const minutes = date.getMinutes();
-                    setTempDuration((hours * 60 + minutes) * 60);
-                  }
-                }}
-                style={{height: 180}}
-              />
+              {Platform.OS === 'ios' ? (
+                <DateTimePicker
+                  mode="countdown"
+                  display="spinner"
+                  value={new Date(0)}
+                  minuteInterval={5}
+                  countDownDuration={tempDuration}
+                  locale="ko"
+                  onChange={(_: DateTimePickerEvent, date?: Date) => {
+                    if (date) {
+                      const hours = date.getHours();
+                      const minutes = date.getMinutes();
+                      setTempDuration((hours * 60 + minutes) * 60);
+                    }
+                  }}
+                  style={{height: 180}}
+                />
+              ) : (
+                <AndroidDurationPicker
+                  durationSeconds={tempDuration}
+                  onChange={setTempDuration}
+                  primaryColor={primaryColor}
+                />
+              )}
               <Pressable
                 onPress={() => {
                   const newDurMins = Math.max(1, Math.floor(tempDuration / 60));
@@ -668,6 +770,19 @@ const popContentStyles = StyleSheet.create({
     transform: [{scale: 0.85}],
     marginLeft: -30,
     marginTop: -8,
+  },
+  androidTimeBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    marginBottom: 8,
+    alignSelf: 'flex-start' as const,
+  },
+  androidTimeBtnText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#1F2937',
   },
   durChipRow: {
     flexDirection: 'row',

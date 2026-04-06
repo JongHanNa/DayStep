@@ -79,6 +79,11 @@ class NativeWeekStripCalendarManager : SimpleViewManager<NativeWeekStripCalendar
     @ReactProp(name = "gradientEndY")
     fun setGradientEndY(view: NativeWeekStripCalendarView, value: Float) {}
 
+    @ReactProp(name = "isExpanded")
+    fun setIsExpanded(view: NativeWeekStripCalendarView, expanded: Boolean) {
+        view.setExpanded(expanded)
+    }
+
     override fun getExportedCustomDirectEventTypeConstants(): MutableMap<String, Any> =
         mutableMapOf(
             "topDateSelect"   to mapOf("registrationName" to "onDateSelect"),
