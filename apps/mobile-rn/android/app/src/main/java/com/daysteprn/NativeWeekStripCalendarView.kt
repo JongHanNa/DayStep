@@ -95,14 +95,53 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         isExpandedState.value = expanded
     }
 
-    private var collapsedHeightPx = 0f
-    private var isCollapsedHeightCaptured = false
+    // 콘텐츠 형제 뷰 캐시 (매 프레임 탐색 방지)
+    private var cachedContentView: java.lang.ref.WeakReference<android.view.View>? = null
 
     fun setExpandProgress(progress: Float) {
         val p = progress.coerceIn(0f, 1f)
         expandProgressState.value = p
-        // 형제 콘텐츠 뷰의 translationY를 직접 설정 (Fabric 우회 → 60fps)
-        updateSiblingTranslationY(p)
+
+        val contentView = getCachedContentView()
+        if (contentView != null) {
+            // 드래그 중: Hardware Layer 활성화 → GPU 텍스처로 캐싱 → 이동 시 재렌더링 없음
+            if (p > 0.01f && p < 0.99f) {
+                if (contentView.layerType != android.view.View.LAYER_TYPE_HARDWARE) {
+                    contentView.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                }
+            } else {
+                // 드래그 끝: Hardware Layer 해제 (GPU 메모리 절약)
+                if (contentView.layerType != android.view.View.LAYER_TYPE_NONE) {
+                    contentView.setLayerType(android.view.View.LAYER_TYPE_NONE, null)
+                }
+            }
+            updateSiblingTranslationY(p, contentView)
+        }
+    }
+
+    private fun getCachedContentView(): android.view.View? {
+        cachedContentView?.get()?.let { return it }
+        val found = findContentSibling()
+        if (found != null) {
+            cachedContentView = java.lang.ref.WeakReference(found)
+        }
+        return found
+    }
+
+    private fun findContentSibling(): android.view.View? {
+        var v: android.view.View = this
+        var result: android.view.View? = null
+        for (depth in 0 until 10) {
+            val parent = v.parent as? android.view.ViewGroup ?: break
+            if (parent.childCount == 2) {
+                val child0 = parent.getChildAt(0)
+                val child1 = parent.getChildAt(1)
+                if (child0 == v) result = child1
+                else if (child1 == v) result = child0
+            }
+            v = parent
+        }
+        return result
     }
 
     /**
@@ -113,10 +152,8 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
      * 가장 바깥쪽(마지막) 매치가 콘텐츠 뷰 (View F).
      * 중간 매치(menuOverlay 등)는 덮어써져서 무시됨.
      */
-    private fun updateSiblingTranslationY(progress: Float) {
+    private fun updateSiblingTranslationY(progress: Float, contentView: android.view.View) {
         val density = resources.displayMetrics.density
-
-        // 현재 월의 행 수에 따라 delta 계산
         val cellHeightDp = 44f
         val cellSpacingDp = 2f
         val oneRowHeightDp = cellHeightDp + cellSpacingDp
@@ -137,22 +174,7 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         val deltaHeightDp = fullHeightDp - oneRowHeightDp
         val deltaHeightPx = deltaHeightDp * density * progress
 
-        // 부모를 최대 10단계까지 올라가며, 2개 자식 중 내가 아닌 쪽을 기록
-        // 마지막(가장 바깥) 매치가 콘텐츠 뷰
-        var v: android.view.View = this
-        var contentView: android.view.View? = null
-        for (depth in 0 until 10) {
-            val parent = v.parent as? android.view.ViewGroup ?: break
-            if (parent.childCount == 2) {
-                val child0 = parent.getChildAt(0)
-                val child1 = parent.getChildAt(1)
-                if (child0 == v) contentView = child1
-                else if (child1 == v) contentView = child0
-            }
-            v = parent
-        }
-
-        contentView?.translationY = deltaHeightPx
+        contentView.translationY = deltaHeightPx
     }
 
     override fun onAttachedToWindow() {
