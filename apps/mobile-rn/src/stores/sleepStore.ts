@@ -598,9 +598,10 @@ export const useSleepStore = create<SleepStoreState>()(
         const isPastWakeTime = expectedWake && now > expectedWake;
 
         // --- 스크린타임 연동 활성 시 강화된 복구 로직 ---
-        // Android에서는 ScreenTime 미지원이므로 이 분기 진입 방지
-        if (screenTimeLinkEnabled && Platform.OS === 'ios') {
-          const authStatus = getAuthorizationStatus(); // 동기 함수
+        if (screenTimeLinkEnabled) {
+          const authStatus = Platform.OS === 'ios'
+            ? getAuthorizationStatus() // iOS: 동기 함수
+            : 'approved'; // Android: 서비스 기반이므로 권한 체크 생략
           const permissionRevoked = authStatus === 'denied';
 
           // Case 1: 명시적 권한 거부 → 포기 처리 (notDetermined는 제외)

@@ -78,7 +78,7 @@ data class SleepDay(
 
 class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) {
 
-    private val composeView = ComposeView(context)
+    private var composeView = ComposeView(context)
 
     // Props
     private var viewModeState = mutableStateOf("month")
@@ -105,6 +105,7 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
         super.onAttachedToWindow()
         if (!contentSet) {
             contentSet = true
+            composeView = ComposeView(context)
             addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
             composeView.setContent {
                 SleepGardenContent()
@@ -114,6 +115,14 @@ class NativeSleepGardenView(context: ThemedReactContext) : FrameLayout(context) 
             }
         }
         requestLayout()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        if (contentSet) {
+            removeAllViews()
+            contentSet = false
+        }
     }
 
     override fun requestLayout() {

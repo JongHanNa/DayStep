@@ -25,7 +25,7 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useSleepStore} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
 import {differenceInSeconds} from 'date-fns';
-import {getAuthorizationStatus} from '@/lib/screenTimeManager';
+import {getAuthorizationStatusAsync} from '@/lib/screenTimeManager';
 
 const RING_SIZE = 280;
 const TEAL = '#059669';
@@ -111,7 +111,7 @@ export default function SleepSessionScreen() {
       tickRef.current += 1;
       if (tickRef.current % 30 === 0 && screenTimeLinkEnabled) {
         try {
-          const status = await getAuthorizationStatus();
+          const status = await getAuthorizationStatusAsync();
           if (status !== 'approved') {
             await abandonSleepSession();
             safeGoBack();
@@ -153,7 +153,7 @@ export default function SleepSessionScreen() {
         // Phase 4: foreground 복귀 시 스크린타임 권한 체크
         if (screenTimeLinkEnabled) {
           try {
-            const status = await getAuthorizationStatus();
+            const status = await getAuthorizationStatusAsync();
             if (status !== 'approved') {
               await abandonSleepSession();
               safeGoBack();

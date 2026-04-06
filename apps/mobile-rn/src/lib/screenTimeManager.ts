@@ -1,96 +1,168 @@
 /**
- * Screen Time Manager — iOS FamilyControls + ManagedSettings + DeviceActivity 래핑
- * react-native-device-activity 패키지 사용
+ * Screen Time Manager — 수면 중 앱 차단 통합 매니저
  *
- * 주요 기능:
- * - 스크린타임 권한 요청/확인
- * - 수면 중 비허용 앱 차단 (enableBlockAllMode)
- * - 기상 시 차단 해제 (disableBlockAllMode + resetBlocks)
- * - DeviceActivity 스케줄 등록 (자동 해제)
+ * iOS: FamilyControls + ManagedSettings + DeviceActivity (react-native-device-activity)
+ * Android: Foreground Service + UsageStats + Overlay (AppBlockerModule)
  */
-import {
-  requestAuthorization as _requestAuth,
-  getAuthorizationStatus as _getAuthStatus,
-  enableBlockAllMode,
-  disableBlockAllMode,
-  resetBlocks,
-  startMonitoring,
-  stopMonitoring,
-  configureActions,
-  isAvailable,
-  userDefaultsGet,
-  AuthorizationStatus,
-} from 'react-native-device-activity';
+import {Platform, NativeModules} from 'react-native';
 
 export type AuthStatus = 'approved' | 'denied' | 'notDetermined';
 
-/**
- * FamilyControls 권한 요청 (.individual)
- * 성공 시 resolve (void), 실패 시 throw
- */
-export async function requestAuthorization(): Promise<void> {
-  if (!isAvailable()) {
-    throw new Error('Screen Time is not available on this device');
+// ============================================
+// Platform-specific imports
+// ============================================
+
+let iosModule: any = null;
+if (Platform.OS === 'ios') {
+  try {
+    iosModule = require('react-native-device-activity');
+  } catch {
+    // iOS 모듈 없으면 무시
   }
-  await _requestAuth('individual');
+}
+
+const AndroidBlocker = Platform.OS === 'android' ? NativeModules.AppBlockerModule : null;
+
+// ============================================
+// Public API (Platform-agnostic)
+// ============================================
+
+/**
+ * 스크린타임 기능 사용 가능 여부
+ */
+export function isScreenTimeAvailable(): boolean {
+  if (Platform.OS === 'ios') {
+    if (!iosModule) return false;
+    const available = iosModule.isAvailable();
+    console.log('[ScreenTime] isScreenTimeAvailable (iOS):', available);
+    return available;
+  }
+
+  // Android: 항상 사용 가능 (Android 5.0+)
+  console.log('[ScreenTime] isScreenTimeAvailable (Android): true');
+  return true;
 }
 
 /**
- * 현재 권한 상태 확인 (동기)
+ * 권한 요청
+ * iOS: FamilyControls 권한 (.individual)
+ * Android: 오버레이 + 사용 접근 권한 (설정 화면으로 이동)
+ */
+export async function requestAuthorization(): Promise<void> {
+  if (Platform.OS === 'ios') {
+    if (!iosModule) throw new Error('Screen Time is not available on this device');
+    await iosModule.requestAuthorization('individual');
+    return;
+  }
+
+  // Android: 권한 없으면 순차적으로 설정 화면으로 이동
+  if (!AndroidBlocker) return;
+
+  const hasPerms = await AndroidBlocker.hasRequiredPermissions();
+  if (hasPerms) return;
+
+  // 오버레이 권한 먼저
+  const {default: {canDrawOverlays}} = await import('react-native/Libraries/Utilities/Platform');
+  await AndroidBlocker.requestOverlayPermission();
+  // 사용 접근 권한은 오버레이 설정에서 돌아온 후 별도 요청 필요
+  // → SleepGardenScreen의 useFocusEffect에서 재체크
+}
+
+/**
+ * 현재 권한 상태 확인
  */
 export function getAuthorizationStatus(): AuthStatus {
-  if (!isAvailable()) {
+  if (Platform.OS === 'ios') {
+    if (!iosModule) return 'notDetermined';
+    const status = iosModule.getAuthorizationStatus();
+    if (status === iosModule.AuthorizationStatus?.approved) return 'approved';
+    if (status === iosModule.AuthorizationStatus?.denied) return 'denied';
     return 'notDetermined';
   }
 
-  const status = _getAuthStatus();
-  if (status === AuthorizationStatus.approved) return 'approved';
-  if (status === AuthorizationStatus.denied) return 'denied';
+  // Android: 동기 호출 불가 → 캐시된 값 반환
+  // 실제 체크는 getAuthorizationStatusAsync 사용
   return 'notDetermined';
 }
 
 /**
- * ManagedSettingsStore — 모든 앱 차단 (허용 앱 제외)
+ * 현재 권한 상태 확인 (비동기 — Android용)
+ */
+export async function getAuthorizationStatusAsync(): Promise<AuthStatus> {
+  if (Platform.OS === 'ios') {
+    return getAuthorizationStatus();
+  }
+
+  if (!AndroidBlocker) return 'notDetermined';
+  const status = await AndroidBlocker.getPermissionStatus();
+  return status as AuthStatus;
+}
+
+/**
+ * 모든 앱 차단 (허용 앱 제외) — 수면 세션 시작 시 호출
  */
 export async function shieldAllExceptAllowed(): Promise<void> {
-  console.log('[ScreenTime] shieldAllExceptAllowed called, isAvailable:', isAvailable());
-  if (!isAvailable()) return;
+  if (Platform.OS === 'ios') {
+    console.log('[ScreenTime] shieldAllExceptAllowed called (iOS)');
+    if (!iosModule) return;
+    try {
+      await iosModule.requestAuthorization('individual');
+      iosModule.enableBlockAllMode('sleep-session');
+      const isBlocking = iosModule.userDefaultsGet('isBlockingAll');
+      console.log('[ScreenTime] enableBlockAllMode done, isBlockingAll:', isBlocking);
+    } catch (error) {
+      console.error('[ScreenTime] shieldAllExceptAllowed error:', error);
+    }
+    return;
+  }
 
+  // Android
+  console.log('[ScreenTime] shieldAllExceptAllowed called (Android)');
+  if (!AndroidBlocker) return;
   try {
-    await _requestAuth('individual'); // 이미 인증 시 즉시 resolve, 미인증 시 시스템 프롬프트
-    enableBlockAllMode('sleep-session');
-    const isBlocking = userDefaultsGet<boolean>('isBlockingAll');
-    console.log('[ScreenTime] enableBlockAllMode done, isBlockingAll:', isBlocking);
+    await AndroidBlocker.startBlocking();
+    console.log('[ScreenTime] Android blocking started');
   } catch (error) {
-    console.error('[ScreenTime] shieldAllExceptAllowed error (auth or shield):', error);
+    console.error('[ScreenTime] Android startBlocking error:', error);
   }
 }
 
 /**
  * 모든 차단 해제 — 수면 종료/포기 시 호출
  */
-export function clearShield(): void {
-  if (!isAvailable()) return;
+export async function clearShield(): Promise<void> {
+  if (Platform.OS === 'ios') {
+    if (!iosModule) return;
+    try {
+      iosModule.disableBlockAllMode('sleep-session-end');
+      iosModule.resetBlocks('sleep-session-end');
+    } catch (error) {
+      console.error('[ScreenTime] clearShield error:', error);
+    }
+    return;
+  }
 
+  // Android
+  if (!AndroidBlocker) return;
   try {
-    disableBlockAllMode('sleep-session-end');
-    resetBlocks('sleep-session-end');
+    await AndroidBlocker.stopBlocking();
+    console.log('[ScreenTime] Android blocking stopped');
   } catch (error) {
-    console.error('[ScreenTime] clearShield error:', error);
+    console.error('[ScreenTime] Android stopBlocking error:', error);
   }
 }
 
 /**
  * DeviceActivity 스케줄 등록 — expectedWakeTime까지 shield 유지 후 자동 해제
- * 앱이 강제 종료되어도 DeviceActivityMonitor extension이 해제 처리
+ * iOS 전용: 앱이 강제 종료되어도 DeviceActivityMonitor extension이 해제 처리
+ * Android: Foreground Service가 계속 실행되므로 별도 스케줄 불필요
  */
 export async function scheduleAutoUnshield(wakeTime: Date): Promise<void> {
-  if (!isAvailable()) return;
+  if (Platform.OS !== 'ios' || !iosModule) return;
 
   const now = new Date();
   try {
-    // intervalDidEnd 시 자동으로 shield 해제하도록 action 등록
-    configureActions({
+    iosModule.configureActions({
       activityName: 'sleep-session',
       callbackName: 'intervalDidEnd',
       actions: [
@@ -99,12 +171,12 @@ export async function scheduleAutoUnshield(wakeTime: Date): Promise<void> {
       ],
     });
 
-    await startMonitoring(
+    await iosModule.startMonitoring(
       'sleep-session',
       {
         intervalStart: {
           year: now.getFullYear(),
-          month: now.getMonth() + 1, // JS 0-indexed → DateComponents 1-indexed
+          month: now.getMonth() + 1,
           day: now.getDate(),
           hour: now.getHours(),
           minute: now.getMinutes(),
@@ -120,7 +192,7 @@ export async function scheduleAutoUnshield(wakeTime: Date): Promise<void> {
         },
         repeats: false,
       },
-      [], // events 배열 필수
+      [],
     );
   } catch (error) {
     console.error('[ScreenTime] scheduleAutoUnshield error:', error);
@@ -128,73 +200,59 @@ export async function scheduleAutoUnshield(wakeTime: Date): Promise<void> {
 }
 
 /**
- * DeviceActivity 모니터링 중단
+ * DeviceActivity 모니터링 중단 (iOS 전용)
  */
 export function cancelAutoUnshield(): void {
-  if (!isAvailable()) return;
+  if (Platform.OS !== 'ios' || !iosModule) return;
 
   try {
-    stopMonitoring(['sleep-session']);
+    iosModule.stopMonitoring(['sleep-session']);
   } catch (error) {
     console.error('[ScreenTime] cancelAutoUnshield error:', error);
   }
 }
 
 // ============================================
-// 청소 세션 전용 Shield (별도 ManagedSettingsStore)
+// 청소 세션 전용 Shield (iOS 전용)
 // ============================================
 
-/**
- * 청소 세션 중 앱 차단 (허용 앱 제외)
- */
 export function shieldForCleaning(): void {
-  if (!isAvailable()) return;
+  if (Platform.OS !== 'ios' || !iosModule) return;
   try {
-    enableBlockAllMode('cleaning-session');
+    iosModule.enableBlockAllMode('cleaning-session');
   } catch (error) {
     console.error('[ScreenTime] shieldForCleaning error:', error);
   }
 }
 
-/**
- * 청소 세션 종료 시 차단 해제
- */
 export function clearCleaningShield(): void {
-  if (!isAvailable()) return;
+  if (Platform.OS !== 'ios' || !iosModule) return;
   try {
-    disableBlockAllMode('cleaning-session-end');
-    resetBlocks('cleaning-session-end');
+    iosModule.disableBlockAllMode('cleaning-session-end');
+    iosModule.resetBlocks('cleaning-session-end');
   } catch (error) {
     console.error('[ScreenTime] clearCleaningShield error:', error);
   }
 }
 
 // ============================================
-// 자동 수면 차단 (백그라운드 daily 스케줄)
+// 자동 수면 차단 (iOS 전용 — DeviceActivity daily 스케줄)
 // ============================================
 
-/**
- * 매일 반복 자동 차단 스케줄 등록
- * - sleepTime에 enableBlockAllMode (차단 시작)
- * - wakeTime에 disableBlockAllMode + resetBlocks (차단 해제)
- * repeats: true + hour/minute만 전달 → 매일 반복
- */
 export async function scheduleDailyAutoShield(
-  sleepTime: string, // "HH:mm"
-  wakeTime: string, // "HH:mm"
+  sleepTime: string,
+  wakeTime: string,
 ): Promise<void> {
-  if (!isAvailable()) return;
+  if (Platform.OS !== 'ios' || !iosModule) return;
 
   try {
-    // 수면 시간에 차단 시작
-    configureActions({
+    iosModule.configureActions({
       activityName: 'daily-sleep',
       callbackName: 'intervalDidStart',
       actions: [{type: 'enableBlockAllMode'}],
     });
 
-    // 기상 시간에 차단 해제
-    configureActions({
+    iosModule.configureActions({
       activityName: 'daily-sleep',
       callbackName: 'intervalDidEnd',
       actions: [
@@ -206,7 +264,7 @@ export async function scheduleDailyAutoShield(
     const [sh, sm] = sleepTime.split(':').map(Number);
     const [wh, wm] = wakeTime.split(':').map(Number);
 
-    await startMonitoring(
+    await iosModule.startMonitoring(
       'daily-sleep',
       {
         intervalStart: {hour: sh, minute: sm, second: 0},
@@ -222,24 +280,12 @@ export async function scheduleDailyAutoShield(
   }
 }
 
-/**
- * 자동 수면 차단 스케줄 해제
- */
 export function cancelDailyAutoShield(): void {
-  if (!isAvailable()) return;
+  if (Platform.OS !== 'ios' || !iosModule) return;
   try {
-    stopMonitoring(['daily-sleep']);
+    iosModule.stopMonitoring(['daily-sleep']);
     console.log('[ScreenTime] cancelDailyAutoShield: stopped');
   } catch (error) {
     console.error('[ScreenTime] cancelDailyAutoShield error:', error);
   }
-}
-
-/**
- * 스크린타임 기능 사용 가능 여부
- */
-export function isScreenTimeAvailable(): boolean {
-  const available = isAvailable();
-  console.log('[ScreenTime] isScreenTimeAvailable:', available);
-  return available;
 }

@@ -8,7 +8,7 @@ import Animated, {FadeInDown, useSharedValue, useAnimatedStyle, withSpring} from
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {TreePine, Moon, Sun, Settings, Shield, ChevronRight, MoreHorizontal} from 'lucide-react-native';
 import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
-import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus} from '@/lib/screenTimeManager';
+import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus, getAuthorizationStatusAsync} from '@/lib/screenTimeManager';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {NativeSleepGardenNative} from '@/components/native';
 import {useSleepStore, type GardenDay} from '@/stores/sleepStore';
@@ -75,6 +75,22 @@ export default function SleepGardenScreen() {
       // 반응형 구독 대신 getState()로 직접 읽기 — 재실행 루프 방지
       const {screenTimeLinkEnabled: linked, setScreenTimeLinkEnabled: setLinked} =
         useSleepStore.getState();
+
+      // Android: 비동기 권한 체크 필요
+      if (Platform.OS === 'android') {
+        getAuthorizationStatusAsync().then(status => {
+          console.log('[SleepGarden] authStatus (Android):', status, 'linked:', linked);
+          if (status === 'approved') {
+            if (!linked) setLinked(true);
+            return;
+          }
+          if (linked) return;
+          setShowScreenTimeModal(true);
+        });
+        return;
+      }
+
+      // iOS: 동기 권한 체크
       const status = getAuthorizationStatus();
       console.log('[SleepGarden] authStatus:', status, 'linked:', linked);
 
@@ -323,7 +339,9 @@ export default function SleepGardenScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Shield size={32} color={primaryColor} />
-            <Text style={styles.modalTitle}>스크린타임 연동</Text>
+            <Text style={styles.modalTitle}>
+              {Platform.OS === 'ios' ? '스크린타임 연동' : '수면 보호 모드'}
+            </Text>
             <Text style={styles.modalDesc}>
               수면 중 앱 사용을 제한하여{'\n'}더 깊은 수면을 도와드려요
             </Text>
@@ -333,12 +351,17 @@ export default function SleepGardenScreen() {
                   await requestAuthorization(); // void 반환, 실패 시 throw
                   setScreenTimeLinkEnabled(true);
                   setShowScreenTimeModal(false);
-                  navigation.navigate('ScreenTimeApps');
+                  if (Platform.OS === 'ios') {
+                    navigation.navigate('ScreenTimeApps');
+                  }
+                  // Android: requestAuthorization이 설정 화면으로 이동시킴
                 } catch {
                   setShowScreenTimeModal(false);
                   Alert.alert(
                     '권한 필요',
-                    '스크린타임 권한을 허용해주세요.\n다른 앱에서 이미 사용 중인 경우, 해당 앱의 스크린타임 연동을 해제해주세요.',
+                    Platform.OS === 'ios'
+                      ? '스크린타임 권한을 허용해주세요.\n다른 앱에서 이미 사용 중인 경우, 해당 앱의 스크린타임 연동을 해제해주세요.'
+                      : '다른 앱 위에 표시 권한과 사용 접근 권한을 허용해주세요.',
                   );
                 }
               }}
