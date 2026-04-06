@@ -112,6 +112,7 @@ const ANDROID_MENU_ROW_HEIGHT = 56;
 const ANDROID_MENU_COLUMNS = 5;
 
 export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps) {
+  if (__DEV__) console.log('[CustomTabBar] RENDER called, routes:', state.routes.map(r => r.name).join(','));
   const insets = useSafeAreaInsets();
   const {primaryColor} = useTheme();
   const timerState = usePomodoroStore(s => s.timerState);
@@ -261,11 +262,13 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const focusedOptions = descriptors[focusedRoute.key].options;
   const tabBarStyle = focusedOptions.tabBarStyle as ViewStyle | undefined;
   if (tabBarStyle?.display === 'none') {
+    if (__DEV__) console.warn('[CustomTabBar] HIDDEN: tabBarStyle.display=none');
     return null;
   }
 
   // 집중 모드(타이머 실행 중) + Execute 탭이면 탭바 숨김
   if (isTimerActive && focusedRoute.name === 'Execute') {
+    if (__DEV__) console.warn('[CustomTabBar] HIDDEN: timer active + Execute tab');
     return null;
   }
 
@@ -275,12 +278,14 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const isScreenTimeApps = activeHomeScreen === 'ScreenTimeApps' || activeMoreScreen === 'ScreenTimeApps';
   const isCleaningSession = activeHomeScreen === 'CleaningSession' || activeMoreScreen === 'CleaningSession';
   if (isSleepActive || isSleepGoal || isScreenTimeApps || isCleaningSession) {
+    if (__DEV__) console.warn('[CustomTabBar] HIDDEN: sleep/cleaning session', {activeHomeScreen, activeMoreScreen, isSleepActive, isSleepGoal, isScreenTimeApps, isCleaningSession});
     return null;
   }
 
   // 월간 캘린더 업셀 화면 시 탭바 숨김 (grace period 중에는 탭바 유지)
   const isMonthlyUpsell = focusedRoute.name === 'Planner' && plannerViewMode === 'monthlyPlanner' && !hasActiveSubscription && !isInGracePeriod;
   if (isMonthlyUpsell) {
+    if (__DEV__) console.warn('[CustomTabBar] HIDDEN: monthly upsell', {plannerViewMode, hasActiveSubscription, isInGracePeriod});
     return null;
   }
 
@@ -374,6 +379,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
 
   // Android: 네이티브 Compose 탭바 (iOS 26+ 경로와 동일한 핸들러 재사용)
   if (isAndroid) {
+    if (__DEV__) console.log('[CustomTabBar] Android branch reached, nativeTabBarHeight:', nativeTabBarHeight.value, 'tabBarBottom:', tabBarBottom, 'inset:', tabBarHorizontalInset);
     const androidTabs: NativeTabData[] = state.routes.map(route => ({
       name: route.name,
       sfSymbol: SF_SYMBOL_MAP[route.name] ?? 'circle',

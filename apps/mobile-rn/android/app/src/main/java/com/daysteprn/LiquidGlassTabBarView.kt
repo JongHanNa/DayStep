@@ -81,7 +81,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -143,13 +142,33 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
     var onMenuItemPressCallback: ((String) -> Unit)? = null
     var onHeightChangeCallback:  ((Float)  -> Unit)? = null
 
+    private var composeView = ComposeView(context)
+    private var contentSet = false
+
     init {
         background = ColorDrawable(AndroidColor.TRANSPARENT)
-        val composeView = ComposeView(context).apply {
-            setViewCompositionStrategy(
-                ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool
+        // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        if (!isAttachedToWindow) {
+            setMeasuredDimension(
+                MeasureSpec.getSize(widthMeasureSpec),
+                MeasureSpec.getSize(heightMeasureSpec)
             )
-            setContent {
+            return
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        android.util.Log.d("LiquidGlassTabBar", "onAttachedToWindow: contentSet=$contentSet childCount=$childCount")
+        if (!contentSet) {
+            contentSet = true
+            composeView = ComposeView(context)
+            addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+            composeView.setContent {
                 MaterialTheme {
                     LiquidGlassTabBarCompose(
                         tabs          = _tabs.value,
@@ -165,33 +184,34 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
                     )
                 }
             }
+            composeView.viewTreeObserver.addOnGlobalLayoutListener {
+                post { requestLayout() }
+            }
+            android.util.Log.d("LiquidGlassTabBar", "onAttachedToWindow: ComposeView installed & content set")
         }
-        addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-    }
-
-    /**
-     * RN Fabric이 뷰를 윈도우에 attach하기 전에 measure를 호출할 수 있음.
-     * ComposeView가 아직 attach되지 않았으면 measure를 스킵해서 크래시 방지.
-     */
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (!isAttachedToWindow) {
-            setMeasuredDimension(
-                MeasureSpec.getSize(widthMeasureSpec),
-                MeasureSpec.getSize(heightMeasureSpec)
-            )
-            return
-        }
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-    }
-
-    /**
-     * attach 전 onMeasure 가드로 스킵된 초기 measure를 보상.
-     * API 29 등 구버전에서는 attach 후 자동 re-measure가 발생하지 않아
-     * ComposeView가 0 크기로 남는 문제 해결.
-     */
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
         requestLayout()
+    }
+
+    override fun requestLayout() {
+        super.requestLayout()
+        // RN Fabric이 requestLayout을 무시할 수 있으므로 강제 measure/layout
+        post {
+            if (!isAttachedToWindow || width <= 0) return@post
+            measure(
+                MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
+            )
+            layout(left, top, right, bottom)
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        android.util.Log.d("LiquidGlassTabBar", "onDetachedFromWindow: contentSet=$contentSet")
+        super.onDetachedFromWindow()
+        if (contentSet) {
+            removeAllViews()
+            contentSet = false
+        }
     }
 
     // Prop setters (RN ViewManager → 여기서 state 갱신)
