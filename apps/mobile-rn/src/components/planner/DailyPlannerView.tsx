@@ -4,7 +4,7 @@
  * ScreenContainer 없이 내부 컨텐츠만 제공
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Text, View, SectionList, RefreshControl, StyleSheet, Alert, Platform} from 'react-native';
+import {Text, View, SectionList, RefreshControl, StyleSheet, Alert, Platform, PixelRatio} from 'react-native';
 import {NativeWeekStripCalendarNative} from '@/components/native';
 import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -347,8 +347,26 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
     [postponeTodo, handleFocusTodo, fetchTodosForDate, selectedDate],
   );
 
-  // Android: 네이티브 Compose view의 높이를 React state로 추적 (Yoga 레이아웃 동기화용)
-  const [androidCalHeight, setAndroidCalHeight] = useState(130);
+  // Android: 고정 높이 래퍼 + SharedValue로 expand progress 제어
+  const [androidCalHeight] = useState(130);
+  const androidExpandProgress = useSharedValue(0);
+
+  // Android: 콘텐츠 translateY — expandProgress 기반 (UI thread, 60fps)
+  const androidContentDeltaPx = useMemo(() => {
+    if (Platform.OS !== 'android') return 0;
+    const d = new Date(selectedDate);
+    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const rows = Math.ceil((firstDay + daysInMonth) / 7);
+    const deltaDp = 44 * (rows - 1) + 2 * (rows - 2); // cellHeight=44, cellSpacing=2
+    return deltaDp * PixelRatio.get();
+  }, [selectedDate]);
+  const androidContentStyle = useAnimatedStyle(() => {
+    if (Platform.OS !== 'android') return {};
+    return {
+      transform: [{translateY: androidExpandProgress.value * androidContentDeltaPx}],
+    };
+  });
 
   return (
     <View style={{flex: 1}}>
@@ -373,9 +391,9 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
             />
           </Animated.View>
         ) : (
-          /* Android: absoluteFill는 Compose view에서 height 0 순환 문제 발생
-             → 명시적 높이 래퍼 + 네이티브 뷰 자연 사이징으로 해결 */
-          <View style={{height: androidCalHeight, overflow: 'hidden'}}>
+          /* Android: 고정 높이 래퍼 + overflow visible로 캘린더 확장 시 오버플로 표시
+             → expandProgressValue로 UI thread에서 60fps 제어 */
+          <View style={{height: androidCalHeight, zIndex: 10, overflow: 'visible'}}>
             <NativeWeekStripCalendarNative
               selectedDate={selectedDate}
               primaryColor={primaryColor}
@@ -385,12 +403,8 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
               gradientEndX={gradient.end.x}
               gradientEndY={gradient.end.y}
               onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
-              onHeightChange={(e) => {
-                const h = e.nativeEvent.height;
-                if (h > 0 && Math.abs(h - androidCalHeight) > 1) {
-                  setAndroidCalHeight(h);
-                }
-              }}
+              expandProgressValue={androidExpandProgress}
+              onHeightChange={() => {}}
               onExpandChange={() => {}}
               style={{alignSelf: 'stretch'}}
             />
@@ -409,6 +423,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
         </View>
       </View>
 
+      <Animated.View style={[{flex: 1}, Platform.OS === 'android' && androidContentStyle]}>
       <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging} onPageChange={handlePageChange}>
         {/* Page 0: 시간대별 할일 리스트 */}
         <View style={{flex: 1}}>
@@ -481,6 +496,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
         {/* Page 1: 우선순위 매트릭스 + 하기 싫지만 해야 할 일 + 보상/칭찬/감사 */}
         <PlannerPage2 onMatrixAdd={handleMatrixAdd} />
       </SwipeablePages>
+      </Animated.View>
 
       {/* FAB (할일 추가) */}
       <Animated.View entering={FadeIn.delay(400).duration(300)} style={styles.fabContainer}>

@@ -4,7 +4,7 @@
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Modal, Platform} from 'react-native';
+import {View, Text, StyleSheet, Modal, Platform, PixelRatio} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, type SharedValue} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer, gradientPresets} from '@/components/core';
@@ -54,9 +54,26 @@ export default function PlannerScreen() {
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
   const [showPaywallModal, setShowPaywallModal] = useState(false);
-  // Android: 캘린더 확장/축소 — 네이티브 Kotlin에서 형제 뷰 translationY 직접 제어
+  // Android: 캘린더 확장/축소 — Reanimated SharedValue로 UI thread 60fps 제어
   const [androidCalHeight] = useState(130);
   const androidExpandProgress = useSharedValue(0);
+
+  // Android 일 뷰: 콘텐츠 translateY 계산
+  const androidContentDeltaPx = useMemo(() => {
+    if (Platform.OS !== 'android') return 0;
+    const d = new Date(selectedDate);
+    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const rows = Math.ceil((firstDay + daysInMonth) / 7);
+    const deltaDp = 44 * (rows - 1) + 2 * (rows - 2);
+    return deltaDp * PixelRatio.get();
+  }, [selectedDate]);
+  const androidDayContentStyle = useAnimatedStyle(() => {
+    if (Platform.OS !== 'android') return {};
+    return {
+      transform: [{translateY: androidExpandProgress.value * androidContentDeltaPx}],
+    };
+  });
 
   const handleUpgrade = useCallback(() => {
     setShowPaywallModal(true);
@@ -292,7 +309,7 @@ export default function PlannerScreen() {
               )}
               {menuOverlay}
             </View>
-            <View style={{flex: 1, position: 'relative'}}>
+            <Animated.View style={[{flex: 1, position: 'relative'}, Platform.OS === 'android' && androidDayContentStyle]}>
               <NativeDayTimeGridNative
                 selectedDate={selectedDate}
                 primaryColor={primaryColor}
@@ -303,7 +320,7 @@ export default function PlannerScreen() {
                 onHeightChange={() => {}}
                 style={{flex: 1}}
               />
-            </View>
+            </Animated.View>
           </View>
         );
       case '3day':

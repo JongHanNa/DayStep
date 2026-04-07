@@ -95,76 +95,8 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         isExpandedState.value = expanded
     }
 
-    // 콘텐츠 형제 뷰 캐시
-    private var cachedContentView: java.lang.ref.WeakReference<android.view.View>? = null
-
     fun setExpandProgress(progress: Float) {
-        val p = progress.coerceIn(0f, 1f)
-        expandProgressState.value = p
-
-        val contentView = getCachedContentView() ?: return
-
-        // Hardware Layer 관리
-        if (p > 0.01f && p < 0.99f) {
-            if (contentView.layerType != android.view.View.LAYER_TYPE_HARDWARE) {
-                contentView.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
-            }
-        } else {
-            if (contentView.layerType != android.view.View.LAYER_TYPE_NONE) {
-                contentView.setLayerType(android.view.View.LAYER_TYPE_NONE, null)
-            }
-        }
-
-        // 직접 translationY 설정 (보간 없이 즉시, 캘린더와 동일 프레임)
-        contentView.translationY = calculateDeltaPx(p)
-    }
-
-    private fun calculateDeltaPx(progress: Float): Float {
-        val density = resources.displayMetrics.density
-        val cellHeightDp = 44f
-        val cellSpacingDp = 2f
-        val oneRowHeightDp = cellHeightDp + cellSpacingDp
-
-        val selectedDate = try {
-            java.time.LocalDate.parse(selectedDateStr.value)
-        } catch (_: Exception) {
-            java.time.LocalDate.now()
-        }
-        val yearMonth = java.time.YearMonth.from(selectedDate)
-        val firstOfMonth = yearMonth.atDay(1)
-        val firstDayOffset = firstOfMonth.dayOfWeek.value % 7
-        val totalDays = firstDayOffset + yearMonth.lengthOfMonth() +
-                (6 - yearMonth.atEndOfMonth().dayOfWeek.value % 7)
-        val rowCount = totalDays / 7
-
-        val fullHeightDp = cellHeightDp * rowCount + cellSpacingDp * (rowCount - 1)
-        val deltaHeightDp = fullHeightDp - oneRowHeightDp
-        return deltaHeightDp * density * progress
-    }
-
-    private fun getCachedContentView(): android.view.View? {
-        cachedContentView?.get()?.let { return it }
-        val found = findContentSibling()
-        if (found != null) {
-            cachedContentView = java.lang.ref.WeakReference(found)
-        }
-        return found
-    }
-
-    private fun findContentSibling(): android.view.View? {
-        var v: android.view.View = this
-        var result: android.view.View? = null
-        for (depth in 0 until 10) {
-            val parent = v.parent as? android.view.ViewGroup ?: break
-            if (parent.childCount == 2) {
-                val child0 = parent.getChildAt(0)
-                val child1 = parent.getChildAt(1)
-                if (child0 == v) result = child1
-                else if (child1 == v) result = child0
-            }
-            v = parent
-        }
-        return result
+        expandProgressState.value = progress.coerceIn(0f, 1f)
     }
 
     override fun onAttachedToWindow() {
