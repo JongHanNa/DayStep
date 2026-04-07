@@ -4,7 +4,7 @@
  * ScreenContainer 없이 내부 컨텐츠만 제공
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Text, View, SectionList, RefreshControl, StyleSheet, Alert, Platform, PixelRatio} from 'react-native';
+import {Text, View, SectionList, RefreshControl, StyleSheet, Alert, Platform} from 'react-native';
 import {NativeWeekStripCalendarNative} from '@/components/native';
 import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -351,20 +351,19 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
   const [androidCalHeight] = useState(130);
   const androidExpandProgress = useSharedValue(0);
 
-  // Android: 콘텐츠 translateY — expandProgress 기반 (UI thread, 60fps)
-  const androidContentDeltaPx = useMemo(() => {
+  // Android: 콘텐츠 translateY — expandProgress 기반 (UI thread, 60fps, dp 단위)
+  const androidContentDeltaDp = useMemo(() => {
     if (Platform.OS !== 'android') return 0;
     const d = new Date(selectedDate);
     const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
     const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
     const rows = Math.ceil((firstDay + daysInMonth) / 7);
-    const deltaDp = 44 * (rows - 1) + 2 * (rows - 2); // cellHeight=44, cellSpacing=2
-    return deltaDp * PixelRatio.get();
+    return 44 * (rows - 1) + 2 * (rows - 2); // cellHeight=44, cellSpacing=2
   }, [selectedDate]);
   const androidContentStyle = useAnimatedStyle(() => {
     if (Platform.OS !== 'android') return {};
     return {
-      transform: [{translateY: androidExpandProgress.value * androidContentDeltaPx}],
+      transform: [{translateY: androidExpandProgress.value * androidContentDeltaDp}],
     };
   });
 

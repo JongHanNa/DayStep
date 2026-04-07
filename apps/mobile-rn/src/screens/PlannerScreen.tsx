@@ -4,7 +4,7 @@
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Modal, Platform, PixelRatio} from 'react-native';
+import {View, Text, StyleSheet, Modal, Platform} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, type SharedValue} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer, gradientPresets} from '@/components/core';
@@ -58,20 +58,19 @@ export default function PlannerScreen() {
   const [androidCalHeight] = useState(130);
   const androidExpandProgress = useSharedValue(0);
 
-  // Android 일 뷰: 콘텐츠 translateY 계산
-  const androidContentDeltaPx = useMemo(() => {
+  // Android 일 뷰: 콘텐츠 translateY 계산 (dp 단위)
+  const androidContentDeltaDp = useMemo(() => {
     if (Platform.OS !== 'android') return 0;
     const d = new Date(selectedDate);
     const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
     const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
     const rows = Math.ceil((firstDay + daysInMonth) / 7);
-    const deltaDp = 44 * (rows - 1) + 2 * (rows - 2);
-    return deltaDp * PixelRatio.get();
+    return 44 * (rows - 1) + 2 * (rows - 2);
   }, [selectedDate]);
   const androidDayContentStyle = useAnimatedStyle(() => {
     if (Platform.OS !== 'android') return {};
     return {
-      transform: [{translateY: androidExpandProgress.value * androidContentDeltaPx}],
+      transform: [{translateY: androidExpandProgress.value * androidContentDeltaDp}],
     };
   });
 
