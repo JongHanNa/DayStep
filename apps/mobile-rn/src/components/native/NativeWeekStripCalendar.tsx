@@ -4,14 +4,11 @@
  * iOS: SwiftUI/UIKit 네이티브 컴포넌트 (자체 드래그 처리)
  * Android: Jetpack Compose 네이티브 컴포넌트 (자체 드래그/스와이프/탭 처리)
  *          → onExpandProgressChange 이벤트로 expandProgress를 RN SharedValue에 전달
- *          → Reanimated useEvent로 UI thread에서 직접 처리 (60fps)
  */
 import React, {useCallback, useRef, useState} from 'react';
 import {Platform, requireNativeComponent, View} from 'react-native';
-import Animated, {
+import {
   useSharedValue,
-  useAnimatedProps,
-  useEvent,
   type SharedValue,
 } from 'react-native-reanimated';
 
@@ -37,18 +34,13 @@ interface NativeWeekStripCalendarProps {
 const NativeWeekStripCalendarView =
   requireNativeComponent<NativeWeekStripCalendarProps>('NativeWeekStripCalendar');
 
-const AnimatedNativeWeekStrip = Animated.createAnimatedComponent(
-  NativeWeekStripCalendarView,
-);
-
 /**
  * Android 전용 래퍼: 네이티브 Compose가 드래그/스와이프/탭 모두 자체 처리
- * → onExpandProgressChange 이벤트를 useEvent로 UI thread에서 수신하여 SharedValue 업데이트
+ * onExpandProgressChange → JS 콜백으로 SharedValue 업데이트
  */
 function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
   const [expanded, setExpanded] = useState(false);
   const expandedRef = useRef(false);
-  // 부모에서 전달받은 SharedValue 사용 (없으면 자체 생성)
   const internalProgress = useSharedValue(0);
   const progress = props.expandProgressValue ?? internalProgress;
 
@@ -69,26 +61,24 @@ function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
     [props.onExpandChange],
   );
 
-  // Reanimated useEvent: 네이티브 expandProgressChange 이벤트를 UI thread에서 직접 수신
-  const progressEventHandler = useEvent<{progress: number}>(
-    (event) => {
-      'worklet';
-      progress.value = event.progress;
+  const handleProgressChange = useCallback(
+    (e: {nativeEvent: {progress: number}}) => {
+      progress.value = e.nativeEvent.progress;
     },
-    ['onExpandProgressChange'],
+    [progress],
   );
 
   const {style, expandProgressValue: _, ...restProps} = props;
 
   return (
     <View style={style}>
-      <AnimatedNativeWeekStrip
+      <NativeWeekStripCalendarView
         {...restProps}
         style={{flex: 1}}
         isExpanded={expanded}
         onHeightChange={handleHeightChange}
         onExpandChange={handleExpandChange}
-        onExpandProgressChange={progressEventHandler}
+        onExpandProgressChange={handleProgressChange}
       />
     </View>
   );

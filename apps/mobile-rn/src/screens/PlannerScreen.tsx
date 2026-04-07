@@ -73,6 +73,15 @@ export default function PlannerScreen() {
       transform: [{translateY: androidExpandProgress.value * androidContentDeltaDp}],
     };
   });
+  // Android: 캘린더 래퍼 높이 — expandProgress에 따라 동적 (터치 영역 확장)
+  const androidCalWrapperStyle = useAnimatedStyle(() => {
+    if (Platform.OS !== 'android') return {};
+    return {
+      height: androidCalHeight + androidExpandProgress.value * androidContentDeltaDp,
+      zIndex: 10,
+      overflow: 'visible' as const,
+    };
+  });
 
   const handleUpgrade = useCallback(() => {
     setShowPaywallModal(true);
@@ -290,7 +299,7 @@ export default function PlannerScreen() {
                   />
                 </Animated.View>
               ) : (
-                <View style={{height: androidCalHeight, zIndex: 10, overflow: 'visible'}}>
+                <Animated.View style={androidCalWrapperStyle}>
                   <NativeWeekStripCalendarNative
                     selectedDate={selectedDate}
                     primaryColor={primaryColor}
@@ -304,11 +313,11 @@ export default function PlannerScreen() {
                     onHeightChange={() => {}}
                     style={{alignSelf: 'stretch'}}
                   />
-                </View>
+                </Animated.View>
               )}
               {menuOverlay}
             </View>
-            <Animated.View style={[{flex: 1, position: 'relative'}, Platform.OS === 'android' && androidDayContentStyle]}>
+            <View style={{flex: 1, position: 'relative'}}>
               <NativeDayTimeGridNative
                 selectedDate={selectedDate}
                 primaryColor={primaryColor}
@@ -319,7 +328,7 @@ export default function PlannerScreen() {
                 onHeightChange={() => {}}
                 style={{flex: 1}}
               />
-            </Animated.View>
+            </View>
           </View>
         );
       case '3day':

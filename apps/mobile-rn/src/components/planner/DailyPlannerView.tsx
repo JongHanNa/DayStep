@@ -366,6 +366,13 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
       transform: [{translateY: androidExpandProgress.value * androidContentDeltaDp}],
     };
   });
+  // Android: 캘린더 래퍼 — absolute + 동적 높이 (터치 영역, Yoga에서 콘텐츠 분리)
+  const androidCalWrapperStyle = useAnimatedStyle(() => {
+    if (Platform.OS !== 'android') return {};
+    return {
+      height: androidCalHeight + androidExpandProgress.value * androidContentDeltaDp,
+    };
+  });
 
   return (
     <View style={{flex: 1}}>
@@ -390,9 +397,11 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
             />
           </Animated.View>
         ) : (
-          /* Android: 고정 높이 래퍼 + overflow visible로 캘린더 확장 시 오버플로 표시
-             → expandProgressValue로 UI thread에서 60fps 제어 */
-          <View style={{height: androidCalHeight, zIndex: 10, overflow: 'visible'}}>
+          /* Android: absolute 래퍼 + 동적 높이 (터치 영역, Yoga 분리) */
+          <Animated.View style={[
+            {position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10},
+            androidCalWrapperStyle,
+          ]}>
             <NativeWeekStripCalendarNative
               selectedDate={selectedDate}
               primaryColor={primaryColor}
@@ -407,8 +416,24 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
               onExpandChange={() => {}}
               style={{alignSelf: 'stretch'}}
             />
+          </Animated.View>
+        )}
+        {Platform.OS === 'ios' && (
+          <View style={styles.menuOverlay} pointerEvents="box-none">
+            <LiquidGlassMenu
+              systemIconName="calendar"
+              iconColor="#9CA3AF"
+              size={36}
+              menuItems={menuItems}
+              onSelect={onMenuSelect}
+              fallbackIcon={<Calendar size={18} color="#9CA3AF" />}
+              testID="planner_view_menu"
+            />
           </View>
         )}
+      </View>
+
+      {Platform.OS === 'android' && (
         <View style={styles.menuOverlay} pointerEvents="box-none">
           <LiquidGlassMenu
             systemIconName="calendar"
@@ -420,9 +445,9 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
             testID="planner_view_menu"
           />
         </View>
-      </View>
+      )}
 
-      <Animated.View style={[{flex: 1}, Platform.OS === 'android' && androidContentStyle]}>
+      <Animated.View style={[{flex: 1, marginTop: Platform.OS === 'android' ? androidCalHeight : 0}, Platform.OS === 'android' && androidContentStyle]}>
       <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging} onPageChange={handlePageChange}>
         {/* Page 0: 시간대별 할일 리스트 */}
         <View style={{flex: 1}}>
