@@ -102,3 +102,14 @@ export const EXECUTION_PARALYSIS_DATA: InfoSection = {
     '수면은 ADHD 뇌의 전두엽을 충전하는 가장 기본적인 방법',
   ],
 };
+
+/** 출처 및 참고 문헌 (Apple Guideline 1.4.1 준수) */
+export const SLEEP_ADHD_SOURCES = [
+  'Hvolby, A. (2015). "Associations of sleep disturbance with ADHD." ADHD Attention Deficit and Hyperactivity Disorders, 7(1), 1–18.',
+  'Coogan, A. N. & McGowan, N. M. (2017). "A systematic review of circadian function, chronotype and chronotherapy in ADHD." ADHD Attention Deficit and Hyperactivity Disorders, 9(3), 129–147.',
+  'Volkow, N. D. et al. (2012). "Sleep deprivation decreases binding of dopamine D2/D3 receptors in the human brain." Journal of Neuroscience, 32(19), 6711–6717.',
+  'Kooij, J. J. S. & Bijlenga, D. (2013). "The circadian rhythm in adult ADHD." Journal of Attention Disorders, 17(7), 550–560.',
+] as const;
+
+export const SLEEP_ADHD_DISCLAIMER =
+  '본 콘텐츠는 교육 목적으로 제공되며, 전문적인 의료 진단이나 치료를 대체하지 않습니다. 수면 문제가 지속되면 전문 의료진과 상담하세요.' as const;

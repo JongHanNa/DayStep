@@ -48,6 +48,16 @@ class NativeWeekStripCalendarManager : SimpleViewManager<NativeWeekStripCalendar
             )
         }
 
+        view.onExpandProgressChangeCallback = { progress ->
+            val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
+            dispatcher?.dispatchEvent(
+                SimpleEvent(
+                    UIManagerHelper.getSurfaceId(context), view.id, "topExpandProgressChange",
+                    Arguments.createMap().apply { putDouble("progress", progress.toDouble()) }
+                )
+            )
+        }
+
         return view
     }
 
@@ -94,5 +104,6 @@ class NativeWeekStripCalendarManager : SimpleViewManager<NativeWeekStripCalendar
             "topDateSelect"   to mapOf("registrationName" to "onDateSelect"),
             "topHeightChange"  to mapOf("registrationName" to "onHeightChange"),
             "topExpandChange"  to mapOf("registrationName" to "onExpandChange"),
+            "topExpandProgressChange" to mapOf("registrationName" to "onExpandProgressChange"),
         )
 }

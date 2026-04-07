@@ -15,7 +15,8 @@ import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {springs, stagger} from '@/theme/animations';
 import {hexWithOpacity} from '@/lib/todoUtils';
-import {ADHD_TOPICS} from '@/constants/adhd-understanding-data';
+import {ADHD_TOPICS, ADHD_UNDERSTANDING_SOURCES, ADHD_UNDERSTANDING_DISCLAIMER} from '@/constants/adhd-understanding-data';
+import {SourcesCitation} from '@/components/common/SourcesCitation';
 
 function AccordionItem({
   topic,
@@ -186,6 +187,7 @@ export function AccordionGuideView() {
           primaryColor={primaryColor}
         />
       ))}
+      <SourcesCitation sources={ADHD_UNDERSTANDING_SOURCES} disclaimer={ADHD_UNDERSTANDING_DISCLAIMER} />
     </ScrollView>
   );
 }

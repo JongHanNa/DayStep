@@ -153,3 +153,14 @@ export const ADHD_TOPICS: ADHDTopic[] = [
 
 /** 읽기 시간 추정 (Design B에서 사용) */
 export const READING_TIMES = ['약 3분', '약 3분', '약 3분', '약 2분', '약 2분'];
+
+/** 출처 및 참고 문헌 (Apple Guideline 1.4.1 준수) */
+export const ADHD_UNDERSTANDING_SOURCES = [
+  'Barkley, R. A. (2015). Attention-Deficit Hyperactivity Disorder: A Handbook for Diagnosis and Treatment. Guilford Press.',
+  'Faraone, S. V. et al. (2021). "The World Federation of ADHD International Consensus Statement." Neuroscience & Biobehavioral Reviews, 128, 789–818.',
+  'Brown, T. E. (2013). A New Understanding of ADHD in Children and Adults: Executive Function Impairments. Routledge.',
+  'Volkow, N. D. et al. (2009). "Evaluating Dopamine Reward Pathway in ADHD." JAMA, 302(10), 1084–1091.',
+] as const;
+
+export const ADHD_UNDERSTANDING_DISCLAIMER =
+  '본 콘텐츠는 교육 목적으로 제공되며, 전문적인 의료 진단이나 치료를 대체하지 않습니다. ADHD 관련 우려가 있다면 전문 의료진과 상담하세요.' as const;

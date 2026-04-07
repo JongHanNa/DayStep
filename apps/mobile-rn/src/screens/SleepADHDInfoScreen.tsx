@@ -12,6 +12,8 @@ import {PrefrontalImpactSection} from '@/components/sleep-adhd-info/PrefrontalIm
 import {ComparisonTableSection} from '@/components/sleep-adhd-info/ComparisonTableSection';
 import {ViciousCycleSection} from '@/components/sleep-adhd-info/ViciousCycleSection';
 import {ExecutionParalysisSection} from '@/components/sleep-adhd-info/ExecutionParalysisSection';
+import {SourcesCitation} from '@/components/common/SourcesCitation';
+import {SLEEP_ADHD_SOURCES, SLEEP_ADHD_DISCLAIMER} from '@/constants/sleep-adhd-info-data';
 
 export default function SleepADHDInfoScreen() {
   const navigation = useNavigation<any>();
@@ -50,6 +52,7 @@ export default function SleepADHDInfoScreen() {
         <ComparisonTableSection />
         <ViciousCycleSection />
         <ExecutionParalysisSection />
+        <SourcesCitation sources={SLEEP_ADHD_SOURCES} disclaimer={SLEEP_ADHD_DISCLAIMER} />
         <View style={{height: 60}} />
       </ScrollView>
     </ScreenContainer>

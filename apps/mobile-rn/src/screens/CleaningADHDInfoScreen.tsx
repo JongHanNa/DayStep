@@ -13,6 +13,8 @@ import {EnergyManagementSection} from '@/components/cleaning-adhd-info/EnergyMan
 import {RoutineAutomationSection} from '@/components/cleaning-adhd-info/RoutineAutomationSection';
 import {CleaningComparisonSection} from '@/components/cleaning-adhd-info/CleaningComparisonSection';
 import {DayStepApproachSection} from '@/components/cleaning-adhd-info/DayStepApproachSection';
+import {SourcesCitation} from '@/components/common/SourcesCitation';
+import {CLEANING_ADHD_SOURCES, CLEANING_ADHD_DISCLAIMER} from '@/constants/cleaning-adhd-info-data';
 
 export default function CleaningADHDInfoScreen() {
   const navigation = useNavigation<any>();
@@ -52,6 +54,7 @@ export default function CleaningADHDInfoScreen() {
         <RoutineAutomationSection />
         <CleaningComparisonSection />
         <DayStepApproachSection />
+        <SourcesCitation sources={CLEANING_ADHD_SOURCES} disclaimer={CLEANING_ADHD_DISCLAIMER} />
         <View style={{height: 60}} />
       </ScrollView>
     </ScreenContainer>

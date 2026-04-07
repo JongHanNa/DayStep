@@ -102,3 +102,13 @@ export const DAYSTEP_APPROACH_DATA: InfoSection = {
     '청소는 의지력 싸움이 아니라, ADHD 뇌에 맞는 시스템의 문제',
   ],
 };
+
+/** 출처 및 참고 문헌 (Apple Guideline 1.4.1 준수) */
+export const CLEANING_ADHD_SOURCES = [
+  'Barkley, R. A. (2012). Executive Functions: What They Are, How They Work, and Why They Evolved. Guilford Press.',
+  'Faraone, S. V. et al. (2021). "The World Federation of ADHD International Consensus Statement." Neuroscience & Biobehavioral Reviews, 128, 789–818.',
+  'Safren, S. A. et al. (2010). "Cognitive-behavioral therapy for ADHD in medication-treated adults." JAMA, 304(8), 875–880.',
+] as const;
+
+export const CLEANING_ADHD_DISCLAIMER =
+  '본 콘텐츠는 교육 목적으로 제공되며, 전문적인 의료 진단이나 치료를 대체하지 않습니다. ADHD 관련 우려가 있다면 전문 의료진과 상담하세요.' as const;
