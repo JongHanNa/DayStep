@@ -3,12 +3,13 @@
  *
  * iOS: SwiftUI/UIKit 네이티브 컴포넌트 (자체 드래그 처리)
  * Android: Jetpack Compose 네이티브 컴포넌트 (자체 드래그/스와이프/탭 처리)
- *          → onExpandProgressChange 이벤트로 expandProgress를 RN SharedValue에 전달
+ *          → onExpandProgressChange를 Reanimated useEvent로 UI thread에서 직접 수신
  */
 import React, {useCallback, useRef, useState} from 'react';
 import {Platform, requireNativeComponent, View} from 'react-native';
-import {
+import Animated, {
   useSharedValue,
+  useEvent,
   type SharedValue,
 } from 'react-native-reanimated';
 
@@ -18,10 +19,9 @@ interface NativeWeekStripCalendarProps {
   onDateSelect: (e: {nativeEvent: {date: string}}) => void;
   onHeightChange: (e: {nativeEvent: {height: number; animated?: boolean}}) => void;
   onExpandChange?: (e: {nativeEvent: {expanded: boolean}}) => void;
-  onExpandProgressChange?: (e: {nativeEvent: {progress: number}}) => void;
+  onExpandProgressChange?: any;
   isExpanded?: boolean;
   expandProgress?: number;
-  /** Android: 부모에서 생성한 SharedValue — expandProgress 이벤트로 업데이트 */
   expandProgressValue?: SharedValue<number>;
   gradientColors?: string[];
   gradientStartX?: number;
@@ -34,9 +34,13 @@ interface NativeWeekStripCalendarProps {
 const NativeWeekStripCalendarView =
   requireNativeComponent<NativeWeekStripCalendarProps>('NativeWeekStripCalendar');
 
+const AnimatedNativeWeekStrip = Animated.createAnimatedComponent(
+  NativeWeekStripCalendarView,
+);
+
 /**
  * Android 전용 래퍼: 네이티브 Compose가 드래그/스와이프/탭 모두 자체 처리
- * onExpandProgressChange → JS 콜백으로 SharedValue 업데이트
+ * useEvent로 onExpandProgressChange를 UI thread에서 직접 수신 → SharedValue 60fps 업데이트
  */
 function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
   const [expanded, setExpanded] = useState(false);
@@ -61,24 +65,26 @@ function AndroidWeekStripCalendar(props: NativeWeekStripCalendarProps) {
     [props.onExpandChange],
   );
 
-  const handleProgressChange = useCallback(
-    (e: {nativeEvent: {progress: number}}) => {
-      progress.value = e.nativeEvent.progress;
+  // Reanimated useEvent: UI thread에서 expandProgress 직접 수신 (브릿지 우회, 60fps)
+  const progressHandler = useEvent<{progress: number}>(
+    (event) => {
+      'worklet';
+      progress.value = event.progress;
     },
-    [progress],
+    ['onExpandProgressChange'],
   );
 
   const {style, expandProgressValue: _, ...restProps} = props;
 
   return (
     <View style={style}>
-      <NativeWeekStripCalendarView
+      <AnimatedNativeWeekStrip
         {...restProps}
         style={{flex: 1}}
         isExpanded={expanded}
         onHeightChange={handleHeightChange}
         onExpandChange={handleExpandChange}
-        onExpandProgressChange={handleProgressChange}
+        onExpandProgressChange={progressHandler}
       />
     </View>
   );
