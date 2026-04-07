@@ -97,10 +97,6 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
 
     // 콘텐츠 형제 뷰 캐시
     private var cachedContentView: java.lang.ref.WeakReference<android.view.View>? = null
-    // Choreographer 보간: prop 업데이트가 불규칙해도 60fps 보장
-    private var targetTranslationY = 0f
-    private var currentTranslationY = 0f
-    private var isInterpolating = false
 
     fun setExpandProgress(progress: Float) {
         val p = progress.coerceIn(0f, 1f)
@@ -119,53 +115,8 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
             }
         }
 
-        // 목표 위치 계산
-        targetTranslationY = calculateDeltaPx(p)
-
-        // Choreographer로 매 프레임 보간 시작
-        if (!isInterpolating && p > 0.001f) {
-            isInterpolating = true
-            android.view.Choreographer.getInstance().postFrameCallback(interpolationCallback)
-        }
-
-        // 완전 축소 시 즉시 리셋
-        if (p <= 0.001f) {
-            currentTranslationY = 0f
-            targetTranslationY = 0f
-            contentView.translationY = 0f
-            isInterpolating = false
-        }
-    }
-
-    /**
-     * Choreographer 콜백: 매 프레임(16ms)마다 호출
-     * 현재 위치를 목표 위치로 부드럽게 보간 (lerp)
-     * prop 업데이트가 30fps로 와도 이동은 60fps로 부드럽게
-     */
-    private val interpolationCallback = object : android.view.Choreographer.FrameCallback {
-        override fun doFrame(frameTimeNanos: Long) {
-            val cv = getCachedContentView()
-            if (cv == null) {
-                isInterpolating = false
-                return
-            }
-
-            // 선형 보간: 0.65 = 빠르게 따라가되 프레임 드롭 보상
-            val diff = targetTranslationY - currentTranslationY
-            if (kotlin.math.abs(diff) < 0.5f) {
-                currentTranslationY = targetTranslationY
-                cv.translationY = targetTranslationY
-                if (targetTranslationY <= 0.5f) {
-                    isInterpolating = false
-                    return
-                }
-            } else {
-                currentTranslationY += diff * 0.65f
-                cv.translationY = currentTranslationY
-            }
-
-            android.view.Choreographer.getInstance().postFrameCallback(this)
-        }
+        // 직접 translationY 설정 (보간 없이 즉시, 캘린더와 동일 프레임)
+        contentView.translationY = calculateDeltaPx(p)
     }
 
     private fun calculateDeltaPx(progress: Float): Float {
