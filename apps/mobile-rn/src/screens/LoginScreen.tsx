@@ -2,12 +2,13 @@
  * 프리미엄 로그인 화면
  * Calm Luxe 그라디언트 + 입장 애니메이션 + 네이티브 OAuth
  */
-import React, {useState} from 'react';
-import {Text, View, ActivityIndicator, Platform, Alert} from 'react-native';
+import React, {useState, useRef, useCallback} from 'react';
+import {Text, View, TextInput, ActivityIndicator, Platform, Alert, Pressable} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {GradientBackground} from '@/components/core';
 import {useAuthStore} from '@/stores/authStore';
+import {supabase} from '@/lib/supabase';
 import {
   signInWithGoogle,
   signInWithApple,
@@ -19,6 +20,47 @@ import {LinkAccountModal} from '@/components/auth/LinkAccountModal';
 export default function LoginScreen() {
   const {signInWithIdToken, loading, error, clearError} = useAuthStore();
   const [authProvider, setAuthProvider] = useState<string | null>(null);
+
+  // 심사용 이메일 로그인 (로고 5번 탭으로 활성화)
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoTap = useCallback(() => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      setShowEmailLogin(prev => !prev);
+    } else {
+      tapTimerRef.current = setTimeout(() => {
+        tapCountRef.current = 0;
+      }, 2000);
+    }
+  }, []);
+
+  const handleEmailSignIn = async () => {
+    if (!email || !password) return;
+    setAuthProvider('email');
+    clearError();
+    try {
+      const {data, error: authError} = await supabase.auth.signInWithPassword({email, password});
+      if (authError) throw authError;
+      if (data.session) {
+        useAuthStore.setState({
+          user: data.session.user,
+          session: data.session,
+          isAuthenticated: true,
+        });
+      }
+    } catch (err: any) {
+      Alert.alert('로그인 실패', err.message ?? '이메일 로그인 중 오류가 발생했습니다');
+    } finally {
+      setAuthProvider(null);
+    }
+  };
 
   // 계정 연결 모달 state
   const [linkModalVisible, setLinkModalVisible] = useState(false);
@@ -133,11 +175,13 @@ export default function LoginScreen() {
         style={{flex: 1}}>
         <View className="flex-1 justify-center items-center px-8">
           {/* 로고 + 인사 */}
-          <Animated.Text
-            entering={FadeIn.duration(800)}
-            className="text-5xl font-bold text-gray-900 mb-2">
-            DayStep
-          </Animated.Text>
+          <Pressable onPress={handleLogoTap}>
+            <Animated.Text
+              entering={FadeIn.duration(800)}
+              className="text-5xl font-bold text-gray-900 mb-2">
+              DayStep
+            </Animated.Text>
+          </Pressable>
           <Animated.Text
             entering={FadeInDown.delay(200).duration(500)}
             className="text-base text-gray-500 mb-3 text-center">
@@ -200,6 +244,46 @@ export default function LoginScreen() {
                   </>
                 )}
               </AnimatedPressable>
+            )}
+
+            {/* 심사용 이메일 로그인 (로고 5번 탭 시 표시) */}
+            {showEmailLogin && (
+              <Animated.View entering={FadeInDown.duration(300)} className="mt-4 gap-2">
+                <View className="border border-gray-200 rounded-xl bg-white px-4 py-3">
+                  <TextInput
+                    placeholder="이메일"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    className="text-base text-gray-700"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+                <View className="border border-gray-200 rounded-xl bg-white px-4 py-3">
+                  <TextInput
+                    placeholder="비밀번호"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    className="text-base text-gray-700"
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+                <AnimatedPressable
+                  onPress={handleEmailSignIn}
+                  disabled={isLoading}
+                  hapticType="medium"
+                  className="bg-indigo-500 px-6 py-4 rounded-2xl items-center">
+                  {authProvider === 'email' ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text className="text-base font-semibold text-white">
+                      이메일로 로그인
+                    </Text>
+                  )}
+                </AnimatedPressable>
+              </Animated.View>
             )}
 
             {/* DEV: 개발용 스킵 */}
