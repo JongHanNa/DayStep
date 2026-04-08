@@ -147,9 +147,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
   const postponeRef = useRef<PostponeBottomSheetRef>(null);
   const postponingTodoRef = useRef<Todo | null>(null);
 
-  useEffect(() => {
-    fetchTodosForDate(selectedDate);
-  }, []);
+  // 중복 fetch 제거: useFocusRefetch가 마운트 시에도 실행되므로 별도 useEffect 불필요
 
   useEffect(() => {
     if (isConnected && selectedDate) {

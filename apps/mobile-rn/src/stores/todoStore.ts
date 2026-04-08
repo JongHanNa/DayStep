@@ -212,14 +212,28 @@ export const useTodoStore = create<TodoState>()(
             .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
             .map(t => t.id);
 
-          if (recurringIds.length > 0) {
-            const {data: exclusions} = await supabase
-              .from('todo_exclusions')
-              .select('parent_todo_id, exclusion_reason')
-              .eq('excluded_date', date)
-              .in('parent_todo_id', recurringIds);
+          let completionData: TodoCompletion[] = [];
 
-            // deleted/postponed exclusion 빌드 (exclusions 없을 수도 있으므로 항상 실행)
+          if (recurringIds.length > 0) {
+            // exclusions + completions 병렬 실행 (네트워크 대기 시간 절감)
+            const [exclusionsResult, completionsResult] = await Promise.all([
+              supabase
+                .from('todo_exclusions')
+                .select('parent_todo_id, exclusion_reason')
+                .eq('excluded_date', date)
+                .in('parent_todo_id', recurringIds),
+              supabase
+                .from('todo_completions')
+                .select('id, todo_id, user_id, completion_date')
+                .eq('completion_date', date)
+                .eq('user_id', userId)
+                .in('todo_id', recurringIds),
+            ]);
+
+            const exclusions = exclusionsResult.data;
+            const completions = completionsResult.data;
+
+            // deleted/postponed exclusion 빌드
             const excludedIds = new Set(
               (exclusions ?? [])
                 .filter(e => e.exclusion_reason === 'deleted' || e.exclusion_reason === 'postponed')
@@ -228,7 +242,6 @@ export const useTodoStore = create<TodoState>()(
             filteredData = filteredData.filter(t => !excludedIds.has(t.id));
 
             // not_needed/missed → todo_exclusions 기준으로 skip_status 결정
-            // (DB의 stale skip_status 초기화 포함 — 반복 할일은 항상 exclusion 기준)
             const skipMap = new Map<string, string>();
             (exclusions ?? [])
               .filter(e => e.exclusion_reason === 'not_needed' || e.exclusion_reason === 'missed')
@@ -236,27 +249,13 @@ export const useTodoStore = create<TodoState>()(
 
             filteredData = filteredData.map(t => {
               const isRecurring = t.recurrence_pattern && t.recurrence_pattern !== 'none';
-              if (!isRecurring) return t; // 일반 할일: DB skip_status 그대로 사용
-              // 반복 할일: exclusion에 있으면 적용, 없으면 null로 초기화 (stale 데이터 방지)
+              if (!isRecurring) return t;
               return {...t, skip_status: skipMap.get(t.id) ?? null};
             });
-          }
 
-          // 반복할일 날짜별 완료 상태 조회
-          let completionData: TodoCompletion[] = [];
-          // exclusion 필터 후 남은 반복할일 재계산
-          const remainingRecurringIds = filteredData
-            .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
-            .map(t => t.id);
-
-          if (remainingRecurringIds.length > 0) {
-            const {data: completions} = await supabase
-              .from('todo_completions')
-              .select('id, todo_id, user_id, completion_date')
-              .eq('completion_date', date)
-              .eq('user_id', userId)
-              .in('todo_id', remainingRecurringIds);
-            completionData = (completions ?? []) as TodoCompletion[];
+            // excluded된 할일의 completion은 제외
+            completionData = ((completions ?? []) as TodoCompletion[])
+              .filter(c => !excludedIds.has(c.todo_id));
           }
 
           // 반복할일의 completed 필드를 날짜별 상태로 덮어씀
