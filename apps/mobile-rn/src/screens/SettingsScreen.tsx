@@ -11,6 +11,7 @@ import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import {AccountView} from '@/components/settings/AccountView';
 import {DevNotificationsView} from '@/components/settings/DevNotificationsView';
 import {AdminPlanLimitsScreen} from '@/screens/admin/AdminPlanLimitsScreen';
+import {QAChecklistScreen} from '@/screens/admin/QAChecklistScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import Animated, {FadeIn} from 'react-native-reanimated';
 
@@ -20,7 +21,8 @@ type SettingsView =
   | 'subscription'
   | 'account'
   | 'devNotifications'
-  | 'adminPlanLimits';
+  | 'adminPlanLimits'
+  | 'qaChecklist';
 
 export default function SettingsScreen() {
   const [view, setView] = useState<SettingsView>('main');
@@ -54,6 +56,7 @@ export default function SettingsScreen() {
         {view === 'theme' && <ThemeSettingsView onBack={goBack} />}
         {view === 'account' && <AccountView onBack={goBack} />}
         {view === 'adminPlanLimits' && <AdminPlanLimitsScreen onBack={goBack} />}
+        {view === 'qaChecklist' && <QAChecklistScreen onBack={goBack} />}
         {__DEV__ && view === 'devNotifications' && (
           <DevNotificationsView onBack={goBack} />
         )}

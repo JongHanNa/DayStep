@@ -18,6 +18,7 @@ import {
   Calendar,
   ChevronRight,
   Crown,
+  ClipboardCheck,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
@@ -206,6 +207,15 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
               subtitle="Free/Pro 엔티티 한도 설정"
               showChevron
               onPress={() => onNavigate('adminPlanLimits')}
+            />
+            <View style={styles.divider} />
+            <SettingsRow
+              icon={ClipboardCheck}
+              iconColor="#10B981"
+              title="QA 체크리스트"
+              subtitle="릴리즈 전 수동 검증 체크리스트"
+              showChevron
+              onPress={() => onNavigate('qaChecklist')}
             />
             <View style={styles.divider} />
             <View style={styles.adminSubRow}>
