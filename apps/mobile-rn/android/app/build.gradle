@@ -93,6 +93,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 3
         versionName "1.0.2"
+        resValue "string", "build_config_package", "com.daysteprn"
     }
     signingConfigs {
         debug {

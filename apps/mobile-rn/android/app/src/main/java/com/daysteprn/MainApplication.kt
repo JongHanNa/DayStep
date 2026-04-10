@@ -22,6 +22,7 @@ class MainApplication : Application(), ReactApplication {
           add(NativeWeekStripCalendarPackage())
           add(NativeCleanupAccordionPackage())
           add(NativeSleepGardenPackage())
+          add(NativeCleaningGardenPackage())
           add(NativeDayTimeGridPackage())
           add(NativeMultiDayTimeGridPackage())
           add(NativeMonthCalendarPackage())
