@@ -1,0 +1,67 @@
+appId: com.daystep.app.dev
+---
+# 네비게이션 테스트
+# QA 체크리스트 2번 "홈 → 하위 화면" 자동 검증
+# 전제조건: 이미 로그인된 상태
+
+# ── 앱 시작 ──
+- launchApp
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+
+# ── 홈에서 시작 ──
+- tapOn:
+    id: "tab_Home"
+- waitForAnimationToEnd
+- takeScreenshot: "nav_01_home"
+
+# ── 플래너 뷰 전환 테스트 ──
+- tapOn:
+    id: "tab_Planner"
+- waitForAnimationToEnd
+
+# 뷰 메뉴 열기
+- tapOn:
+    id: "planner_view_menu"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "nav_02_planner_menu"
+
+# ── 실행 화면 확인 ──
+- tapOn:
+    id: "tab_Execute"
+- waitForAnimationToEnd
+- takeScreenshot: "nav_03_execute"
+
+# ── 노트 화면 확인 ──
+- tapOn:
+    id: "tab_Notes"
+- waitForAnimationToEnd
+- takeScreenshot: "nav_04_notes"
+
+# ── 설정 화면 확인 ──
+- tapOn:
+    id: "tab_More"
+- waitForAnimationToEnd
+- takeScreenshot: "nav_05_settings"
+
+# ── 설정 → 테마 이동 ──
+- tapOn:
+    text: ".*테마.*색상.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "nav_06_theme"
+
+# ── 뒤로 가기 ──
+- tapOn:
+    point: "5%,7%"
+    optional: true
+- waitForAnimationToEnd
+
+# ── 홈으로 복귀 ──
+- tapOn:
+    id: "tab_Home"
+- waitForAnimationToEnd
+- takeScreenshot: "nav_07_back_home"

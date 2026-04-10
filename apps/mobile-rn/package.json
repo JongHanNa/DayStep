@@ -12,7 +12,11 @@
     "start": "react-native start",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "e2e:smoke": "maestro test .maestro/smoke-test.yaml",
+    "e2e:nav": "maestro test .maestro/navigation-test.yaml",
+    "e2e:todo": "maestro test .maestro/todo-crud.yaml",
+    "e2e:all": "maestro test .maestro/"
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^1.1.0",

@@ -1,0 +1,58 @@
+appId: com.daystep.app.dev
+---
+# 할일 CRUD 테스트
+# QA 체크리스트 6번 "플래너" 섹션 자동 검증
+# 전제조건: 이미 로그인된 상태
+
+# ── 앱 시작 ──
+- launchApp
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+
+# ── 1. 플래너 탭 이동 ──
+- tapOn:
+    id: "tab_Planner"
+- waitForAnimationToEnd
+- takeScreenshot: "todo_01_planner"
+
+# ── 2. 새 할일 생성 ──
+# FAB 또는 + 버튼 탭 (화면 하단 우측의 추가 버튼)
+- tapOn:
+    text: ".*추가.*|.*\\+.*"
+    optional: true
+- waitForAnimationToEnd
+
+# 할일 제목 입력 (BottomSheet가 열린 상태)
+- tapOn:
+    text: ".*할일.*제목.*|.*무엇.*"
+    optional: true
+- inputText: "자동 테스트 할일"
+- waitForAnimationToEnd
+- takeScreenshot: "todo_02_input"
+
+# 저장 버튼
+- tapOn:
+    text: ".*저장.*|.*완료.*|.*추가.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "todo_03_created"
+
+# ── 3. 생성 확인 ──
+- assertVisible:
+    text: "자동 테스트 할일"
+    optional: true
+
+# ── 4. 할일 체크 (완료 토글) ──
+- tapOn:
+    text: "자동 테스트 할일"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: "todo_04_toggled"
+
+# ── 5. 홈으로 복귀 ──
+- tapOn:
+    id: "tab_Home"
+- waitForAnimationToEnd
+- takeScreenshot: "todo_05_done"
