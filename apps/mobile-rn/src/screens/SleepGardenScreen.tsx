@@ -48,7 +48,7 @@ export default function SleepGardenScreen() {
 
   const [showScreenTimeModal, setShowScreenTimeModal] = useState(false);
   const isUITest = require('../lib/mmkv').storage.getBoolean('uitest_active');
-  const [viewMode, setViewMode] = useState<ViewMode>(isUITest ? 'day' : 'month');
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [androidGardenHeight, setAndroidGardenHeight] = useState(450);
 
   // 네이티브 컴포넌트 높이 애니메이션 (absoluteFill 패턴)

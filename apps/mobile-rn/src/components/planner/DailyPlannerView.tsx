@@ -35,11 +35,14 @@ import {useAuthStore} from '@/stores/authStore';
 import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {DailyCalendarEventCard} from '@/components/todo/DailyCalendarEventCard';
+import {useSleepStore} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
+import {hexWithOpacity} from '@/lib/todoUtils';
 import {format} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
-import {Inbox, Calendar} from 'lucide-react-native';
+import {Inbox, Calendar, Moon, Sun} from 'lucide-react-native';
 import {LiquidGlassMenu} from '@/components/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface DailyPlannerViewProps {
   menuItems: Array<{title: string; key: string}>;
@@ -93,6 +96,77 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   return sections;
 }
 
+/** 수면/기상 시간 카드 — 카드 터치 → 네이티브 타임피커 직접 표시 */
+function SleepWakeCard({type, time, onTimeChange}: {
+  type: 'sleep' | 'wake';
+  time: string;
+  onTimeChange: (newTime: string) => void;
+}) {
+  const {primaryColor} = useTheme();
+  const isSleep = type === 'sleep';
+  const [showPicker, setShowPicker] = useState(false);
+
+  const timeDate = useMemo(() => {
+    const [h, m] = time.split(':').map(Number);
+    const d = new Date();
+    d.setHours(h, m, 0, 0);
+    return d;
+  }, [time]);
+
+  return (
+    <>
+      <AnimatedPressable
+        onPress={() => setShowPicker(prev => !prev)}
+        hapticType="light"
+        scaleValue={0.98}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: hexWithOpacity(primaryColor, 0.06),
+          borderRadius: 12,
+          padding: 12,
+          marginVertical: 3,
+        }}>
+        <View style={{
+          width: 28, height: 28, borderRadius: 14,
+          backgroundColor: hexWithOpacity(primaryColor, 0.12),
+          justifyContent: 'center', alignItems: 'center', marginRight: 10,
+        }}>
+          {isSleep
+            ? <Moon size={14} color={primaryColor} />
+            : <Sun size={14} color={primaryColor} />}
+        </View>
+        <Text style={{fontSize: 14, fontWeight: '600', color: '#374151', flex: 1}}>
+          {isSleep ? '취침' : '기상'}
+        </Text>
+        <Text style={{fontSize: 13, fontWeight: '500', color: primaryColor}}>
+          {time}
+        </Text>
+      </AnimatedPressable>
+      {showPicker && (
+        <DateTimePicker
+          value={timeDate}
+          mode="time"
+          is24Hour={true}
+          display="spinner"
+          onChange={(_, date) => {
+            if (Platform.OS === 'android') setShowPicker(false);
+            if (date) {
+              const hh = date.getHours().toString().padStart(2, '0');
+              const mm = date.getMinutes().toString().padStart(2, '0');
+              onTimeChange(`${hh}:${mm}`);
+            }
+          }}
+          {...(Platform.OS === 'ios' ? {
+            themeVariant: 'light' as const,
+            style: {alignSelf: 'center', marginVertical: 4},
+          } : {})}
+        />
+      )}
+    </>
+  );
+}
+
 export function DailyPlannerView({menuItems, onMenuSelect}: DailyPlannerViewProps): React.ReactElement {
   return (
     <DndProvider>
@@ -123,6 +197,8 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
   const {projects, fetchProjects} = useProjectStore();
   const user = useAuthStore(s => s.user);
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
+  const sleepGoalTime = useSleepStore(s => s.sleepGoalTime);
+  const wakeGoalTime = useSleepStore(s => s.wakeGoalTime);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, {title: string; color: string; icon?: string}>();
@@ -232,7 +308,28 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
     return earliest?.id ?? null;
   }, [todos, nowForUpcoming]);
 
-  const sections = useMemo(() => categorizeTodos(todos), [todos]);
+  const sections = useMemo(() => {
+    const base = categorizeTodos(todos);
+    // 기상 pseudo-todo: 오전 섹션 앞에 삽입
+    const wakeTodo = {id: '_wake', title: '기상', start_time: `${selectedDate}T${wakeGoalTime}:00`, schedule_type: 'timed', _isSleepWake: 'wake'} as any;
+    const morningIdx = base.findIndex(s => s.period === 'morning');
+    if (morningIdx >= 0) {
+      base[morningIdx].data.unshift(wakeTodo);
+    } else {
+      // 오전 섹션이 없으면 생성
+      const insertIdx = base.findIndex(s => s.period === 'afternoon' || s.period === 'evening');
+      base.splice(insertIdx >= 0 ? insertIdx : base.length, 0, {title: '오전', period: 'morning', data: [wakeTodo]});
+    }
+    // 취침 pseudo-todo: 저녁 섹션 끝에 삽입
+    const sleepTodo = {id: '_sleep', title: '취침', start_time: `${selectedDate}T${sleepGoalTime}:00`, schedule_type: 'timed', _isSleepWake: 'sleep'} as any;
+    const eveningIdx = base.findIndex(s => s.period === 'evening');
+    if (eveningIdx >= 0) {
+      base[eveningIdx].data.push(sleepTodo);
+    } else {
+      base.push({title: '저녁', period: 'evening', data: [sleepTodo]});
+    }
+    return base;
+  }, [todos, selectedDate, sleepGoalTime, wakeGoalTime]);
 
   const calendarHeight = useSharedValue(0);
   const calendarHeightStyle = useAnimatedStyle(() => ({
@@ -482,25 +579,44 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
                 </View>
               );
             }}
-            renderItem={({item, index}) => (
-              <DraggableTodoChip todo={item} onDrop={handleDrop}>
-                <TodoCard
-                  todo={item}
-                  index={index}
-                  projectMap={projectMap}
-                  onToggle={handleToggle}
-                  onPress={handleTodoPress}
-                  onFocus={handleFocusTodo}
-                  onSkipTodo={handleSkipTodo}
-                  onUnskipTodo={handleUnskipTodo}
-                  onPostpone={handlePostpone}
-                  onDeferComplete={(todo) => handleToggle(todo.id)}
-                  onRestoreOriginal={handleRestoreOriginal}
-                  linkedMotivations={motivationMap[item.id]}
-                  isNextUpcoming={item.id === nextUpcomingId}
-                />
-              </DraggableTodoChip>
-            )}
+            renderItem={({item, index}) => {
+              // 수면/기상 pseudo-todo
+              if ((item as any)._isSleepWake) {
+                const type = (item as any)._isSleepWake as 'sleep' | 'wake';
+                const time = type === 'sleep' ? sleepGoalTime : wakeGoalTime;
+                const setSleepGoalTime = useSleepStore.getState().setSleepGoalTime;
+                const setWakeGoalTime = useSleepStore.getState().setWakeGoalTime;
+                return (
+                  <SleepWakeCard
+                    type={type}
+                    time={time}
+                    onTimeChange={(newTime) => {
+                      if (type === 'sleep') setSleepGoalTime(newTime);
+                      else setWakeGoalTime(newTime);
+                    }}
+                  />
+                );
+              }
+              return (
+                <DraggableTodoChip todo={item} onDrop={handleDrop}>
+                  <TodoCard
+                    todo={item}
+                    index={index}
+                    projectMap={projectMap}
+                    onToggle={handleToggle}
+                    onPress={handleTodoPress}
+                    onFocus={handleFocusTodo}
+                    onSkipTodo={handleSkipTodo}
+                    onUnskipTodo={handleUnskipTodo}
+                    onPostpone={handlePostpone}
+                    onDeferComplete={(todo) => handleToggle(todo.id)}
+                    onRestoreOriginal={handleRestoreOriginal}
+                    linkedMotivations={motivationMap[item.id]}
+                    isNextUpcoming={item.id === nextUpcomingId}
+                  />
+                </DraggableTodoChip>
+              );
+            }}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center py-20">
                 <Animated.View entering={FadeInDown.duration(400)} className="items-center">

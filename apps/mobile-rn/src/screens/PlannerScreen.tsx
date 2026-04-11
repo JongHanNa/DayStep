@@ -21,6 +21,7 @@ import {useSettingsStore, type PlannerViewMode} from '@/stores/settingsStore';
 import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {useSleepStore} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
 import {Calendar} from 'lucide-react-native';
 import {format, addDays, subDays} from 'date-fns';
@@ -139,7 +140,10 @@ export default function PlannerScreen() {
     }
   }, [viewMode, selectedDate, isConnected, fetchEventsForMonth]);
 
-  // 일 뷰용 데이터
+  const sleepGoalTime = useSleepStore(s => s.sleepGoalTime);
+  const wakeGoalTime = useSleepStore(s => s.wakeGoalTime);
+
+  // 일 뷰용 데이터 (수면/기상 블록 포함)
   const dayTodoData = useMemo(() => {
     const items = todos.map(t => ({
       id: t.id,
@@ -149,8 +153,36 @@ export default function PlannerScreen() {
       completed: t.completed,
       project_color: t.color || '#6366F1',
     }));
+    // 기상 블록: wakeGoalTime - 30분 ~ wakeGoalTime
+    const [wh, wm] = wakeGoalTime.split(':').map(Number);
+    const wakeStart = new Date(`${selectedDate}T00:00:00`);
+    wakeStart.setHours(wh, wm - 30, 0);
+    const wakeEnd = new Date(`${selectedDate}T00:00:00`);
+    wakeEnd.setHours(wh, wm, 0);
+    items.push({
+      id: '_wake',
+      title: '☀️ 기상',
+      start_time: wakeStart.toISOString(),
+      end_time: wakeEnd.toISOString(),
+      completed: false,
+      project_color: '#F59E0B',
+    });
+    // 취침 블록: sleepGoalTime ~ sleepGoalTime + 30분
+    const [sh, sm] = sleepGoalTime.split(':').map(Number);
+    const sleepStart = new Date(`${selectedDate}T00:00:00`);
+    sleepStart.setHours(sh, sm, 0);
+    const sleepEnd = new Date(`${selectedDate}T00:00:00`);
+    sleepEnd.setHours(sh, sm + 30, 0);
+    items.push({
+      id: '_sleep',
+      title: '🌙 취침',
+      start_time: sleepStart.toISOString(),
+      end_time: sleepEnd.toISOString(),
+      completed: false,
+      project_color: '#7C3AED',
+    });
     return JSON.stringify(items);
-  }, [todos]);
+  }, [todos, selectedDate, sleepGoalTime, wakeGoalTime]);
 
   const dayEventData = useMemo(() => {
     if (!isConnected) return '[]';

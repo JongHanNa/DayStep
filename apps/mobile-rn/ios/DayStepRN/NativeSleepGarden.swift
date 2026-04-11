@@ -348,6 +348,20 @@ struct SleepGardenContent: View {
         .padding(.top, 8)
         .padding(.bottom, 12)
     }
+    .background(
+      GeometryReader { geo in
+        Color.clear
+          .onAppear { onHeightChange?(geo.size.height) }
+          .onChange(of: geo.size.height) { newHeight in
+            onHeightChange?(newHeight)
+          }
+          .onChange(of: state.viewMode) { _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              onHeightChange?(geo.size.height)
+            }
+          }
+      }
+    )
   }
 
   // MARK: - Picker
@@ -664,7 +678,7 @@ struct MonthGardenView: View {
             .foregroundColor(Color(hex: "#6B7280"))
         }
 
-        Text("\(year)년 \(month)월")
+        Text("\(String(year))년 \(String(month))월")
           .font(.system(size: 17, weight: .bold))
           .foregroundColor(Color(hex: "#1F2937"))
           .padding(.horizontal, 8)
@@ -829,7 +843,7 @@ struct YearGardenView: View {
 
   var body: some View {
     VStack(spacing: 8) {
-      Text("\(currentYear)년")
+      Text("\(String(currentYear))년")
         .font(.system(size: 17, weight: .bold))
         .foregroundColor(Color(hex: "#1F2937"))
 
@@ -936,6 +950,9 @@ class NativeSleepGardenUIView: UIView {
   @objc func setViewMode(_ value: NSString) {
     gardenState.viewMode = value as String
     setupOnce()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+      self?.emitHeight()
+    }
   }
 
   @objc func setSelectedDate(_ value: NSString) {
