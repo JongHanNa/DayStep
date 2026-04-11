@@ -7,12 +7,13 @@ import {View, Text, StyleSheet, Pressable, Switch, Alert} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
-import {ChevronLeft, Moon, Sun, Bell, XCircle} from 'lucide-react-native';
+import {ChevronLeft, Moon, Sun, Bell, Shield, XCircle} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {useSleepStore} from '@/stores/sleepStore';
 import {requestNotificationPermission} from '@/lib/notifications';
+import {requestAuthorization} from '@/lib/screenTimeManager';
 import {storage} from '@/lib/mmkv';
 import {format} from 'date-fns';
 
@@ -49,9 +50,11 @@ export default function SleepGoalScreen() {
     sleepGoalTime,
     wakeGoalTime,
     autoSleepEnabled,
+    autoBlockAtBedtime,
     setSleepGoalTime,
     setWakeGoalTime,
     setAutoSleepEnabled,
+    setAutoBlockAtBedtime,
   } = useSleepStore();
 
   const MMKV_SKIP_KEY = 'bedtime-skip-date';
@@ -85,6 +88,18 @@ export default function SleepGoalScreen() {
     haptic.light();
     setAutoSleepEnabled(value);
   }, [haptic, setAutoSleepEnabled]);
+
+  const handleAutoBlockToggle = useCallback(async (value: boolean) => {
+    if (value) {
+      try {
+        await requestAuthorization();
+      } catch {
+        // 시뮬레이터 등 ScreenTime 미지원 환경에서는 권한 요청 실패 무시
+      }
+    }
+    haptic.light();
+    setAutoBlockAtBedtime(value);
+  }, [haptic, setAutoBlockAtBedtime]);
 
   const handleSave = useCallback(() => {
     haptic.medium();
@@ -161,6 +176,26 @@ export default function SleepGoalScreen() {
             onValueChange={handleAutoSleepToggle}
             trackColor={{false: '#D1D5DB', true: '#A78BFA'}}
             thumbColor={autoSleepEnabled ? '#7C3AED' : '#F3F4F6'}
+          />
+        </View>
+
+        {/* 자동 잠들기 시작 (앱 차단) 토글 */}
+        <View style={[styles.toggleRow, !autoSleepEnabled && styles.toggleRowDisabled]}>
+          <View style={styles.toggleLeft}>
+            <Shield size={16} color={autoSleepEnabled ? '#6366F1' : '#D1D5DB'} />
+            <View>
+              <Text style={[styles.toggleLabel, !autoSleepEnabled && styles.toggleLabelDisabled]}>
+                자동 잠들기 시작
+              </Text>
+              <Text style={styles.toggleDesc}>취침 시간에 자동으로 다른 앱을 차단해요</Text>
+            </View>
+          </View>
+          <Switch
+            value={autoBlockAtBedtime}
+            onValueChange={handleAutoBlockToggle}
+            disabled={!autoSleepEnabled}
+            trackColor={{false: '#D1D5DB', true: '#A78BFA'}}
+            thumbColor={autoBlockAtBedtime ? '#7C3AED' : '#F3F4F6'}
           />
         </View>
 
@@ -251,7 +286,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    marginBottom: 24,
+    marginBottom: 12,
+  },
+  toggleRowDisabled: {
+    opacity: 0.5,
   },
   toggleLeft: {
     flexDirection: 'row',
@@ -264,6 +302,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#374151',
   },
+  toggleLabelDisabled: {
+    color: '#9CA3AF',
+  },
   toggleDesc: {
     fontSize: 12,
     color: '#9CA3AF',
@@ -274,6 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    marginTop: 12,
     marginBottom: 24,
     flexDirection: 'row',
     alignItems: 'center',
@@ -309,6 +351,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
+    marginTop: 12,
     marginBottom: 40,
   },
   saveBtnText: {

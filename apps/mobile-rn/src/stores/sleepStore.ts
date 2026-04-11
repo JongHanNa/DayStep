@@ -100,6 +100,7 @@ interface SleepStoreState {
   wakeGoalTime: string; // HH:mm (기본 07:00)
   screenTimeLinkEnabled: boolean;
   autoSleepEnabled: boolean; // 자동 취침 알림
+  autoBlockAtBedtime: boolean; // 취침 시 자동 앱 차단
   sessionState: SleepSessionState;
   _sleepSettingsSyncedAt: string | null;
 
@@ -120,6 +121,7 @@ interface SleepStoreState {
   setWakeGoalTime: (time: string) => void;
   setScreenTimeLinkEnabled: (v: boolean) => void;
   setAutoSleepEnabled: (v: boolean) => void;
+  setAutoBlockAtBedtime: (v: boolean) => void;
   getGoalDurationMinutes: () => number;
   startSleepSession: () => Promise<void>;
   completeSleepSession: () => Promise<void>;
@@ -181,6 +183,7 @@ export const useSleepStore = create<SleepStoreState>()(
       wakeGoalTime: '07:00',
       screenTimeLinkEnabled: false,
       autoSleepEnabled: false,
+      autoBlockAtBedtime: false,
       sessionState: {...DEFAULT_SESSION},
       _sleepSettingsSyncedAt: null,
 
@@ -401,6 +404,7 @@ export const useSleepStore = create<SleepStoreState>()(
           wakeGoalTime: settings.wakeGoalTime ?? '07:00',
           screenTimeLinkEnabled: settings.screenTimeLinkEnabled ?? false,
           autoSleepEnabled: settings.autoSleepEnabled ?? false,
+          autoBlockAtBedtime: settings.autoBlockAtBedtime ?? false,
           _sleepSettingsSyncedAt: settings._lastSyncedAt ?? now,
         });
       },
@@ -415,20 +419,25 @@ export const useSleepStore = create<SleepStoreState>()(
           import('@/lib/notifications').then(({scheduleSleepBedtimeNotification}) =>
             scheduleSleepBedtimeNotification(time),
           );
-          if (get().screenTimeLinkEnabled) {
+          if (get().autoBlockAtBedtime || get().screenTimeLinkEnabled) {
             scheduleDailyAutoShield(time, get().wakeGoalTime);
           }
         }
       },
       setWakeGoalTime: (time) => {
         set({wakeGoalTime: time});
-        if (get().autoSleepEnabled && get().screenTimeLinkEnabled) {
+        if (get().autoSleepEnabled && (get().autoBlockAtBedtime || get().screenTimeLinkEnabled)) {
           scheduleDailyAutoShield(get().sleepGoalTime, time);
         }
       },
       setScreenTimeLinkEnabled: (v) => set({screenTimeLinkEnabled: v}),
       setAutoSleepEnabled: (v) => {
-        set({autoSleepEnabled: v});
+        if (!v) {
+          // 자동 취침 알림 OFF → 자동 잠들기도 OFF
+          set({autoSleepEnabled: false, autoBlockAtBedtime: false});
+        } else {
+          set({autoSleepEnabled: true});
+        }
         import('@/lib/notifications').then(({scheduleSleepBedtimeNotification, cancelSleepBedtimeNotification}) => {
           if (v) {
             scheduleSleepBedtimeNotification(get().sleepGoalTime);
@@ -437,9 +446,21 @@ export const useSleepStore = create<SleepStoreState>()(
           }
         });
         // 자동 수면 차단 스케줄 등록/해제
-        if (v && get().screenTimeLinkEnabled) {
+        if (v && (get().autoBlockAtBedtime || get().screenTimeLinkEnabled)) {
+          scheduleDailyAutoShield(get().sleepGoalTime, get().wakeGoalTime);
+        } else if (!v) {
+          cancelDailyAutoShield();
+        }
+      },
+
+      setAutoBlockAtBedtime: (v) => {
+        set({autoBlockAtBedtime: v});
+        if (v) {
+          // 자동 앱 차단 ON → screenTimeLinkEnabled도 활성화 + daily shield 등록
+          set({screenTimeLinkEnabled: true});
           scheduleDailyAutoShield(get().sleepGoalTime, get().wakeGoalTime);
         } else {
+          // 자동 앱 차단 OFF → daily shield만 해제 (수동 세션 차단은 유지)
           cancelDailyAutoShield();
         }
       },
@@ -798,6 +819,7 @@ export const useSleepStore = create<SleepStoreState>()(
         wakeGoalTime: state.wakeGoalTime,
         screenTimeLinkEnabled: state.screenTimeLinkEnabled,
         autoSleepEnabled: state.autoSleepEnabled,
+        autoBlockAtBedtime: state.autoBlockAtBedtime,
         sessionState: state.sessionState,
         _sleepSettingsSyncedAt: state._sleepSettingsSyncedAt,
       }),
@@ -843,5 +865,6 @@ export function getSleepSettingsForSync() {
     wakeGoalTime: s.wakeGoalTime,
     screenTimeLinkEnabled: s.screenTimeLinkEnabled,
     autoSleepEnabled: s.autoSleepEnabled,
+    autoBlockAtBedtime: s.autoBlockAtBedtime,
   };
 }
