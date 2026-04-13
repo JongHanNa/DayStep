@@ -44,6 +44,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   }, []);
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const isDemoAccount = user?.email === 'demo@daystep.app';
   const isGoogleUser = user?.app_metadata?.providers?.includes('google') ?? false;
   const avatarUrl = user?.user_metadata?.avatar_url;
 
@@ -261,6 +262,68 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                     });
                   } catch (err) {
                     console.error('[Admin] subscription toggle error:', err);
+                    Alert.alert('오류', '구독 상태 변경에 실패했습니다.');
+                  }
+                }}
+                trackColor={{false: '#D1D5DB', true: primaryColor}}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+          </View>
+        </>
+      )}
+
+      {/* 데모 계정용 구독 상태 전환 (관리자 메뉴 없이 토글만) */}
+      {isDemoAccount && !isAdmin && (
+        <>
+          <Text style={styles.sectionTitle}>심사용 도구</Text>
+          <View style={[styles.section, {marginBottom: 16}]}>
+            <View style={styles.adminSubRow}>
+              <View style={{flex: 1}}>
+                <Text style={styles.adminSubTitle}>구독 상태 전환</Text>
+                <Text style={styles.adminSubDesc}>
+                  {hasActiveSubscription ? 'Pro 구독 중' : 'Free (만료됨)'}
+                </Text>
+              </View>
+              <Switch
+                value={hasActiveSubscription}
+                onValueChange={async (value) => {
+                  if (!user?.id) return;
+                  try {
+                    const newStatus = value ? 'active' : 'expired';
+                    const {error} = await supabase
+                      .from('subscriptions')
+                      .update({
+                        status: newStatus,
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq('user_id', user.id);
+                    if (error) throw error;
+                    useSubscriptionStore.setState({
+                      hasActiveSubscription: value,
+                      subscriptionInfo: value
+                        ? {
+                            id: 'demo-override',
+                            userId: user.id,
+                            status: 'active' as SubscriptionStatus,
+                            platform: 'ios' as Platform,
+                            productId: 'pro_monthly',
+                            subscriptionStartDate: new Date().toISOString(),
+                            subscriptionEndDate: null,
+                            trialStartDate: null,
+                            trialEndDate: null,
+                            isLegacyUser: false,
+                            legacyGracePeriodEnd: null,
+                            promoCode: null,
+                            autoRenewEnabled: false,
+                            cancelledAt: null,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                          }
+                        : null,
+                    });
+                  } catch (err) {
+                    console.error('[Demo] subscription toggle error:', err);
                     Alert.alert('오류', '구독 상태 변경에 실패했습니다.');
                   }
                 }}

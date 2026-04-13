@@ -3,7 +3,7 @@
  * Calm Luxe 그라디언트 + 입장 애니메이션 + 네이티브 OAuth
  */
 import React, {useState, useRef, useCallback} from 'react';
-import {Text, View, TextInput, ActivityIndicator, Platform, Alert, Pressable} from 'react-native';
+import {Text, View, TextInput, ActivityIndicator, Platform, Alert, Pressable, KeyboardAvoidingView, ScrollView, Keyboard, TouchableWithoutFeedback} from 'react-native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {GradientBackground} from '@/components/core';
@@ -173,7 +173,16 @@ export default function LoginScreen() {
         start={{x: 0.2, y: 0}}
         end={{x: 0.8, y: 1}}
         style={{flex: 1}}>
-        <View className="flex-1 justify-center items-center px-8">
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={{flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32}}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+        <View className="w-full items-center">
           {/* 로고 + 인사 */}
           <Pressable onPress={handleLogoTap}>
             <Animated.Text
@@ -298,16 +307,19 @@ export default function LoginScreen() {
               </AnimatedPressable>
             )}
           </Animated.View>
-        </View>
 
-        {/* 하단 약관 */}
-        <Animated.View
-          entering={FadeInDown.delay(800).duration(500)}
-          className="pb-8 px-8">
-          <Text className="text-xs text-gray-400 text-center leading-5">
-            계속 진행하면 이용약관 및 개인정보처리방침에 동의하는 것입니다
-          </Text>
-        </Animated.View>
+          {/* 하단 약관 */}
+          <Animated.View
+            entering={FadeInDown.delay(800).duration(500)}
+            className="pt-12 pb-8">
+            <Text className="text-xs text-gray-400 text-center leading-5">
+              계속 진행하면 이용약관 및 개인정보처리방침에 동의하는 것입니다
+            </Text>
+          </Animated.View>
+        </View>
+        </ScrollView>
+        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </GradientBackground>
 
       {/* 계정 연결 확인 모달 */}
