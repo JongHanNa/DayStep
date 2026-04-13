@@ -23,7 +23,7 @@ import {getPriorityColor, hexWithOpacity} from '@/lib/todoUtils';
 import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
 import {MissedTodoActionPanel} from './MissedTodoActionPanel';
 import {DeferredTodoActionPanel} from './DeferredTodoActionPanel';
-import {Play, XCircle, MinusCircle, Shield, Clock} from 'lucide-react-native';
+import {XCircle, MinusCircle, Shield, Clock} from 'lucide-react-native';
 
 interface LinkedMotivation {
   id: string;
@@ -53,7 +53,6 @@ export function TodoCard({
   projectMap,
   onToggle,
   onPress,
-  onFocus,
   onSkipTodo,
   onUnskipTodo,
   onPostpone,
@@ -331,19 +330,28 @@ export function TodoCard({
           )}
         </View>
 
-        {/* 포커스 타이머 버튼 (미완료 + 미놓침 할일만) */}
-        {onFocus && !todo.completed && !isMissed && !isSkipped && (
-          <AnimatedPressable
-            onPress={() => {
-              haptic.medium();
-              onFocus(todo);
-            }}
-            haptic={false}
-            scaleValue={0.85}
-            style={[styles.focusBtn, {backgroundColor: primaryColor}]}>
-            <Play size={12} color="#FFFFFF" strokeWidth={3} fill="#FFFFFF" />
-          </AnimatedPressable>
-        )}
+        {/* 프로젝트/할일 아이콘 */}
+        {(() => {
+          const proj = projectMap && todo.project_id ? projectMap.get(todo.project_id) : undefined;
+          if (proj?.icon) {
+            return (
+              <View style={[styles.iconCircle, {
+                backgroundColor: proj.color ? `${proj.color}20` : '#F3F4F6',
+              }]}>
+                <Text style={styles.iconEmoji}>{proj.icon}</Text>
+              </View>
+            );
+          }
+          const TodoIcon = resolveTodoIcon(todo.icon);
+          if (TodoIcon) {
+            return (
+              <View style={[styles.iconCircle, {backgroundColor: '#F3F4F6'}]}>
+                <TodoIcon size={16} color={todo.completed ? '#9CA3AF' : '#6B7280'} />
+              </View>
+            );
+          }
+          return null;
+        })()}
       </AnimatedPressable>
     </Animated.View>
   );
@@ -541,13 +549,16 @@ const styles = StyleSheet.create({
   projectText: {
     fontSize: 11,
   },
-  focusBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
     marginTop: 2,
+  },
+  iconEmoji: {
+    fontSize: 16,
   },
 });

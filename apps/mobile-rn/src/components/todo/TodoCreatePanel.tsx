@@ -45,7 +45,12 @@ import type {UseTodoFormReturn} from './useTodoForm';
 // Types
 // ============================================
 
-type ActivePop = 'none' | 'priority' | 'icon';
+type ActivePop = 'none' | 'priority' | 'icon' | 'color';
+
+const TODO_COLORS = [
+  '#EF4444', '#F97316', '#F59E0B', '#22C55E', '#14B8A6',
+  '#3B82F6', '#6366F1', '#9333EA', '#EC4899', '#6B7280',
+];
 
 interface ToolbarCallbacks {
   onDatePress: () => void;
@@ -148,6 +153,11 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
       setActivePop('icon');
     }, []);
 
+    const handleColorPress = useCallback((anchor: AnchorRect) => {
+      setPopAnchor(anchor);
+      setActivePop('color');
+    }, []);
+
     const renderBackdrop = useCallback(
       (props: any) => (
         <BottomSheetBackdrop
@@ -216,6 +226,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
                 onDatePress={toolbarCallbacks.onDatePress}
                 onPriorityPress={handlePriorityPress}
                 onIconPress={handleIconPress}
+                onColorPress={handleColorPress}
               />
             </View>
           </BottomSheetView>
@@ -252,6 +263,21 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
               selectedIcon={form.icon}
               onIconChange={v => updateField('icon', v)}
               popover
+            />
+          </Popover>
+        )}
+
+        {/* 색상 팝오버 */}
+        {activePop === 'color' && popAnchor && (
+          <Popover
+            visible
+            onClose={() => setActivePop('none')}
+            anchorPosition={popAnchor}
+            horizontalAlign="left"
+            width={280}>
+            <ColorPopoverContent
+              selectedColor={form.color}
+              onColorChange={v => updateField('color', v)}
             />
           </Popover>
         )}
@@ -352,6 +378,72 @@ function PriorityPopoverContent({
     </View>
   );
 }
+
+// ============================================
+// ColorPopoverContent — 색상 선택 팝오버
+// ============================================
+
+interface ColorPopoverContentProps {
+  selectedColor: string;
+  onColorChange: (color: string) => void;
+}
+
+function ColorPopoverContent({selectedColor, onColorChange}: ColorPopoverContentProps) {
+  const haptic = useHaptic();
+  const {primaryColor} = useTheme();
+
+  return (
+    <View style={popStyles.container}>
+      <View style={popStyles.header}>
+        <View style={[colorStyles.headerDot, {backgroundColor: primaryColor}]} />
+        <Text style={popStyles.headerTitle}>색상</Text>
+      </View>
+      <View style={colorStyles.grid}>
+        {TODO_COLORS.map(color => {
+          const isSelected = selectedColor === color;
+          return (
+            <AnimatedPressable
+              key={color}
+              onPress={() => {
+                haptic.selection();
+                onColorChange(isSelected ? '' : color);
+              }}
+              haptic={false}
+              style={[
+                colorStyles.swatch,
+                {backgroundColor: color},
+                isSelected && colorStyles.swatchSelected,
+              ]}>
+              {isSelected && <Text style={colorStyles.check}>✓</Text>}
+            </AnimatedPressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const colorStyles = StyleSheet.create({
+  headerDot: {width: 14, height: 14, borderRadius: 7},
+  grid: {flexDirection: 'row', flexWrap: 'wrap', gap: 10},
+  swatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swatchSelected: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  check: {color: '#FFFFFF', fontSize: 16, fontWeight: '700'},
+});
 
 // ============================================
 // Styles

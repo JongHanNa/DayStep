@@ -24,6 +24,7 @@ export interface FormData {
   title: string;
   content: string;
   icon: string;
+  color: string;
   scheduledDate: string; // yyyy-MM-dd
   scheduleType: ScheduleType;
   startTime: Date | null;
@@ -52,6 +53,7 @@ export const DEFAULT_FORM: FormData = {
   title: '',
   content: '',
   icon: '',
+  color: '',
   scheduledDate: format(new Date(), 'yyyy-MM-dd'),
   scheduleType: 'timed',
   startTime: getNextHour(),
@@ -188,6 +190,7 @@ export function useTodoForm() {
         title: todo.title,
         content: (todo as any).content ?? '',
         icon: todo.icon ?? '',
+        color: todo.color ?? '',
         scheduledDate: todo.start_time
           ? format(new Date(todo.start_time), 'yyyy-MM-dd')
           : selectedDate,
@@ -227,6 +230,7 @@ export function useTodoForm() {
           title: trimmed,
           content: form.content.trim() || null,
           icon: form.icon || null,
+          color: form.color || null,
           schedule_type: form.scheduleType,
           importance: form.importance || null,
           urgency: form.urgency || null,

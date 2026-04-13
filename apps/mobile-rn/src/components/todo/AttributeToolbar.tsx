@@ -16,6 +16,7 @@ import {
   Repeat,
   Flag,
   Sparkles,
+  Palette,
 } from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
 import {fixedColors} from '@/theme/colors';
@@ -40,6 +41,7 @@ interface ToolbarForm {
   recurrenceDaysOfWeek: number[];
   importance: boolean;
   urgency: boolean;
+  color?: string;
 }
 
 interface AttributeToolbarProps {
@@ -47,6 +49,7 @@ interface AttributeToolbarProps {
   onDatePress: () => void;
   onPriorityPress: (anchor: AnchorRect) => void;
   onIconPress?: (anchor: AnchorRect) => void;
+  onColorPress?: (anchor: AnchorRect) => void;
   // Legacy: 기존 Edit 모드에서 사용 (서브시트 직접 열기)
   onTimePress?: () => void;
   onAlarmPress?: () => void;
@@ -113,6 +116,7 @@ export function AttributeToolbar({
   onDatePress,
   onPriorityPress,
   onIconPress,
+  onColorPress,
   onTimePress,
   onAlarmPress,
   onRecurrencePress,
@@ -121,6 +125,7 @@ export function AttributeToolbar({
   const priorityStyle = getPriorityChipStyle(form);
   const priorityChipRef = useRef<View>(null);
   const iconChipRef = useRef<View>(null);
+  const colorChipRef = useRef<View>(null);
 
   const handlePriorityMeasure = () => {
     priorityChipRef.current?.measureInWindow((x, y, w, h) => {
@@ -131,6 +136,12 @@ export function AttributeToolbar({
   const handleIconMeasure = () => {
     iconChipRef.current?.measureInWindow((x, y, w, h) => {
       onIconPress?.({x, y, width: w, height: h});
+    });
+  };
+
+  const handleColorMeasure = () => {
+    colorChipRef.current?.measureInWindow((x, y, w, h) => {
+      onColorPress?.({x, y, width: w, height: h});
     });
   };
 
@@ -164,6 +175,21 @@ export function AttributeToolbar({
         {onIconPress && (
           <View ref={iconChipRef} collapsable={false}>
             <Chip icon={Sparkles} label="" onPress={handleIconMeasure} />
+          </View>
+        )}
+
+        {onColorPress && (
+          <View ref={colorChipRef} collapsable={false}>
+            {form.color ? (
+              <AnimatedPressable
+                onPress={handleColorMeasure}
+                hapticType="selection"
+                style={[styles.chip, {borderColor: form.color, borderWidth: 1.5}]}>
+                <View style={[styles.colorDot, {backgroundColor: form.color}]} />
+              </AnimatedPressable>
+            ) : (
+              <Chip icon={Palette} label="" onPress={handleColorMeasure} />
+            )}
           </View>
         )}
       </ScrollView>
@@ -261,5 +287,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#4B5563',
     fontWeight: '500',
+  },
+  colorDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
 });
