@@ -327,7 +327,9 @@ export default function SleepGardenScreen() {
           style={[styles.fab, {backgroundColor: primaryColor}]}>
           <Moon size={24} color="#FFFFFF" />
         </AnimatedPressable>
-        <Text style={styles.fabLabel}>잠들기 시작</Text>
+        <Text style={styles.fabLabel}>
+          {sessionState.status === 'running' ? '수면 중' : '잠들기 시작'}
+        </Text>
       </View>
 
       {/* 스크린타임 연동 유도 모달 */}

@@ -298,12 +298,11 @@ export const useTodoStore = create<TodoState>()(
             todos: normalizedData.map(parseTodo),
             completions: completionData,
             selectedDate: date,
+            loading: false,
           });
         } catch (err: any) {
           console.error('[TodoStore] Fetch error:', err);
-          set({error: err.message ?? 'Failed to fetch todos'});
-        } finally {
-          set({loading: false});
+          set({error: err.message ?? 'Failed to fetch todos', loading: false});
         }
       },
 

@@ -158,54 +158,52 @@ struct DayTimeGridContent: View {
 
     return Group {
       if !allDayEvents.isEmpty || !anytimeTodos.isEmpty {
-        VStack(alignment: .leading, spacing: 4) {
-          Text("종일")
-            .font(.system(size: 11, weight: .medium))
-            .foregroundColor(Color(hex: "#9CA3AF"))
-            .padding(.leading, timeColumnWidth)
-
-          // 종일 이벤트 칩
+        VStack(alignment: .leading, spacing: 3) {
+          // 종일 이벤트 — 전체 너비 바
           ForEach(allDayEvents) { event in
             HStack(spacing: 6) {
               RoundedRectangle(cornerRadius: 2)
                 .fill(Color(hex: event.color))
                 .frame(width: 4, height: 16)
               Text(event.title)
-                .font(.system(size: 12))
-                .foregroundColor(Color(hex: "#374151"))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.white)
                 .lineLimit(1)
+              Spacer()
             }
             .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(hex: event.color).opacity(0.1))
-            .cornerRadius(4)
-            .padding(.leading, timeColumnWidth)
+            .padding(.vertical, 6)
+            .background(Color(hex: event.color).opacity(0.7))
+            .cornerRadius(6)
           }
 
-          // 시간 미지정 할일
+          // 언제든지 할일 — 전체 너비 바
           ForEach(anytimeTodos) { todo in
             Button(action: { onTodoPress?(todo.id) }) {
               HStack(spacing: 6) {
+                Text("언제든지")
+                  .font(.system(size: 10, weight: .medium))
+                  .foregroundColor(Color(hex: todo.projectColor).opacity(0.6))
                 Circle()
                   .fill(todo.completed ? Color(hex: "#9CA3AF") : Color(hex: todo.projectColor))
-                  .frame(width: 8, height: 8)
+                  .frame(width: 6, height: 6)
                 Text(todo.title)
-                  .font(.system(size: 12))
+                  .font(.system(size: 12, weight: .medium))
                   .foregroundColor(todo.completed ? Color(hex: "#9CA3AF") : Color(hex: "#374151"))
                   .strikethrough(todo.completed)
                   .lineLimit(1)
+                Spacer()
               }
               .padding(.horizontal, 8)
-              .padding(.vertical, 4)
+              .padding(.vertical, 6)
               .background(Color(hex: todo.projectColor).opacity(0.08))
-              .cornerRadius(4)
+              .cornerRadius(6)
             }
             .buttonStyle(.plain)
-            .padding(.leading, timeColumnWidth)
           }
         }
-        .padding(.vertical, 8)
-        .background(Color(hex: "#F9FAFB"))
+        .padding(.horizontal, 4)
+        .padding(.vertical, 4)
 
         Divider()
       }

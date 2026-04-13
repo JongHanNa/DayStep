@@ -17,7 +17,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {TreePine} from 'lucide-react-native';
+import {TreePine, ChevronLeft, Info} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {TimerRing} from '@/components/core/TimerRing';
 import {NativeSleepActionButton} from '@/components/native';
@@ -225,8 +225,23 @@ export default function SleepSessionScreen() {
       statusBarStyle="light-content"
       edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.container}>
-        {/* 상단 여백 */}
-        <View style={styles.topSpacer} />
+        {/* 상단 바 */}
+        <View style={styles.topBar}>
+          <AnimatedPressable
+            onPress={safeGoBack}
+            hapticType="light"
+            scaleValue={0.9}
+            style={styles.backBtn}>
+            <ChevronLeft size={22} color="rgba(255,255,255,0.6)" />
+          </AnimatedPressable>
+          <AnimatedPressable
+            onPress={() => navigation.navigate('SleepADHDInfo')}
+            hapticType="light"
+            scaleValue={0.9}
+            style={styles.backBtn}>
+            <Info size={20} color="rgba(255,255,255,0.6)" />
+          </AnimatedPressable>
+        </View>
 
         {/* 중앙: TimerRing */}
         <View style={styles.ringContainer}>
@@ -288,8 +303,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  topSpacer: {
-    height: 40,
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Ring

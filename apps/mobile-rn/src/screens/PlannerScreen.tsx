@@ -148,8 +148,9 @@ export default function PlannerScreen() {
     const items = todos.map(t => ({
       id: t.id,
       title: t.title,
-      start_time: t.start_time,
-      end_time: t.end_time,
+      // anytime 할일은 start_time을 null로 → 네이티브 종일 섹션에 표시
+      start_time: t.schedule_type === 'anytime' ? null : t.start_time,
+      end_time: t.schedule_type === 'anytime' ? null : t.end_time,
       completed: t.completed,
       project_color: t.color || '#6366F1',
     }));

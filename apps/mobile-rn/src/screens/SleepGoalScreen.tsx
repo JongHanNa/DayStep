@@ -7,7 +7,7 @@ import {View, Text, StyleSheet, Pressable, Switch, Alert} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
 import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
-import {ChevronLeft, Moon, Sun, Bell, Shield, XCircle} from 'lucide-react-native';
+import {ChevronLeft, Moon, Sun, Bell, AlarmClock, Shield, XCircle} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
@@ -51,10 +51,12 @@ export default function SleepGoalScreen() {
     wakeGoalTime,
     autoSleepEnabled,
     autoBlockAtBedtime,
+    autoWakeEnabled,
     setSleepGoalTime,
     setWakeGoalTime,
     setAutoSleepEnabled,
     setAutoBlockAtBedtime,
+    setAutoWakeEnabled,
   } = useSleepStore();
 
   const MMKV_SKIP_KEY = 'bedtime-skip-date';
@@ -88,6 +90,18 @@ export default function SleepGoalScreen() {
     haptic.light();
     setAutoSleepEnabled(value);
   }, [haptic, setAutoSleepEnabled]);
+
+  const handleAutoWakeToggle = useCallback(async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert('알림 권한 필요', '자동 기상 알림을 사용하려면 설정에서 알림 권한을 허용해주세요.');
+        return;
+      }
+    }
+    haptic.light();
+    setAutoWakeEnabled(value);
+  }, [haptic, setAutoWakeEnabled]);
 
   const handleAutoBlockToggle = useCallback(async (value: boolean) => {
     if (value) {
@@ -176,6 +190,23 @@ export default function SleepGoalScreen() {
             onValueChange={handleAutoSleepToggle}
             trackColor={{false: '#D1D5DB', true: '#A78BFA'}}
             thumbColor={autoSleepEnabled ? '#7C3AED' : '#F3F4F6'}
+          />
+        </View>
+
+        {/* 자동 기상 알림 토글 */}
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLeft}>
+            <AlarmClock size={16} color="#F59E0B" />
+            <View>
+              <Text style={styles.toggleLabel}>자동 기상 알림</Text>
+              <Text style={styles.toggleDesc}>기상 시간에 알림을 보내드려요</Text>
+            </View>
+          </View>
+          <Switch
+            value={autoWakeEnabled}
+            onValueChange={handleAutoWakeToggle}
+            trackColor={{false: '#D1D5DB', true: '#A78BFA'}}
+            thumbColor={autoWakeEnabled ? '#7C3AED' : '#F3F4F6'}
           />
         </View>
 

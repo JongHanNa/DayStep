@@ -101,6 +101,7 @@ interface SleepStoreState {
   screenTimeLinkEnabled: boolean;
   autoSleepEnabled: boolean; // 자동 취침 알림
   autoBlockAtBedtime: boolean; // 취침 시 자동 앱 차단
+  autoWakeEnabled: boolean; // 자동 기상 알림
   sessionState: SleepSessionState;
   _sleepSettingsSyncedAt: string | null;
 
@@ -122,6 +123,7 @@ interface SleepStoreState {
   setScreenTimeLinkEnabled: (v: boolean) => void;
   setAutoSleepEnabled: (v: boolean) => void;
   setAutoBlockAtBedtime: (v: boolean) => void;
+  setAutoWakeEnabled: (v: boolean) => void;
   getGoalDurationMinutes: () => number;
   startSleepSession: () => Promise<void>;
   completeSleepSession: () => Promise<void>;
@@ -184,6 +186,7 @@ export const useSleepStore = create<SleepStoreState>()(
       screenTimeLinkEnabled: false,
       autoSleepEnabled: false,
       autoBlockAtBedtime: false,
+      autoWakeEnabled: false,
       sessionState: {...DEFAULT_SESSION},
       _sleepSettingsSyncedAt: null,
 
@@ -405,6 +408,7 @@ export const useSleepStore = create<SleepStoreState>()(
           screenTimeLinkEnabled: settings.screenTimeLinkEnabled ?? false,
           autoSleepEnabled: settings.autoSleepEnabled ?? false,
           autoBlockAtBedtime: settings.autoBlockAtBedtime ?? false,
+          autoWakeEnabled: settings.autoWakeEnabled ?? false,
           _sleepSettingsSyncedAt: settings._lastSyncedAt ?? now,
         });
       },
@@ -428,6 +432,11 @@ export const useSleepStore = create<SleepStoreState>()(
         set({wakeGoalTime: time});
         if (get().autoSleepEnabled && (get().autoBlockAtBedtime || get().screenTimeLinkEnabled)) {
           scheduleDailyAutoShield(get().sleepGoalTime, time);
+        }
+        if (get().autoWakeEnabled) {
+          import('@/lib/notifications').then(({scheduleSleepWakeupNotification}) =>
+            scheduleSleepWakeupNotification(time),
+          );
         }
       },
       setScreenTimeLinkEnabled: (v) => set({screenTimeLinkEnabled: v}),
@@ -463,6 +472,17 @@ export const useSleepStore = create<SleepStoreState>()(
           // 자동 앱 차단 OFF → daily shield만 해제 (수동 세션 차단은 유지)
           cancelDailyAutoShield();
         }
+      },
+
+      setAutoWakeEnabled: (v) => {
+        set({autoWakeEnabled: v});
+        import('@/lib/notifications').then(({scheduleSleepWakeupNotification, cancelSleepWakeupNotification}) => {
+          if (v) {
+            scheduleSleepWakeupNotification(get().wakeGoalTime);
+          } else {
+            cancelSleepWakeupNotification();
+          }
+        });
       },
 
       getGoalDurationMinutes: () => {
@@ -820,6 +840,7 @@ export const useSleepStore = create<SleepStoreState>()(
         screenTimeLinkEnabled: state.screenTimeLinkEnabled,
         autoSleepEnabled: state.autoSleepEnabled,
         autoBlockAtBedtime: state.autoBlockAtBedtime,
+        autoWakeEnabled: state.autoWakeEnabled,
         sessionState: state.sessionState,
         _sleepSettingsSyncedAt: state._sleepSettingsSyncedAt,
       }),
@@ -866,5 +887,6 @@ export function getSleepSettingsForSync() {
     screenTimeLinkEnabled: s.screenTimeLinkEnabled,
     autoSleepEnabled: s.autoSleepEnabled,
     autoBlockAtBedtime: s.autoBlockAtBedtime,
+    autoWakeEnabled: s.autoWakeEnabled,
   };
 }

@@ -399,6 +399,60 @@ export async function cancelSleepBedtimeNotification(): Promise<void> {
 }
 
 // ============================================
+// Sleep Wake-up Notification
+// ============================================
+
+const SLEEP_WAKEUP_ID = 'sleep-wakeup-reminder';
+
+/**
+ * 다음 기상 시간에 time-sensitive 로컬 알림 스케줄링
+ * @param wakeGoalTime - HH:mm 형식의 목표 기상 시간
+ */
+export async function scheduleSleepWakeupNotification(wakeGoalTime: string): Promise<void> {
+  await notifee.cancelNotification(SLEEP_WAKEUP_ID);
+
+  const [h, m] = wakeGoalTime.split(':').map(Number);
+  const now = new Date();
+  const triggerDate = new Date();
+  triggerDate.setHours(h, m, 0, 0);
+
+  if (triggerDate.getTime() <= now.getTime()) {
+    triggerDate.setDate(triggerDate.getDate() + 1);
+  }
+
+  const trigger: TimestampTrigger = {
+    type: TriggerType.TIMESTAMP,
+    timestamp: triggerDate.getTime(),
+  };
+
+  await notifee.createTriggerNotification(
+    {
+      id: SLEEP_WAKEUP_ID,
+      title: '기상 시간이에요 ☀️',
+      body: '좋은 아침이에요! 일어나서 하루를 시작해보세요.',
+      data: {type: 'sleep-wakeup'},
+      android: {
+        channelId: CHANNEL_ID,
+        smallIcon: 'ic_notification',
+        importance: AndroidImportance.HIGH,
+        pressAction: {id: 'default'},
+      },
+      ios: {
+        sound: 'default',
+        interruptionLevel: 'timeSensitive' as any,
+      },
+    },
+    trigger,
+  );
+  console.log(`[Notifications] scheduled sleep wakeup for ${triggerDate.toISOString()}`);
+}
+
+/** 기상 알림 취소 */
+export async function cancelSleepWakeupNotification(): Promise<void> {
+  await notifee.cancelNotification(SLEEP_WAKEUP_ID);
+}
+
+// ============================================
 // Utilities
 // ============================================
 

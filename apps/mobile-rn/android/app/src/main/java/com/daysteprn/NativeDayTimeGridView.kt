@@ -151,26 +151,16 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
         }
 
         Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
-            // ─── 종일 섹션 ───
+            // ─── 언제든지 섹션 (상단 전체 너비 바) ───
             if (allDayBlocks.isNotEmpty()) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
-                    Text(
-                        text = "종일",
-                        fontSize = 11.sp,
-                        color = Color(0xFF9CA3AF),
-                        modifier = Modifier
-                            .width(TIME_COLUMN_WIDTH)
-                            .padding(end = 6.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.End
-                    )
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        allDayBlocks.forEach { block ->
-                            AllDayChip(block)
-                        }
+                    allDayBlocks.forEach { block ->
+                        AllDayChip(block)
                     }
                 }
                 Box(modifier = Modifier.fillMaxWidth().height(0.5.dp).background(Color(0xFFE5E7EB)))
@@ -268,34 +258,48 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     }
 
     @Composable
+    @Composable
     private fun AllDayChip(block: TimeBlock) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 2.dp)
                 .clip(RoundedCornerShape(6.dp))
-                .background(block.color.copy(alpha = 0.12f))
+                .background(block.color.copy(alpha = if (block.type == "event") 0.7f else 0.08f))
                 .clickable {
                     if (block.type == "todo") onTodoPressCb?.invoke(block.id)
                 }
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .width(3.dp)
-                    .height(16.dp)
-                    .background(block.color, RoundedCornerShape(1.5.dp))
-            )
-            Spacer(modifier = Modifier.width(6.dp))
+            if (block.type == "todo") {
+                Text(
+                    text = "언제든지",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = block.color.copy(alpha = 0.6f),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .background(
+                            if (block.completed) Color(0xFF9CA3AF) else block.color,
+                            CircleShape
+                        )
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
             Text(
                 text = block.title,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = block.color,
+                color = if (block.type == "event") Color.White
+                       else if (block.completed) Color(0xFF9CA3AF)
+                       else Color(0xFF374151),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                textDecoration = if (block.completed) TextDecoration.LineThrough else TextDecoration.None
+                textDecoration = if (block.completed) TextDecoration.LineThrough else TextDecoration.None,
+                modifier = Modifier.weight(1f)
             )
         }
     }

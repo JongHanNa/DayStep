@@ -138,6 +138,7 @@ export const MotivationInputBottomSheet = forwardRef<MotivationInputBottomSheetR
             multiline
             maxLength={1000}
             textAlignVertical="top"
+            scrollEnabled
           />
 
           {/* 저장 버튼 */}
@@ -214,6 +215,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingVertical: 0,
     minHeight: 120,
+    maxHeight: 200,
   },
   saveBtn: {
     paddingVertical: 14,

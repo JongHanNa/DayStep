@@ -179,7 +179,6 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
   const {
     todos,
     selectedDate,
-    loading,
     motivationMap,
     setSelectedDate,
     fetchTodosForDate,
@@ -344,8 +343,14 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
     [toggleTodoCompletion],
   );
 
-  const handleRefresh = useCallback(() => {
-    fetchTodosForDate(selectedDate);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchTodosForDate(selectedDate);
+    } finally {
+      setIsRefreshing(false);
+    }
   }, [selectedDate, fetchTodosForDate]);
 
   const handleTodoPress = useCallback((todo: Todo) => {
@@ -565,7 +570,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
               ) : null
             }
             refreshControl={
-              <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+              <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
             }
             renderSectionHeader={({section}) => {
               return (
