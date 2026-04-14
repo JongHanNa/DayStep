@@ -7,7 +7,8 @@ import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import Animated, {FadeIn} from 'react-native-reanimated';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
-import {ADHD_TOPICS, type ADHDTopic} from '@/constants/adhd-understanding-data';
+import {ADHD_TOPICS, ADHD_UNDERSTANDING_SOURCES, ADHD_UNDERSTANDING_DISCLAIMER, type ADHDTopic} from '@/constants/adhd-understanding-data';
+import {SourcesCitation} from '@/components/common/SourcesCitation';
 
 interface TopicBottomSheetProps {
   selectedTopicId: number | null;
@@ -118,6 +119,9 @@ export function TopicBottomSheet({selectedTopicId}: TopicBottomSheetProps) {
             </View>
           ))}
         </Animated.View>
+        <View style={{paddingHorizontal: 20, paddingBottom: 40}}>
+          <SourcesCitation sources={ADHD_UNDERSTANDING_SOURCES} disclaimer={ADHD_UNDERSTANDING_DISCLAIMER} />
+        </View>
       </BottomSheetScrollView>
     </BottomSheet>
   );

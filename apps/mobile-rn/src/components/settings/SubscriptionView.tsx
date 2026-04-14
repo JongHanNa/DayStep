@@ -159,12 +159,16 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     if (user?.id) fetchSubscription(user.id);
   }, [user?.id, fetchSubscription]);
 
-  // RevenueCat offerings 로딩 (재시도 가능)
+  // RevenueCat offerings 로딩 (타임아웃 + 재시도 가능)
   const loadOfferings = useCallback(async () => {
     setOfferingsLoading(true);
     setOfferingsError(null);
     try {
-      const offerings = await Purchases.getOfferings();
+      const offeringsPromise = Purchases.getOfferings();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('구독 상품 로딩 시간이 초과되었습니다. 다시 시도해 주세요.')), 15000),
+      );
+      const offerings = await Promise.race([offeringsPromise, timeoutPromise]);
       setMonthlyPkg(offerings.current?.monthly ?? null);
       setAnnualPkg(offerings.current?.annual ?? null);
       if (!offerings.current) {
