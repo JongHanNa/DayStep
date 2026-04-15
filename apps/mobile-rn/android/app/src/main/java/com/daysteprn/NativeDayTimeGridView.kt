@@ -258,7 +258,6 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     }
 
     @Composable
-    @Composable
     private fun AllDayChip(block: TimeBlock) {
         Row(
             modifier = Modifier

@@ -88,6 +88,8 @@ export function LiquidGlassMenu({
         onMenuItemSelect={(event) => {
           onSelect(event.nativeEvent.key);
         }}
+        testID={testID}
+        accessibilityIdentifier={testID}
         style={{width: size, height: size}}
       />
     );

@@ -93,7 +93,7 @@ async function main() {
       bgEnd: slide.bgEnd,
       glow: slide.glow,
       glowPosition: slide.glowPosition || 'top-right',
-      screenshot: screenshotDataUri,
+      screenshot: '', // placeholder — injected via evaluate
       rotateY: slide.rotateY || '0',
       rotateX: slide.rotateX || '1',
     });
@@ -102,6 +102,12 @@ async function main() {
     await page.goto(`${templateUrl}?${params.toString()}`, {
       waitUntil: 'load',
     });
+
+    // base64 데이터는 URL 크기 제한을 초과할 수 있으므로 evaluate로 주입
+    await page.evaluate((dataUri) => {
+      const img = document.getElementById('screenshot');
+      if (img) img.src = dataUri;
+    }, screenshotDataUri);
 
     await page.waitForTimeout(800);
 

@@ -12,6 +12,7 @@ import {
   Keyboard,
   ScrollView,
   Pressable,
+  Modal,
   StyleSheet,
 } from 'react-native';
 import Animated, {
@@ -21,8 +22,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AnimatedPressable} from '@/components/core';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
-import {resolveTodoIcon} from '@/lib/iconMap';
-import {ChevronLeft, ClipboardList, Square, CheckSquare, Shield, Star, Zap, FolderOpen} from 'lucide-react-native';
+import {ChevronLeft, Square, CheckSquare, Shield, Star, Zap, FolderOpen, Palette} from 'lucide-react-native';
 import {useProjectStore} from '@/stores/projectStore';
 import {ProjectPickerModal} from './ProjectPickerModal';
 import {InlineIconPicker} from './InlineIconPicker';
@@ -63,7 +63,7 @@ export function TodoEditOverlay({
   const insets = useSafeAreaInsets();
   const titleInputRef = useRef<TextInput>(null);
   const [projectPickerVisible, setProjectPickerVisible] = useState(false);
-  const [showIconPicker, setShowIconPicker] = useState(false);
+  const [iconColorModalVisible, setIconColorModalVisible] = useState(false);
 
   const projects = useProjectStore(s => s.projects);
   const linkedProject = useMemo(
@@ -116,7 +116,6 @@ export function TodoEditOverlay({
 
   const dateSummary = getDateSummary(form);
   const dateSummaryExtras = getDateSummaryExtras(form);
-  const ResolvedIcon = resolveTodoIcon(form.icon);
 
   return (
     <Animated.View
@@ -157,6 +156,17 @@ export function TodoEditOverlay({
               ) : (
                 <FolderOpen size={16} color="#D1D5DB" />
               )}
+            </Pressable>
+
+            {/* 아이콘/색상 편집 */}
+            <Pressable
+              onPress={() => setIconColorModalVisible(true)}
+              hitSlop={4}
+              style={({pressed}) => [
+                styles.iconColorToggle,
+                pressed && {opacity: 0.7},
+              ]}>
+              <Palette size={16} color="#9CA3AF" />
             </Pressable>
           </View>
 
@@ -238,20 +248,8 @@ export function TodoEditOverlay({
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          {/* 아이콘 + 제목 */}
+          {/* 제목 */}
           <View style={styles.titleSection}>
-            <Pressable
-              onPress={() => setShowIconPicker(p => !p)}
-              style={[
-                styles.iconContainer,
-                form.color ? {backgroundColor: `${form.color}20`} : null,
-              ]}>
-              {ResolvedIcon ? (
-                <ResolvedIcon size={20} color={form.color || '#6B7280'} />
-              ) : (
-                <ClipboardList size={20} color="#9CA3AF" />
-              )}
-            </Pressable>
             <TextInput
               ref={titleInputRef}
               value={form.title}
@@ -262,37 +260,6 @@ export function TodoEditOverlay({
               multiline
             />
           </View>
-
-          {/* 아이콘 & 색상 선택 패널 */}
-          {showIconPicker && (
-            <View style={styles.pickerSection}>
-              <InlineIconPicker
-                selectedIcon={form.icon}
-                onIconChange={v => updateField('icon', v)}
-                popover
-              />
-              <View style={styles.colorPickerSection}>
-                <Text style={styles.colorPickerLabel}>색상</Text>
-                <View style={styles.colorRow}>
-                  {TODO_COLORS.map(color => {
-                    const isSelected = form.color === color;
-                    return (
-                      <Pressable
-                        key={color}
-                        onPress={() => updateField('color', isSelected ? '' : color)}
-                        style={[
-                          styles.colorSwatch,
-                          {backgroundColor: color},
-                          isSelected && styles.colorSwatchSelected,
-                        ]}>
-                        {isSelected && <Text style={styles.colorCheck}>✓</Text>}
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
-          )}
 
           {/* 설명 */}
           <View style={styles.descSection}>
@@ -316,9 +283,126 @@ export function TodoEditOverlay({
         onSelect={handleProjectSelect}
         onClose={() => setProjectPickerVisible(false)}
       />
+
+      {/* 아이콘/색상 선택 모달 */}
+      <IconColorPickerModal
+        visible={iconColorModalVisible}
+        selectedIcon={form.icon}
+        selectedColor={form.color}
+        onIconChange={v => updateField('icon', v)}
+        onColorChange={v => updateField('color', v)}
+        onClose={() => setIconColorModalVisible(false)}
+      />
     </Animated.View>
   );
 }
+
+// ============================================
+// IconColorPickerModal
+// ============================================
+
+interface IconColorPickerModalProps {
+  visible: boolean;
+  selectedIcon: string;
+  selectedColor: string;
+  onIconChange: (icon: string) => void;
+  onColorChange: (color: string) => void;
+  onClose: () => void;
+}
+
+function IconColorPickerModal({
+  visible,
+  selectedIcon,
+  selectedColor,
+  onIconChange,
+  onColorChange,
+  onClose,
+}: IconColorPickerModalProps) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}>
+      <View style={[modalStyles.container, {paddingTop: insets.top + 8}]}>
+        <View style={modalStyles.header}>
+          <Text style={modalStyles.headerTitle}>아이콘 & 색상</Text>
+          <Pressable onPress={onClose} hitSlop={8} style={modalStyles.closeBtn}>
+            <Text style={modalStyles.closeBtnText}>완료</Text>
+          </Pressable>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={[modalStyles.content, {paddingBottom: insets.bottom + 20}]}
+          showsVerticalScrollIndicator={false}>
+          <Text style={modalStyles.sectionLabel}>아이콘</Text>
+          <InlineIconPicker
+            selectedIcon={selectedIcon}
+            onIconChange={onIconChange}
+            popover
+          />
+
+          <Text style={[modalStyles.sectionLabel, {marginTop: 20}]}>색상</Text>
+          <View style={modalStyles.colorGrid}>
+            {TODO_COLORS.map(color => {
+              const isSelected = selectedColor === color;
+              return (
+                <Pressable
+                  key={color}
+                  onPress={() => onColorChange(isSelected ? '' : color)}
+                  style={[
+                    modalStyles.colorSwatch,
+                    {backgroundColor: color},
+                    isSelected && modalStyles.colorSwatchSelected,
+                  ]}>
+                  {isSelected && <Text style={modalStyles.colorCheck}>✓</Text>}
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: '#FFFFFF'},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: {fontSize: 17, fontWeight: '700', color: '#1F2937'},
+  closeBtn: {padding: 4},
+  closeBtnText: {fontSize: 15, fontWeight: '600', color: '#3B82F6'},
+  content: {paddingHorizontal: 16, paddingTop: 16},
+  sectionLabel: {fontSize: 13, fontWeight: '600', color: '#9CA3AF', marginBottom: 10},
+  colorGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
+  colorSwatch: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colorSwatchSelected: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  colorCheck: {color: '#FFFFFF', fontSize: 16, fontWeight: '700'},
+});
 
 // ============================================
 // Styles
@@ -364,6 +448,16 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
     maxWidth: 140,
+  },
+  iconColorToggle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   projectBadgeRow: {
     flexDirection: 'row',
@@ -469,15 +563,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     gap: 8,
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-    backgroundColor: '#F3F4F6',
-  },
   heroTitle: {
     flex: 1,
     fontSize: 22,
@@ -494,52 +579,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     paddingVertical: 6,
-    paddingLeft: 36, // icon width + gap 맞추기
     textAlignVertical: 'top',
   },
   scrollContent: {
     // paddingBottom은 인라인으로 insets.bottom + 20 처리
-  },
-  pickerSection: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-    paddingBottom: 12,
-  },
-  colorPickerSection: {
-    marginTop: 12,
-  },
-  colorPickerLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginBottom: 8,
-  },
-  colorRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  colorSwatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  colorSwatchSelected: {
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  colorCheck: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

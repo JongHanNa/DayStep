@@ -138,33 +138,6 @@ export function TodoCard({
           isMissed && styles.containerMissed,
           !todo.completed && priorityColor && {backgroundColor: hexWithOpacity(priorityColor, 0.04)},
         ]}>
-        {/* 체크박스 */}
-        <AnimatedPressable
-          onPress={isSkipped ? () => { haptic.light(); onUnskipTodo?.(todo); } : handleToggle}
-          haptic={false}
-          scaleValue={0.85}
-          style={styles.checkboxArea}>
-          <Animated.View
-            style={[
-              styles.checkbox,
-              todo.completed && {backgroundColor: primaryColor, borderColor: primaryColor},
-              !todo.completed && priorityColor && {borderColor: priorityColor, borderWidth: 2.5},
-              isSkipped && skipReason === 'missed' && styles.checkboxMissed,
-              isSkipped && skipReason === 'not_needed' && styles.checkboxNotNeeded,
-              checkAnimatedStyle,
-            ]}>
-            {isSkipped ? (
-              skipReason === 'missed' ? (
-                <XCircle size={18} color="#DC2626" strokeWidth={2} />
-              ) : (
-                <MinusCircle size={18} color="#6B7280" strokeWidth={2} />
-              )
-            ) : todo.completed ? (
-              <Text style={styles.checkmark}>✓</Text>
-            ) : null}
-          </Animated.View>
-        </AnimatedPressable>
-
         {/* 콘텐츠 */}
         <View style={styles.content}>
           {/* 시간 + 반복 */}
@@ -180,16 +153,6 @@ export function TodoCard({
 
           {/* 제목 */}
           <View style={styles.titleRow}>
-            {(() => {
-              const TodoIcon = resolveTodoIcon(todo.icon);
-              return TodoIcon ? (
-                <TodoIcon
-                  size={16}
-                  color={todo.completed ? '#9CA3AF' : '#6B7280'}
-                  style={{marginRight: 4}}
-                />
-              ) : null;
-            })()}
             <Text
               style={[
                 styles.title,
@@ -345,13 +308,42 @@ export function TodoCard({
           const TodoIcon = resolveTodoIcon(todo.icon);
           if (TodoIcon) {
             return (
-              <View style={[styles.iconCircle, {backgroundColor: '#F3F4F6'}]}>
-                <TodoIcon size={16} color={todo.completed ? '#9CA3AF' : '#6B7280'} />
+              <View style={[styles.iconCircle, {
+                backgroundColor: todo.color ? `${todo.color}20` : '#F3F4F6',
+              }]}>
+                <TodoIcon size={16} color={todo.color || (todo.completed ? '#9CA3AF' : '#6B7280')} />
               </View>
             );
           }
           return null;
         })()}
+
+        {/* 체크박스 (우측 끝) */}
+        <AnimatedPressable
+          onPress={isSkipped ? () => { haptic.light(); onUnskipTodo?.(todo); } : handleToggle}
+          haptic={false}
+          scaleValue={0.85}
+          style={styles.checkboxArea}>
+          <Animated.View
+            style={[
+              styles.checkbox,
+              todo.completed && {backgroundColor: primaryColor, borderColor: primaryColor},
+              !todo.completed && priorityColor && {borderColor: priorityColor, borderWidth: 2.5},
+              isSkipped && skipReason === 'missed' && styles.checkboxMissed,
+              isSkipped && skipReason === 'not_needed' && styles.checkboxNotNeeded,
+              checkAnimatedStyle,
+            ]}>
+            {isSkipped ? (
+              skipReason === 'missed' ? (
+                <XCircle size={18} color="#DC2626" strokeWidth={2} />
+              ) : (
+                <MinusCircle size={18} color="#6B7280" strokeWidth={2} />
+              )
+            ) : todo.completed ? (
+              <Text style={styles.checkmark}>✓</Text>
+            ) : null}
+          </Animated.View>
+        </AnimatedPressable>
       </AnimatedPressable>
     </Animated.View>
   );
@@ -389,7 +381,7 @@ const styles = StyleSheet.create({
   },
   checkboxArea: {
     padding: 4,
-    marginRight: 8,
+    marginLeft: 8,
     marginTop: 2,
   },
   checkbox: {

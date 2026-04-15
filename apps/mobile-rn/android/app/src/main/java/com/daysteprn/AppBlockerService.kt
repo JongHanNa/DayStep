@@ -232,7 +232,7 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                 BlockerOverlayContent(
                     onReturnToDayStep = {
                         // DayStep 앱으로 전환
-                        val launchIntent = packageManager.getLaunchIntentForPackage("com.daysteprn")
+                        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
                         launchIntent?.let {
                             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                             startActivity(it)
@@ -284,7 +284,7 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val launchIntent = packageManager.getLaunchIntentForPackage("com.daysteprn")
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
         val launchPendingIntent = PendingIntent.getActivity(
             this, 1, launchIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
