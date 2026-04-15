@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>할일 연결 피커 — 리디자인 시안 3종</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: #F3F4F6; padding: 24px; }
+
+  .page-header {
+    max-width: 1300px; margin: 0 auto 32px;
+    text-align: center;
+  }
+  .page-header h1 { font-size: 28px; font-weight: 800; color: #1F2937; margin-bottom: 8px; }
+  .page-header p { font-size: 15px; color: #6B7280; line-height: 1.6; }
+
+  /* 문제 분석 */
+  .analysis {
+    max-width: 1300px; margin: 0 auto 40px;
+    background: #FFF; border-radius: 16px; padding: 28px;
+    border: 1px solid #E5E7EB;
+  }
+  .analysis h2 { font-size: 18px; font-weight: 700; color: #1F2937; margin-bottom: 16px; }
+  .analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .issue-card {
+    background: #FEF2F2; border-radius: 12px; padding: 16px;
+    border-left: 3px solid #EF4444;
+  }
+  .issue-card h3 { font-size: 13px; font-weight: 700; color: #991B1B; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .issue-card p { font-size: 13px; color: #7F1D1D; line-height: 1.5; }
+
+  /* 시안 그리드 */
+  .designs {
+    max-width: 1300px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px;
+  }
+  @media (max-width: 1100px) { .designs { grid-template-columns: 1fr; max-width: 420px; } }
+
+  .design-col { display: flex; flex-direction: column; gap: 16px; }
+  .design-label {
+    background: #1F2937; color: #FFF; font-size: 13px; font-weight: 700;
+    padding: 8px 14px; border-radius: 8px; text-align: center;
+  }
+  .design-desc {
+    font-size: 12px; color: #6B7280; text-align: center; line-height: 1.5;
+    padding: 0 8px;
+  }
+
+  /* 폰 프레임 */
+  .phone {
+    width: 375px; height: 720px;
+    background: #FFF; border-radius: 40px;
+    border: 3px solid #1F2937;
+    overflow: hidden; position: relative;
+    margin: 0 auto;
+    display: flex; flex-direction: column;
+  }
+  .phone-notch {
+    height: 50px; background: #FFF;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 6px; flex-shrink: 0;
+  }
+  .phone-notch .pill {
+    width: 120px; height: 28px; background: #1F2937;
+    border-radius: 14px;
+  }
+
+  /* 공통 pageSheet 그랩바 */
+  .grab-bar {
+    width: 36px; height: 5px; background: #D1D5DB; border-radius: 3px;
+    margin: 8px auto 0;
+  }
+
+  /* 시안 내부 */
+  .sheet-content {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ───── 시안 A: iOS 네이티브 UISearchController + 그룹 리스트 ───── */
+  .a-header {
+    padding: 12px 16px 0;
+    display: flex; flex-direction: column; gap: 10px;
+    flex-shrink: 0;
+  }
+  .a-header-row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .a-header-row h2 { font-size: 17px; font-weight: 700; color: #1F2937; }
+  .a-header-row .done-btn { font-size: 15px; font-weight: 600; color: #D97706; cursor: pointer; }
+  .a-search {
+    /* UISearchController 네이티브 검색바 */
+    background: #F2F2F7; border-radius: 10px; padding: 8px 12px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 14px; color: #8E8E93;
+  }
+  .a-search svg { flex-shrink: 0; }
+
+  .a-list {
+    flex: 1; overflow-y: auto; padding: 8px 16px 20px;
+  }
+  .a-section-header {
+    font-size: 12px; font-weight: 600; color: #8E8E93;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 16px 0 6px;
+  }
+  .a-group {
+    background: #FFF; border-radius: 12px;
+    border: 1px solid #F3F4F6;
+    overflow: hidden;
+  }
+  .a-item {
+    display: flex; align-items: center; padding: 11px 14px;
+    gap: 12px; cursor: pointer; transition: background 0.15s;
+    border-bottom: 0.5px solid #F3F4F6;
+  }
+  .a-item:last-child { border-bottom: none; }
+  .a-item:hover { background: #FFFBEB; }
+  .a-item .icon-wrap {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 14px;
+  }
+  .a-item .icon-daily { background: #FEF3C7; color: #D97706; }
+  .a-item .icon-repeat { background: #EDE9FE; color: #7C3AED; }
+  .a-item .text { flex: 1; font-size: 15px; color: #1F2937; line-height: 1.3; }
+  .a-item .text .sub { font-size: 11px; color: #9CA3AF; margin-top: 1px; }
+  .a-check {
+    width: 22px; height: 22px; border-radius: 11px;
+    border: 2px solid #D1D5DB; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .a-check.on { background: #D97706; border-color: #D97706; }
+  .a-check.on::after { content: '✓'; color: #FFF; font-size: 13px; font-weight: 700; }
+
+  /* 네이티브 라벨 */
+  .native-label {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: #1F2937; color: #FFF; font-size: 9px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px; white-space: nowrap;
+    opacity: 0.85; letter-spacing: 0.3px;
+    z-index: 10;
+  }
+
+  /* ───── 시안 B: 토글 칩 필터 + 스와이프 해제 ───── */
+  .b-header {
+    padding: 12px 16px 0;
+    display: flex; flex-direction: column; gap: 10px;
+    flex-shrink: 0;
+  }
+  .b-header-row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .b-header-row h2 { font-size: 17px; font-weight: 700; color: #1F2937; }
+  .b-header-row .done-btn { font-size: 15px; font-weight: 600; color: #D97706; cursor: pointer; }
+
+  .b-linked-section {
+    padding: 8px 16px 0;
+    flex-shrink: 0;
+  }
+  .b-linked-label { font-size: 12px; font-weight: 600; color: #8E8E93; margin-bottom: 6px; }
+  .b-linked-chips {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .b-chip {
+    display: flex; align-items: center; gap: 4px;
+    background: #FFFBEB; border: 1px solid #FDE68A;
+    border-radius: 8px; padding: 5px 10px;
+    font-size: 13px; color: #92400E; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .b-chip .x { font-size: 11px; color: #D97706; font-weight: 700; }
+  .b-chip:hover { background: #FEF3C7; }
+  .b-chip-add {
+    background: none; border: 1.5px dashed #D1D5DB;
+    border-radius: 8px; padding: 5px 10px;
+    font-size: 13px; color: #9CA3AF; cursor: pointer;
+    display: flex; align-items: center; gap: 3px;
+  }
+
+  .b-filter-row {
+    display: flex; gap: 6px; padding: 12px 16px 0;
+    flex-shrink: 0;
+  }
+  .b-filter {
+    padding: 6px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid #E5E7EB; color: #6B7280; background: #FFF;
+  }
+  .b-filter.active { background: #FFFBEB; border-color: #FDE68A; color: #92400E; font-weight: 600; }
+
+  .b-list {
+    flex: 1; overflow-y: auto; padding: 8px 16px 20px;
+  }
+  .b-item {
+    display: flex; align-items: center; padding: 12px 0;
+    gap: 12px; cursor: pointer;
+    border-bottom: 0.5px solid #F3F4F6;
+    transition: background 0.15s;
+  }
+  .b-item:hover { background: #FAFAFA; margin: 0 -16px; padding: 12px 16px; border-radius: 8px; }
+  .b-item .text { flex: 1; font-size: 15px; color: #1F2937; }
+  .b-item .badge {
+    font-size: 10px; color: #9CA3AF; background: #F3F4F6;
+    padding: 2px 6px; border-radius: 4px; font-weight: 500;
+  }
+
+  /* ───── 시안 C: 인라인 바텀시트 (전체 피커 불필요) ───── */
+  .c-header {
+    padding: 12px 16px 0;
+    flex-shrink: 0;
+  }
+  .c-header-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .c-header-row h2 { font-size: 17px; font-weight: 700; color: #1F2937; }
+  .c-header-row .done-btn { font-size: 15px; font-weight: 600; color: #D97706; cursor: pointer; }
+
+  .c-search {
+    background: #F2F2F7; border-radius: 10px; padding: 8px 12px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 14px; color: #8E8E93;
+    margin: 0 16px;
+    flex-shrink: 0;
+  }
+
+  .c-linked-area {
+    padding: 12px 16px 0;
+    flex-shrink: 0;
+  }
+  .c-linked-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .c-linked-header span { font-size: 12px; font-weight: 600; color: #8E8E93; }
+  .c-linked-header .count { font-size: 12px; color: #D97706; font-weight: 600; }
+  .c-linked-item {
+    display: flex; align-items: center; padding: 8px 12px;
+    background: #FFFBEB; border-radius: 10px; margin-bottom: 6px;
+    gap: 8px; position: relative; overflow: hidden;
+  }
+  .c-linked-item .text { flex: 1; font-size: 14px; color: #92400E; }
+  .c-linked-item .unlink {
+    font-size: 12px; color: #D97706; font-weight: 600; cursor: pointer;
+    padding: 2px 6px;
+  }
+  .c-linked-swipe-hint {
+    font-size: 10px; color: #D1D5DB; text-align: center; padding: 2px 0 0;
+  }
+
+  .c-divider {
+    height: 1px; background: #F3F4F6; margin: 12px 16px 0;
+    flex-shrink: 0;
+  }
+  .c-avail-label {
+    font-size: 12px; font-weight: 600; color: #8E8E93;
+    padding: 10px 16px 6px;
+    flex-shrink: 0;
+  }
+  .c-list {
+    flex: 1; overflow-y: auto; padding: 0 16px 20px;
+  }
+  .c-item {
+    display: flex; align-items: center; padding: 11px 0;
+    gap: 10px; cursor: pointer;
+    border-bottom: 0.5px solid #F3F4F6;
+    transition: background 0.15s;
+  }
+  .c-item:hover { background: #FAFAFA; margin: 0 -8px; padding: 11px 8px; border-radius: 8px; }
+  .c-item .plus-circle {
+    width: 22px; height: 22px; border-radius: 11px;
+    border: 1.5px solid #D1D5DB; display: flex;
+    align-items: center; justify-content: center;
+    flex-shrink: 0; color: #9CA3AF; font-size: 14px; font-weight: 300;
+    transition: all 0.15s;
+  }
+  .c-item:hover .plus-circle { border-color: #D97706; color: #D97706; }
+  .c-item .text { flex: 1; font-size: 14px; color: #374151; }
+  .c-item .type-tag {
+    font-size: 10px; padding: 2px 6px; border-radius: 4px;
+    font-weight: 500;
+  }
+  .c-item .tag-repeat { background: #EDE9FE; color: #7C3AED; }
+  .c-item .tag-timed { background: #DBEAFE; color: #2563EB; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>할일 연결 피커 — 리디자인 시안</h1>
+  <p>원동력 새기기 화면에서 할일을 연결/해제하는 피커 모달</p>
+</div>
+
+<!-- ━━━ 현재 문제 분석 ━━━ -->
+<div class="analysis">
+  <h2>현재 화면 문제 분석</h2>
+  <div class="analysis-grid">
+    <div class="issue-card">
+      <h3>시각적 스타일링</h3>
+      <p>할일 제목과 체크 원이 수직 정렬 불일치. 항목 간 간격이 불균일하고 텍스트가 체크 원보다 위에 배치됨. 전체적으로 리스트 밀도가 낮아 스크롤 양 증가.</p>
+    </div>
+    <div class="issue-card">
+      <h3>정보 구조</h3>
+      <p>일반 할일과 반복 할일 구분 없이 단일 리스트로 나열. 이미 연결된 할일이 어떤 것인지 시각적 구분 없음. 항목이 많을 때 원하는 할일을 찾기 어려움.</p>
+    </div>
+    <div class="issue-card">
+      <h3>인터랙션 패턴</h3>
+      <p>RN Modal (presentationStyle="pageSheet")을 사용하나 검색/필터 없이 전체 목록만 나열. ScrollView 내 스크롤은 네이티브 리스트 대비 물리감이 부족하고 rubber-band가 어색.</p>
+    </div>
+    <div class="issue-card">
+      <h3>태스크 플로우</h3>
+      <p>연결 상태 변경 후 피드백 없음 — 체크만 토글되고 "n개 연결됨" 같은 요약이 없음. 완료 후 결과 확인을 위해 모달을 닫아야 하는 구조.</p>
+    </div>
+    <div class="issue-card">
+      <h3>행동설계</h3>
+      <p>"연결" 행위의 의미가 불명확 — 왜 이 할일을 원동력에 연결하는지 맥락 제공 없음. 빈 체크 원만으로는 연결/미연결 상태의 시각적 차이가 약함.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━ 시안 3종 ━━━ -->
+<div class="designs">
+
+  <!-- ━━━ 시안 A: iOS 네이티브 검색 + 그룹 리스트 ━━━ -->
+  <div class="design-col">
+    <div class="design-label">A. 네이티브 그룹 리스트</div>
+    <div class="design-desc">
+      iOS UISearchController + UITableView grouped 스타일.<br>
+      일반/반복을 섹션으로 분리, 검색으로 빠른 탐색.
+    </div>
+    <div class="phone">
+      <div class="phone-notch"><div class="pill"></div></div>
+      <div class="grab-bar"></div>
+      <div class="sheet-content">
+        <div class="a-header">
+          <div class="a-header-row">
+            <h2>할일 연결</h2>
+            <span class="done-btn">완료</span>
+          </div>
+          <!-- ✦ 네이티브: UISearchController (SwiftUI .searchable) -->
+          <div class="a-search" title="네이티브: UISearchController / SwiftUI .searchable modifier">
+            <svg width="14" height="14" fill="none" stroke="#8E8E93" stroke-width="2"><circle cx="6" cy="6" r="5"/><path d="M10 10l3 3"/></svg>
+            <span>할일 검색</span>
+          </div>
+        </div>
+
+        <div class="a-list">
+          <!-- 연결됨 섹션 -->
+          <div class="a-section-header">연결됨 (2)</div>
+          <div class="a-group">
+            <div class="a-item">
+              <div class="icon-wrap icon-repeat">↻</div>
+              <div class="text">성경읽기<div class="sub">매일 반복</div></div>
+              <div class="a-check on"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-daily">○</div>
+              <div class="text">주간암송</div>
+              <div class="a-check on"></div>
+            </div>
+          </div>
+
+          <!-- 반복 할일 -->
+          <div class="a-section-header">반복 할일</div>
+          <!-- ✦ 네이티브: UITableView grouped / SwiftUI List(.insetGrouped) -->
+          <div class="a-group" title="네이티브: SwiftUI List(.insetGrouped) 스타일">
+            <div class="a-item">
+              <div class="icon-wrap icon-repeat">↻</div>
+              <div class="text">양치<div class="sub">매일 반복</div></div>
+              <div class="a-check"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-repeat">↻</div>
+              <div class="text">기도<div class="sub">매일 반복</div></div>
+              <div class="a-check"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-repeat">↻</div>
+              <div class="text">겸손부 풋대말씀<div class="sub">매주 반복</div></div>
+              <div class="a-check"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-repeat">↻</div>
+              <div class="text">겸손부 수련회<div class="sub">매주 반복</div></div>
+              <div class="a-check"></div>
+            </div>
+          </div>
+
+          <!-- 일반 할일 -->
+          <div class="a-section-header">일반 할일</div>
+          <div class="a-group">
+            <div class="a-item">
+              <div class="icon-wrap icon-daily">○</div>
+              <div class="text">스크린샷 찍기</div>
+              <div class="a-check"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-daily">○</div>
+              <div class="text">스크린샷용 기기 및 환경 준비하기</div>
+              <div class="a-check"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-daily">○</div>
+              <div class="text">앱스토어 가이드라인 확인하기</div>
+              <div class="a-check"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-daily">○</div>
+              <div class="text">의류를 정리해서 옷장에 넣기</div>
+              <div class="a-check"></div>
+            </div>
+            <div class="a-item">
+              <div class="icon-wrap icon-daily">○</div>
+              <div class="text">서랍을 열고 내용물을 비우기</div>
+              <div class="a-check"></div>
+            </div>
+          </div>
+        </div>
+        <div class="native-label">
+          리스트: SwiftUI List(.insetGrouped) &nbsp;|&nbsp; 검색: .searchable modifier &nbsp;|&nbsp; 시트: .sheet(.presentationDetents)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━━ 시안 B: 칩 필터 + 연결 상태 상단 표시 ━━━ -->
+  <div class="design-col">
+    <div class="design-label">B. 칩 필터 + 연결 상태 요약</div>
+    <div class="design-desc">
+      연결된 할일을 상단 칩으로 즉시 파악.<br>
+      타입 필터로 빠른 탐색, x 탭으로 즉시 해제.
+    </div>
+    <div class="phone">
+      <div class="phone-notch"><div class="pill"></div></div>
+      <div class="grab-bar"></div>
+      <div class="sheet-content">
+        <div class="b-header">
+          <div class="b-header-row">
+            <h2>할일 연결</h2>
+            <span class="done-btn">완료</span>
+          </div>
+        </div>
+
+        <!-- 연결됨 칩 -->
+        <div class="b-linked-section">
+          <div class="b-linked-label">연결됨</div>
+          <div class="b-linked-chips">
+            <div class="b-chip">성경읽기 <span class="x">✕</span></div>
+            <div class="b-chip">주간암송 <span class="x">✕</span></div>
+            <div class="b-chip-add">+ 추가</div>
+          </div>
+        </div>
+
+        <!-- 필터 -->
+        <!-- ✦ 네이티브: UISegmentedControl / SwiftUI Picker(.segmented) -->
+        <div class="b-filter-row" title="네이티브: SwiftUI Picker(.segmented) 스타일">
+          <div class="b-filter active">전체</div>
+          <div class="b-filter">반복</div>
+          <div class="b-filter">일반</div>
+          <div class="b-filter">시간 지정</div>
+        </div>
+
+        <div class="b-list">
+          <div class="b-item">
+            <div class="a-check on"></div>
+            <div class="text">성경읽기</div>
+            <div class="badge">매일</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check on"></div>
+            <div class="text">주간암송</div>
+            <div class="badge">일반</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">양치</div>
+            <div class="badge">매일</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">기도</div>
+            <div class="badge">매일</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">겸손부 풋대말씀</div>
+            <div class="badge">매주</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">겸손부 수련회</div>
+            <div class="badge">매주</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">스크린샷 찍기</div>
+            <div class="badge">일반</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">스크린샷용 기기 및 환경 준비하기</div>
+            <div class="badge">일반</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">앱스토어 가이드라인 확인하기</div>
+            <div class="badge">일반</div>
+          </div>
+          <div class="b-item">
+            <div class="a-check"></div>
+            <div class="text">의류를 정리해서 옷장에 넣기</div>
+            <div class="badge">일반</div>
+          </div>
+        </div>
+        <div class="native-label">
+          필터: SwiftUI Picker(.segmented) &nbsp;|&nbsp; 리스트: SwiftUI List &nbsp;|&nbsp; 칩 해제: 스와이프 → UISwipeAction
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━━ 시안 C: 연결됨/미연결 2분할 + 검색 ━━━ -->
+  <div class="design-col">
+    <div class="design-label">C. 2분할 레이아웃 (연결/전체)</div>
+    <div class="design-desc">
+      상단: 현재 연결된 할일 (스와이프로 해제).<br>
+      하단: 전체 할일 목록 (+로 연결). 명확한 2영역 구분.
+    </div>
+    <div class="phone">
+      <div class="phone-notch"><div class="pill"></div></div>
+      <div class="grab-bar"></div>
+      <div class="sheet-content">
+        <div class="c-header">
+          <div class="c-header-row">
+            <h2>할일 연결</h2>
+            <span class="done-btn">완료</span>
+          </div>
+        </div>
+
+        <div class="c-search" title="네이티브: UISearchController / SwiftUI .searchable">
+          <svg width="14" height="14" fill="none" stroke="#8E8E93" stroke-width="2"><circle cx="6" cy="6" r="5"/><path d="M10 10l3 3"/></svg>
+          <span>할일 검색</span>
+        </div>
+
+        <!-- 연결된 할일 영역 -->
+        <div class="c-linked-area">
+          <div class="c-linked-header">
+            <span>연결된 할일</span>
+            <span class="count">2개</span>
+          </div>
+          <!-- ✦ 네이티브: UISwipeActionsConfiguration / SwiftUI .swipeActions -->
+          <div class="c-linked-item" title="네이티브: SwiftUI .swipeActions(edge: .trailing) { Button('해제') }">
+            <div style="width:6px;height:6px;border-radius:3px;background:#D97706;flex-shrink:0"></div>
+            <div class="text">성경읽기</div>
+            <div class="unlink">해제</div>
+          </div>
+          <div class="c-linked-item">
+            <div style="width:6px;height:6px;border-radius:3px;background:#D97706;flex-shrink:0"></div>
+            <div class="text">주간암송</div>
+            <div class="unlink">해제</div>
+          </div>
+          <div class="c-linked-swipe-hint">← 스와이프하여 해제</div>
+        </div>
+
+        <div class="c-divider"></div>
+        <div class="c-avail-label">전체 할일</div>
+
+        <div class="c-list">
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">양치</div>
+            <span class="type-tag tag-repeat">반복</span>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">기도</div>
+            <span class="type-tag tag-repeat">반복</span>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">겸손부 풋대말씀</div>
+            <span class="type-tag tag-repeat">반복</span>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">겸손부 수련회</div>
+            <span class="type-tag tag-repeat">반복</span>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">스크린샷 찍기</div>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">스크린샷용 기기 및 환경 준비하기</div>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">71구역 기도모임 마치는 기도하기</div>
+            <span class="type-tag tag-timed">시간</span>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">앱스토어 가이드라인 확인하기</div>
+          </div>
+          <div class="c-item">
+            <div class="plus-circle">+</div>
+            <div class="text">의류를 정리해서 옷장에 넣기</div>
+          </div>
+        </div>
+        <div class="native-label">
+          스와이프 해제: SwiftUI .swipeActions &nbsp;|&nbsp; 검색: .searchable &nbsp;|&nbsp; 리스트: SwiftUI List
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 네이티브 교체 요약 -->
+<div class="analysis" style="margin-top: 40px;">
+  <h2>네이티브 컨트롤 교체 요약</h2>
+  <div class="analysis-grid">
+    <div class="issue-card" style="background: #F0FDF4; border-left-color: #22C55E;">
+      <h3 style="color: #166534;">RN Modal → SwiftUI .sheet</h3>
+      <p style="color: #14532D;">.presentationDetents([.medium, .large])로 네이티브 시트 제스처 (드래그 dismiss, 러버밴드, 속도 감응) 확보. 현재 RN Modal의 pageSheet는 제스처 미지원.</p>
+    </div>
+    <div class="issue-card" style="background: #F0FDF4; border-left-color: #22C55E;">
+      <h3 style="color: #166534;">RN ScrollView → SwiftUI List</h3>
+      <p style="color: #14532D;">List(.insetGrouped) 또는 List(.plain)으로 네이티브 스크롤 물리감, 셀 재활용, 섹션 헤더 sticky 효과 확보. 대량 항목에서 성능 이점.</p>
+    </div>
+    <div class="issue-card" style="background: #F0FDF4; border-left-color: #22C55E;">
+      <h3 style="color: #166534;">JS 검색 → SwiftUI .searchable</h3>
+      <p style="color: #14532D;">.searchable modifier로 네이티브 검색바 UI + 키보드 자동 dismiss + 취소 버튼 자동 생성. JS TextInput 검색바 대비 플랫폼 일관성 확보.</p>
+    </div>
+    <div class="issue-card" style="background: #F0FDF4; border-left-color: #22C55E;">
+      <h3 style="color: #166534;">JS 체크 토글 → SwiftUI Toggle / .swipeActions</h3>
+      <p style="color: #14532D;">연결 해제는 .swipeActions(edge: .trailing)로 스와이프 삭제 패턴 활용. 연결 추가는 탭 시 네이티브 haptic + 스프링 애니메이션 .withAnimation(.spring).</p>
+    </div>
+    <div class="issue-card" style="background: #F0FDF4; border-left-color: #22C55E;">
+      <h3 style="color: #166534;">JS 필터 버튼 → SwiftUI Picker(.segmented)</h3>
+      <p style="color: #14532D;">시안 B의 타입 필터를 네이티브 세그먼트 컨트롤로 구현. 터치 피드백, 슬라이드 전환이 플랫폼 네이티브 수준.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

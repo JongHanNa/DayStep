@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01AA11BB22CC33DD44EE55F6 /* NativeTodoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */; };
+		01CC33DD44EE55FF66778899 /* NativeTodoPickerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */; };
 		03A711A6634CCE600EF8A599 /* LiquidGlassMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */; };
 		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
 		0B3C275442CA372D372F51C4 /* LiquidGlassMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */; };
@@ -177,6 +179,8 @@
 		FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeSleepGarden.swift; path = DayStepRN/NativeSleepGarden.swift; sourceTree = "<group>"; };
 		FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeSleepGardenBridge.m; path = DayStepRN/NativeSleepGardenBridge.m; sourceTree = "<group>"; };
 		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
+		01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeTodoPicker.swift; path = DayStepRN/NativeTodoPicker.swift; sourceTree = "<group>"; };
+		01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeTodoPickerBridge.m; path = DayStepRN/NativeTodoPickerBridge.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -369,6 +373,8 @@
 				9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */,
 				EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */,
 				EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */,
+				01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */,
+				01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -828,6 +834,8 @@
 				9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */,
 				EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */,
 				EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */,
+				01AA11BB22CC33DD44EE55F6 /* NativeTodoPicker.swift in Sources */,
+				01CC33DD44EE55FF66778899 /* NativeTodoPickerBridge.m in Sources */,
 				EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

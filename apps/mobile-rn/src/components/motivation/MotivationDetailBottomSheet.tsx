@@ -11,7 +11,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, Text, TextInput, Alert, StyleSheet, Keyboard, Modal, Pressable, ScrollView} from 'react-native';
+import {View, Text, TextInput, Alert, StyleSheet, Keyboard, Modal} from 'react-native';
 import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -20,10 +20,10 @@ import {EMOTION_CONFIG, EMOTION_TAGS} from '@/lib/motivationUtils';
 import type {Note, EmotionTag} from '@/stores/motivationStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
-import {Pin, Trash2, Link2, Link2Off, Plus, Check} from 'lucide-react-native';
+import {NativeTodoPickerNative} from '@/components/native';
+import {Pin, Trash2, Link2, Link2Off, Plus} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export interface MotivationDetailBottomSheetRef {
   open: (note: Note, startEditing?: boolean) => void;
@@ -39,6 +39,13 @@ interface MotivationDetailBottomSheetProps {
 }
 
 // ─── TodoPickerModal ─────────────────────────────
+interface PickerTodo {
+  id: string;
+  title: string;
+  recurrence_pattern: string;
+  schedule_type: string;
+}
+
 interface TodoPickerModalProps {
   visible: boolean;
   motivationId: string;
@@ -48,30 +55,42 @@ interface TodoPickerModalProps {
 }
 
 function TodoPickerModal({visible, motivationId, linkedTodoIds, onToggle, onClose}: TodoPickerModalProps) {
-  const insets = useSafeAreaInsets();
   const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
-  const [todos, setTodos] = useState<{id: string; title: string}[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [todos, setTodos] = useState<PickerTodo[]>([]);
 
   useEffect(() => {
     if (!visible || !user?.id) return;
-    setLoading(true);
     (async () => {
       try {
         const {data} = await supabase
           .from('todos')
-          .select('id, title')
+          .select('id, title, recurrence_pattern, schedule_type')
           .eq('user_id', user.id)
           .is('parent_recurring_todo_id', null)
           .order('created_at', {ascending: false})
-          .limit(100);
-        setTodos(data ?? []);
-      } finally {
-        setLoading(false);
+          .limit(200);
+        setTodos((data as PickerTodo[]) ?? []);
+      } catch (err) {
+        console.error('[TodoPicker] fetch error:', err);
       }
     })();
   }, [visible, user?.id]);
+
+  const todosDataJSON = useMemo(() => JSON.stringify(todos), [todos]);
+  const linkedIdsArray = useMemo(() => Array.from(linkedTodoIds), [linkedTodoIds]);
+
+  const handleTodoToggle = useCallback(
+    (e: {nativeEvent: {todoId: string; todoTitle: string; isLinked: boolean}}) => {
+      const {todoId, todoTitle, isLinked} = e.nativeEvent;
+      onToggle(todoId, todoTitle, isLinked);
+    },
+    [onToggle],
+  );
+
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
   return (
     <Modal
@@ -79,50 +98,21 @@ function TodoPickerModal({visible, motivationId, linkedTodoIds, onToggle, onClos
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
-      <View style={[pickerStyles.container, {paddingTop: 8}]}>
-        <View style={pickerStyles.header}>
-          <Text style={pickerStyles.headerTitle}>할일 연결</Text>
-          <Pressable onPress={onClose} hitSlop={8} style={pickerStyles.closeBtn}>
-            <Text style={[pickerStyles.closeBtnText, {color: primaryColor}]}>완료</Text>
-          </Pressable>
+      {NativeTodoPickerNative ? (
+        <NativeTodoPickerNative
+          todosData={todosDataJSON}
+          linkedTodoIds={linkedIdsArray}
+          primaryColor={primaryColor}
+          onTodoToggle={handleTodoToggle}
+          onClose={handleClose}
+          onHeightChange={() => {}}
+          style={{flex: 1}}
+        />
+      ) : (
+        <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
+          <Text style={{color: '#9CA3AF'}}>네이티브 모듈 미등록</Text>
         </View>
-
-        {loading ? (
-          <View style={pickerStyles.emptyContainer}>
-            <Text style={pickerStyles.emptyText}>불러오는 중...</Text>
-          </View>
-        ) : todos.length === 0 ? (
-          <View style={pickerStyles.emptyContainer}>
-            <Text style={pickerStyles.emptyText}>할일이 없습니다</Text>
-          </View>
-        ) : (
-          <ScrollView
-            contentContainerStyle={[pickerStyles.listContent, {paddingBottom: insets.bottom + 20}]}
-            showsVerticalScrollIndicator={false}>
-            {todos.map(todo => {
-              const isLinked = linkedTodoIds.has(todo.id);
-              return (
-                <Pressable
-                  key={todo.id}
-                  onPress={() => onToggle(todo.id, todo.title, isLinked)}
-                  style={({pressed}) => [
-                    pickerStyles.todoItem,
-                    isLinked && {backgroundColor: `${primaryColor}08`, borderColor: primaryColor},
-                    pressed && {opacity: 0.7},
-                  ]}>
-                  <Text style={pickerStyles.todoTitle} numberOfLines={2}>{todo.title}</Text>
-                  <View style={[
-                    pickerStyles.checkCircle,
-                    isLinked && {backgroundColor: primaryColor, borderColor: primaryColor},
-                  ]}>
-                    {isLinked && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        )}
-      </View>
+      )}
     </Modal>
   );
 }
@@ -534,42 +524,3 @@ const styles = StyleSheet.create({
   },
 });
 
-const pickerStyles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#FFFFFF'},
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  headerTitle: {fontSize: 17, fontWeight: '700', color: '#1F2937'},
-  closeBtn: {padding: 4},
-  closeBtnText: {fontSize: 15, fontWeight: '600'},
-  listContent: {paddingTop: 8, paddingHorizontal: 16},
-  todoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    marginBottom: 8,
-    gap: 12,
-  },
-  todoTitle: {flex: 1, fontSize: 14, color: '#1F2937', lineHeight: 20},
-  checkCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyContainer: {flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8},
-  emptyText: {fontSize: 15, color: '#9CA3AF', fontWeight: '500'},
-});

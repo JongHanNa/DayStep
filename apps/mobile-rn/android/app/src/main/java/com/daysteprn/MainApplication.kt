@@ -28,6 +28,7 @@ class MainApplication : Application(), ReactApplication {
           add(NativeMonthCalendarPackage())
           add(AppBlockerPackage())
           add(AnimatedOffsetPackage())
+          add(NativeTodoPickerPackage())
         },
     )
   }
