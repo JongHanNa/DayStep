@@ -70,6 +70,7 @@ export default function NotesScreen() {
     deleteNote,
     setBannerPinned,
     unlinkTodo,
+    linkTodo,
   } = useMotivationStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
   const {primaryColor} = useTheme();
@@ -142,7 +143,7 @@ export default function NotesScreen() {
 
   const handleNoteEdit = useCallback(
     (note: Note) => {
-      detailSheetRef.current?.open(note);
+      detailSheetRef.current?.open(note, true);
     },
     [],
   );
@@ -166,6 +167,13 @@ export default function NotesScreen() {
       unlinkTodo(motivationId, todoId);
     },
     [unlinkTodo],
+  );
+
+  const handleLinkTodo = useCallback(
+    (motivationId: string, todoId: string, todoTitle: string) => {
+      linkTodo(motivationId, todoId, todoTitle);
+    },
+    [linkTodo],
   );
 
   const handleDelete = useCallback(
@@ -279,6 +287,7 @@ export default function NotesScreen() {
         onPin={handlePin}
         onDelete={handleDelete}
         onUnlinkTodo={handleUnlinkTodo}
+        onLinkTodo={handleLinkTodo}
       />
       <LimitReachedModal
         visible={isLimitReached}

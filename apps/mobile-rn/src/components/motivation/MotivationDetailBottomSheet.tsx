@@ -26,7 +26,7 @@ import {ko} from 'date-fns/locale';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export interface MotivationDetailBottomSheetRef {
-  open: (note: Note) => void;
+  open: (note: Note, startEditing?: boolean) => void;
   close: () => void;
 }
 
@@ -63,7 +63,7 @@ function TodoPickerModal({visible, motivationId, linkedTodoIds, onToggle, onClos
           .from('todos')
           .select('id, title')
           .eq('user_id', user.id)
-          .eq('is_deleted', false)
+          .is('parent_recurring_todo_id', null)
           .order('created_at', {ascending: false})
           .limit(100);
         setTodos(data ?? []);
@@ -79,7 +79,7 @@ function TodoPickerModal({visible, motivationId, linkedTodoIds, onToggle, onClos
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
-      <View style={[pickerStyles.container, {paddingTop: insets.top + 8}]}>
+      <View style={[pickerStyles.container, {paddingTop: 8}]}>
         <View style={pickerStyles.header}>
           <Text style={pickerStyles.headerTitle}>할일 연결</Text>
           <Pressable onPress={onClose} hitSlop={8} style={pickerStyles.closeBtn}>
@@ -142,12 +142,12 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
     const [showTodoPicker, setShowTodoPicker] = useState(false);
 
     useImperativeHandle(ref, () => ({
-      open: (n: Note) => {
+      open: (n: Note, startEditing = false) => {
         setNote(n);
         setTitle(n.title ?? '');
         setContent(n.content);
         setEmotionTag(n.emotion_tag ?? undefined);
-        setIsEditing(false);
+        setIsEditing(startEditing);
         sheetRef.current?.snapToIndex(0);
       },
       close: () => {
@@ -300,13 +300,6 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
                     multiline
                     textAlignVertical="top"
                   />
-                  <AnimatedPressable
-                    onPress={handleSave}
-                    haptic={false}
-                    scaleValue={0.95}
-                    style={[styles.saveBtn, {backgroundColor: primaryColor}]}>
-                    <Text style={styles.saveBtnText}>저장</Text>
-                  </AnimatedPressable>
                 </>
               ) : (
                 <>
@@ -328,33 +321,6 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
                   {/* 내용 */}
                   <Text style={styles.noteContent}>{note.content}</Text>
 
-                  {/* 연결된 할일 */}
-                  {todoCount > 0 && (
-                    <View style={styles.todosSection}>
-                      <View style={styles.todosSectionHeader}>
-                        <Link2 size={14} color="#6B7280" strokeWidth={2} />
-                        <Text style={styles.todosSectionTitle}>
-                          연결된 할일 ({todoCount})
-                        </Text>
-                      </View>
-                      {note.todos?.map(todo => (
-                        <View key={todo.id} style={styles.todoItemRow}>
-                          <Text style={styles.todoItem} numberOfLines={1}>
-                            • {todo.title}
-                          </Text>
-                          <AnimatedPressable
-                            onPress={() => handleUnlinkTodo(todo.id)}
-                            haptic={false}
-                            scaleValue={0.85}
-                            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                            style={styles.unlinkBtn}>
-                            <Link2Off size={14} color="#9CA3AF" strokeWidth={2} />
-                          </AnimatedPressable>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
                   {/* 수정 버튼 */}
                   <AnimatedPressable
                     onPress={() => setIsEditing(true)}
@@ -365,9 +331,65 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
                   </AnimatedPressable>
                 </>
               )}
+
+              {/* 연결된 할일 — 편집/보기 모드 공통 */}
+              <View style={styles.todosSection}>
+                <View style={styles.todosSectionHeader}>
+                  <Link2 size={14} color="#6B7280" strokeWidth={2} />
+                  <Text style={styles.todosSectionTitle}>
+                    연결된 할일{todoCount > 0 ? ` (${todoCount})` : ''}
+                  </Text>
+                  <View style={{flex: 1}} />
+                  <AnimatedPressable
+                    onPress={() => setShowTodoPicker(true)}
+                    hapticType="light"
+                    scaleValue={0.85}
+                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                    <Plus size={16} color={primaryColor} strokeWidth={2.5} />
+                  </AnimatedPressable>
+                </View>
+                {note.todos?.map(todo => (
+                  <View key={todo.id} style={styles.todoItemRow}>
+                    <Text style={styles.todoItem} numberOfLines={1}>
+                      • {todo.title}
+                    </Text>
+                    <AnimatedPressable
+                      onPress={() => handleUnlinkTodo(todo.id)}
+                      haptic={false}
+                      scaleValue={0.85}
+                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                      style={styles.unlinkBtn}>
+                      <Link2Off size={14} color="#9CA3AF" strokeWidth={2} />
+                    </AnimatedPressable>
+                  </View>
+                ))}
+                {todoCount === 0 && (
+                  <Text style={styles.emptyTodoText}>연결된 할일이 없습니다</Text>
+                )}
+              </View>
+
+              {/* 저장 버튼 — 편집 모드에서만 최하단 */}
+              {isEditing && (
+                <AnimatedPressable
+                  onPress={handleSave}
+                  haptic={false}
+                  scaleValue={0.95}
+                  style={[styles.saveBtn, {backgroundColor: primaryColor}]}>
+                  <Text style={styles.saveBtnText}>저장</Text>
+                </AnimatedPressable>
+              )}
             </>
           )}
         </BottomSheetScrollView>
+        {note && (
+          <TodoPickerModal
+            visible={showTodoPicker}
+            motivationId={note.id}
+            linkedTodoIds={linkedTodoIds}
+            onToggle={handlePickerToggle}
+            onClose={() => setShowTodoPicker(false)}
+          />
+        )}
       </BottomSheet>
     );
   },
@@ -465,6 +487,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 12,
+    marginTop: 16,
     marginBottom: 16,
   },
   todosSectionHeader: {
@@ -493,6 +516,12 @@ const styles = StyleSheet.create({
   unlinkBtn: {
     padding: 4,
   },
+  emptyTodoText: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    paddingVertical: 4,
+  },
   editBtn: {
     paddingVertical: 12,
     borderRadius: 14,
@@ -503,4 +532,44 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+});
+
+const pickerStyles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: '#FFFFFF'},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: {fontSize: 17, fontWeight: '700', color: '#1F2937'},
+  closeBtn: {padding: 4},
+  closeBtnText: {fontSize: 15, fontWeight: '600'},
+  listContent: {paddingTop: 8, paddingHorizontal: 16},
+  todoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    marginBottom: 8,
+    gap: 12,
+  },
+  todoTitle: {flex: 1, fontSize: 14, color: '#1F2937', lineHeight: 20},
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyContainer: {flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8},
+  emptyText: {fontSize: 15, color: '#9CA3AF', fontWeight: '500'},
 });

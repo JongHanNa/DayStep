@@ -117,7 +117,7 @@ export function ProjectPickerModal({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
-      <View style={[styles.container, {paddingTop: insets.top + 8}]}>
+      <View style={[styles.container, {paddingTop: 8}]}>
         {/* 헤더 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>프로젝트 선택</Text>

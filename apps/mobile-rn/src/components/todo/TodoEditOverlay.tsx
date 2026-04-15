@@ -338,7 +338,7 @@ function IconColorPickerModal({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
-      <View style={[modalStyles.container, {paddingTop: insets.top + 8}]}>
+      <View style={[modalStyles.container, {paddingTop: 8}]}>
         <View style={modalStyles.header}>
           <Text style={modalStyles.headerTitle}>아이콘 & 색상</Text>
           <Pressable onPress={onClose} hitSlop={8} style={modalStyles.closeBtn}>
@@ -504,7 +504,7 @@ function MotivationPickerModal({visible, todoId, onClose}: MotivationPickerModal
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={handleClose}>
-      <View style={[motModalStyles.container, {paddingTop: insets.top + 8}]}>
+      <View style={[motModalStyles.container, {paddingTop: 8}]}>
         <View style={motModalStyles.header}>
           <Text style={motModalStyles.headerTitle}>원동력 연결</Text>
           <Pressable onPress={handleClose} hitSlop={8} style={motModalStyles.closeBtn}>
