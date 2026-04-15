@@ -6,7 +6,7 @@ import React, {useCallback, useState} from 'react';
 import {View, Text, StyleSheet, Pressable, Switch, Alert} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
 import {useNavigation} from '@react-navigation/native';
-import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import {InlineTimePicker} from '@/components/native/InlineTimePicker';
 import {ChevronLeft, Moon, Sun, Bell, AlarmClock, Shield, XCircle} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -143,13 +143,10 @@ export default function SleepGoalScreen() {
             <Moon size={16} color="#6366F1" />
             <Text style={styles.timeLabel}>목표 취침 시간</Text>
           </View>
-          <DateTimePicker
+          <InlineTimePicker
             value={localSleepTime}
-            mode="time"
-            display="spinner"
-            onChange={(_: DateTimePickerEvent, date?: Date) => date && setLocalSleepTime(date)}
-            style={styles.timePicker}
-            locale="ko"
+            onChange={(date) => setLocalSleepTime(date)}
+            height={150}
           />
         </View>
 
@@ -159,13 +156,10 @@ export default function SleepGoalScreen() {
             <Sun size={16} color="#F59E0B" />
             <Text style={styles.timeLabel}>목표 기상 시간</Text>
           </View>
-          <DateTimePicker
+          <InlineTimePicker
             value={localWakeTime}
-            mode="time"
-            display="spinner"
-            onChange={(_: DateTimePickerEvent, date?: Date) => date && setLocalWakeTime(date)}
-            style={styles.timePicker}
-            locale="ko"
+            onChange={(date) => setLocalWakeTime(date)}
+            height={150}
           />
         </View>
 

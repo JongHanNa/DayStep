@@ -11,7 +11,7 @@ import {AnimatedPressable, Popover} from '@/components/core';
 import {useTheme} from '@/theme';
 import {fixedColors} from '@/theme/colors';
 import {useHaptic} from '@/hooks/useHaptic';
-import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import {InlineTimePicker} from '@/components/native/InlineTimePicker';
 import {
   X,
   Check,
@@ -343,8 +343,6 @@ function TimePopoverContent({
 
   const [durationPickerVisible, setDurationPickerVisible] = useState(false);
   const [tempDuration, setTempDuration] = useState(durMins * 60); // 초 단위
-  // Android: DateTimePicker는 항상 다이얼로그 → 조건부 렌더링 필요
-  const [showStartTimePicker, setShowStartTimePicker] = useState(false);
 
   function getDurLabel(mins: number): string {
     if (mins < 60) return `${mins}분`;
@@ -411,50 +409,18 @@ function TimePopoverContent({
         <>
           {/* 시작 시간 */}
           <Text style={popContentStyles.sectionLabel}>시작 시간</Text>
-          {Platform.OS === 'ios' ? (
-            <DateTimePicker
-              value={form.startTime}
-              mode="time"
-              display="spinner"
-              onChange={(_: DateTimePickerEvent, date?: Date) => {
-                if (!date) return;
-                if (form.endTime) {
-                  const dur = form.endTime.getTime() - form.startTime!.getTime();
-                  updateField('endTime', new Date(date.getTime() + dur));
-                }
-                updateField('startTime', date);
-              }}
-              style={popContentStyles.startTimePicker}
-              locale="ko"
-            />
-          ) : (
-            <>
-              <Pressable
-                onPress={() => setShowStartTimePicker(true)}
-                style={popContentStyles.androidTimeBtn}>
-                <Text style={popContentStyles.androidTimeBtnText}>
-                  {format(form.startTime, 'a h:mm', {locale: ko})}
-                </Text>
-              </Pressable>
-              {showStartTimePicker && (
-                <DateTimePicker
-                  value={form.startTime}
-                  mode="time"
-                  display="spinner"
-                  onChange={(event: DateTimePickerEvent, date?: Date) => {
-                    setShowStartTimePicker(false);
-                    if (event.type === 'dismissed' || !date) return;
-                    if (form.endTime) {
-                      const dur = form.endTime.getTime() - form.startTime!.getTime();
-                      updateField('endTime', new Date(date.getTime() + dur));
-                    }
-                    updateField('startTime', date);
-                  }}
-                  locale="ko"
-                />
-              )}
-            </>
-          )}
+          <InlineTimePicker
+            value={form.startTime}
+            onChange={(date) => {
+              if (form.endTime) {
+                const dur = form.endTime.getTime() - form.startTime!.getTime();
+                updateField('endTime', new Date(date.getTime() + dur));
+              }
+              updateField('startTime', date);
+            }}
+            height={100}
+            style={popContentStyles.startTimePicker}
+          />
 
           {/* 소요 시간 */}
           <Text style={popContentStyles.sectionLabel}>소요 시간</Text>
@@ -497,21 +463,20 @@ function TimePopoverContent({
             <View style={popContentStyles.durationModal}>
               <Text style={popContentStyles.durationModalTitle}>소요 시간</Text>
               {Platform.OS === 'ios' ? (
-                <DateTimePicker
-                  mode="countdown"
-                  display="spinner"
-                  value={new Date(0)}
-                  minuteInterval={5}
-                  countDownDuration={tempDuration}
-                  locale="ko"
-                  onChange={(_: DateTimePickerEvent, date?: Date) => {
-                    if (date) {
-                      const hours = date.getHours();
-                      const minutes = date.getMinutes();
-                      setTempDuration((hours * 60 + minutes) * 60);
-                    }
+                <InlineTimePicker
+                  value={(() => {
+                    const d = new Date(0);
+                    d.setHours(Math.floor(tempDuration / 3600));
+                    d.setMinutes(Math.floor((tempDuration % 3600) / 60));
+                    return d;
+                  })()}
+                  onChange={(date) => {
+                    const hours = date.getHours();
+                    const minutes = date.getMinutes();
+                    setTempDuration((hours * 60 + minutes) * 60);
                   }}
-                  style={{height: 180}}
+                  minuteInterval={5}
+                  height={180}
                 />
               ) : (
                 <AndroidDurationPicker

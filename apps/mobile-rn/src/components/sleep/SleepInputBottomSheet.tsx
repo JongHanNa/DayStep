@@ -12,7 +12,7 @@ import React, {
 } from 'react';
 import {View, Text, StyleSheet, Keyboard, Platform} from 'react-native';
 import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
-import DateTimePicker, {DateTimePickerEvent} from '@react-native-community/datetimepicker';
+import {InlineTimePicker} from '@/components/native/InlineTimePicker';
 import {Moon, Sun, Pill, Leaf} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
@@ -140,13 +140,10 @@ export const SleepInputBottomSheet = forwardRef<SleepInputBottomSheetRef, Props>
               <Moon size={16} color="#6366F1" />
               <Text style={styles.timeLabel}>취침 시간</Text>
             </View>
-            <DateTimePicker
+            <InlineTimePicker
               value={sleepTime}
-              mode="time"
-              display="spinner"
-              onChange={(_: DateTimePickerEvent, date?: Date) => date && setSleepTime(date)}
-              style={styles.timePicker}
-              locale="ko"
+              onChange={(date) => setSleepTime(date)}
+              height={120}
             />
           </View>
 
@@ -156,13 +153,10 @@ export const SleepInputBottomSheet = forwardRef<SleepInputBottomSheetRef, Props>
               <Sun size={16} color="#F59E0B" />
               <Text style={styles.timeLabel}>기상 시간</Text>
             </View>
-            <DateTimePicker
+            <InlineTimePicker
               value={wakeTime}
-              mode="time"
-              display="spinner"
-              onChange={(_: DateTimePickerEvent, date?: Date) => date && setWakeTime(date)}
-              style={styles.timePicker}
-              locale="ko"
+              onChange={(date) => setWakeTime(date)}
+              height={120}
             />
           </View>
 

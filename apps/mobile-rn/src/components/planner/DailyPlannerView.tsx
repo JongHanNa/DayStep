@@ -42,7 +42,7 @@ import {format} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
 import {Inbox, Calendar, Moon, Sun} from 'lucide-react-native';
 import {LiquidGlassMenu} from '@/components/native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import {InlineTimePicker} from '@/components/native/InlineTimePicker';
 
 interface DailyPlannerViewProps {
   menuItems: Array<{title: string; key: string}>;
@@ -144,23 +144,15 @@ function SleepWakeCard({type, time, onTimeChange}: {
         </Text>
       </AnimatedPressable>
       {showPicker && (
-        <DateTimePicker
+        <InlineTimePicker
           value={timeDate}
-          mode="time"
-          is24Hour={true}
-          display="spinner"
-          onChange={(_, date) => {
-            if (Platform.OS === 'android') setShowPicker(false);
-            if (date) {
-              const hh = date.getHours().toString().padStart(2, '0');
-              const mm = date.getMinutes().toString().padStart(2, '0');
-              onTimeChange(`${hh}:${mm}`);
-            }
+          onChange={(date) => {
+            const hh = date.getHours().toString().padStart(2, '0');
+            const mm = date.getMinutes().toString().padStart(2, '0');
+            onTimeChange(`${hh}:${mm}`);
           }}
-          {...(Platform.OS === 'ios' ? {
-            themeVariant: 'light' as const,
-            style: {alignSelf: 'center', marginVertical: 4},
-          } : {})}
+          height={150}
+          style={{alignSelf: 'center', marginVertical: 4}}
         />
       )}
     </>

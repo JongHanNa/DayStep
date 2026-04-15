@@ -126,16 +126,22 @@ class NativeTodoPickerView(context: android.content.Context) : FrameLayout(conte
 
 // ── Compose UI ──
 
-private fun parseColor(hex: String): Color {
+private fun todoPickerParseColor(hex: String): Color {
     return try {
-        Color(android.graphics.Color.parseColor(hex))
+        val colorInt = android.graphics.Color.parseColor(hex)
+        Color(
+            red = android.graphics.Color.red(colorInt) / 255f,
+            green = android.graphics.Color.green(colorInt) / 255f,
+            blue = android.graphics.Color.blue(colorInt) / 255f,
+            alpha = android.graphics.Color.alpha(colorInt) / 255f,
+        )
     } catch (_: Exception) {
-        Color(0xFFD97706)
+        Color(red = 0.85f, green = 0.47f, blue = 0.02f)
     }
 }
 
 @Composable
-fun TodoPickerScreen(
+private fun TodoPickerScreen(
     todos: List<PickerTodo>,
     linkedIds: Set<String>,
     primaryColorHex: String,
@@ -143,7 +149,7 @@ fun TodoPickerScreen(
     onClose: () -> Unit,
     onHeightChange: (Double) -> Unit,
 ) {
-    val primary = parseColor(primaryColorHex)
+    val primary = todoPickerParseColor(primaryColorHex)
     var searchText by remember { mutableStateOf("") }
     val density = LocalDensity.current
 

@@ -13,9 +13,9 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import {View, Text, StyleSheet, Platform} from 'react-native';
+import {View, Text, StyleSheet} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import {InlineTimePicker} from '@/components/native/InlineTimePicker';
 import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {Clock, Cloud, Play, Check} from 'lucide-react-native';
@@ -217,16 +217,11 @@ export const PostponeBottomSheet = forwardRef<
         {selectedAction === 'reschedule' && (
           <View style={styles.timePickerSection}>
             <Text style={styles.timePickerLabel}>변경할 시간 선택</Text>
-            <DateTimePicker
+            <InlineTimePicker
               value={pickerDate}
-              mode="time"
-              display="spinner"
+              onChange={(date) => setPickerDate(date)}
               minuteInterval={15}
-              locale="ko"
-              onChange={(_event, date) => {
-                if (date) setPickerDate(date);
-              }}
-              style={styles.timePicker}
+              height={120}
             />
           </View>
         )}

@@ -29,6 +29,7 @@ class MainApplication : Application(), ReactApplication {
           add(AppBlockerPackage())
           add(AnimatedOffsetPackage())
           add(NativeTodoPickerPackage())
+          add(NativeTimePickerPackage())
         },
     )
   }
