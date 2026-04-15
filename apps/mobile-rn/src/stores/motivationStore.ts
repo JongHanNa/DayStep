@@ -44,6 +44,8 @@ interface NoteState {
   updateNote: (id: string, updates: Partial<Pick<Note, 'title' | 'content' | 'emotion_tag'>>) => Promise<boolean>;
   deleteNote: (id: string) => Promise<boolean>;
   setBannerPinned: (noteId: string, isPinned: boolean) => Promise<boolean>;
+  unlinkTodo: (motivationId: string, todoId: string) => Promise<boolean>;
+  linkTodo: (motivationId: string, todoId: string, todoTitle: string) => Promise<boolean>;
   getBannerPinnedMotivationNotes: () => Note[];
   getRandomMotivationNote: () => Note | null;
   clearError: () => void;
@@ -217,6 +219,63 @@ export const useMotivationStore = create<NoteState>()(
           set({notes: originalNotes});
           console.error('[NoteStore] Pin error:', err);
           set({error: err.message ?? 'Failed to pin note'});
+          return false;
+        }
+      },
+
+      unlinkTodo: async (motivationId, todoId) => {
+        const originalNotes = get().notes;
+        try {
+          // Optimistic: 해당 motivation의 todos에서 제거
+          set(state => ({
+            notes: state.notes.map(n =>
+              n.id === motivationId
+                ? {...n, todos: n.todos?.filter(t => t.id !== todoId) ?? []}
+                : n,
+            ),
+          }));
+
+          const {error} = await supabase
+            .from('todo_motivations')
+            .delete()
+            .eq('todo_id', todoId)
+            .eq('motivation_id', motivationId);
+
+          if (error) throw error;
+          return true;
+        } catch (err: any) {
+          set({notes: originalNotes});
+          console.error('[NoteStore] Unlink todo error:', err);
+          set({error: err.message ?? 'Failed to unlink todo'});
+          return false;
+        }
+      },
+
+      linkTodo: async (motivationId, todoId, todoTitle) => {
+        const originalNotes = get().notes;
+        try {
+          // Optimistic: 해당 motivation의 todos에 추가
+          set(state => ({
+            notes: state.notes.map(n =>
+              n.id === motivationId
+                ? {...n, todos: [...(n.todos ?? []), {id: todoId, title: todoTitle}]}
+                : n,
+            ),
+          }));
+
+          const userId = await getCurrentUserId();
+          if (!userId) throw new Error('Not authenticated');
+
+          const {error} = await supabase
+            .from('todo_motivations')
+            .insert({todo_id: todoId, motivation_id: motivationId, user_id: userId});
+
+          if (error) throw error;
+          return true;
+        } catch (err: any) {
+          set({notes: originalNotes});
+          console.error('[NoteStore] Link todo error:', err);
+          set({error: err.message ?? 'Failed to link todo'});
           return false;
         }
       },

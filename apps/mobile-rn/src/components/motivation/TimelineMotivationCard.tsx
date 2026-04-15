@@ -9,7 +9,7 @@ import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {LiquidGlassMenu} from '@/components/native';
-import {Link2, MoreHorizontal, Pencil} from 'lucide-react-native';
+import {Link2, Link2Off, MoreHorizontal, Pencil} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Note} from '@/stores/motivationStore';
@@ -22,6 +22,7 @@ interface TimelineMotivationCardProps {
   onEdit: (note: Note) => void;
   onPin: (noteId: string, isPinned: boolean) => void;
   onDelete: (noteId: string) => void;
+  onUnlinkTodo: (motivationId: string, todoId: string) => void;
 }
 
 export function TimelineMotivationCard({
@@ -32,6 +33,7 @@ export function TimelineMotivationCard({
   onEdit,
   onPin,
   onDelete,
+  onUnlinkTodo,
 }: TimelineMotivationCardProps) {
   const timeStr = format(new Date(note.created_at), 'a h:mm', {locale: ko});
   const todoCount = note.todos?.length ?? 0;
@@ -83,7 +85,17 @@ export function TimelineMotivationCard({
                   <Text style={styles.todosTitle}>연결된 할일 ({todoCount})</Text>
                 </View>
                 {note.todos?.map(todo => (
-                  <Text key={todo.id} style={styles.todoItem}>• {todo.title}</Text>
+                  <View key={todo.id} style={styles.todoItemRow}>
+                    <Text style={styles.todoItem} numberOfLines={1}>• {todo.title}</Text>
+                    <AnimatedPressable
+                      onPress={() => onUnlinkTodo(note.id, todo.id)}
+                      hapticType="light"
+                      scaleValue={0.85}
+                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                      style={styles.unlinkBtn}>
+                      <Link2Off size={12} color="#9CA3AF" strokeWidth={2} />
+                    </AnimatedPressable>
+                  </View>
                 ))}
               </View>
             )}
@@ -158,11 +170,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
+  todoItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
   todoItem: {
     fontSize: 13,
     color: '#4B5563',
     marginLeft: 2,
-    marginBottom: 2,
+    flex: 1,
+  },
+  unlinkBtn: {
+    padding: 4,
   },
   editBtn: {
     flexDirection: 'row',

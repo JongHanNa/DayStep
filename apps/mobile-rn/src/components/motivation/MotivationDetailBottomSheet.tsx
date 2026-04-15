@@ -11,16 +11,19 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, Text, TextInput, Alert, StyleSheet, Keyboard} from 'react-native';
+import {View, Text, TextInput, Alert, StyleSheet, Keyboard, Modal, Pressable, ScrollView} from 'react-native';
 import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {EMOTION_CONFIG, EMOTION_TAGS} from '@/lib/motivationUtils';
 import type {Note, EmotionTag} from '@/stores/motivationStore';
-import {Pin, Trash2, Link2} from 'lucide-react-native';
+import {useAuthStore} from '@/stores/authStore';
+import {supabase} from '@/lib/supabase';
+import {Pin, Trash2, Link2, Link2Off, Plus, Check} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 export interface MotivationDetailBottomSheetRef {
   open: (note: Note) => void;
@@ -31,10 +34,101 @@ interface MotivationDetailBottomSheetProps {
   onUpdate: (id: string, updates: Partial<Pick<Note, 'title' | 'content' | 'emotion_tag'>>) => void;
   onPin: (noteId: string, isPinned: boolean) => void;
   onDelete: (noteId: string) => void;
+  onUnlinkTodo: (motivationId: string, todoId: string) => void;
+  onLinkTodo: (motivationId: string, todoId: string, todoTitle: string) => void;
+}
+
+// ─── TodoPickerModal ─────────────────────────────
+interface TodoPickerModalProps {
+  visible: boolean;
+  motivationId: string;
+  linkedTodoIds: Set<string>;
+  onToggle: (todoId: string, todoTitle: string, isLinked: boolean) => void;
+  onClose: () => void;
+}
+
+function TodoPickerModal({visible, motivationId, linkedTodoIds, onToggle, onClose}: TodoPickerModalProps) {
+  const insets = useSafeAreaInsets();
+  const {primaryColor} = useTheme();
+  const user = useAuthStore(s => s.user);
+  const [todos, setTodos] = useState<{id: string; title: string}[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!visible || !user?.id) return;
+    setLoading(true);
+    (async () => {
+      try {
+        const {data} = await supabase
+          .from('todos')
+          .select('id, title')
+          .eq('user_id', user.id)
+          .eq('is_deleted', false)
+          .order('created_at', {ascending: false})
+          .limit(100);
+        setTodos(data ?? []);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [visible, user?.id]);
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}>
+      <View style={[pickerStyles.container, {paddingTop: insets.top + 8}]}>
+        <View style={pickerStyles.header}>
+          <Text style={pickerStyles.headerTitle}>할일 연결</Text>
+          <Pressable onPress={onClose} hitSlop={8} style={pickerStyles.closeBtn}>
+            <Text style={[pickerStyles.closeBtnText, {color: primaryColor}]}>완료</Text>
+          </Pressable>
+        </View>
+
+        {loading ? (
+          <View style={pickerStyles.emptyContainer}>
+            <Text style={pickerStyles.emptyText}>불러오는 중...</Text>
+          </View>
+        ) : todos.length === 0 ? (
+          <View style={pickerStyles.emptyContainer}>
+            <Text style={pickerStyles.emptyText}>할일이 없습니다</Text>
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={[pickerStyles.listContent, {paddingBottom: insets.bottom + 20}]}
+            showsVerticalScrollIndicator={false}>
+            {todos.map(todo => {
+              const isLinked = linkedTodoIds.has(todo.id);
+              return (
+                <Pressable
+                  key={todo.id}
+                  onPress={() => onToggle(todo.id, todo.title, isLinked)}
+                  style={({pressed}) => [
+                    pickerStyles.todoItem,
+                    isLinked && {backgroundColor: `${primaryColor}08`, borderColor: primaryColor},
+                    pressed && {opacity: 0.7},
+                  ]}>
+                  <Text style={pickerStyles.todoTitle} numberOfLines={2}>{todo.title}</Text>
+                  <View style={[
+                    pickerStyles.checkCircle,
+                    isLinked && {backgroundColor: primaryColor, borderColor: primaryColor},
+                  ]}>
+                    {isLinked && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
+      </View>
+    </Modal>
+  );
 }
 
 export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomSheetRef, MotivationDetailBottomSheetProps>(
-  ({onUpdate, onPin, onDelete}, ref) => {
+  ({onUpdate, onPin, onDelete, onUnlinkTodo, onLinkTodo}, ref) => {
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['60%', '85%'], []);
     const {primaryColor, colors} = useTheme();
@@ -45,6 +139,7 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
     const [content, setContent] = useState('');
     const [emotionTag, setEmotionTag] = useState<EmotionTag | undefined>(undefined);
     const [isEditing, setIsEditing] = useState(false);
+    const [showTodoPicker, setShowTodoPicker] = useState(false);
 
     useImperativeHandle(ref, () => ({
       open: (n: Note) => {
@@ -101,6 +196,30 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
       ),
       [],
     );
+
+    const handleUnlinkTodo = useCallback((todoId: string) => {
+      if (!note) return;
+      haptic.light();
+      onUnlinkTodo(note.id, todoId);
+      setNote(prev => prev ? {...prev, todos: prev.todos?.filter(t => t.id !== todoId)} : prev);
+    }, [note, onUnlinkTodo, haptic]);
+
+    const linkedTodoIds = useMemo(
+      () => new Set(note?.todos?.map(t => t.id) ?? []),
+      [note?.todos],
+    );
+
+    const handlePickerToggle = useCallback((todoId: string, todoTitle: string, isLinked: boolean) => {
+      if (!note) return;
+      haptic.light();
+      if (isLinked) {
+        onUnlinkTodo(note.id, todoId);
+        setNote(prev => prev ? {...prev, todos: prev.todos?.filter(t => t.id !== todoId)} : prev);
+      } else {
+        onLinkTodo(note.id, todoId, todoTitle);
+        setNote(prev => prev ? {...prev, todos: [...(prev.todos ?? []), {id: todoId, title: todoTitle}]} : prev);
+      }
+    }, [note, onUnlinkTodo, onLinkTodo, haptic]);
 
     const emotionConfig = note?.emotion_tag ? EMOTION_CONFIG[note.emotion_tag] : null;
     const todoCount = note?.todos?.length ?? 0;
@@ -219,9 +338,19 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
                         </Text>
                       </View>
                       {note.todos?.map(todo => (
-                        <Text key={todo.id} style={styles.todoItem}>
-                          • {todo.title}
-                        </Text>
+                        <View key={todo.id} style={styles.todoItemRow}>
+                          <Text style={styles.todoItem} numberOfLines={1}>
+                            • {todo.title}
+                          </Text>
+                          <AnimatedPressable
+                            onPress={() => handleUnlinkTodo(todo.id)}
+                            haptic={false}
+                            scaleValue={0.85}
+                            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                            style={styles.unlinkBtn}>
+                            <Link2Off size={14} color="#9CA3AF" strokeWidth={2} />
+                          </AnimatedPressable>
+                        </View>
                       ))}
                     </View>
                   )}
@@ -349,11 +478,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
+  todoItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
   todoItem: {
     fontSize: 14,
     color: '#4B5563',
     marginLeft: 4,
-    marginBottom: 4,
+    flex: 1,
+  },
+  unlinkBtn: {
+    padding: 4,
   },
   editBtn: {
     paddingVertical: 12,

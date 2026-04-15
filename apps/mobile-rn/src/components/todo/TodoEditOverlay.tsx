@@ -4,7 +4,7 @@
  * - 아래→위 슬라이드 진입 애니메이션
  * - Header → 날짜요약+체크박스 → ScrollView(제목+설명)
  */
-import {useCallback, useMemo, useRef, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -22,10 +22,15 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {AnimatedPressable} from '@/components/core';
 import {getDateSummary, getDateSummaryExtras} from './useTodoForm';
 import {useTheme} from '@/theme';
-import {ChevronLeft, Square, CheckSquare, Shield, Star, Zap, FolderOpen, Palette} from 'lucide-react-native';
+import {ChevronLeft, Square, CheckSquare, Shield, Star, Zap, FolderOpen, Palette, Sparkles, Check, X} from 'lucide-react-native';
 import {useProjectStore} from '@/stores/projectStore';
+import {useMotivationStore, type Note} from '@/stores/motivationStore';
+import {useAuthStore} from '@/stores/authStore';
+import {useTodoStore} from '@/stores/todoStore';
+import {supabase} from '@/lib/supabase';
 import {ProjectPickerModal} from './ProjectPickerModal';
 import {InlineIconPicker} from './InlineIconPicker';
+import {EMOTION_CONFIG} from '@/lib/motivationUtils';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 const TODO_COLORS = [
@@ -64,6 +69,7 @@ export function TodoEditOverlay({
   const titleInputRef = useRef<TextInput>(null);
   const [projectPickerVisible, setProjectPickerVisible] = useState(false);
   const [iconColorModalVisible, setIconColorModalVisible] = useState(false);
+  const [motivationModalVisible, setMotivationModalVisible] = useState(false);
 
   const projects = useProjectStore(s => s.projects);
   const linkedProject = useMemo(
@@ -120,7 +126,7 @@ export function TodoEditOverlay({
   return (
     <Animated.View
       entering={SlideInDown.duration(300)}
-      style={[styles.overlay, {paddingTop: insets.top}]}>
+      style={[styles.overlay, {paddingTop: 0}]}>
       <View style={styles.flex}>
         {/* ──────── 헤더 ──────── */}
         <View style={styles.header}>
@@ -132,30 +138,16 @@ export function TodoEditOverlay({
               <ChevronLeft size={20} color="#374151" strokeWidth={2.5} />
             </AnimatedPressable>
 
-            {/* 프로젝트 배지 */}
+            {/* 프로젝트 */}
             <Pressable
               onPress={() => setProjectPickerVisible(true)}
               hitSlop={4}
               style={({pressed}) => [
-                styles.projectBadgePressable,
+                styles.iconColorToggle,
                 linkedProject && {backgroundColor: (linkedProject.color ?? '#A8DADC') + '18'},
-                pressed && styles.projectBadgePressed,
+                pressed && {opacity: 0.7},
               ]}>
-              {linkedProject ? (
-                <View style={styles.projectBadgeRow}>
-                  <View
-                    style={[
-                      styles.projectDot,
-                      {backgroundColor: linkedProject.color ?? '#A8DADC'},
-                    ]}
-                  />
-                  <Text style={styles.projectBadgeText} numberOfLines={1}>
-                    {linkedProject.title}
-                  </Text>
-                </View>
-              ) : (
-                <FolderOpen size={16} color="#D1D5DB" />
-              )}
+              <FolderOpen size={16} color={linkedProject ? (linkedProject.color ?? '#A8DADC') : '#D1D5DB'} />
             </Pressable>
 
             {/* 아이콘/색상 편집 */}
@@ -167,6 +159,17 @@ export function TodoEditOverlay({
                 pressed && {opacity: 0.7},
               ]}>
               <Palette size={16} color="#9CA3AF" />
+            </Pressable>
+
+            {/* 원동력 연결 */}
+            <Pressable
+              onPress={() => setMotivationModalVisible(true)}
+              hitSlop={4}
+              style={({pressed}) => [
+                styles.iconColorToggle,
+                pressed && {opacity: 0.7},
+              ]}>
+              <Sparkles size={16} color="#9CA3AF" />
             </Pressable>
           </View>
 
@@ -293,6 +296,15 @@ export function TodoEditOverlay({
         onColorChange={v => updateField('color', v)}
         onClose={() => setIconColorModalVisible(false)}
       />
+
+      {/* 원동력 선택 모달 */}
+      {editingTodo && (
+        <MotivationPickerModal
+          visible={motivationModalVisible}
+          todoId={editingTodo.id}
+          onClose={() => setMotivationModalVisible(false)}
+        />
+      )}
     </Animated.View>
   );
 }
@@ -405,6 +417,209 @@ const modalStyles = StyleSheet.create({
 });
 
 // ============================================
+// MotivationPickerModal
+// ============================================
+
+interface MotivationPickerModalProps {
+  visible: boolean;
+  todoId: string;
+  onClose: () => void;
+}
+
+function MotivationPickerModal({visible, todoId, onClose}: MotivationPickerModalProps) {
+  const insets = useSafeAreaInsets();
+  const {primaryColor} = useTheme();
+  const {notes, fetchMotivationNotes} = useMotivationStore();
+  const user = useAuthStore(s => s.user);
+  const {fetchMotivationsForTodos} = useTodoStore();
+  const [linkedIds, setLinkedIds] = useState<Set<string>>(new Set());
+  const [loadingLinks, setLoadingLinks] = useState(true);
+
+  // 모달 열릴 때 데이터 로드
+  useEffect(() => {
+    if (!visible || !user?.id) return;
+    setLoadingLinks(true);
+    (async () => {
+      try {
+        await fetchMotivationNotes(user.id);
+        const {data} = await supabase
+          .from('todo_motivations')
+          .select('motivation_id')
+          .eq('todo_id', todoId);
+        setLinkedIds(new Set((data ?? []).map(r => r.motivation_id)));
+      } finally {
+        setLoadingLinks(false);
+      }
+    })();
+  }, [visible, user?.id, todoId, fetchMotivationNotes]);
+
+  const handleToggle = useCallback(async (motivationId: string) => {
+    if (!user?.id) return;
+    const isLinked = linkedIds.has(motivationId);
+    // Optimistic update
+    setLinkedIds(prev => {
+      const next = new Set(prev);
+      if (isLinked) next.delete(motivationId);
+      else next.add(motivationId);
+      return next;
+    });
+
+    try {
+      if (isLinked) {
+        await supabase
+          .from('todo_motivations')
+          .delete()
+          .eq('todo_id', todoId)
+          .eq('motivation_id', motivationId);
+      } else {
+        await supabase
+          .from('todo_motivations')
+          .insert({todo_id: todoId, motivation_id: motivationId, user_id: user.id});
+      }
+    } catch {
+      // Rollback
+      setLinkedIds(prev => {
+        const next = new Set(prev);
+        if (isLinked) next.add(motivationId);
+        else next.delete(motivationId);
+        return next;
+      });
+    }
+  }, [user?.id, todoId, linkedIds]);
+
+  const handleClose = useCallback(() => {
+    // 닫힐 때 todoStore의 motivationMap 갱신
+    fetchMotivationsForTodos([todoId]);
+    onClose();
+  }, [todoId, fetchMotivationsForTodos, onClose]);
+
+  const motivationNotes = useMemo(
+    () => notes.filter(n => n.category === 'motivation' || !n.category),
+    [notes],
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={handleClose}>
+      <View style={[motModalStyles.container, {paddingTop: insets.top + 8}]}>
+        <View style={motModalStyles.header}>
+          <Text style={motModalStyles.headerTitle}>원동력 연결</Text>
+          <Pressable onPress={handleClose} hitSlop={8} style={motModalStyles.closeBtn}>
+            <Text style={[motModalStyles.closeBtnText, {color: primaryColor}]}>완료</Text>
+          </Pressable>
+        </View>
+
+        {loadingLinks ? (
+          <View style={motModalStyles.emptyContainer}>
+            <Text style={motModalStyles.emptyText}>불러오는 중...</Text>
+          </View>
+        ) : motivationNotes.length === 0 ? (
+          <View style={motModalStyles.emptyContainer}>
+            <Sparkles size={32} color="#D1D5DB" />
+            <Text style={motModalStyles.emptyText}>원동력이 없습니다</Text>
+            <Text style={motModalStyles.emptySubText}>홈 화면에서 원동력을 먼저 작성해 주세요</Text>
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={[motModalStyles.listContent, {paddingBottom: insets.bottom + 20}]}
+            showsVerticalScrollIndicator={false}>
+            {motivationNotes.map(note => {
+              const isLinked = linkedIds.has(note.id);
+              const emotionCfg = note.emotion_tag ? EMOTION_CONFIG[note.emotion_tag] : null;
+              return (
+                <Pressable
+                  key={note.id}
+                  onPress={() => handleToggle(note.id)}
+                  style={({pressed}) => [
+                    motModalStyles.noteItem,
+                    isLinked && {backgroundColor: `${primaryColor}08`, borderColor: primaryColor},
+                    pressed && {opacity: 0.7},
+                  ]}>
+                  <View style={motModalStyles.noteContent}>
+                    {emotionCfg && (
+                      <View style={[motModalStyles.emotionBadge, {backgroundColor: emotionCfg.bgColor}]}>
+                        <emotionCfg.icon size={14} color={emotionCfg.color} />
+                      </View>
+                    )}
+                    <View style={motModalStyles.noteTextArea}>
+                      {note.title ? (
+                        <Text style={motModalStyles.noteTitle} numberOfLines={1}>{note.title}</Text>
+                      ) : null}
+                      <Text style={motModalStyles.noteText} numberOfLines={2}>{note.content}</Text>
+                    </View>
+                  </View>
+                  <View style={[
+                    motModalStyles.checkCircle,
+                    isLinked && {backgroundColor: primaryColor, borderColor: primaryColor},
+                  ]}>
+                    {isLinked && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
+      </View>
+    </Modal>
+  );
+}
+
+const motModalStyles = StyleSheet.create({
+  container: {flex: 1, backgroundColor: '#FFFFFF'},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: {fontSize: 17, fontWeight: '700', color: '#1F2937'},
+  closeBtn: {padding: 4},
+  closeBtnText: {fontSize: 15, fontWeight: '600'},
+  listContent: {paddingTop: 8, paddingHorizontal: 16},
+  noteItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    marginBottom: 8,
+    gap: 12,
+  },
+  noteContent: {flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 8},
+  emotionBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  noteTextArea: {flex: 1},
+  noteTitle: {fontSize: 14, fontWeight: '600', color: '#1F2937', marginBottom: 2},
+  noteText: {fontSize: 13, color: '#6B7280', lineHeight: 18},
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyContainer: {flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8},
+  emptyText: {fontSize: 15, color: '#9CA3AF', fontWeight: '500'},
+  emptySubText: {fontSize: 13, color: '#D1D5DB'},
+});
+
+// ============================================
 // Styles
 // ============================================
 
@@ -423,7 +638,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
@@ -442,13 +657,6 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
-  projectBadgePressable: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    maxWidth: 140,
-  },
   iconColorToggle: {
     width: 32,
     height: 32,
@@ -458,26 +666,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     borderWidth: 1.5,
     borderColor: 'transparent',
-  },
-  projectBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  projectBadgePressed: {
-    opacity: 0.7,
-  },
-  projectDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  projectBadgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#374151',
-    flexShrink: 1,
-    lineHeight: 16,
   },
   headerActions: {
     flexDirection: 'row',

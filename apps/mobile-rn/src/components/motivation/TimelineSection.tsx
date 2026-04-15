@@ -30,6 +30,7 @@ interface TimelineSectionProps {
   onMotivationEdit: (note: Note) => void;
   onNotePin: (noteId: string, isPinned: boolean) => void;
   onNoteDelete: (noteId: string) => void;
+  onUnlinkTodo: (motivationId: string, todoId: string) => void;
 }
 
 export function TimelineSection({
@@ -40,6 +41,7 @@ export function TimelineSection({
   onMotivationEdit,
   onNotePin,
   onNoteDelete,
+  onUnlinkTodo,
 }: TimelineSectionProps) {
   return (
     <View style={styles.container}>
@@ -86,6 +88,7 @@ export function TimelineSection({
                     onEdit={onMotivationEdit}
                     onPin={onNotePin}
                     onDelete={onNoteDelete}
+                    onUnlinkTodo={onUnlinkTodo}
                   />
                 </Animated.View>
               ))}

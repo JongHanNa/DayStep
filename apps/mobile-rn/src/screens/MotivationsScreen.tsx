@@ -69,6 +69,7 @@ export default function NotesScreen() {
     updateNote,
     deleteNote,
     setBannerPinned,
+    unlinkTodo,
   } = useMotivationStore();
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
   const {primaryColor} = useTheme();
@@ -158,6 +159,13 @@ export default function NotesScreen() {
       setBannerPinned(noteId, isPinned);
     },
     [setBannerPinned],
+  );
+
+  const handleUnlinkTodo = useCallback(
+    (motivationId: string, todoId: string) => {
+      unlinkTodo(motivationId, todoId);
+    },
+    [unlinkTodo],
   );
 
   const handleDelete = useCallback(
@@ -250,6 +258,7 @@ export default function NotesScreen() {
             onMotivationEdit={handleNoteEdit}
             onNotePin={handlePin}
             onNoteDelete={handleDelete}
+            onUnlinkTodo={handleUnlinkTodo}
           />
         )}
       </ScrollView>
@@ -269,6 +278,7 @@ export default function NotesScreen() {
         onUpdate={handleUpdate}
         onPin={handlePin}
         onDelete={handleDelete}
+        onUnlinkTodo={handleUnlinkTodo}
       />
       <LimitReachedModal
         visible={isLimitReached}
