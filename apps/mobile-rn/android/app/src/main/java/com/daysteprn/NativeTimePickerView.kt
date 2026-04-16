@@ -5,6 +5,7 @@
 package com.daysteprn
 
 import android.content.Context
+import android.view.MotionEvent
 import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,7 +33,7 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
 
     var onTimeChangeCallback: ((Int, Int) -> Unit)? = null
 
-    private var composeView = ComposeView(context)
+    private lateinit var composeView: ComposeView
     private var contentSet = false
 
     private var hour24State = mutableIntStateOf(7)
@@ -39,17 +41,51 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
     private var heightDpState = mutableIntStateOf(150)
     private var minuteIntervalState = mutableIntStateOf(1)
 
-    init {}
+    init {
+        // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
+    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         if (!contentSet) {
             contentSet = true
+            composeView = ComposeView(context)
             addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
             composeView.setContent {
                 TimePickerContent()
             }
         }
+        requestLayout()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        if (contentSet) {
+            removeAllViews()
+            contentSet = false
+        }
+    }
+
+    override fun requestLayout() {
+        super.requestLayout()
+        post(measureAndLayout)
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        // 터치 시 부모 ScrollView가 이벤트를 가로채지 못하도록 차단
+        when (ev.action) {
+            MotionEvent.ACTION_DOWN -> parent?.requestDisallowInterceptTouchEvent(true)
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> parent?.requestDisallowInterceptTouchEvent(false)
+        }
+        return false
+    }
+
+    private val measureAndLayout = Runnable {
+        measure(
+            MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
+        )
+        layout(left, top, right, bottom)
     }
 
     fun setHour(h: Int) {
@@ -84,12 +120,11 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
         val minuteItems = (0..59).filter { it % minuteInterval == 0 }
 
         val itemHeightDp = 40.dp
-        val visibleItems = (heightDp / 40).coerceAtLeast(3)
-        val centerIndex = visibleItems / 2
 
         val coroutineScope = rememberCoroutineScope()
 
-        // Initialize scroll states
+        // Initialize scroll states — 선택된 아이템이 첫 번째 visible이 되도록 설정
+        // contentPadding이 위아래로 추가되어 첫 아이템이 가운데에 위치함
         val amPmInitial = if (isAm) 0 else 1
         val hourInitial = hourItems.indexOf(displayHour).coerceAtLeast(0)
         val minuteInitial = minuteItems.indexOf(minute).let { if (it < 0) 0 else it }
@@ -97,22 +132,23 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
         // Repeat count for infinite scroll illusion
         val repeatCount = 200
         val amPmListState = rememberLazyListState(
-            initialFirstVisibleItemIndex = repeatCount / 2 * amPmItems.size + amPmInitial - centerIndex
+            initialFirstVisibleItemIndex = repeatCount / 2 * amPmItems.size + amPmInitial
         )
         val hourListState = rememberLazyListState(
-            initialFirstVisibleItemIndex = repeatCount / 2 * hourItems.size + hourInitial - centerIndex
+            initialFirstVisibleItemIndex = repeatCount / 2 * hourItems.size + hourInitial
         )
         val minuteListState = rememberLazyListState(
-            initialFirstVisibleItemIndex = repeatCount / 2 * minuteItems.size + minuteInitial - centerIndex
+            initialFirstVisibleItemIndex = repeatCount / 2 * minuteItems.size + minuteInitial
         )
 
         // Track settled scroll positions and emit changes
+        // contentPadding 방식: firstVisibleItemIndex가 곧 선택된 아이템
         LaunchedEffect(Unit) {
             snapshotFlow {
                 Triple(
-                    getSelectedIndex(amPmListState, centerIndex) % amPmItems.size,
-                    getSelectedIndex(hourListState, centerIndex) % hourItems.size,
-                    getSelectedIndex(minuteListState, centerIndex) % minuteItems.size
+                    amPmListState.firstVisibleItemIndex % amPmItems.size,
+                    hourListState.firstVisibleItemIndex % hourItems.size,
+                    minuteListState.firstVisibleItemIndex % minuteItems.size
                 )
             }.collect { (amPmIdx, hourIdx, minuteIdx) ->
                 val selectedAmPm = amPmItems[amPmIdx.coerceIn(0, amPmItems.lastIndex)]
@@ -146,7 +182,6 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
                     repeatCount = repeatCount,
                     itemHeight = itemHeightDp,
                     totalHeight = heightDp.dp,
-                    centerIndex = centerIndex,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -157,18 +192,23 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
                     repeatCount = repeatCount,
                     itemHeight = itemHeightDp,
                     totalHeight = heightDp.dp,
-                    centerIndex = centerIndex,
                     modifier = Modifier.weight(1f)
                 )
 
-                // Colon separator
-                Text(
-                    text = ":",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A1A2E),
-                    modifier = Modifier.padding(horizontal = 2.dp)
-                )
+                // Colon separator — 하이라이트와 동일한 높이에 위치
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .height(heightDp.dp)
+                        .padding(horizontal = 2.dp)
+                ) {
+                    Text(
+                        text = ":",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1A1A2E)
+                    )
+                }
 
                 // Minute column
                 WheelColumn(
@@ -177,7 +217,6 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
                     repeatCount = repeatCount,
                     itemHeight = itemHeightDp,
                     totalHeight = heightDp.dp,
-                    centerIndex = centerIndex,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -235,21 +274,24 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
         repeatCount: Int,
         itemHeight: Dp,
         totalHeight: Dp,
-        centerIndex: Int,
         modifier: Modifier = Modifier
     ) {
         val totalItems = items.size * repeatCount
+        // contentPadding: 위아래에 (totalHeight - itemHeight) / 2 만큼 패딩 추가
+        // → firstVisibleItem이 정확히 가운데에 위치
+        val verticalPadding = (totalHeight - itemHeight) / 2
 
         LazyColumn(
             state = listState,
             modifier = modifier.height(totalHeight),
             horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(vertical = verticalPadding),
             flingBehavior = rememberSnapFlingBehavior(listState, itemHeight)
         ) {
             items(totalItems) { index ->
                 val actualIndex = index % items.size
-                val centerItemIndex = getSelectedIndex(listState, centerIndex)
-                val distanceFromCenter = abs(index - centerItemIndex)
+                val selectedIndex = listState.firstVisibleItemIndex
+                val distanceFromCenter = abs(index - selectedIndex)
 
                 val alpha = when {
                     distanceFromCenter == 0 -> 1f
@@ -281,10 +323,6 @@ class NativeTimePickerView(context: Context) : FrameLayout(context) {
                 }
             }
         }
-    }
-
-    private fun getSelectedIndex(listState: LazyListState, centerIndex: Int): Int {
-        return listState.firstVisibleItemIndex + centerIndex
     }
 
     @Composable

@@ -81,7 +81,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     ref,
   ) {
     const {primaryColor} = useTheme();
-    const {width: screenWidth} = useWindowDimensions();
+    const {width: screenWidth, height: screenHeight} = useWindowDimensions();
     const bottomSheetRef = useRef<BottomSheet>(null);
     const titleInputRef = useRef<any>(null);
     const pendingFocusRef = useRef(false);
@@ -178,6 +178,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
           ref={bottomSheetRef}
           index={-1}
           enableDynamicSizing
+          maxDynamicContentSize={screenHeight * 0.35}
           enablePanDownToClose
           keyboardBehavior="interactive"
           handleComponent={null}
@@ -216,6 +217,8 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
                 placeholderTextColor="#D1D5DB"
                 style={styles.descInput}
                 multiline
+                scrollEnabled
+                textAlignVertical="top"
               />
 
               {/* 구분선 + 3칩 툴바 */}
