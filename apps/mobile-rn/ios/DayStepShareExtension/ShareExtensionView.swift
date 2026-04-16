@@ -2,7 +2,6 @@ import SwiftUI
 
 /// Share Extension 메인 뷰 — TickTick 스타일 할일 빠른 생성
 struct ShareExtensionView: View {
-  @Environment(\.dismiss) private var dismiss
   let onClose: () -> Void
   let sharedText: String
 
@@ -105,28 +104,25 @@ struct ShareExtensionView: View {
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
-          Button("취소") { onClose() }
+          Button(action: { onClose() }) {
+            Image(systemName: "xmark")
+              .font(.system(size: 15, weight: .medium))
+              .foregroundColor(.primary)
+          }
         }
         ToolbarItem(placement: .confirmationAction) {
-          Button(action: { addTodo() }) {
-            Text("추가")
-              .font(.system(size: 15, weight: .bold))
-              .foregroundColor(.white)
-              .padding(.horizontal, 14)
-              .padding(.vertical, 7)
-              .background(
-                (title.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
-                  ? primaryColor.opacity(0.4)
-                  : primaryColor
-              )
-              .cornerRadius(18)
-          }
-          .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
-          .buttonStyle(PlainButtonStyle())
+          Button("추가") { addTodo() }
+            .font(.system(size: 16, weight: .bold))
+            .foregroundColor(isAddDisabled ? primaryColor.opacity(0.4) : primaryColor)
+            .disabled(isAddDisabled)
         }
       }
     }
     .onAppear { parseSharedText() }
+  }
+
+  private var isAddDisabled: Bool {
+    title.trimmingCharacters(in: .whitespaces).isEmpty || isLoading
   }
 
   private var dateDisplayText: String {
@@ -144,8 +140,11 @@ struct ShareExtensionView: View {
   }
 
   private func parseSharedText() {
+    // 제목은 원본 텍스트 그대로
+    title = sharedText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    // 날짜/시간만 파싱해서 자동 채움
     let parsed = KoreanDateParser.parse(sharedText)
-    title = parsed.title
 
     if let date = parsed.date {
       selectedDate = date
@@ -183,7 +182,6 @@ struct ShareExtensionView: View {
         switch result {
         case .success:
           showSuccess = true
-          // 0.8초 후 자동 닫기
           DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             onClose()
           }
