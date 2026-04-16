@@ -218,6 +218,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
           ref={bottomSheetRef}
           index={-1}
           enableDynamicSizing
+          maxDynamicContentSize={200}
           enablePanDownToClose
           keyboardBehavior="interactive"
           keyboardBlurBehavior="none"

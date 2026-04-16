@@ -77,6 +77,12 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
     private var contentSet = false
     private var isLayoutRequested = false
 
+    init {
+        // 확장 시 FrameLayout bounds 밖의 콘텐츠도 보이도록 클리핑 비활성화
+        clipChildren = false
+        clipToPadding = false
+    }
+
     private var selectedDateStr = mutableStateOf(LocalDate.now().toString())
     private var primaryColorHex = mutableStateOf("#6366F1")
 
@@ -101,6 +107,7 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
             addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
             composeView.setContent { WeekStripCalendarContent() }
         }
+        requestLayout()
     }
 
     override fun onDetachedFromWindow() {
@@ -110,11 +117,17 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
 
     override fun requestLayout() {
         super.requestLayout()
+        // 중복 호출 방지하되, 레이아웃이 완료된 후 다시 요청될 수 있도록 함
         if (isLayoutRequested) return
         isLayoutRequested = true
         post {
             isLayoutRequested = false
-            if (!isAttachedToWindow || width <= 0) return@post
+            if (!isAttachedToWindow) return@post
+            // width가 0이면 다음 프레임에 재시도
+            if (width <= 0) {
+                post { requestLayout() }
+                return@post
+            }
             measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
