@@ -23,11 +23,14 @@ import {
   Keyboard,
   AppState,
   Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import {useUIStore} from '@/stores/uiStore';
 import BottomSheet, {
+  BottomSheetModal,
   BottomSheetView,
   BottomSheetScrollView,
   BottomSheetBackdrop,
@@ -39,14 +42,14 @@ import {InlineIconPicker} from './InlineIconPicker';
 import {useTheme} from '@/theme';
 import {fixedColors} from '@/theme/colors';
 import {useHaptic} from '@/hooks/useHaptic';
-import {Flag, Star, Zap, AlertCircle, AlertTriangle, Minus} from 'lucide-react-native';
+import {Flag, Star, Zap, AlertCircle, AlertTriangle, Minus, X} from 'lucide-react-native';
 import type {UseTodoFormReturn} from './useTodoForm';
 
 // ============================================
 // Types
 // ============================================
 
-type ActivePop = 'none' | 'priority' | 'icon' | 'color';
+type ActivePop = 'none' | 'priority' | 'iconColor';
 
 const TODO_COLORS = [
   '#EF4444', '#F97316', '#F59E0B', '#22C55E', '#14B8A6',
@@ -86,6 +89,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const {primaryColor} = useTheme();
     const {width: screenWidth, height: screenHeight} = useWindowDimensions();
     const bottomSheetRef = useRef<BottomSheet>(null);
+    const iconColorSheetRef = useRef<BottomSheetModal>(null);
     const titleInputRef = useRef<any>(null);
     const descInputRef = useRef<any>(null);
     const pendingFocusRef = useRef(false);
@@ -95,6 +99,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const [isOpen, setIsOpen] = useState(false);
     const [sheetKey, setSheetKey] = useState(0);
     const [hiddenForSub, setHiddenForSub] = useState(false);
+    const iconColorSnapPoints = useMemo(() => ['65%'], []);
 
     useEffect(() => {
       const sub = AppState.addEventListener('change', nextState => {
@@ -182,17 +187,16 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
       hideForSubSheet();
     }, [hideForSubSheet]);
 
-    const handleIconPress = useCallback((anchor: AnchorRect) => {
-      setPopAnchor(anchor);
-      setActivePop('icon');
+    const handleIconColorPress = useCallback(() => {
       hideForSubSheet();
+      setActivePop('iconColor');
+      setTimeout(() => iconColorSheetRef.current?.present(), 100);
     }, [hideForSubSheet]);
 
-    const handleColorPress = useCallback((anchor: AnchorRect) => {
-      setPopAnchor(anchor);
-      setActivePop('color');
-      hideForSubSheet();
-    }, [hideForSubSheet]);
+    const handleIconColorDismiss = useCallback(() => {
+      setActivePop('none');
+      restoreFromSubSheet();
+    }, [restoreFromSubSheet]);
 
     const renderBackdrop = useCallback(
       (props: any) => (
@@ -272,8 +276,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
                 compact
                 onDatePress={toolbarCallbacks.onDatePress}
                 onPriorityPress={handlePriorityPress}
-                onIconPress={handleIconPress}
-                onColorPress={handleColorPress}
+                onIconColorPress={handleIconColorPress}
               />
             </View>
           </BottomSheetView>
@@ -298,36 +301,57 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
           </Popover>
         )}
 
-        {/* 아이콘 팝오버 */}
-        {activePop === 'icon' && popAnchor && (
-          <Popover
-            visible
-            onClose={restoreFromSubSheet}
-            anchorPosition={popAnchor}
-            horizontalAlign="left"
-            width={Math.min(screenWidth - 32, 320)}>
-            <InlineIconPicker
-              selectedIcon={form.icon}
-              onIconChange={v => updateField('icon', v)}
-              popover
-            />
-          </Popover>
-        )}
-
-        {/* 색상 팝오버 */}
-        {activePop === 'color' && popAnchor && (
-          <Popover
-            visible
-            onClose={restoreFromSubSheet}
-            anchorPosition={popAnchor}
-            horizontalAlign="left"
-            width={280}>
-            <ColorPopoverContent
-              selectedColor={form.color}
-              onColorChange={v => updateField('color', v)}
-            />
-          </Popover>
-        )}
+        {/* 아이콘 & 색상 BottomSheetModal */}
+        <BottomSheetModal
+          ref={iconColorSheetRef}
+          snapPoints={iconColorSnapPoints}
+          enableDynamicSizing={false}
+          enablePanDownToClose
+          backdropComponent={renderBackdrop}
+          handleComponent={null}
+          backgroundStyle={styles.sheetBg}
+          onDismiss={handleIconColorDismiss}>
+          <BottomSheetView style={{flex: 1}}>
+            <View style={iconColorStyles.header}>
+              <Text style={iconColorStyles.headerTitle}>아이콘 & 색상</Text>
+              <AnimatedPressable
+                onPress={() => iconColorSheetRef.current?.dismiss()}
+                hapticType="light"
+                style={iconColorStyles.closeBtn}>
+                <X size={20} color="#6B7280" />
+              </AnimatedPressable>
+            </View>
+            <ScrollView
+              contentContainerStyle={iconColorStyles.content}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="always">
+              <Text style={iconColorStyles.sectionLabel}>아이콘</Text>
+              <InlineIconPicker
+                selectedIcon={form.icon}
+                onIconChange={v => updateField('icon', v)}
+                popover
+              />
+              <Text style={[iconColorStyles.sectionLabel, {marginTop: 20}]}>색상</Text>
+              <View style={iconColorStyles.colorGrid}>
+                {TODO_COLORS.map(color => {
+                  const isSelected = form.color === color;
+                  return (
+                    <Pressable
+                      key={color}
+                      onPress={() => updateField('color', isSelected ? '' : color)}
+                      style={[
+                        iconColorStyles.colorSwatch,
+                        {backgroundColor: color},
+                        isSelected && iconColorStyles.colorSwatchSelected,
+                      ]}>
+                      {isSelected && <Text style={iconColorStyles.colorCheck}>✓</Text>}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </BottomSheetView>
+        </BottomSheetModal>
       </>
     );
   },
@@ -584,4 +608,38 @@ const popStyles = StyleSheet.create({
     gap: 4,
   },
   btnText: {fontSize: 12, fontWeight: '600', color: '#4B5563'},
+});
+
+const iconColorStyles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: {fontSize: 17, fontWeight: '700', color: '#1F2937'},
+  closeBtn: {padding: 4},
+  content: {paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40},
+  sectionLabel: {fontSize: 13, fontWeight: '600', color: '#9CA3AF', marginBottom: 10},
+  colorGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 12},
+  colorSwatch: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  colorSwatchSelected: {
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  colorCheck: {color: '#FFFFFF', fontSize: 16, fontWeight: '700'},
 });

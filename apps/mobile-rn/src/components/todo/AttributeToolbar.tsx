@@ -50,6 +50,7 @@ interface AttributeToolbarProps {
   onPriorityPress: (anchor: AnchorRect) => void;
   onIconPress?: (anchor: AnchorRect) => void;
   onColorPress?: (anchor: AnchorRect) => void;
+  onIconColorPress?: () => void;
   // Legacy: 기존 Edit 모드에서 사용 (서브시트 직접 열기)
   onTimePress?: () => void;
   onAlarmPress?: () => void;
@@ -117,6 +118,7 @@ export function AttributeToolbar({
   onPriorityPress,
   onIconPress,
   onColorPress,
+  onIconColorPress,
   onTimePress,
   onAlarmPress,
   onRecurrencePress,
@@ -172,13 +174,17 @@ export function AttributeToolbar({
           </View>
         )}
 
-        {onIconPress && (
+        {onIconColorPress && (
+          <Chip icon={Palette} label="" onPress={onIconColorPress} />
+        )}
+
+        {!onIconColorPress && onIconPress && (
           <View ref={iconChipRef} collapsable={false}>
             <Chip icon={Sparkles} label="" onPress={handleIconMeasure} />
           </View>
         )}
 
-        {onColorPress && (
+        {!onIconColorPress && onColorPress && (
           <View ref={colorChipRef} collapsable={false}>
             {form.color ? (
               <AnimatedPressable
