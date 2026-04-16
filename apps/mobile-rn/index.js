@@ -18,10 +18,16 @@ if (__DEV__) {
 
 // 백그라운드/종료 상태에서 알림 탭 처리 (AppRegistry 전에 등록 필수)
 notifee.onBackgroundEvent(async ({type, detail}) => {
-  // PRESS (type === 3): 알림 탭 시 sleep-bedtime이면 MMKV 플래그 저장
-  if (type === 3 && detail.notification?.data?.type === 'sleep-bedtime') {
-    const mmkv = createMMKV({id: 'daystep-rn'});
-    mmkv.set('pending-sleep-bedtime-nav', 'true');
+  // PRESS (type === 3): 알림 탭 시 유형별 MMKV 플래그 저장
+  if (type === 3) {
+    const notifType = detail.notification?.data?.type;
+    if (notifType === 'sleep-bedtime') {
+      const mmkv = createMMKV({id: 'daystep-rn'});
+      mmkv.set('pending-sleep-bedtime-nav', 'true');
+    } else if (notifType === 'call-reminder') {
+      const mmkv = createMMKV({id: 'daystep-rn'});
+      mmkv.set('pending-call-reminder-nav', 'true');
+    }
   }
 });
 

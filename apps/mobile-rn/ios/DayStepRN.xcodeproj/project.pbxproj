@@ -37,6 +37,14 @@
 		A43C01272F6CB8BC001C082C /* ShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A43C01332F6CB8DF001C082C /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */; };
 		A43C013B2F6CB8DF001C082C /* ShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C01322F6CB8DF001C082C /* ShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A476069A2F9175C900375BC1 /* DayStepShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A47606902F9175C900375BC1 /* DayStepShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A47606AD2F9177BD00375BC1 /* CallKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A47606AC2F9177BD00375BC1 /* CallKit.framework */; };
+		A4F440BE2F9180CD00C25E59 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */; };
+		A4F440BF2F9180CD00C25E59 /* DayStepShareModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */; };
+		A4F440C02F9180CD00C25E59 /* DayStepShareModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */; };
+		A4F440C12F9180CD00C25E59 /* AddTodoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */; };
+		A4F440C22F9180CD00C25E59 /* CallDetectorModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */; };
+		A4F440C32F9180CD00C25E59 /* CallDetectorModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */; };
 		A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */; };
 		AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */; };
 		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
@@ -99,6 +107,13 @@
 			remoteGlobalIDString = A43C01312F6CB8DF001C082C;
 			remoteInfo = ShieldAction;
 		};
+		A47606982F9175C900375BC1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A476068F2F9175C900375BC1;
+			remoteInfo = DayStepShareExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -110,6 +125,7 @@
 			files = (
 				A43C01272F6CB8BC001C082C /* ShieldConfiguration.appex in Embed Foundation Extensions */,
 				A43C013B2F6CB8DF001C082C /* ShieldAction.appex in Embed Foundation Extensions */,
+				A476069A2F9175C900375BC1 /* DayStepShareExtension.appex in Embed Foundation Extensions */,
 				A43C01102F6CB891001C082C /* ActivityMonitorExtension.appex in Embed Foundation Extensions */,
 				A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */,
 			);
@@ -119,6 +135,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeTodoPicker.swift; path = DayStepRN/NativeTodoPicker.swift; sourceTree = "<group>"; };
+		01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeTodoPickerBridge.m; path = DayStepRN/NativeTodoPickerBridge.m; sourceTree = "<group>"; };
 		079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassBackgroundBridge.m; path = DayStepRN/LiquidGlassBackgroundBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
@@ -159,7 +177,15 @@
 		A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
 		A43C011E2F6CB8BC001C082C /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
 		A43C01322F6CB8DF001C082C /* ShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A47606902F9175C900375BC1 /* DayStepShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A47606AC2F9177BD00375BC1 /* CallKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CallKit.framework; path = System/Library/Frameworks/CallKit.framework; sourceTree = SDKROOT; };
 		A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeWeekStripCalendarBridge.m; path = DayStepRN/NativeWeekStripCalendarBridge.m; sourceTree = "<group>"; };
+		A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AddTodoIntent.swift; path = DayStepRN/AddTodoIntent.swift; sourceTree = "<group>"; };
+		A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppShortcuts.swift; path = DayStepRN/AppShortcuts.swift; sourceTree = "<group>"; };
+		A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = CallDetectorModule.m; path = DayStepRN/CallDetectorModule.m; sourceTree = "<group>"; };
+		A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallDetectorModule.swift; path = DayStepRN/CallDetectorModule.swift; sourceTree = "<group>"; };
+		A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = DayStepShareModule.m; path = DayStepRN/DayStepShareModule.m; sourceTree = "<group>"; };
+		A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepShareModule.swift; path = DayStepRN/DayStepShareModule.swift; sourceTree = "<group>"; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
 		B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeMissionCard.swift; path = DayStepRN/NativeMissionCard.swift; sourceTree = "<group>"; };
 		B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMonthCalendar.swift; path = DayStepRN/NativeMonthCalendar.swift; sourceTree = "<group>"; };
@@ -179,101 +205,53 @@
 		FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeSleepGarden.swift; path = DayStepRN/NativeSleepGarden.swift; sourceTree = "<group>"; };
 		FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeSleepGardenBridge.m; path = DayStepRN/NativeSleepGardenBridge.m; sourceTree = "<group>"; };
 		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/LiquidGlassMenu.swift; sourceTree = "<group>"; };
-		01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeTodoPicker.swift; path = DayStepRN/NativeTodoPicker.swift; sourceTree = "<group>"; };
-		01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeTodoPickerBridge.m; path = DayStepRN/NativeTodoPickerBridge.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A41F7D832F500A4E00A4C1D8 /* Exceptions for "DayStepCalendarWidget" folder in "DayStepCalendarWidgetExtension" target */ = {
+		A41F7D832F500A4E00A4C1D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */;
 		};
-		A43C01132F6CB891001C082C /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */ = {
+		A43C01132F6CB891001C082C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = A43C01052F6CB890001C082C /* ActivityMonitorExtension */;
 		};
-		A43C01282F6CB8BC001C082C /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */ = {
+		A43C01282F6CB8BC001C082C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = A43C011A2F6CB8BC001C082C /* ShieldConfiguration */;
 		};
-		A43C013C2F6CB8DF001C082C /* Exceptions for "ShieldAction" folder in "ShieldAction" target */ = {
+		A43C013C2F6CB8DF001C082C /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = A43C01312F6CB8DF001C082C /* ShieldAction */;
 		};
+		A476069D2F9175C900375BC1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A476068F2F9175C900375BC1 /* DayStepShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A41F7D832F500A4E00A4C1D8 /* Exceptions for "DayStepCalendarWidget" folder in "DayStepCalendarWidgetExtension" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = DayStepCalendarWidget;
-			sourceTree = "<group>";
-		};
-		A42367212F729E6E0054947D /* DayStepRNUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = DayStepRNUITests;
-			sourceTree = "<group>";
-		};
-		A43C01092F6CB890001C082C /* ActivityMonitorExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A43C01132F6CB891001C082C /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = ActivityMonitorExtension;
-			sourceTree = "<group>";
-		};
-		A43C01202F6CB8BC001C082C /* ShieldConfiguration */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A43C01282F6CB8BC001C082C /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = ShieldConfiguration;
-			sourceTree = "<group>";
-		};
-		A43C01342F6CB8DF001C082C /* ShieldAction */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				A43C013C2F6CB8DF001C082C /* Exceptions for "ShieldAction" folder in "ShieldAction" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = ShieldAction;
-			sourceTree = "<group>";
-		};
+		A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A41F7D832F500A4E00A4C1D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = DayStepCalendarWidget; sourceTree = "<group>"; };
+		A42367212F729E6E0054947D /* DayStepRNUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = DayStepRNUITests; sourceTree = "<group>"; };
+		A43C01092F6CB890001C082C /* ActivityMonitorExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A43C01132F6CB891001C082C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ActivityMonitorExtension; sourceTree = "<group>"; };
+		A43C01202F6CB8BC001C082C /* ShieldConfiguration */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A43C01282F6CB8BC001C082C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShieldConfiguration; sourceTree = "<group>"; };
+		A43C01342F6CB8DF001C082C /* ShieldAction */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A43C013C2F6CB8DF001C082C /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ShieldAction; sourceTree = "<group>"; };
+		A47606912F9175C900375BC1 /* DayStepShareExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A476069D2F9175C900375BC1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = DayStepShareExtension; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -281,6 +259,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A47606AD2F9177BD00375BC1 /* CallKit.framework in Frameworks */,
 				A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */,
 				124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */,
 			);
@@ -327,12 +306,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A476068D2F9175C900375BC1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		13B07FAE1A68108700A75B9A /* DayStepRN */ = {
 			isa = PBXGroup;
 			children = (
+				A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */,
+				A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */,
+				A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */,
+				A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */,
+				A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */,
+				A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */,
 				A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -382,6 +374,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A47606AC2F9177BD00375BC1 /* CallKit.framework */,
 				A41F7D662F483FF800A4C1D8 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */,
@@ -414,6 +407,7 @@
 				A43C01202F6CB8BC001C082C /* ShieldConfiguration */,
 				A43C01342F6CB8DF001C082C /* ShieldAction */,
 				A42367212F729E6E0054947D /* DayStepRNUITests */,
+				A47606912F9175C900375BC1 /* DayStepShareExtension */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -433,6 +427,7 @@
 				A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */,
 				A43C01322F6CB8DF001C082C /* ShieldAction.appex */,
 				A42367202F729E6E0054947D /* DayStepRNUITests.xctest */,
+				A47606902F9175C900375BC1 /* DayStepShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -486,6 +481,7 @@
 				A43C010F2F6CB891001C082C /* PBXTargetDependency */,
 				A43C01262F6CB8BC001C082C /* PBXTargetDependency */,
 				A43C013A2F6CB8DF001C082C /* PBXTargetDependency */,
+				A47606992F9175C900375BC1 /* PBXTargetDependency */,
 			);
 			name = DayStepRN;
 			productName = DayStepRN;
@@ -593,6 +589,28 @@
 			productReference = A43C01322F6CB8DF001C082C /* ShieldAction.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		A476068F2F9175C900375BC1 /* DayStepShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A476069E2F9175C900375BC1 /* Build configuration list for PBXNativeTarget "DayStepShareExtension" */;
+			buildPhases = (
+				A476068C2F9175C900375BC1 /* Sources */,
+				A476068D2F9175C900375BC1 /* Frameworks */,
+				A476068E2F9175C900375BC1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A47606912F9175C900375BC1 /* DayStepShareExtension */,
+			);
+			name = DayStepShareExtension;
+			packageProductDependencies = (
+			);
+			productName = DayStepShareExtension;
+			productReference = A47606902F9175C900375BC1 /* DayStepShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -621,6 +639,9 @@
 					A43C01312F6CB8DF001C082C = {
 						CreatedOnToolsVersion = 26.2;
 					};
+					A476068F2F9175C900375BC1 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "DayStepRN" */;
@@ -642,6 +663,7 @@
 				A43C011A2F6CB8BC001C082C /* ShieldConfiguration */,
 				A43C01312F6CB8DF001C082C /* ShieldAction */,
 				A423671F2F729E6E0054947D /* DayStepRNUITests */,
+				A476068F2F9175C900375BC1 /* DayStepShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -686,6 +708,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A43C01302F6CB8DF001C082C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A476068E2F9175C900375BC1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -743,9 +772,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -782,9 +815,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -812,6 +849,12 @@
 				CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */,
 				EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */,
 				117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */,
+				A4F440BE2F9180CD00C25E59 /* AppShortcuts.swift in Sources */,
+				A4F440BF2F9180CD00C25E59 /* DayStepShareModule.swift in Sources */,
+				A4F440C02F9180CD00C25E59 /* DayStepShareModule.m in Sources */,
+				A4F440C12F9180CD00C25E59 /* AddTodoIntent.swift in Sources */,
+				A4F440C22F9180CD00C25E59 /* CallDetectorModule.m in Sources */,
+				A4F440C32F9180CD00C25E59 /* CallDetectorModule.swift in Sources */,
 				C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */,
 				D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */,
 				E1F2A3B4C5D6E7F8A9B0C1D2 /* NativeWeekStripCalendar.swift in Sources */,
@@ -875,6 +918,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A476068C2F9175C900375BC1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -902,6 +952,11 @@
 			isa = PBXTargetDependency;
 			target = A43C01312F6CB8DF001C082C /* ShieldAction */;
 			targetProxy = A43C01392F6CB8DF001C082C /* PBXContainerItemProxy */;
+		};
+		A47606992F9175C900375BC1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A476068F2F9175C900375BC1 /* DayStepShareExtension */;
+			targetProxy = A47606982F9175C900375BC1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1581,6 +1636,97 @@
 			};
 			name = Release;
 		};
+		A476069B2F9175C900375BC1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = DayStepShareExtension/DayStepShareExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DayStepShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DayStepShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.DayStepShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A476069C2F9175C900375BC1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = DayStepShareExtension/DayStepShareExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DayStepShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DayStepShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.DayStepShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1643,6 +1789,15 @@
 			buildConfigurations = (
 				A43C013E2F6CB8DF001C082C /* Debug */,
 				A43C013F2F6CB8DF001C082C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A476069E2F9175C900375BC1 /* Build configuration list for PBXNativeTarget "DayStepShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A476069B2F9175C900375BC1 /* Debug */,
+				A476069C2F9175C900375BC1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

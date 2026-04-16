@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Crown,
   ClipboardCheck,
+  Megaphone,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
@@ -217,6 +218,15 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
               subtitle="릴리즈 전 수동 검증 체크리스트"
               showChevron
               onPress={() => onNavigate('qaChecklist')}
+            />
+            <View style={styles.divider} />
+            <SettingsRow
+              icon={Megaphone}
+              iconColor={primaryColor}
+              title="마케팅 자료"
+              subtitle="가성비·소개 스크립트·핵심 메시지"
+              showChevron
+              onPress={() => onNavigate('marketingToolkit')}
             />
             <View style={styles.divider} />
             <View style={styles.adminSubRow}>

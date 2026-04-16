@@ -30,6 +30,8 @@ class MainApplication : Application(), ReactApplication {
           add(AnimatedOffsetPackage())
           add(NativeTodoPickerPackage())
           add(NativeTimePickerPackage())
+          add(ShareIntentPackage())
+          add(CallDetectorPackage())
         },
     )
   }

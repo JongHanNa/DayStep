@@ -21,6 +21,8 @@ import {supabase} from '@/lib/supabase';
 import {useTheme} from '@/theme';
 import {useSleepStore, useSleepStoreHydrated} from '@/stores/sleepStore';
 import {useBedtimeMonitor} from '@/hooks/useBedtimeMonitor';
+import {useExternalInput} from '@/hooks/useExternalInput';
+import {useCallReminder} from '@/hooks/useCallReminder';
 import {BedtimeModal} from '@/components/sleep/BedtimeModal';
 import {useNavigation} from '@react-navigation/native';
 
@@ -35,6 +37,8 @@ const Stack = createNativeStackNavigator();
  */
 function AuthenticatedApp() {
   useRealtimeSync();
+  useExternalInput();
+  useCallReminder();
   const navigation = useNavigation<any>();
 
   // 설정 DB 동기화 (morePanelShowLabels 등)

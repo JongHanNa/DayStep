@@ -146,7 +146,8 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         setBottomSheetOpen(true);
         if (pendingFocusRef.current) {
           pendingFocusRef.current = false;
-          setTimeout(() => titleInputRef.current?.focus(), 100);
+          const target = lastFocusRef.current === 'desc' ? descInputRef : titleInputRef;
+          setTimeout(() => target.current?.focus(), 100);
         }
       }
     }, [setBottomSheetOpen]);
@@ -168,17 +169,13 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     }, []);
 
     // 서브 팝오버/시트 닫힐 때: 모달 복원 + 포커스 복원
+    // focus는 handleSheetChange(index >= 0)에서 pendingFocusRef를 소비하여 실행
+    // (iOS에서 expand 애니메이션 완료 전 focus가 먼저 실행되면 키보드만 남는 race 방지)
     const restoreFromSubSheet = useCallback(() => {
       setActivePop('none');
       setHiddenForSub(false);
+      pendingFocusRef.current = true;
       bottomSheetRef.current?.expand();
-      setTimeout(() => {
-        if (lastFocusRef.current === 'desc') {
-          descInputRef.current?.focus();
-        } else {
-          titleInputRef.current?.focus();
-        }
-      }, 200);
     }, []);
 
     const handlePriorityPress = useCallback((anchor: AnchorRect) => {

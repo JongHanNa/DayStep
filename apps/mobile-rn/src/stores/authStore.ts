@@ -4,6 +4,8 @@
  */
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
+import {NativeModules, Platform} from 'react-native';
+import Config from 'react-native-config';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage, sessionStorage, storage} from '@/lib/mmkv';
 import type {Session, User, AuthChangeEvent} from '@supabase/supabase-js';
@@ -54,6 +56,26 @@ function setupTokenRefresh(expiresAt?: number) {
       console.warn('[Auth] Token refresh failed:', err);
     }
   }, refreshAt);
+}
+
+/** Share Extension에 인증 정보 동기화 (iOS App Group UserDefaults) */
+function syncAuthToExtension(session: Session | null) {
+  if (Platform.OS !== 'ios' || !session?.user?.id || !session?.access_token) return;
+  const mod = NativeModules.DayStepShareModule;
+  if (!mod?.setAuthForExtension) return;
+  mod.setAuthForExtension(
+    session.user.id,
+    session.access_token,
+    Config.SUPABASE_URL ?? '',
+    Config.SUPABASE_ANON_KEY ?? '',
+  ).catch(() => {});
+}
+
+function clearAuthFromExtension() {
+  if (Platform.OS !== 'ios') return;
+  const mod = NativeModules.DayStepShareModule;
+  if (!mod?.clearAuthForExtension) return;
+  mod.clearAuthForExtension().catch(() => {});
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -136,6 +158,8 @@ export const useAuthStore = create<AuthState>()(
                   if (newSession?.expires_at) {
                     setupTokenRefresh(newSession.expires_at);
                   }
+                  // Share Extension에 인증 정보 동기화 (iOS)
+                  syncAuthToExtension(newSession);
                   break;
 
                 case 'SIGNED_OUT':
@@ -148,6 +172,8 @@ export const useAuthStore = create<AuthState>()(
                     clearTimeout(tokenRefreshTimer);
                     tokenRefreshTimer = null;
                   }
+                  // Share Extension 인증 정보 삭제
+                  clearAuthFromExtension();
                   break;
               }
             },

@@ -31,6 +31,9 @@ interface SettingsState {
   // More 패널
   morePanelShowLabels: boolean;
 
+  // 통화 후 리마인더
+  callReminderEnabled: boolean;
+
   // 동기화
   _lastSyncedAt: string | null;
 
@@ -42,6 +45,7 @@ interface SettingsState {
   setBackgroundPreset: (preset: BackgroundPreset) => void;
   setPlannerViewMode: (mode: PlannerViewMode) => void;
   setMorePanelShowLabels: (show: boolean) => void;
+  setCallReminderEnabled: (enabled: boolean) => void;
   loadFromDB: (settings: Record<string, any>) => void;
 }
 
@@ -55,6 +59,7 @@ export const useSettingsStore = create<SettingsState>()(
       backgroundPreset: 'calmBackground',
       plannerViewMode: 'dailyPlanner',
       morePanelShowLabels: true,
+      callReminderEnabled: false,
       _lastSyncedAt: null,
 
       setColorTheme: (theme) => set({colorTheme: theme}),
@@ -64,6 +69,7 @@ export const useSettingsStore = create<SettingsState>()(
       setBackgroundPreset: (preset) => set({backgroundPreset: preset}),
       setPlannerViewMode: (mode) => set({plannerViewMode: mode}),
       setMorePanelShowLabels: (show) => set({morePanelShowLabels: show}),
+      setCallReminderEnabled: (enabled) => set({callReminderEnabled: enabled}),
       loadFromDB: (settings) =>
         set((state) => ({
           ...state,

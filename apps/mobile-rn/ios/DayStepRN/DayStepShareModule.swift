@@ -43,6 +43,44 @@ class DayStepShareModule: NSObject {
     resolve(text)
   }
 
+  /// 인증 정보를 App Group UserDefaults에 저장 (Share Extension에서 사용)
+  @objc(setAuthForExtension:accessToken:supabaseUrl:supabaseKey:withResolver:withRejecter:)
+  func setAuthForExtension(
+    _ userId: String,
+    accessToken: String,
+    supabaseUrl: String,
+    supabaseKey: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else {
+      reject("ERR_APP_GROUP", "App Group not found", nil)
+      return
+    }
+    defaults.set(userId, forKey: "extension_user_id")
+    defaults.set(accessToken, forKey: "extension_access_token")
+    defaults.set(supabaseUrl, forKey: "extension_supabase_url")
+    defaults.set(supabaseKey, forKey: "extension_supabase_key")
+    defaults.synchronize()
+    resolve(nil)
+  }
+
+  /// 로그아웃 시 Extension 인증 정보 삭제
+  @objc(clearAuthForExtension:withRejecter:)
+  func clearAuthForExtension(
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else {
+      resolve(nil)
+      return
+    }
+    defaults.removeObject(forKey: "extension_user_id")
+    defaults.removeObject(forKey: "extension_access_token")
+    defaults.synchronize()
+    resolve(nil)
+  }
+
   @objc static func requiresMainQueueSetup() -> Bool {
     return false
   }

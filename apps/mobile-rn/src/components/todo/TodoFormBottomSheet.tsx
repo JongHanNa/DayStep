@@ -8,12 +8,14 @@
  */
 import React, {
   useCallback,
+  useEffect,
   useRef,
   useState,
   forwardRef,
   useImperativeHandle,
 } from 'react';
 import {Keyboard} from 'react-native';
+import {useUIStore} from '@/stores/uiStore';
 import {useTodoForm} from './useTodoForm';
 import {TodoCreatePanel, type TodoCreatePanelRef} from './TodoCreatePanel';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
@@ -65,6 +67,24 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
         Keyboard.dismiss();
       },
     }));
+
+    // ------------------------------------------
+    // 외부 입력 prefill 감지
+    // ------------------------------------------
+    const pendingPrefill = useUIStore(s => s.pendingTodoPrefill);
+    const clearPendingPrefill = useUIStore(s => s.clearPendingPrefill);
+
+    useEffect(() => {
+      if (!pendingPrefill) return;
+      // resetForCreate → prefill 필드 덮어쓰기 → 패널 열기
+      formHook.resetForCreate(pendingPrefill.scheduledDate);
+      // 약간의 딜레이 후 prefill 적용 (resetForCreate가 setForm 후 반영되도록)
+      requestAnimationFrame(() => {
+        formHook.setForm(prev => ({...prev, ...pendingPrefill}));
+        createSheetRef.current?.expand();
+        clearPendingPrefill();
+      });
+    }, [pendingPrefill, clearPendingPrefill, formHook]);
 
     // ------------------------------------------
     // Create 모드 콜백
