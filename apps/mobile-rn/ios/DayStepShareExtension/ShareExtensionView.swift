@@ -108,15 +108,21 @@ struct ShareExtensionView: View {
           Button("취소") { onClose() }
         }
         ToolbarItem(placement: .confirmationAction) {
-          Button("추가") { addTodo() }
-            .font(.system(size: 16, weight: .bold))
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .background(primaryColor)
-            .clipShape(Capsule())
-            .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
-            .opacity(title.trimmingCharacters(in: .whitespaces).isEmpty || isLoading ? 0.5 : 1)
+          Button(action: { addTodo() }) {
+            Text("추가")
+              .font(.system(size: 15, weight: .bold))
+              .foregroundColor(.white)
+              .padding(.horizontal, 14)
+              .padding(.vertical, 7)
+              .background(
+                (title.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
+                  ? primaryColor.opacity(0.4)
+                  : primaryColor
+              )
+              .cornerRadius(18)
+          }
+          .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
+          .buttonStyle(PlainButtonStyle())
         }
       }
     }

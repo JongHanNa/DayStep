@@ -135,6 +135,8 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
             });
             setupTokenRefresh(session.expires_at);
+            // Share Extension에 인증 정보 동기화 (앱 시작 시 기존 세션)
+            syncAuthToExtension(session);
           }
 
           // 2. 인증 상태 변경 리스너
