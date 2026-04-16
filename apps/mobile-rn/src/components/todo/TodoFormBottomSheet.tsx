@@ -73,7 +73,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
       () => ({
         onDatePress: () => {
           haptic.selection();
-          Keyboard.dismiss();
+          createSheetRef.current?.hideForSub();
           scheduleModalRef.current?.open();
         },
       }),
@@ -102,6 +102,7 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
           ref={scheduleModalRef}
           form={formHook.form}
           updateField={formHook.updateField}
+          onDismiss={() => createSheetRef.current?.restoreFromSub()}
         />
 
         {/* 한도 초과 모달 */}

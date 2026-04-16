@@ -51,6 +51,7 @@ export interface SchedulePanelRef {
 interface SchedulePanelProps {
   form: FormData;
   updateField: <K extends keyof FormData>(field: K, value: FormData[K]) => void;
+  onDismiss?: () => void;
 }
 
 // ============================================
@@ -895,7 +896,7 @@ function SettingRow({
 // ============================================
 
 export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
-  function SchedulePanel({form, updateField}, ref) {
+  function SchedulePanel({form, updateField, onDismiss}, ref) {
     const bottomSheetRef = useRef<BottomSheetModal>(null);
     const {primaryColor} = useTheme();
     const haptic = useHaptic();
@@ -983,7 +984,8 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         handleComponent={null}
-        backgroundStyle={sheetStyles.sheetBg}>
+        backgroundStyle={sheetStyles.sheetBg}
+        onDismiss={onDismiss}>
         <BottomSheetView style={sheetStyles.sheetContent}>
           {/* Header */}
           <View style={styles.tabHeader}>

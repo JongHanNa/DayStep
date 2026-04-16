@@ -29,6 +29,7 @@ import {
 import {useUIStore} from '@/stores/uiStore';
 import BottomSheet, {
   BottomSheetView,
+  BottomSheetScrollView,
   BottomSheetBackdrop,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
@@ -59,6 +60,8 @@ interface ToolbarCallbacks {
 export interface TodoCreatePanelRef {
   expand: () => void;
   close: () => void;
+  hideForSub: () => void;
+  restoreFromSub: () => void;
 }
 
 interface TodoCreatePanelProps extends UseTodoFormReturn {
@@ -84,11 +87,14 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
     const {width: screenWidth, height: screenHeight} = useWindowDimensions();
     const bottomSheetRef = useRef<BottomSheet>(null);
     const titleInputRef = useRef<any>(null);
+    const descInputRef = useRef<any>(null);
     const pendingFocusRef = useRef(false);
+    const lastFocusRef = useRef<'title' | 'desc'>('title');
     const [activePop, setActivePop] = useState<ActivePop>('none');
     const [popAnchor, setPopAnchor] = useState<AnchorRect | null>(null);
     const [isOpen, setIsOpen] = useState(false);
     const [sheetKey, setSheetKey] = useState(0);
+    const [hiddenForSub, setHiddenForSub] = useState(false);
 
     useEffect(() => {
       const sub = AppState.addEventListener('change', nextState => {
@@ -114,17 +120,23 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         bottomSheetRef.current?.close();
         setIsOpen(false);
       },
+      hideForSub: () => hideForSubSheet(),
+      restoreFromSub: () => restoreFromSubSheet(),
     }));
 
     const setBottomSheetOpen = useUIStore(s => s.setBottomSheetOpen);
 
     const handleSheetChange = useCallback((index: number) => {
       if (index === -1) {
-        Keyboard.dismiss();
-        setIsOpen(false);
-        setActivePop('none');
-        setSheetKey(prev => prev + 1);
-        setBottomSheetOpen(false);
+        if (!hiddenForSub) {
+          // 정상 닫기 — 폼 리셋
+          Keyboard.dismiss();
+          setIsOpen(false);
+          setActivePop('none');
+          setSheetKey(prev => prev + 1);
+          setBottomSheetOpen(false);
+        }
+        // hiddenForSub일 때는 서브시트를 위해 숨긴 것이므로 리셋하지 않음
       } else if (index >= 0) {
         setBottomSheetOpen(true);
         if (pendingFocusRef.current) {
@@ -143,20 +155,44 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
       });
     }, [handleSave]);
 
+    // 서브 팝오버/시트 열릴 때: 모달 숨기기 + 키보드 dismiss
+    const hideForSubSheet = useCallback(() => {
+      Keyboard.dismiss();
+      setHiddenForSub(true);
+      bottomSheetRef.current?.close();
+    }, []);
+
+    // 서브 팝오버/시트 닫힐 때: 모달 복원 + 포커스 복원
+    const restoreFromSubSheet = useCallback(() => {
+      setActivePop('none');
+      setHiddenForSub(false);
+      bottomSheetRef.current?.expand();
+      setTimeout(() => {
+        if (lastFocusRef.current === 'desc') {
+          descInputRef.current?.focus();
+        } else {
+          titleInputRef.current?.focus();
+        }
+      }, 200);
+    }, []);
+
     const handlePriorityPress = useCallback((anchor: AnchorRect) => {
       setPopAnchor(anchor);
       setActivePop('priority');
-    }, []);
+      hideForSubSheet();
+    }, [hideForSubSheet]);
 
     const handleIconPress = useCallback((anchor: AnchorRect) => {
       setPopAnchor(anchor);
       setActivePop('icon');
-    }, []);
+      hideForSubSheet();
+    }, [hideForSubSheet]);
 
     const handleColorPress = useCallback((anchor: AnchorRect) => {
       setPopAnchor(anchor);
       setActivePop('color');
-    }, []);
+      hideForSubSheet();
+    }, [hideForSubSheet]);
 
     const renderBackdrop = useCallback(
       (props: any) => (
@@ -178,9 +214,10 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
           ref={bottomSheetRef}
           index={-1}
           enableDynamicSizing
-          maxDynamicContentSize={screenHeight * 0.35}
+          maxDynamicContentSize={screenHeight * 0.45}
           enablePanDownToClose
           keyboardBehavior="interactive"
+          keyboardBlurBehavior="none"
           handleComponent={null}
           backdropComponent={renderBackdrop}
           backgroundStyle={styles.sheetBg}
@@ -197,6 +234,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
                   placeholderTextColor="#9CA3AF"
                   style={styles.titleInput}
                   returnKeyType="next"
+                  onFocus={() => { lastFocusRef.current = 'title'; }}
                 />
 
                 <AnimatedPressable
@@ -211,6 +249,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
 
               {/* 설명 */}
               <BottomSheetTextInput
+                ref={descInputRef}
                 value={form.content}
                 onChangeText={(v: string) => updateField('content', v)}
                 placeholder="설명 추가"
@@ -218,11 +257,16 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
                 style={styles.descInput}
                 multiline
                 scrollEnabled
+                numberOfLines={4}
                 textAlignVertical="top"
+                onFocus={() => { lastFocusRef.current = 'desc'; }}
               />
 
-              {/* 구분선 + 3칩 툴바 */}
-              <View style={styles.divider} />
+              {/* 구분선 + 3칩 툴바 — 빈 영역 터치 시 키보드 유지 */}
+              <View
+                style={styles.divider}
+                onStartShouldSetResponder={() => true}
+              />
               <AttributeToolbar
                 form={form}
                 compact
@@ -239,7 +283,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         {activePop === 'priority' && popAnchor && (
           <Popover
             visible
-            onClose={() => setActivePop('none')}
+            onClose={restoreFromSubSheet}
             anchorPosition={popAnchor}
             horizontalAlign="left"
             width={260}>
@@ -258,7 +302,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         {activePop === 'icon' && popAnchor && (
           <Popover
             visible
-            onClose={() => setActivePop('none')}
+            onClose={restoreFromSubSheet}
             anchorPosition={popAnchor}
             horizontalAlign="left"
             width={Math.min(screenWidth - 32, 320)}>
@@ -274,7 +318,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
         {activePop === 'color' && popAnchor && (
           <Popover
             visible
-            onClose={() => setActivePop('none')}
+            onClose={restoreFromSubSheet}
             anchorPosition={popAnchor}
             horizontalAlign="left"
             width={280}>

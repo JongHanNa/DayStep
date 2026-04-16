@@ -151,8 +151,8 @@ export function AttributeToolbar({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.toolbar}
-        keyboardShouldPersistTaps="handled">
+        contentContainerStyle={[styles.toolbar, {flexGrow: 1}]}
+        keyboardShouldPersistTaps="always">
         <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
 
         {(form.importance || form.urgency) && (
