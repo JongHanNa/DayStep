@@ -218,10 +218,10 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
           ref={bottomSheetRef}
           index={-1}
           enableDynamicSizing
-          maxDynamicContentSize={screenHeight * 0.45}
           enablePanDownToClose
           keyboardBehavior="interactive"
           keyboardBlurBehavior="none"
+          android_keyboardInputMode="adjustResize"
           handleComponent={null}
           backdropComponent={renderBackdrop}
           backgroundStyle={styles.sheetBg}
@@ -564,10 +564,10 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     paddingHorizontal: 20,
     paddingVertical: 4,
-    paddingBottom: 8,
+    paddingBottom: 4,
     textAlignVertical: 'top',
-    minHeight: 32,
-    maxHeight: 120,
+    minHeight: 28,
+    maxHeight: 80,
   },
   divider: {
     height: 1,
