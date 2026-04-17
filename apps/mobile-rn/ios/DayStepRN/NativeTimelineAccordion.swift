@@ -98,43 +98,72 @@ struct TimelineMotivationCardView: View {
   var onLongPress: ((String, String) -> Void)?
 
   var body: some View {
-    Button(action: {
-      onToggle?(note.id)
-    }) {
-      VStack(alignment: .leading, spacing: 6) {
-        // Header: time + title
-        HStack(spacing: 8) {
-          Text(formatTime(note.created_at))
-            .font(.system(size: 12, weight: .medium))
-            .foregroundColor(Color(hex: "#9CA3AF"))
+    VStack(alignment: .leading, spacing: 6) {
+      // Header: time + title + "..." menu
+      HStack(spacing: 8) {
+        Text(formatTime(note.created_at))
+          .font(.system(size: 12, weight: .medium))
+          .foregroundColor(Color(hex: "#9CA3AF"))
 
-          if !note.title.isEmpty {
-            Text(note.title)
-              .font(.system(size: 14, weight: .semibold))
-              .foregroundColor(Color(hex: "#374151"))
-              .lineLimit(1)
+        if !note.title.isEmpty {
+          Text(note.title)
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(Color(hex: "#374151"))
+            .lineLimit(1)
+        }
+
+        Spacer()
+
+        Menu {
+          Button(action: {
+            onEdit?(note.id)
+          }) {
+            Label("편집", systemImage: "pencil")
+          }
+          Button(action: {
+            onLongPress?(note.id, "pin")
+          }) {
+            Label(note.is_banner_pinned ? "배너 해제" : "배너 고정",
+                  systemImage: note.is_banner_pinned ? "pin.slash" : "pin")
+          }
+          Button(role: .destructive, action: {
+            onLongPress?(note.id, "delete")
+          }) {
+            Label("삭제", systemImage: "trash")
+          }
+        } label: {
+          Image(systemName: "ellipsis")
+            .font(.system(size: 16, weight: .medium))
+            .foregroundColor(Color(hex: "#9CA3AF"))
+            .frame(width: 28, height: 28)
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+      }
+
+      // Tappable content area (toggle)
+      Button(action: {
+        onToggle?(note.id)
+      }) {
+        VStack(alignment: .leading, spacing: 6) {
+          // Content
+          if isExpanded {
+            Text(note.content)
+              .font(.system(size: 14))
+              .foregroundColor(Color(hex: "#4B5563"))
+              .lineSpacing(3)
+              .frame(maxWidth: .infinity, alignment: .leading)
+          } else {
+            Text(note.content)
+              .font(.system(size: 14))
+              .foregroundColor(Color(hex: "#4B5563"))
+              .lineLimit(2)
+              .lineSpacing(3)
+              .frame(maxWidth: .infinity, alignment: .leading)
           }
 
-          Spacer()
-        }
-
-        // Content
-        if isExpanded {
-          Text(note.content)
-            .font(.system(size: 14))
-            .foregroundColor(Color(hex: "#4B5563"))
-            .lineSpacing(3)
-        } else {
-          Text(note.content)
-            .font(.system(size: 14))
-            .foregroundColor(Color(hex: "#4B5563"))
-            .lineLimit(2)
-            .lineSpacing(3)
-        }
-
-        // Expanded: todos + edit
-        if isExpanded {
-          if note.todo_count > 0 {
+          // Expanded: todos
+          if isExpanded && note.todo_count > 0 {
             HStack(spacing: 4) {
               Image(systemName: "link")
                 .font(.system(size: 11))
@@ -145,31 +174,19 @@ struct TimelineMotivationCardView: View {
             }
             .padding(.top, 4)
           }
-
-          Button(action: {
-            onEdit?(note.id)
-          }) {
-            HStack(spacing: 6) {
-              Image(systemName: "pencil")
-                .font(.system(size: 12, weight: .medium))
-              Text("편집")
-                .font(.system(size: 14, weight: .semibold))
-            }
-            .foregroundColor(Color(hex: primaryColor))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(Color(hex: "#F3F4F6"))
-            .cornerRadius(12)
-          }
-          .buttonStyle(.plain)
-          .padding(.top, 6)
         }
+        .contentShape(Rectangle())
       }
-      .padding(14)
+      .buttonStyle(.plain)
     }
-    .buttonStyle(.plain)
+    .padding(14)
     .timelineCardStyle()
     .contextMenu {
+      Button(action: {
+        onEdit?(note.id)
+      }) {
+        Label("편집", systemImage: "pencil")
+      }
       Button(action: {
         onLongPress?(note.id, "pin")
       }) {

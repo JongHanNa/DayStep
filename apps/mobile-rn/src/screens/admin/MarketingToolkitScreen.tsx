@@ -36,10 +36,6 @@ interface KeyValue {
 
 const KEY_VALUES: KeyValue[] = [
   {
-    title: '비난 없는 동반자',
-    desc: '미완료에 죄책감이 아닌, 완료에 격려를 주는 따뜻한 톤',
-  },
-  {
     title: 'ADHD 맞춤 설계',
     desc: '뇌과학 기반 기능 매핑 (전두엽, 도파민 보상회로, 실행기능)',
   },
@@ -449,7 +445,7 @@ export function MarketingToolkitScreen({onBack}: Props) {
         {/* 2. 핵심 가치 제안 (Key Messages) */}
         {/* =========================================================== */}
         <Text style={[styles.sectionTitle, {marginTop: 28}]}>핵심 가치 제안</Text>
-        <Text style={styles.sectionDesc}>Key Messages — 4가지</Text>
+        <Text style={styles.sectionDesc}>Key Messages — 3가지</Text>
 
         <View style={styles.card}>
           {KEY_VALUES.map((kv, idx) => (

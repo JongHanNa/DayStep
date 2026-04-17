@@ -1,15 +1,15 @@
 /**
  * TimelineMotivationCard — 타임라인 개별 노트 카드
  * collapsed: content 2줄 + 시간
- * expanded: 전체내용 + 연결할일 + "편집" 버튼
+ * expanded: 전체내용 + 연결할일
  * emotion은 타임라인 도트 색상으로만 표현 (borderLeft 없음)
- * LiquidGlassMenu 롱프레스: "배너 고정", "삭제"
+ * LiquidGlassMenu: "편집", "배너 고정", "삭제"
  */
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {LiquidGlassMenu} from '@/components/native';
-import {Link2, Link2Off, MoreHorizontal, Pencil} from 'lucide-react-native';
+import {Link2, Link2Off, MoreHorizontal} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Note} from '@/stores/motivationStore';
@@ -28,7 +28,6 @@ interface TimelineMotivationCardProps {
 export function TimelineMotivationCard({
   note,
   isExpanded,
-  primaryColor,
   onToggle,
   onEdit,
   onPin,
@@ -39,7 +38,8 @@ export function TimelineMotivationCard({
   const todoCount = note.todos?.length ?? 0;
 
   const handleMenuSelect = (key: string) => {
-    if (key === 'pin') onPin(note.id, !note.is_banner_pinned);
+    if (key === 'edit') onEdit(note);
+    else if (key === 'pin') onPin(note.id, !note.is_banner_pinned);
     else if (key === 'delete') onDelete(note.id);
   };
 
@@ -62,6 +62,7 @@ export function TimelineMotivationCard({
             iconColor="#9CA3AF"
             size={28}
             menuItems={[
+              {title: '편집', key: 'edit'},
               {title: note.is_banner_pinned ? '배너 해제' : '배너 고정', key: 'pin'},
               {title: '삭제', key: 'delete'},
             ]}
@@ -75,39 +76,27 @@ export function TimelineMotivationCard({
           {note.content}
         </Text>
 
-        {/* 확장 시: 연결된 할일 + 편집 버튼 */}
-        {isExpanded && (
-          <>
-            {todoCount > 0 && (
-              <View style={styles.todosSection}>
-                <View style={styles.todosHeader}>
-                  <Link2 size={12} color="#6B7280" strokeWidth={2} />
-                  <Text style={styles.todosTitle}>연결된 할일 ({todoCount})</Text>
-                </View>
-                {note.todos?.map(todo => (
-                  <View key={todo.id} style={styles.todoItemRow}>
-                    <Text style={styles.todoItem} numberOfLines={1}>• {todo.title}</Text>
-                    <AnimatedPressable
-                      onPress={() => onUnlinkTodo(note.id, todo.id)}
-                      hapticType="light"
-                      scaleValue={0.85}
-                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                      style={styles.unlinkBtn}>
-                      <Link2Off size={12} color="#9CA3AF" strokeWidth={2} />
-                    </AnimatedPressable>
-                  </View>
-                ))}
+        {/* 확장 시: 연결된 할일 */}
+        {isExpanded && todoCount > 0 && (
+          <View style={styles.todosSection}>
+            <View style={styles.todosHeader}>
+              <Link2 size={12} color="#6B7280" strokeWidth={2} />
+              <Text style={styles.todosTitle}>연결된 할일 ({todoCount})</Text>
+            </View>
+            {note.todos?.map(todo => (
+              <View key={todo.id} style={styles.todoItemRow}>
+                <Text style={styles.todoItem} numberOfLines={1}>• {todo.title}</Text>
+                <AnimatedPressable
+                  onPress={() => onUnlinkTodo(note.id, todo.id)}
+                  hapticType="light"
+                  scaleValue={0.85}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                  style={styles.unlinkBtn}>
+                  <Link2Off size={12} color="#9CA3AF" strokeWidth={2} />
+                </AnimatedPressable>
               </View>
-            )}
-            <AnimatedPressable
-              onPress={() => onEdit(note)}
-              hapticType="light"
-              scaleValue={0.95}
-              style={styles.editBtn}>
-              <Pencil size={14} color={primaryColor} strokeWidth={2} />
-              <Text style={[styles.editBtnText, {color: primaryColor}]}>편집</Text>
-            </AnimatedPressable>
-          </>
+            ))}
+          </View>
         )}
       </AnimatedPressable>
     </View>
@@ -184,19 +173,5 @@ const styles = StyleSheet.create({
   },
   unlinkBtn: {
     padding: 4,
-  },
-  editBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#F3F4F6',
-    marginTop: 10,
-  },
-  editBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

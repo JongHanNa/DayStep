@@ -1,5 +1,5 @@
 /**
- * MotivationDetailBottomSheet — 노트 상세/수정 바텀시트
+ * MotivationDetailBottomSheet — 노트 상세/수정 시트 (iOS pageSheet Modal 기반)
  * 수정, 핀 토글, 삭제, 연결된 할일 표시
  */
 import React, {
@@ -8,22 +8,28 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState,
 } from 'react';
-import {View, Text, TextInput, Alert, StyleSheet, Keyboard, Modal} from 'react-native';
-import BottomSheet, {BottomSheetBackdrop, BottomSheetScrollView} from '@gorhom/bottom-sheet';
+import {
+  View,
+  Text,
+  TextInput,
+  Alert,
+  StyleSheet,
+  Keyboard,
+  Modal,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
-import {EMOTION_CONFIG, EMOTION_TAGS} from '@/lib/motivationUtils';
-import type {Note, EmotionTag} from '@/stores/motivationStore';
+import type {Note} from '@/stores/motivationStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
 import {NativeTodoPickerNative} from '@/components/native';
 import {Pin, Trash2, Link2, Link2Off, Plus} from 'lucide-react-native';
-import {format} from 'date-fns';
-import {ko} from 'date-fns/locale';
 
 export interface MotivationDetailBottomSheetRef {
   open: (note: Note, startEditing?: boolean) => void;
@@ -119,31 +125,30 @@ function TodoPickerModal({visible, motivationId, linkedTodoIds, onToggle, onClos
 
 export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomSheetRef, MotivationDetailBottomSheetProps>(
   ({onUpdate, onPin, onDelete, onUnlinkTodo, onLinkTodo}, ref) => {
-    const sheetRef = useRef<BottomSheet>(null);
-    const snapPoints = useMemo(() => ['60%', '85%'], []);
     const {primaryColor, colors} = useTheme();
     const haptic = useHaptic();
 
+    const [visible, setVisible] = useState(false);
     const [note, setNote] = useState<Note | null>(null);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [emotionTag, setEmotionTag] = useState<EmotionTag | undefined>(undefined);
     const [isEditing, setIsEditing] = useState(false);
     const [showTodoPicker, setShowTodoPicker] = useState(false);
+
+    const closeSelf = useCallback(() => {
+      Keyboard.dismiss();
+      setVisible(false);
+    }, []);
 
     useImperativeHandle(ref, () => ({
       open: (n: Note, startEditing = false) => {
         setNote(n);
         setTitle(n.title ?? '');
         setContent(n.content);
-        setEmotionTag(n.emotion_tag ?? undefined);
         setIsEditing(startEditing);
-        sheetRef.current?.snapToIndex(0);
+        setVisible(true);
       },
-      close: () => {
-        Keyboard.dismiss();
-        sheetRef.current?.close();
-      },
+      close: closeSelf,
     }));
 
     const handleSave = useCallback(() => {
@@ -152,18 +157,17 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
       onUpdate(note.id, {
         title: title.trim() || undefined,
         content: content.trim(),
-        emotion_tag: emotionTag ?? null,
       });
       setIsEditing(false);
-      sheetRef.current?.close();
-    }, [note, title, content, emotionTag, onUpdate, haptic]);
+      closeSelf();
+    }, [note, title, content, onUpdate, haptic, closeSelf]);
 
     const handlePin = useCallback(() => {
       if (!note) return;
       haptic.light();
       onPin(note.id, !note.is_banner_pinned);
-      sheetRef.current?.close();
-    }, [note, onPin, haptic]);
+      closeSelf();
+    }, [note, onPin, haptic, closeSelf]);
 
     const handleDelete = useCallback(() => {
       if (!note) return;
@@ -174,108 +178,95 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
           style: 'destructive',
           onPress: () => {
             onDelete(note.id);
-            sheetRef.current?.close();
+            closeSelf();
           },
         },
       ]);
-    }, [note, onDelete]);
+    }, [note, onDelete, closeSelf]);
 
-    const renderBackdrop = useCallback(
-      (props: any) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0} />
-      ),
-      [],
+    const handleUnlinkTodo = useCallback(
+      (todoId: string) => {
+        if (!note) return;
+        haptic.light();
+        onUnlinkTodo(note.id, todoId);
+        setNote(prev => (prev ? {...prev, todos: prev.todos?.filter(t => t.id !== todoId)} : prev));
+      },
+      [note, onUnlinkTodo, haptic],
     );
-
-    const handleUnlinkTodo = useCallback((todoId: string) => {
-      if (!note) return;
-      haptic.light();
-      onUnlinkTodo(note.id, todoId);
-      setNote(prev => prev ? {...prev, todos: prev.todos?.filter(t => t.id !== todoId)} : prev);
-    }, [note, onUnlinkTodo, haptic]);
 
     const linkedTodoIds = useMemo(
       () => new Set(note?.todos?.map(t => t.id) ?? []),
       [note?.todos],
     );
 
-    const handlePickerToggle = useCallback((todoId: string, todoTitle: string, isLinked: boolean) => {
-      if (!note) return;
-      haptic.light();
-      if (isLinked) {
-        onUnlinkTodo(note.id, todoId);
-        setNote(prev => prev ? {...prev, todos: prev.todos?.filter(t => t.id !== todoId)} : prev);
-      } else {
-        onLinkTodo(note.id, todoId, todoTitle);
-        setNote(prev => prev ? {...prev, todos: [...(prev.todos ?? []), {id: todoId, title: todoTitle}]} : prev);
-      }
-    }, [note, onUnlinkTodo, onLinkTodo, haptic]);
+    const handlePickerToggle = useCallback(
+      (todoId: string, todoTitle: string, isLinked: boolean) => {
+        if (!note) return;
+        haptic.light();
+        if (isLinked) {
+          onUnlinkTodo(note.id, todoId);
+          setNote(prev => (prev ? {...prev, todos: prev.todos?.filter(t => t.id !== todoId)} : prev));
+        } else {
+          onLinkTodo(note.id, todoId, todoTitle);
+          setNote(prev => (prev ? {...prev, todos: [...(prev.todos ?? []), {id: todoId, title: todoTitle}]} : prev));
+        }
+      },
+      [note, onUnlinkTodo, onLinkTodo, haptic],
+    );
 
-    const emotionConfig = note?.emotion_tag ? EMOTION_CONFIG[note.emotion_tag] : null;
     const todoCount = note?.todos?.length ?? 0;
 
     return (
-      <BottomSheet
-        ref={sheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={{backgroundColor: '#D1D5DB'}}>
-        <BottomSheetScrollView contentContainerStyle={styles.container}>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={closeSelf}>
+        <KeyboardAvoidingView
+          style={styles.sheetRoot}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           {note && (
-            <>
-              {/* 헤더: 날짜 + 액션 */}
-              <View style={styles.headerRow}>
-                <Text style={styles.dateText}>
-                  {format(new Date(note.created_at), 'yyyy년 M월 d일 (EEE)', {locale: ko})}
-                </Text>
-                <View style={styles.actions}>
-                  <AnimatedPressable onPress={handlePin} hapticType="light" scaleValue={0.9}>
-                    <Pin
-                      size={20}
-                      color={note.is_banner_pinned ? primaryColor : '#9CA3AF'}
-                      strokeWidth={2}
-                      fill={note.is_banner_pinned ? primaryColor : 'none'}
-                    />
-                  </AnimatedPressable>
+            <View style={styles.flex1}>
+              {/* ─── 고정 상단: 좌(삭제) / 우(핀 + 저장·수정) + 제목 ─── */}
+              <View style={styles.topSection}>
+                <View style={styles.headerRow}>
                   <AnimatedPressable onPress={handleDelete} hapticType="light" scaleValue={0.9}>
-                    <Trash2 size={20} color={colors.error} strokeWidth={2} />
+                    <Trash2 size={22} color={colors.error} strokeWidth={2} />
                   </AnimatedPressable>
-                </View>
-              </View>
 
-              {isEditing ? (
-                <>
-                  {/* 감정 태그 편집 */}
-                  <View style={styles.emotionRow}>
-                    {EMOTION_TAGS.map(tag => {
-                      const config = EMOTION_CONFIG[tag];
-                      const isSelected = emotionTag === tag;
-                      return (
-                        <AnimatedPressable
-                          key={tag}
-                          onPress={() => setEmotionTag(isSelected ? undefined : tag)}
-                          scaleValue={0.9}
-                          hapticType="selection"
-                          style={[
-                            styles.emotionChip,
-                            isSelected && {
-                              backgroundColor: config.bgColor,
-                              borderColor: config.borderColor,
-                            },
-                          ]}>
-                          <config.icon size={16} color={isSelected ? config.color : '#6B7280'} strokeWidth={2} />
-                          {isSelected && (
-                            <Text style={[styles.emotionLabel, {color: config.color}]}>
-                              {config.label}
-                            </Text>
-                          )}
-                        </AnimatedPressable>
-                      );
-                    })}
+                  <View style={styles.actions}>
+                    <AnimatedPressable onPress={handlePin} hapticType="light" scaleValue={0.9}>
+                      <Pin
+                        size={22}
+                        color={note.is_banner_pinned ? primaryColor : '#9CA3AF'}
+                        strokeWidth={2}
+                        fill={note.is_banner_pinned ? primaryColor : 'none'}
+                      />
+                    </AnimatedPressable>
+
+                    {isEditing ? (
+                      <AnimatedPressable
+                        onPress={handleSave}
+                        haptic={false}
+                        scaleValue={0.95}
+                        style={[styles.primaryActionBtn, {backgroundColor: primaryColor}]}>
+                        <Text style={styles.primaryActionBtnText}>저장</Text>
+                      </AnimatedPressable>
+                    ) : (
+                      <AnimatedPressable
+                        onPress={() => setIsEditing(true)}
+                        hapticType="light"
+                        scaleValue={0.95}
+                        style={styles.secondaryActionBtn}>
+                        <Text style={[styles.secondaryActionBtnText, {color: primaryColor}]}>
+                          수정
+                        </Text>
+                      </AnimatedPressable>
+                    )}
                   </View>
+                </View>
 
+                {isEditing ? (
                   <TextInput
                     style={styles.titleInput}
                     placeholder="제목 (선택)"
@@ -283,94 +274,73 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
                     value={title}
                     onChangeText={setTitle}
                   />
+                ) : (
+                  note.title && <Text style={styles.noteTitle}>{note.title}</Text>
+                )}
+              </View>
+
+              {/* ─── flex:1 중간: 내용만 내부 스크롤 ─── */}
+              <View style={styles.contentSection}>
+                {isEditing ? (
                   <TextInput
                     style={styles.contentInput}
                     value={content}
                     onChangeText={setContent}
                     multiline
+                    scrollEnabled
                     textAlignVertical="top"
                   />
-                </>
-              ) : (
-                <>
-                  {/* 감정 뱃지 */}
-                  {emotionConfig && (
-                    <View style={[styles.emotionBadge, {backgroundColor: emotionConfig.bgColor}]}>
-                      <emotionConfig.icon size={14} color={emotionConfig.color} strokeWidth={2} />
-                      <Text style={[styles.emotionLabel, {color: emotionConfig.color}]}>
-                        {emotionConfig.label}
-                      </Text>
-                    </View>
-                  )}
-
-                  {/* 제목 */}
-                  {note.title && (
-                    <Text style={styles.noteTitle}>{note.title}</Text>
-                  )}
-
-                  {/* 내용 */}
-                  <Text style={styles.noteContent}>{note.content}</Text>
-
-                  {/* 수정 버튼 */}
-                  <AnimatedPressable
-                    onPress={() => setIsEditing(true)}
-                    hapticType="light"
-                    scaleValue={0.95}
-                    style={styles.editBtn}>
-                    <Text style={[styles.editBtnText, {color: primaryColor}]}>수정하기</Text>
-                  </AnimatedPressable>
-                </>
-              )}
-
-              {/* 연결된 할일 — 편집/보기 모드 공통 */}
-              <View style={styles.todosSection}>
-                <View style={styles.todosSectionHeader}>
-                  <Link2 size={14} color="#6B7280" strokeWidth={2} />
-                  <Text style={styles.todosSectionTitle}>
-                    연결된 할일{todoCount > 0 ? ` (${todoCount})` : ''}
-                  </Text>
-                  <View style={{flex: 1}} />
-                  <AnimatedPressable
-                    onPress={() => setShowTodoPicker(true)}
-                    hapticType="light"
-                    scaleValue={0.85}
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                    <Plus size={16} color={primaryColor} strokeWidth={2.5} />
-                  </AnimatedPressable>
-                </View>
-                {note.todos?.map(todo => (
-                  <View key={todo.id} style={styles.todoItemRow}>
-                    <Text style={styles.todoItem} numberOfLines={1}>
-                      • {todo.title}
-                    </Text>
-                    <AnimatedPressable
-                      onPress={() => handleUnlinkTodo(todo.id)}
-                      haptic={false}
-                      scaleValue={0.85}
-                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                      style={styles.unlinkBtn}>
-                      <Link2Off size={14} color="#9CA3AF" strokeWidth={2} />
-                    </AnimatedPressable>
-                  </View>
-                ))}
-                {todoCount === 0 && (
-                  <Text style={styles.emptyTodoText}>연결된 할일이 없습니다</Text>
+                ) : (
+                  <ScrollView
+                    style={styles.flex1}
+                    contentContainerStyle={styles.viewContentContainer}
+                    showsVerticalScrollIndicator={false}>
+                    <Text style={styles.noteContent}>{note.content}</Text>
+                  </ScrollView>
                 )}
               </View>
 
-              {/* 저장 버튼 — 편집 모드에서만 최하단 */}
-              {isEditing && (
-                <AnimatedPressable
-                  onPress={handleSave}
-                  haptic={false}
-                  scaleValue={0.95}
-                  style={[styles.saveBtn, {backgroundColor: primaryColor}]}>
-                  <Text style={styles.saveBtnText}>저장</Text>
-                </AnimatedPressable>
-              )}
-            </>
+              {/* ─── 고정 하단: 연결된 할일 ─── */}
+              <View style={styles.bottomSection}>
+                <View style={styles.todosSection}>
+                  <View style={styles.todosSectionHeader}>
+                    <Link2 size={14} color="#6B7280" strokeWidth={2} />
+                    <Text style={styles.todosSectionTitle}>
+                      연결된 할일{todoCount > 0 ? ` (${todoCount})` : ''}
+                    </Text>
+                    <View style={{flex: 1}} />
+                    <AnimatedPressable
+                      onPress={() => setShowTodoPicker(true)}
+                      hapticType="light"
+                      scaleValue={0.85}
+                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                      <Plus size={16} color={primaryColor} strokeWidth={2.5} />
+                    </AnimatedPressable>
+                  </View>
+                  {note.todos?.map(todo => (
+                    <View key={todo.id} style={styles.todoItemRow}>
+                      <Text style={styles.todoItem} numberOfLines={1}>
+                        • {todo.title}
+                      </Text>
+                      <AnimatedPressable
+                        onPress={() => handleUnlinkTodo(todo.id)}
+                        haptic={false}
+                        scaleValue={0.85}
+                        hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                        style={styles.unlinkBtn}>
+                        <Link2Off size={14} color="#9CA3AF" strokeWidth={2} />
+                      </AnimatedPressable>
+                    </View>
+                  ))}
+                  {todoCount === 0 && (
+                    <Text style={styles.emptyTodoText}>연결된 할일이 없습니다</Text>
+                  )}
+                </View>
+              </View>
+            </View>
           )}
-        </BottomSheetScrollView>
+        </KeyboardAvoidingView>
+
         {note && (
           <TodoPickerModal
             visible={showTodoPicker}
@@ -380,16 +350,32 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
             onClose={() => setShowTodoPicker(false)}
           />
         )}
-      </BottomSheet>
+      </Modal>
     );
   },
 );
 
 const styles = StyleSheet.create({
-  container: {
+  flex1: {flex: 1},
+  sheetRoot: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  topSection: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  contentSection: {
+    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 4,
-    paddingBottom: 40,
+  },
+  bottomSection: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+  viewContentContainer: {
+    paddingVertical: 4,
   },
   headerRow: {
     flexDirection: 'row',
@@ -397,42 +383,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  dateText: {
-    fontSize: 13,
-    color: '#6B7280',
-  },
   actions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 16,
   },
-  emotionRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+  primaryActionBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
-  emotionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    gap: 4,
+  primaryActionBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  emotionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
+  secondaryActionBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
   },
-  emotionBadge: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 14,
-    gap: 4,
-    marginBottom: 12,
+  secondaryActionBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   titleInput: {
     fontSize: 16,
@@ -444,22 +418,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   contentInput: {
+    flex: 1,
     fontSize: 15,
     color: '#1F2937',
     lineHeight: 22,
-    minHeight: 120,
     paddingVertical: 0,
-  },
-  saveBtn: {
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  saveBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   noteTitle: {
     fontSize: 18,
@@ -471,14 +434,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#4B5563',
     lineHeight: 24,
-    marginBottom: 16,
   },
   todosSection: {
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 12,
-    marginTop: 16,
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 8,
   },
   todosSectionHeader: {
     flexDirection: 'row',
@@ -512,15 +474,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 4,
   },
-  editBtn: {
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-  },
-  editBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
 });
-
