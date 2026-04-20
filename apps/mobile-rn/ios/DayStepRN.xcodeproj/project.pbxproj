@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		01AA11BB22CC33DD44EE55F6 /* NativeTodoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */; };
 		01CC33DD44EE55FF66778899 /* NativeTodoPickerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */; };
+		02AA11BB22CC33DD44EE55F6 /* NativeMotivationJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */; };
+		02CC33DD44EE55FF66778899 /* NativeMotivationJournalBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */; };
 		03A711A6634CCE600EF8A599 /* LiquidGlassMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */; };
 		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
 		0B3C275442CA372D372F51C4 /* LiquidGlassMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */; };
@@ -137,6 +139,8 @@
 /* Begin PBXFileReference section */
 		01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeTodoPicker.swift; path = DayStepRN/NativeTodoPicker.swift; sourceTree = "<group>"; };
 		01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeTodoPickerBridge.m; path = DayStepRN/NativeTodoPickerBridge.m; sourceTree = "<group>"; };
+		02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMotivationJournal.swift; path = DayStepRN/NativeMotivationJournal.swift; sourceTree = "<group>"; };
+		02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMotivationJournalBridge.m; path = DayStepRN/NativeMotivationJournalBridge.m; sourceTree = "<group>"; };
 		079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassBackgroundBridge.m; path = DayStepRN/LiquidGlassBackgroundBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
@@ -367,6 +371,8 @@
 				EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */,
 				01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */,
 				01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */,
+				02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */,
+				02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -879,6 +885,8 @@
 				EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */,
 				01AA11BB22CC33DD44EE55F6 /* NativeTodoPicker.swift in Sources */,
 				01CC33DD44EE55FF66778899 /* NativeTodoPickerBridge.m in Sources */,
+				02AA11BB22CC33DD44EE55F6 /* NativeMotivationJournal.swift in Sources */,
+				02CC33DD44EE55FF66778899 /* NativeMotivationJournalBridge.m in Sources */,
 				EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

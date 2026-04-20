@@ -17,4 +17,9 @@ export {NativeSleepGardenNative} from './NativeSleepGarden';
 export {NativeCleaningGardenNative} from './NativeCleaningGarden';
 export {LiquidGlassButton} from './LiquidGlassButton';
 export {NativeTodoPickerNative} from './NativeTodoPicker';
+export {
+  NativeMotivationJournalNative,
+  type NativeMotivationJournalNoteData,
+  type NativeMotivationJournalLinkedTodo,
+} from './NativeMotivationJournal';
 export {isIOS26Plus, isAndroid} from './utils';

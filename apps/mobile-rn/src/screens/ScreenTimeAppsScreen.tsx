@@ -6,7 +6,7 @@
  * 무료 사용자: 앱 + 카테고리 합계 1개까지 (소프트 제한 — 배너 표시)
  * Pro 사용자: 제한 없음
  */
-import React, {useState, useCallback} from 'react';
+import React, {useState, useCallback, useRef} from 'react';
 import {View, Text, StyleSheet, Pressable, Platform} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {ChevronLeft, Crown} from 'lucide-react-native';
@@ -18,12 +18,16 @@ import type {NativeSyntheticEvent} from 'react-native';
 
 // react-native-device-activity의 DeviceActivitySelectionView 컴포넌트
 let DeviceActivitySelectionView: any = null;
+let nativeDA: any = null;
 try {
-  const da = require('react-native-device-activity');
-  DeviceActivitySelectionView = da.DeviceActivitySelectionView;
+  nativeDA = require('react-native-device-activity');
+  DeviceActivitySelectionView = nativeDA.DeviceActivitySelectionView;
 } catch {
   // 패키지 미설치 시 무시
 }
+
+// Shared.swift의 CURRENT_WHITELIST_KEY
+const CURRENT_WHITELIST_KEY = 'currentWhitelist';
 
 const FREE_ALLOWED_TOTAL = 1; // 무료: 앱 + 카테고리 합계 1개
 
@@ -36,18 +40,56 @@ export default function ScreenTimeAppsScreen() {
   const [appCount, setAppCount] = useState(0);
   const [categoryCount, setCategoryCount] = useState(0);
 
+  // picker가 emit하는 최신 직렬화 토큰 (base64)
+  const latestSelectionRef = useRef<string | null>(null);
+  const hasChangesRef = useRef(false);
+
+  // 마운트 시 직전 whitelist를 읽어 picker 초기값으로 사용 (다음 방문 시 복원)
+  const [initialSelection] = useState<string | null>(() => {
+    if (Platform.OS !== 'ios' || !nativeDA) return null;
+    try {
+      const stored = nativeDA.userDefaultsGet?.(CURRENT_WHITELIST_KEY);
+      return typeof stored === 'string' && stored.length > 0 ? stored : null;
+    } catch {
+      return null;
+    }
+  });
+
   const totalSelected = appCount + categoryCount;
   const isOverLimit = !hasActiveSubscription && totalSelected > FREE_ALLOWED_TOTAL;
 
   const handleSelectionChange = useCallback(
     (event: NativeSyntheticEvent<any>) => {
-      const {applicationCount, categoryCount: catCount} =
+      const {applicationCount, categoryCount: catCount, familyActivitySelection} =
         event.nativeEvent;
       setAppCount(applicationCount ?? 0);
       setCategoryCount(catCount ?? 0);
+      latestSelectionRef.current =
+        typeof familyActivitySelection === 'string' ? familyActivitySelection : null;
+      hasChangesRef.current = true;
     },
     [],
   );
+
+  const handleDone = useCallback(() => {
+    if (hasChangesRef.current && Platform.OS === 'ios' && nativeDA) {
+      try {
+        // picker는 체크 해제도 포함한 전체 상태를 emit하므로,
+        // UNION 의미인 add 전에 clear로 기존 whitelist를 초기화해야 제거가 반영된다.
+        nativeDA.clearWhitelistAndUpdateBlock?.('sleep-allowed-apps-update');
+        const token = latestSelectionRef.current;
+        if (token) {
+          nativeDA.addSelectionToWhitelistAndUpdateBlock?.(
+            {activitySelectionToken: token},
+            'sleep-allowed-apps-update',
+          );
+        }
+      } catch (error) {
+        console.error('[ScreenTimeApps] whitelist update error:', error);
+      }
+    }
+    navigation.goBack();
+  }, [navigation]);
 
   const handleUpgrade = () => {
     navigation.navigate('Settings' as never);
@@ -65,7 +107,7 @@ export default function ScreenTimeAppsScreen() {
           <ChevronLeft size={24} color="#1F2937" />
         </Pressable>
         <Text style={styles.headerTitle}>허용 앱 선택</Text>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+        <Pressable onPress={handleDone} hitSlop={12}>
           <Text style={[styles.doneText, {color: primaryColor}]}>완료</Text>
         </Pressable>
       </View>
@@ -112,6 +154,7 @@ export default function ScreenTimeAppsScreen() {
               <DeviceActivitySelectionView
                 style={styles.picker}
                 headerText={headerText}
+                familyActivitySelection={initialSelection ?? undefined}
                 onSelectionChange={handleSelectionChange}
               />
             </View>

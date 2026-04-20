@@ -28,7 +28,7 @@ import {useTheme} from '@/theme';
 import type {Note} from '@/stores/motivationStore';
 import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
-import {NativeTodoPickerNative} from '@/components/native';
+import {NativeTodoPickerNative, NativeMotivationJournalNative} from '@/components/native';
 import {Pin, Trash2, Link2, Link2Off, Plus} from 'lucide-react-native';
 
 export interface MotivationDetailBottomSheetRef {
@@ -194,6 +194,73 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
       [note, onUnlinkTodo, haptic],
     );
 
+    // ─── Native event handlers (NativeMotivationJournal) ───
+    const handleNativeSave = useCallback(
+      (e: {nativeEvent: {title: string; content: string; isPinned: boolean}}) => {
+        if (!note) return;
+        haptic.medium();
+        const {title: nTitle, content: nContent} = e.nativeEvent;
+        onUpdate(note.id, {
+          title: nTitle.trim() || undefined,
+          content: nContent.trim(),
+        });
+        closeSelf();
+      },
+      [note, onUpdate, haptic, closeSelf],
+    );
+
+    const handleNativePinToggle = useCallback(
+      (e: {nativeEvent: {isPinned: boolean}}) => {
+        if (!note) return;
+        haptic.light();
+        onPin(note.id, e.nativeEvent.isPinned);
+        // 네이티브에서 이미 상태 변경되었으므로 닫지 않음
+        setNote(prev => (prev ? {...prev, is_banner_pinned: e.nativeEvent.isPinned} : prev));
+      },
+      [note, onPin, haptic],
+    );
+
+    const handleNativeDelete = useCallback(() => {
+      if (!note) return;
+      Alert.alert('삭제 확인', '이 원동력을 삭제할까요?', [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: () => {
+            onDelete(note.id);
+            closeSelf();
+          },
+        },
+      ]);
+    }, [note, onDelete, closeSelf]);
+
+    const handleNativeUnlinkTodo = useCallback(
+      (e: {nativeEvent: {todoId: string}}) => {
+        handleUnlinkTodo(e.nativeEvent.todoId);
+      },
+      [handleUnlinkTodo],
+    );
+
+    const noteDataJSON = useMemo(() => {
+      if (!note) return '{}';
+      return JSON.stringify({
+        id: note.id,
+        title: note.title ?? '',
+        content: note.content,
+        is_banner_pinned: note.is_banner_pinned ?? false,
+        created_at: note.created_at,
+      });
+    }, [note]);
+
+    const linkedTodosDataJSON = useMemo(
+      () =>
+        JSON.stringify(
+          (note?.todos ?? []).map(t => ({id: t.id, title: t.title})),
+        ),
+      [note?.todos],
+    );
+
     const linkedTodoIds = useMemo(
       () => new Set(note?.todos?.map(t => t.id) ?? []),
       [note?.todos],
@@ -216,6 +283,39 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
 
     const todoCount = note?.todos?.length ?? 0;
 
+    // iOS 네이티브 저널 컴포넌트가 등록된 경우 네이티브 렌더
+    if (NativeMotivationJournalNative && note) {
+      return (
+        <Modal
+          visible={visible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={closeSelf}>
+          <NativeMotivationJournalNative
+            mode="edit"
+            primaryColor={primaryColor}
+            noteData={noteDataJSON}
+            linkedTodosData={linkedTodosDataJSON}
+            onSave={handleNativeSave}
+            onPinToggle={handleNativePinToggle}
+            onDelete={handleNativeDelete}
+            onUnlinkTodo={handleNativeUnlinkTodo}
+            onLinkTodoRequest={() => setShowTodoPicker(true)}
+            onClose={closeSelf}
+            style={{flex: 1}}
+          />
+          <TodoPickerModal
+            visible={showTodoPicker}
+            motivationId={note.id}
+            linkedTodoIds={linkedTodoIds}
+            onToggle={handlePickerToggle}
+            onClose={() => setShowTodoPicker(false)}
+          />
+        </Modal>
+      );
+    }
+
+    // JS 폴백 (Android · 네이티브 미등록 iOS)
     return (
       <Modal
         visible={visible}
