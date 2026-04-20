@@ -71,6 +71,8 @@ class WeekStripState {
   var isExpanded: Bool = false
   var expandProgress: CGFloat = 0  // 0=주간, 1=월간
   var isDragging: Bool = false
+  // verticalPan의 .changed에서 최초 유의미 translation으로 방향을 확정했는지
+  var panDirectionResolved: Bool = false
   var months: [MonthPageData] = []
   var currentMonthId: String = ""
 
@@ -401,6 +403,9 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     gridScrollView.delegate = self
     gridScrollView.backgroundColor = .clear
     gridScrollView.clipsToBounds = false  // scrollView 자체는 클리핑 안 함 (container가 담당)
+    // 수평 드래그 시작 후 수직 성분을 흡수하지 않도록 방향 잠금
+    gridScrollView.isDirectionalLockEnabled = true
+    gridScrollView.alwaysBounceVertical = false
     gridContainerView.addSubview(gridScrollView)
 
     gridContentView.backgroundColor = .clear
@@ -415,6 +420,8 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     weekScrollView.delegate = self
     weekScrollView.backgroundColor = .clear
     weekScrollView.clipsToBounds = false
+    weekScrollView.isDirectionalLockEnabled = true
+    weekScrollView.alwaysBounceVertical = false
     gridContainerView.addSubview(weekScrollView)
 
     weekContentView.backgroundColor = .clear
@@ -619,6 +626,10 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     let gridTop = state.headerHeight + state.weekdayHeight
     let gridVisibleHeight = state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress
     gridContainerView.frame = CGRect(x: 0, y: gridTop, width: w, height: gridVisibleHeight)
+    // Force mask re-evaluation — iOS가 frame.height만 바뀌고 clip 영역은 동일 viewport일
+    // 때 mask를 재계산하지 않는 현상 방지. 토글로 명시적으로 mask를 dirty 상태로.
+    gridContainerView.layer.masksToBounds = false
+    gridContainerView.layer.masksToBounds = true
 
     // 모드 전환: 축소 완전 상태(progress≈0)에서만 weekScrollView를 보여 주 단위 스와이프 허용.
     // 드래그가 시작되는 순간 gridScrollView로 전환되어, 한 줄(선택된 주)에서 점진적으로
@@ -846,6 +857,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     } else if scrollView === weekScrollView {
       updateCurrentWeekFromScroll()
     }
+    flushLayoutAfterPaging()
   }
 
   func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
@@ -854,6 +866,21 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     } else if scrollView === weekScrollView {
       updateCurrentWeekFromScroll()
     }
+    flushLayoutAfterPaging()
+  }
+
+  // Paging 종료 직후 CoreAnimation pipeline을 강제 flush.
+  // animateCollapse의 UIView.animate { layoutSubviews() } 패턴을 그대로 복제하여,
+  // duration 0 animation block으로 명시적 CATransaction begin/commit을 유발.
+  // 단순한 setNeedsLayout/layoutIfNeeded/CATransaction.flush보다 더 강하게 render
+  // server에 commit을 강제.
+  private func flushLayoutAfterPaging() {
+    UIView.animate(withDuration: 0, animations: { [weak self] in
+      guard let self = self else { return }
+      self.setNeedsLayout()
+      self.layoutIfNeeded()
+      self.layoutSubviews()
+    })
   }
 
   private func updateCurrentWeekFromScroll() {
@@ -889,12 +916,17 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     let newMonthId = state.months[pageIndex].id
     if newMonthId != state.currentMonthId {
       state.currentMonthId = newMonthId
-      // 해당 달의 1일을 선택
-      if let monthPage = state.months.first(where: { $0.id == newMonthId }),
-         let firstDayCell = monthPage.rows.flatMap({ $0 }).first(where: { $0.isCurrentMonth && $0.day == 1 }) {
-        state.selectedDate = firstDayCell.date
-        state.updateDisplayMonth(for: firstDayCell.date)
-        onDateSelect?(["date": firstDayCell.id])
+      // 해당 달에 오늘이 포함되면 오늘 선택, 아니면 1일 선택
+      if let monthPage = state.months.first(where: { $0.id == newMonthId }) {
+        let todayStr = state.dateString(from: today)
+        let cells = monthPage.rows.flatMap({ $0 })
+        let todayCell = cells.first(where: { $0.id == todayStr && $0.isCurrentMonth })
+        let firstDayCell = cells.first(where: { $0.isCurrentMonth && $0.day == 1 })
+        if let target = todayCell ?? firstDayCell {
+          state.selectedDate = target.date
+          state.updateDisplayMonth(for: target.date)
+          onDateSelect?(["date": target.id])
+        }
       }
       updateUI()
     }
@@ -904,10 +936,16 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
 
   private var expandableHeight: CGFloat { 150.0 }
 
+  private weak var verticalPan: UIPanGestureRecognizer?
+
   private func setupPanGesture() {
     let pan = UIPanGestureRecognizer(target: self, action: #selector(handleVerticalPan(_:)))
     pan.delegate = self
+    // cancelsTouchesInView는 기본값(true) 유지 — pan이 시작되면 subview의 터치를 취소.
+    // false로 두면 드래그 중 finger 위치의 UIButton cell이 touchUpInside를 받아 원치 않는
+    // 날짜 클릭이 발생함.
     addGestureRecognizer(pan)
+    verticalPan = pan
   }
 
   @objc private func handleVerticalPan(_ gesture: UIPanGestureRecognizer) {
@@ -917,9 +955,28 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     switch gesture.state {
     case .began:
       state.isDragging = true
+      state.panDirectionResolved = false
+      // 방어: 이전 paging에서 flush가 race로 지연됐을 경우를 대비해 여기서도 강제 flush
+      flushLayoutAfterPaging()
 
     case .changed:
       let ty = translation.y
+      let tx = translation.x
+
+      // 방향 미결정 상태에서 최초 유의미 translation(touchSlop 초과)으로 축 확정.
+      // 수평 우세면 gesture를 리셋하여 gridScrollView/weekScrollView paging에 양보.
+      if !state.panDirectionResolved {
+        let magnitude = max(abs(tx), abs(ty))
+        if magnitude < 4 { return }
+        if abs(tx) > abs(ty) * 1.2 {
+          gesture.isEnabled = false
+          gesture.isEnabled = true
+          state.isDragging = false
+          return
+        }
+        state.panDirectionResolved = true
+      }
+
       if state.isExpanded {
         let progress = max(0, 1.0 - (-ty / expandableHeight))
         state.expandProgress = min(1.0, progress)
@@ -969,11 +1026,12 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     }
   }
 
-  // UIGestureRecognizerDelegate — 수직 방향 우세 시에만 pan 인식
+  // UIGestureRecognizerDelegate — 항상 시작 허용.
+  // 방향 판별(수직/수평)은 handleVerticalPan.changed에서 translation 기반으로 수행.
+  // velocity 기반 판별은 paging deceleration 잔여로 velocity가 편향되어 영구 거부를
+  // 유발하는 문제가 있어 채택하지 않음.
   override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-    guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
-    let v = pan.velocity(in: self)
-    return abs(v.y) > abs(v.x)
+    return true
   }
 
   // ScrollView와 동시 인식 허용
