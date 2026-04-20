@@ -620,10 +620,15 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     let gridVisibleHeight = state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress
     gridContainerView.frame = CGRect(x: 0, y: gridTop, width: w, height: gridVisibleHeight)
 
-    // 모드 전환: expandProgress에 따라 weekScrollView/gridScrollView 표시 전환
-    let showWeekScroll = state.expandProgress < 0.5
-    weekScrollView.isHidden = !showWeekScroll
-    gridScrollView.isHidden = showWeekScroll
+    // 모드 전환: expandProgress 기반 crossfade (딱딱한 토글 대신 부드러운 전환)
+    let p = state.expandProgress
+    weekScrollView.isHidden = false
+    gridScrollView.isHidden = false
+    weekScrollView.alpha = 1.0 - p
+    gridScrollView.alpha = p
+    // 터치 이벤트는 지배적인 뷰 하나만 받도록 (alpha 기반으로 전환 중 터치 중복 방지)
+    weekScrollView.isUserInteractionEnabled = p < 0.5
+    gridScrollView.isUserInteractionEnabled = p >= 0.5
 
     // --- weekScrollView 레이아웃 (접힌 상태) ---
     let weekRowHeight = state.weekHeight
