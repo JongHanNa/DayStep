@@ -27,7 +27,7 @@ try {
 }
 
 // Shared.swift의 CURRENT_WHITELIST_KEY
-const CURRENT_WHITELIST_KEY = 'currentWhitelist';
+const CURRENT_WHITELIST_KEY = 'currentUnblockedSelection';
 
 const FREE_ALLOWED_TOTAL = 1; // 무료: 앱 + 카테고리 합계 1개
 
