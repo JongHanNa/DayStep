@@ -60,5 +60,24 @@
           android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
           android:value="App blocking during sleep session for ADHD management" />
       </service>
+
+      <!-- 월간 캘린더 위젯 -->
+      <receiver
+        android:name=".widget.DayStepCalendarWidgetProvider"
+        android:exported="false"
+        android:label="@string/widget_calendar_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+          <action android:name="com.daysteprn.widget.CHANGE_MONTH" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_calendar_info" />
+      </receiver>
+
+      <service
+        android:name=".widget.CalendarRemoteViewsService"
+        android:exported="false"
+        android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 </manifest>

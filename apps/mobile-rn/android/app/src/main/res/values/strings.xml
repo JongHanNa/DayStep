@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">DayStep</string>
+    <string name="widget_calendar_label">DayStep 월간 캘린더</string>
+    <string name="widget_calendar_description">이번 달 할일을 한눈에 확인하세요.</string>
 </resources>

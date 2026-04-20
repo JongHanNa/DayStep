@@ -1,7 +1,6 @@
 /**
- * widgetBridge.ts — iOS WidgetKit 연동 RN 브리지
- * DayStepWidgetModule (Swift Native Module) 래퍼
- * Android에서는 no-op으로 처리
+ * widgetBridge.ts — iOS WidgetKit / Android AppWidget 연동 RN 브리지
+ * DayStepWidgetModule (Swift/Kotlin Native Module) 래퍼
  */
 import {NativeModules, Platform} from 'react-native';
 
@@ -24,13 +23,12 @@ export interface WidgetCalendarPayload {
 const {DayStepWidgetModule} = NativeModules;
 
 /**
- * 월간 데이터를 위젯에 동기화
- * iOS 전용: Android는 no-op
+ * 월간 데이터를 위젯에 동기화 (iOS + Android)
  */
 export async function syncWidgetData(
   payload: WidgetCalendarPayload,
 ): Promise<void> {
-  if (Platform.OS !== 'ios') return;
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') return;
   if (!DayStepWidgetModule) return;
 
   try {
@@ -42,11 +40,10 @@ export async function syncWidgetData(
 }
 
 /**
- * 위젯 타임라인 강제 갱신 (앱 포그라운드 복귀 시)
- * iOS 전용: Android는 no-op
+ * 위젯 타임라인 강제 갱신 (앱 포그라운드 복귀 시) (iOS + Android)
  */
 export async function reloadWidgetTimelines(): Promise<void> {
-  if (Platform.OS !== 'ios') return;
+  if (Platform.OS !== 'ios' && Platform.OS !== 'android') return;
   if (!DayStepWidgetModule) return;
 
   try {

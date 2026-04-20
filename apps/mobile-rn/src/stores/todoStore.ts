@@ -142,6 +142,68 @@ async function getCurrentUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
+/**
+ * 위젯 payload 빌드 + 동기화 (3개월 범위: 전월/당월/익월)
+ * 인메모리 todos 스냅샷 기준 — mutation 직후 호출 시 DB 재쿼리 없이 반영
+ */
+function buildAndSyncWidget(todos: Todo[], year: number, month: number): void {
+  const monthAnchor = new Date(year, month - 1, 1);
+  const prevMonthStart = startOfMonth(subMonths(monthAnchor, 1));
+  const nextMonthEnd = endOfMonth(addMonths(monthAnchor, 1));
+
+  const filterTodosForDay = (dateStr: string, dayOfWeek: number) => {
+    return todos.filter((todo: any) => {
+      if (todo.recurrence_pattern === 'daily') {
+        if (!todo.start_time) return false;
+        const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+        if (startDate > dateStr) return false;
+        if (todo.recurrence_end_date && todo.recurrence_end_date <= dateStr) return false;
+        return true;
+      }
+      if (todo.recurrence_pattern === 'weekly') {
+        if (!todo.start_time) return false;
+        const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+        if (startDate > dateStr) return false;
+        if (todo.recurrence_end_date && todo.recurrence_end_date <= dateStr) return false;
+        return todo.recurrence_days_of_week?.includes(dayOfWeek) ?? false;
+      }
+      if (todo.start_time) {
+        const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+        if (startDate === dateStr) return true;
+        if (todo.end_time && todo.schedule_type === 'timed') {
+          const endDate = format(parseISO(todo.end_time), 'yyyy-MM-dd');
+          if (startDate < dateStr && endDate >= dateStr) return true;
+        }
+      }
+      return false;
+    });
+  };
+
+  const allDays = eachDayOfInterval({start: prevMonthStart, end: nextMonthEnd});
+  const widgetDays = allDays.map(day => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const dayTodos = filterTodosForDay(dateStr, getDay(day));
+    return {
+      date: dateStr,
+      todos: dayTodos.slice(0, 5).map((t: any) => ({
+        title: t.title,
+        color: t.color || '#3B82F6',
+      })),
+    };
+  });
+
+  syncWidgetData({year, month, days: widgetDays}).catch(() => {/* 위젯 실패는 조용히 */});
+}
+
+/** 특정 할일 기준으로 위젯 동기화 대상 월을 결정 */
+function getWidgetMonthForTodo(todo: any, fallbackDate: string): {year: number; month: number} {
+  const dateStr = todo?.start_time
+    ? format(parseISO(todo.start_time), 'yyyy-MM-dd')
+    : fallbackDate;
+  const d = parseISO(dateStr);
+  return {year: d.getFullYear(), month: d.getMonth() + 1};
+}
+
 // ============================================
 // Store
 // ============================================
@@ -422,6 +484,10 @@ export const useTodoStore = create<TodoState>()(
             ),
           }));
 
+          // 위젯 동기화
+          const {year, month} = getWidgetMonthForTodo(data, get().selectedDate);
+          buildAndSyncWidget(get().todos, year, month);
+
           return parseTodo(data);
         } catch (err: any) {
           console.error('[TodoStore] Create error:', err);
@@ -434,6 +500,7 @@ export const useTodoStore = create<TodoState>()(
 
       updateTodo: async (id, updates) => {
         const originalTodos = get().todos;
+        const originalTodo = originalTodos.find(t => t.id === id);
         try {
           // Optimistic update
           set(state => ({
@@ -448,6 +515,23 @@ export const useTodoStore = create<TodoState>()(
             .eq('id', id);
 
           if (error) throw error;
+
+          // 위젯 동기화: 변경 전/후 날짜가 다를 수 있으므로 양쪽 월 모두 갱신
+          const updatedTodo = get().todos.find(t => t.id === id);
+          const oldMonth = originalTodo
+            ? getWidgetMonthForTodo(originalTodo, get().selectedDate)
+            : null;
+          const newMonth = updatedTodo
+            ? getWidgetMonthForTodo(updatedTodo, get().selectedDate)
+            : null;
+          if (newMonth) buildAndSyncWidget(get().todos, newMonth.year, newMonth.month);
+          if (
+            oldMonth &&
+            (!newMonth || oldMonth.year !== newMonth.year || oldMonth.month !== newMonth.month)
+          ) {
+            buildAndSyncWidget(get().todos, oldMonth.year, oldMonth.month);
+          }
+
           return true;
         } catch (err: any) {
           // 롤백
@@ -460,6 +544,7 @@ export const useTodoStore = create<TodoState>()(
 
       deleteTodo: async (id) => {
         const originalTodos = get().todos;
+        const deletedTodo = originalTodos.find(t => t.id === id);
         try {
           // Optimistic delete
           set(state => ({
@@ -472,6 +557,13 @@ export const useTodoStore = create<TodoState>()(
             .eq('id', id);
 
           if (error) throw error;
+
+          // 위젯 동기화
+          if (deletedTodo) {
+            const {year, month} = getWidgetMonthForTodo(deletedTodo, get().selectedDate);
+            buildAndSyncWidget(get().todos, year, month);
+          }
+
           return true;
         } catch (err: any) {
           // 롤백
@@ -556,6 +648,11 @@ export const useTodoStore = create<TodoState>()(
               ),
             }));
           }
+
+          // 위젯 동기화: 토글된 날짜 기준 월
+          const toggleDate = parseISO(date);
+          buildAndSyncWidget(get().todos, toggleDate.getFullYear(), toggleDate.getMonth() + 1);
+
           return true;
         } catch (err: any) {
           // 롤백
@@ -660,6 +757,20 @@ export const useTodoStore = create<TodoState>()(
               break;
             }
           }
+
+          // 위젯 동기화: occurrenceDate 월 + 원본 start_time 월
+          const occDate = parseISO(occurrenceDate);
+          buildAndSyncWidget(get().todos, occDate.getFullYear(), occDate.getMonth() + 1);
+          if (todo.start_time) {
+            const origDate = parseISO(todo.start_time);
+            if (
+              origDate.getFullYear() !== occDate.getFullYear() ||
+              origDate.getMonth() !== occDate.getMonth()
+            ) {
+              buildAndSyncWidget(get().todos, origDate.getFullYear(), origDate.getMonth() + 1);
+            }
+          }
+
           return true;
         } catch (err: any) {
           console.error('[TodoStore] updateRecurringTodo error:', err);
@@ -801,6 +912,10 @@ export const useTodoStore = create<TodoState>()(
                 parseTodo(newTodo),
               ],
             }));
+
+            // 위젯 동기화: 새로 이동된 날짜 월
+            const {year, month} = getWidgetMonthForTodo(newTodo, get().selectedDate);
+            buildAndSyncWidget(get().todos, year, month);
           }
 
           return true;
@@ -1136,21 +1251,8 @@ export const useTodoStore = create<TodoState>()(
 
           set({monthViewData: result});
 
-          // iOS 위젯 동기화: 3개월 범위
-          const allDays = eachDayOfInterval({start: prevMonthStart, end: nextMonthEnd});
-          const widgetResult: Record<string, MonthTodoSummary[]> = {};
-          for (const day of allDays) {
-            const dateStr = format(day, 'yyyy-MM-dd');
-            widgetResult[dateStr] = filterTodosForDay(dateStr, getDay(day));
-          }
-          const widgetDays = Object.entries(widgetResult).map(([date, dayTodos]) => ({
-            date,
-            todos: dayTodos.slice(0, 5).map(t => ({
-              title: t.title,
-              color: t.color || '#3B82F6',
-            })),
-          }));
-          syncWidgetData({year, month, days: widgetDays}).catch(() => {/* 위젯 실패는 조용히 */});
+          // 위젯 동기화: 3개월 범위 (iOS + Android)
+          buildAndSyncWidget(todos as unknown as Todo[], year, month);
         } catch (err: any) {
           console.error('[TodoStore] fetchTodosForMonthView error:', err);
         } finally {

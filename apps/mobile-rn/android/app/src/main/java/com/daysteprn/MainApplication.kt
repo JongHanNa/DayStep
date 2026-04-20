@@ -4,6 +4,7 @@ import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
 
 import android.app.Application
+import com.daysteprn.widget.DayStepWidgetPackage
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
@@ -32,6 +33,7 @@ class MainApplication : Application(), ReactApplication {
           add(NativeTimePickerPackage())
           add(ShareIntentPackage())
           add(CallDetectorPackage())
+          add(DayStepWidgetPackage())
         },
     )
   }
