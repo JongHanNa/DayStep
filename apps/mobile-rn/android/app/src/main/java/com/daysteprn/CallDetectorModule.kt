@@ -3,6 +3,8 @@ package com.daysteprn
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
@@ -12,6 +14,8 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.bridge.Promise
 import com.facebook.react.modules.core.DeviceEventManagerModule
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 
 class CallDetectorModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
@@ -21,14 +25,10 @@ class CallDetectorModule(private val reactContext: ReactApplicationContext) :
     private var isListening = false
     private var wasInCall = false
 
-    // Legacy API (< Android 12)
+    // Legacy API (< Android 12) — PhoneStateListener 생성 시 Handler()가 현재 스레드 Looper를 요구.
+    // TurboModule 초기화 스레드는 Looper가 없을 수 있어, 사용 시점에 메인 스레드에서 생성.
     @Suppress("DEPRECATION")
-    private val phoneStateListener = object : PhoneStateListener() {
-        @Deprecated("Deprecated in Java")
-        override fun onCallStateChanged(state: Int, phoneNumber: String?) {
-            handleCallState(state)
-        }
-    }
+    private var phoneStateListener: PhoneStateListener? = null
 
     // Modern API (Android 12+)
     private val telephonyCallback: Any? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -38,6 +38,36 @@ class CallDetectorModule(private val reactContext: ReactApplicationContext) :
             }
         }
     } else null
+
+    @Suppress("DEPRECATION")
+    private fun ensurePhoneStateListener(): PhoneStateListener {
+        phoneStateListener?.let { return it }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            val created = object : PhoneStateListener() {
+                @Deprecated("Deprecated in Java")
+                override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                    handleCallState(state)
+                }
+            }
+            phoneStateListener = created
+            return created
+        }
+        val ref = AtomicReference<PhoneStateListener>()
+        val latch = CountDownLatch(1)
+        Handler(Looper.getMainLooper()).post {
+            ref.set(object : PhoneStateListener() {
+                @Deprecated("Deprecated in Java")
+                override fun onCallStateChanged(state: Int, phoneNumber: String?) {
+                    handleCallState(state)
+                }
+            })
+            latch.countDown()
+        }
+        latch.await()
+        val created = ref.get()
+        phoneStateListener = created
+        return created
+    }
 
     private fun handleCallState(state: Int) {
         if (!isListening) return
@@ -90,7 +120,7 @@ class CallDetectorModule(private val reactContext: ReactApplicationContext) :
             )
         } else {
             @Suppress("DEPRECATION")
-            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
+            telephonyManager.listen(ensurePhoneStateListener(), PhoneStateListener.LISTEN_CALL_STATE)
         }
 
         isListening = true
@@ -110,7 +140,9 @@ class CallDetectorModule(private val reactContext: ReactApplicationContext) :
             telephonyManager.unregisterTelephonyCallback(telephonyCallback as TelephonyCallback)
         } else {
             @Suppress("DEPRECATION")
-            telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
+            phoneStateListener?.let {
+                telephonyManager.listen(it, PhoneStateListener.LISTEN_NONE)
+            }
         }
 
         isListening = false

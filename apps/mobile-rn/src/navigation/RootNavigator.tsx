@@ -20,6 +20,7 @@ import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {supabase} from '@/lib/supabase';
 import {useTheme} from '@/theme';
 import {useSleepStore, useSleepStoreHydrated} from '@/stores/sleepStore';
+import {useTodoStore} from '@/stores/todoStore';
 import {useBedtimeMonitor} from '@/hooks/useBedtimeMonitor';
 import {useExternalInput} from '@/hooks/useExternalInput';
 import {useCallReminder} from '@/hooks/useCallReminder';
@@ -94,6 +95,11 @@ function AuthenticatedApp() {
       unsubscribeLimits();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 인증 완료 직후 위젯 초기 동기화 (3개월 풀셋을 DB에서 재쿼리)
+  useEffect(() => {
+    useTodoStore.getState().syncWidget();
   }, []);
 
   // 알림 채널 생성(Android) + 권한 요청(iOS/Android 13+) + 반복 알람 초기 스케줄

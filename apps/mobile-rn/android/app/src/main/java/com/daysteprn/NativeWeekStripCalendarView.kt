@@ -12,6 +12,7 @@ package com.daysteprn
 
 import android.widget.FrameLayout
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -149,11 +150,8 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         val firstOfMonth = yearMonth.atDay(1)
         val firstDayOfWeekOffset = firstOfMonth.dayOfWeek.value % 7
         val startDate = firstOfMonth.minusDays(firstDayOfWeekOffset.toLong())
-        val lastOfMonth = yearMonth.atEndOfMonth()
-        val lastDayOfWeekOffset = (6 - lastOfMonth.dayOfWeek.value % 7)
-        val endDate = lastOfMonth.plusDays(lastDayOfWeekOffset.toLong())
-        val totalDays = (endDate.toEpochDay() - startDate.toEpochDay() + 1).toInt()
-        val rows = totalDays / 7
+        // 어느 달이든 항상 6행(42일) 고정 — 달마다 높이 변동 방지
+        val rows = 6
         return (0 until rows).map { row ->
             (0 until 7).map { col ->
                 val date = startDate.plusDays((row * 7 + col).toLong())
@@ -232,6 +230,9 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         val dragThresholdPx = with(density) { DRAG_THRESHOLD_DP.dp.toPx() }
         val touchSlop = viewConfiguration.touchSlop
 
+        // 축소 상태 수평 드래그 오프셋 (손 따라감 효과)
+        val weekDragOffset = remember { Animatable(0f) }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -280,10 +281,12 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
                         awaitEachGesture {
                             val down = awaitFirstDown(requireUnconsumed = false)
                             var verticalDragStarted = false
+                            var horizontalDragStarted = false
                             var prevY = down.position.y
                             val startX = down.position.x
                             val startY = down.position.y
                             val startTime = down.uptimeMillis
+                            val viewWidth = size.width.toFloat()
 
                             while (true) {
                                 val event = awaitPointerEvent()
@@ -296,12 +299,24 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
                                         val current = expandProgressState.value
                                         val shouldExpand = if (abs(velocityY) > VELOCITY_THRESHOLD) velocityY > 0 else current > 0.5f
                                         animateToTarget(shouldExpand)
-                                    } else if (expandProgressState.value < 0.1f) {
+                                    } else if (horizontalDragStarted && expandProgressState.value < 0.1f) {
+                                        // 축소 상태 수평 드래그 종료 → threshold 기반 주 이동 또는 원위치
                                         val totalDx = change.position.x - startX
                                         val elapsed = change.uptimeMillis - startTime
-                                        if (elapsed in 1..500 && abs(totalDx) > touchSlop * 3) {
-                                            val newDate = if (totalDx > 0) selectedDate.minusWeeks(1) else selectedDate.plusWeeks(1)
-                                            onDateSelectCallback?.invoke(newDate.toString())
+                                        val velocityX = if (elapsed > 0) totalDx / elapsed * 1000f else 0f
+                                        val shouldMoveWeek = abs(velocityX) > VELOCITY_THRESHOLD || abs(totalDx) > viewWidth * 0.25f
+                                        coroutineScope.launch {
+                                            if (shouldMoveWeek) {
+                                                val targetOffset = if (totalDx > 0) viewWidth else -viewWidth
+                                                weekDragOffset.animateTo(targetOffset, tween(180))
+                                                // 런타임에 selectedDateStr.value 재파싱 (stale closure 방지)
+                                                val currentSelected = try { LocalDate.parse(selectedDateStr.value) } catch (_: Exception) { LocalDate.now() }
+                                                val newDate = if (totalDx > 0) currentSelected.minusWeeks(1) else currentSelected.plusWeeks(1)
+                                                onDateSelectCallback?.invoke(newDate.toString())
+                                                weekDragOffset.snapTo(0f)
+                                            } else {
+                                                weekDragOffset.animateTo(0f, tween(180))
+                                            }
                                         }
                                     }
                                     break
@@ -310,7 +325,13 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
                                 val dy = change.position.y - startY
                                 val dx = change.position.x - down.position.x
 
-                                if (!verticalDragStarted && abs(dy) > touchSlop && abs(dy) > abs(dx) * 1.5f) {
+                                // 수평 드래그를 먼저 판별 (확장/축소 상태 모두). 수평 드래그 시작 후에는 수직 판별 금지
+                                if (!verticalDragStarted && !horizontalDragStarted &&
+                                    abs(dx) > touchSlop && abs(dx) > abs(dy) * 1.5f) {
+                                    horizontalDragStarted = true
+                                }
+                                if (!verticalDragStarted && !horizontalDragStarted &&
+                                    abs(dy) > touchSlop && abs(dy) > abs(dx) * 1.5f) {
                                     verticalDragStarted = true
                                 }
 
@@ -320,6 +341,10 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
                                     val newProgress = (expandProgressState.value + deltaY / dragThresholdPx).coerceIn(0f, 1f)
                                     expandProgressState.value = newProgress
                                     onExpandProgressChangeCallback?.invoke(newProgress)
+                                } else if (horizontalDragStarted && expandProgressState.value < 0.1f) {
+                                    // 축소 상태: 손 따라가는 오프셋 (확장 상태는 HorizontalPager가 처리)
+                                    change.consume()
+                                    coroutineScope.launch { weekDragOffset.snapTo(change.position.x - startX) }
                                 }
                                 prevY = change.position.y
                             }
@@ -328,7 +353,11 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
             ) {
                 HorizontalPager(
                     state = pagerState,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            if (isCollapsed) translationX = weekDragOffset.value
+                        },
                     userScrollEnabled = !isCollapsed,
                 ) { page ->
                     val yearMonth = baseYearMonth.plusMonths((page - CENTER_MONTH_INDEX).toLong())

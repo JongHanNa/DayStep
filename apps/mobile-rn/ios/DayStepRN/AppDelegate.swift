@@ -45,7 +45,12 @@ class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
+    // 1) Google Sign-In OAuth 콜백
     if GIDSignIn.sharedInstance.handle(url) {
+      return true
+    }
+    // 2) React Native Linking (daystep:// 딥링크 — 위젯 탭 등)
+    if RCTLinkingManager.application(app, open: url, options: options) {
       return true
     }
     return super.application(app, open: url, options: options)

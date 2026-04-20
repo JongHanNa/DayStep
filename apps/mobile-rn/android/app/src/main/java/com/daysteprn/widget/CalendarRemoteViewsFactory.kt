@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
@@ -121,6 +122,16 @@ class CalendarRemoteViewsFactory(
         val payload = WidgetDataStore.loadPayload(context)
         val dayMap = payload?.dayMap ?: emptyMap()
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+
+        if (payload == null) {
+            Log.w("DayStepWidget", "loadCells: payload is null (no data saved yet)")
+        } else {
+            val totalTodos = dayMap.values.sumOf { it.size }
+            Log.d(
+                "DayStepWidget",
+                "loadCells: year=$year month=$month dayMapSize=${dayMap.size} totalTodos=$totalTodos",
+            )
+        }
 
         val cal = Calendar.getInstance().apply {
             firstDayOfWeek = Calendar.SUNDAY

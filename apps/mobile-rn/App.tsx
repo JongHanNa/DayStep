@@ -1,6 +1,6 @@
 import './global.css';
 import React, {useEffect} from 'react';
-import {AppState, LogBox, StatusBar, useColorScheme} from 'react-native';
+import {AppState, Linking, LogBox, StatusBar, useColorScheme} from 'react-native';
 import {SafeAreaProvider, initialWindowMetrics} from 'react-native-safe-area-context';
 import {NavigationContainer, DefaultTheme, createNavigationContainerRef} from '@react-navigation/native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
@@ -11,6 +11,8 @@ import RootNavigator from './src/navigation/RootNavigator';
 import {setupNotificationChannel} from './src/lib/notifications';
 import {reloadWidgetTimelines} from './src/lib/widgetBridge';
 import {useSleepStore} from './src/stores/sleepStore';
+import {useTodoStore} from './src/stores/todoStore';
+import {useSettingsStore} from './src/stores/settingsStore';
 import {storage} from './src/lib/mmkv';
 
 // UI Test 모드: LogBox 완전 비활성화 (스크린샷에 경고 배너 제거)
@@ -40,9 +42,10 @@ const linking = {
     screens: {
       Main: {
         screens: {
+          // 위젯 → 월간 플래너 탭 (viewMode는 Linking URL 감지로 별도 세팅)
+          Planner: 'monthly',
           Home: {
             screens: {
-              MonthlyPlanner: 'monthly',
               SleepSession: 'sleep-session',
             },
           },
@@ -51,6 +54,13 @@ const linking = {
     },
   },
 };
+
+/** daystep://monthly URL 감지 시 월간 플래너 뷰 모드로 강제 전환 */
+function applyUrlToPlannerView(url: string | null) {
+  if (url && url.startsWith('daystep://monthly')) {
+    useSettingsStore.getState().setPlannerViewMode('monthlyPlanner');
+  }
+}
 
 function App() {
   useEffect(() => {
@@ -82,12 +92,22 @@ function App() {
     return unsubscribe;
   }, []);
 
+  // 위젯 동기화: 포그라운드 복귀 시마다 3개월 풀셋 재쿼리
+  // (마운트 시 초기 동기화는 AuthenticatedApp에서 — 인증 완료 후 trigger)
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') {
+        useTodoStore.getState().syncWidget();
         reloadWidgetTimelines();
       }
     });
+    return () => sub.remove();
+  }, []);
+
+  // daystep://monthly 딥링크 감지 → 월간 뷰 강제 전환
+  useEffect(() => {
+    Linking.getInitialURL().then(applyUrlToPlannerView);
+    const sub = Linking.addEventListener('url', ({url}) => applyUrlToPlannerView(url));
     return () => sub.remove();
   }, []);
   const isDarkMode = useColorScheme() === 'dark';

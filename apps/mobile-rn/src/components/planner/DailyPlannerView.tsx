@@ -443,15 +443,8 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
   const [androidCalHeight] = useState(130);
   const androidExpandProgress = useSharedValue(0);
 
-  // Android: 콘텐츠 translateY — expandProgress 기반 (UI thread, 60fps, dp 단위)
-  const androidContentDeltaDp = useMemo(() => {
-    if (Platform.OS !== 'android') return 0;
-    const d = new Date(selectedDate);
-    const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
-    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    const rows = Math.ceil((firstDay + daysInMonth) / 7);
-    return 44 * (rows - 1) + 2 * (rows - 2); // cellHeight=44, cellSpacing=2
-  }, [selectedDate]);
+  // Android: 콘텐츠 translateY — 달력 6행 고정이므로 delta도 고정 (44 * 5 + 2 * 4 = 228dp)
+  const androidContentDeltaDp = Platform.OS === 'android' ? 228 : 0;
   const androidContentStyle = useAnimatedStyle(() => {
     if (Platform.OS !== 'android') return {};
     return {

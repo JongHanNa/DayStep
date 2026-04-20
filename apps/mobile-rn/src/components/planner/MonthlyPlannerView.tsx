@@ -16,7 +16,7 @@ import {NativeMonthCalendarNative, LiquidGlassMenu} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSettingsStore} from '@/stores/settingsStore';
-import {format} from 'date-fns';
+import {format, parseISO} from 'date-fns';
 import {Calendar} from 'lucide-react-native';
 import {useTheme} from '@/theme';
 
@@ -28,7 +28,7 @@ interface MonthlyPlannerViewProps {
 export function MonthlyPlannerView({menuItems, onMenuSelect}: MonthlyPlannerViewProps): React.ReactElement {
   const navigation = useNavigation<any>();
   const {primaryColor} = useTheme();
-  const {monthViewData, fetchTodosForMonthView, setSelectedDate} =
+  const {monthViewData, fetchTodosForMonthView, setSelectedDate, selectedDate} =
     useTodoStore();
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
   const setPlannerViewMode = useSettingsStore(s => s.setPlannerViewMode);
@@ -77,8 +77,14 @@ export function MonthlyPlannerView({menuItems, onMenuSelect}: MonthlyPlannerView
   );
 
   const handleFABPress = useCallback(() => {
-    formSheetRef.current?.openCreate(format(currentMonth, 'yyyy-MM-dd'));
-  }, [currentMonth]);
+    // selectedDate가 현재 표시 월에 속하면 그 날짜로, 아니면 월 1일로 fallback
+    const sel = parseISO(selectedDate);
+    const inCurrentMonth =
+      sel.getFullYear() === currentMonth.getFullYear() &&
+      sel.getMonth() === currentMonth.getMonth();
+    const target = inCurrentMonth ? selectedDate : format(currentMonth, 'yyyy-MM-dd');
+    formSheetRef.current?.openCreate(target);
+  }, [currentMonth, selectedDate]);
 
   const monthDataJson = useMemo(
     () => JSON.stringify(monthViewData ?? {}),

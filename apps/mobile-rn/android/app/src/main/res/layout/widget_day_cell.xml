@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="1dp">
 
-        <View
+        <FrameLayout
             android:id="@+id/cell_today_bg"
             android:layout_width="18dp"
             android:layout_height="18dp"

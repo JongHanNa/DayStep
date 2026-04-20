@@ -16,13 +16,13 @@ import {MonthlyFAB} from '@/components/monthly-planner';
 import {NativeMonthCalendarNative} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
-import {format} from 'date-fns';
+import {format, parseISO} from 'date-fns';
 import {useTheme} from '@/theme';
 
 export default function MonthlyPlannerScreen() {
   const navigation = useNavigation<any>();
   const {primaryColor} = useTheme();
-  const {monthViewData, fetchTodosForMonthView, setSelectedDate} =
+  const {monthViewData, fetchTodosForMonthView, setSelectedDate, selectedDate} =
     useTodoStore();
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
 
@@ -70,8 +70,14 @@ export default function MonthlyPlannerScreen() {
   );
 
   const handleFABPress = useCallback(() => {
-    formSheetRef.current?.openCreate(format(currentMonth, 'yyyy-MM-dd'));
-  }, [currentMonth]);
+    // selectedDate가 현재 표시 월에 속하면 그 날짜로, 아니면 월 1일로 fallback
+    const sel = parseISO(selectedDate);
+    const inCurrentMonth =
+      sel.getFullYear() === currentMonth.getFullYear() &&
+      sel.getMonth() === currentMonth.getMonth();
+    const target = inCurrentMonth ? selectedDate : format(currentMonth, 'yyyy-MM-dd');
+    formSheetRef.current?.openCreate(target);
+  }, [currentMonth, selectedDate]);
 
   const monthDataJson = useMemo(
     () => JSON.stringify(monthViewData ?? {}),

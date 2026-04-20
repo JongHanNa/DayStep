@@ -2,6 +2,7 @@ package com.daysteprn.widget
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import org.json.JSONObject
 import java.util.Calendar
 
@@ -48,7 +49,8 @@ object WidgetDataStore {
                 dayMap[date] = todos
             }
             WidgetPayload(year, month, dayMap)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("DayStepWidget", "payload parse failed", e)
             null
         }
     }

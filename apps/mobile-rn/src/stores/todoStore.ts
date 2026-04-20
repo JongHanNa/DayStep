@@ -93,6 +93,8 @@ interface TodoState {
   fetchTodosForDate: (date: string) => Promise<void>;
   fetchTodosForDateRange: (startDate: string, endDate: string) => Promise<Record<string, Todo[]>>;
   fetchTodosForMonthView: (year: number, month: number) => Promise<void>;
+  /** 위젯에 3개월 풀셋을 직접 DB에서 쿼리해서 동기화 (연/월 미지정 시 오늘 기준) */
+  syncWidget: (year?: number, month?: number) => Promise<void>;
   fetchMotivationsForTodos: (todoIds: string[]) => Promise<void>;
   fetchAllTodos: (userId: string, days?: number) => Promise<Todo[]>;
   createTodo: (input: CreateTodoInput) => Promise<Todo | null>;
@@ -202,6 +204,54 @@ function getWidgetMonthForTodo(todo: any, fallbackDate: string): {year: number; 
     : fallbackDate;
   const d = parseISO(dateStr);
   return {year: d.getFullYear(), month: d.getMonth() + 1};
+}
+
+/**
+ * 위젯용 3개월(전월~익월) 범위 Supabase 쿼리
+ * fetchTodosForMonthView와 syncWidgetForMonth에서 공용
+ */
+async function fetchWidgetTodosRange(
+  userId: string,
+  year: number,
+  month: number,
+): Promise<MonthTodoSummary[]> {
+  const monthAnchor = new Date(year, month - 1);
+  const prevMonthStart = startOfMonth(subMonths(monthAnchor, 1));
+  const nextMonthEnd = endOfMonth(addMonths(monthAnchor, 1));
+  const rangeStartISO = prevMonthStart.toISOString();
+  const rangeEndISO = nextMonthEnd.toISOString();
+  const rangeStartDate = format(prevMonthStart, 'yyyy-MM-dd');
+
+  const {data, error} = await supabase
+    .from('todos')
+    .select('id, title, start_time, end_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
+    .eq('user_id', userId)
+    .or(
+      [
+        `and(schedule_type.eq.timed,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
+        `and(schedule_type.eq.anytime,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
+        `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
+        `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
+      ].join(','),
+    );
+
+  if (error) throw error;
+  return (data ?? []) as MonthTodoSummary[];
+}
+
+/**
+ * 특정 월 기준 3개월 풀셋을 DB에서 쿼리해 위젯에 동기화
+ * mutation 후 호출 — state.todos가 1일치만 있어도 위젯은 풀셋 유지
+ */
+async function syncWidgetForMonth(year: number, month: number): Promise<void> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+    const rangeTodos = await fetchWidgetTodosRange(userId, year, month);
+    buildAndSyncWidget(rangeTodos as unknown as Todo[], year, month);
+  } catch {
+    /* 위젯 동기화 실패는 조용히 */
+  }
 }
 
 // ============================================
@@ -484,9 +534,9 @@ export const useTodoStore = create<TodoState>()(
             ),
           }));
 
-          // 위젯 동기화
+          // 위젯 동기화 (3개월 풀셋 재쿼리 — fire-and-forget)
           const {year, month} = getWidgetMonthForTodo(data, get().selectedDate);
-          buildAndSyncWidget(get().todos, year, month);
+          syncWidgetForMonth(year, month);
 
           return parseTodo(data);
         } catch (err: any) {
@@ -524,12 +574,12 @@ export const useTodoStore = create<TodoState>()(
           const newMonth = updatedTodo
             ? getWidgetMonthForTodo(updatedTodo, get().selectedDate)
             : null;
-          if (newMonth) buildAndSyncWidget(get().todos, newMonth.year, newMonth.month);
+          if (newMonth) syncWidgetForMonth(newMonth.year, newMonth.month);
           if (
             oldMonth &&
             (!newMonth || oldMonth.year !== newMonth.year || oldMonth.month !== newMonth.month)
           ) {
-            buildAndSyncWidget(get().todos, oldMonth.year, oldMonth.month);
+            syncWidgetForMonth(oldMonth.year, oldMonth.month);
           }
 
           return true;
@@ -561,7 +611,7 @@ export const useTodoStore = create<TodoState>()(
           // 위젯 동기화
           if (deletedTodo) {
             const {year, month} = getWidgetMonthForTodo(deletedTodo, get().selectedDate);
-            buildAndSyncWidget(get().todos, year, month);
+            syncWidgetForMonth(year, month);
           }
 
           return true;
@@ -651,7 +701,7 @@ export const useTodoStore = create<TodoState>()(
 
           // 위젯 동기화: 토글된 날짜 기준 월
           const toggleDate = parseISO(date);
-          buildAndSyncWidget(get().todos, toggleDate.getFullYear(), toggleDate.getMonth() + 1);
+          syncWidgetForMonth(toggleDate.getFullYear(), toggleDate.getMonth() + 1);
 
           return true;
         } catch (err: any) {
@@ -760,14 +810,14 @@ export const useTodoStore = create<TodoState>()(
 
           // 위젯 동기화: occurrenceDate 월 + 원본 start_time 월
           const occDate = parseISO(occurrenceDate);
-          buildAndSyncWidget(get().todos, occDate.getFullYear(), occDate.getMonth() + 1);
+          syncWidgetForMonth(occDate.getFullYear(), occDate.getMonth() + 1);
           if (todo.start_time) {
             const origDate = parseISO(todo.start_time);
             if (
               origDate.getFullYear() !== occDate.getFullYear() ||
               origDate.getMonth() !== occDate.getMonth()
             ) {
-              buildAndSyncWidget(get().todos, origDate.getFullYear(), origDate.getMonth() + 1);
+              syncWidgetForMonth(origDate.getFullYear(), origDate.getMonth() + 1);
             }
           }
 
@@ -915,7 +965,7 @@ export const useTodoStore = create<TodoState>()(
 
             // 위젯 동기화: 새로 이동된 날짜 월
             const {year, month} = getWidgetMonthForTodo(newTodo, get().selectedDate);
-            buildAndSyncWidget(get().todos, year, month);
+            syncWidgetForMonth(year, month);
           }
 
           return true;
@@ -1186,30 +1236,8 @@ export const useTodoStore = create<TodoState>()(
           const monthStart = startOfMonth(new Date(year, month - 1));
           const monthEnd = endOfMonth(new Date(year, month - 1));
 
-          // 위젯용 ±1개월 확장 범위
-          const prevMonthStart = startOfMonth(subMonths(new Date(year, month - 1), 1));
-          const nextMonthEnd = endOfMonth(addMonths(new Date(year, month - 1), 1));
-          const rangeStartISO = prevMonthStart.toISOString();
-          const rangeEndISO = nextMonthEnd.toISOString();
-          const rangeStartDate = format(prevMonthStart, 'yyyy-MM-dd');
-
-          // 3개월 범위 쿼리 (전월~익월)
-          const {data, error} = await supabase
-            .from('todos')
-            .select('id, title, start_time, end_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
-            .eq('user_id', userId)
-            .or(
-              [
-                `and(schedule_type.eq.timed,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
-                `and(schedule_type.eq.anytime,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
-                `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
-                `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
-              ].join(','),
-            );
-
-          if (error) throw error;
-
-          const todos = (data ?? []) as MonthTodoSummary[];
+          // 3개월 범위 쿼리 (전월~익월) — 위젯과 공용 헬퍼 재사용
+          const todos = await fetchWidgetTodosRange(userId, year, month);
 
           // monthViewData: 현재 월만 (플래너용)
           const monthDays = eachDayOfInterval({start: monthStart, end: monthEnd});
@@ -1258,6 +1286,13 @@ export const useTodoStore = create<TodoState>()(
         } finally {
           set({monthViewLoading: false});
         }
+      },
+
+      syncWidget: async (year, month) => {
+        const now = new Date();
+        const y = year ?? now.getFullYear();
+        const m = month ?? now.getMonth() + 1;
+        await syncWidgetForMonth(y, m);
       },
 
       clearError: () => set({error: null}),

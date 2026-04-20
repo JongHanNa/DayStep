@@ -205,21 +205,16 @@ class WeekStripState {
     let year = calendar.component(.year, from: date)
     let month = calendar.component(.month, from: date)
 
-    guard let firstOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)),
-          let range = calendar.range(of: .day, in: .month, for: firstOfMonth) else { return [] }
-    let lastDay = range.count
-    guard let lastOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: lastDay)) else { return [] }
+    guard let firstOfMonth = calendar.date(from: DateComponents(year: year, month: month, day: 1)) else { return [] }
 
     let firstWeekday = calendar.component(.weekday, from: firstOfMonth)
     guard let firstSunday = calendar.date(byAdding: .day, value: -(firstWeekday - 1), to: firstOfMonth) else { return [] }
 
-    let lastWeekday = calendar.component(.weekday, from: lastOfMonth)
-    guard let lastSaturday = calendar.date(byAdding: .day, value: (7 - lastWeekday), to: lastOfMonth) else { return [] }
-
     var rows: [[MonthGridCell]] = []
     var currentSunday = firstSunday
 
-    while currentSunday <= lastSaturday {
+    // 어느 달이든 항상 6행 고정 — 달마다 높이 변동 방지
+    while rows.count < 6 {
       var row: [MonthGridCell] = []
       for d in 0..<7 {
         guard let cellDate = calendar.date(byAdding: .day, value: d, to: currentSunday) else { continue }
@@ -270,8 +265,8 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
   private let gridScrollView = UIScrollView()  // horizontal paging (월간 모드)
   private let gridContentView = UIView()       // scrollView 내부 콘텐츠
   private var monthPageViews: [String: UIView] = [:] // monthId → UIView
-  private var cellButtons: [String: UIButton] = [:]  // cellId → UIButton
-  private var circleViews: [String: UIView] = [:]    // cellId → circle background
+  private var cellButtons: [String: UIButton] = [:]  // "monthId_cellId" → UIButton (월별 분리 — 6행 고정 시 중복 날짜 처리)
+  private var circleViews: [String: UIView] = [:]    // "monthId_cellId" → circle background
 
   // 주간 모드 전용 스크롤뷰
   private let weekScrollView = UIScrollView()
@@ -490,13 +485,15 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
 
     for (rowIndex, row) in monthPage.rows.enumerated() {
       for cell in row {
+        let key = "\(monthPage.id)_\(cell.id)"
+
         // Circle background view
         let circleView = UIView()
         circleView.layer.cornerRadius = 17
         circleView.backgroundColor = .clear
         circleView.tag = rowIndex
         pageView.addSubview(circleView)
-        circleViews[cell.id] = circleView
+        circleViews[key] = circleView
 
         // Day button
         let button = UIButton(type: .system)
@@ -506,7 +503,7 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
         // accessibilityIdentifier에 cellId 저장
         button.accessibilityIdentifier = cell.id
         pageView.addSubview(button)
-        cellButtons[cell.id] = button
+        cellButtons[key] = button
       }
     }
 
@@ -685,11 +682,12 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
         for cell in row {
           let cellX = gridInset + CGFloat(cell.weekdayIndex) * cellWidth
           let cellFrame = CGRect(x: cellX, y: rowY, width: cellWidth, height: cellHeight)
+          let key = "\(monthPage.id)_\(cell.id)"
 
-          if let button = cellButtons[cell.id] {
+          if let button = cellButtons[key] {
             button.frame = cellFrame
           }
-          if let circle = circleViews[cell.id] {
+          if let circle = circleViews[key] {
             let circleSize: CGFloat = 34
             circle.frame = CGRect(
               x: cellX + (cellWidth - circleSize) / 2,
@@ -725,8 +723,9 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     for monthPage in state.months {
       for row in monthPage.rows {
         for cell in row {
-          guard let button = cellButtons[cell.id],
-                let circle = circleViews[cell.id] else { continue }
+          let key = "\(monthPage.id)_\(cell.id)"
+          guard let button = cellButtons[key],
+                let circle = circleViews[key] else { continue }
 
           let isToday = cell.id == todayStr
           let isSelected = cell.id == selectedStr

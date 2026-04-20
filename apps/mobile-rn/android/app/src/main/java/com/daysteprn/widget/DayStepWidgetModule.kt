@@ -1,5 +1,6 @@
 package com.daysteprn.widget
 
+import android.util.Log
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -15,10 +16,13 @@ class DayStepWidgetModule(reactContext: ReactApplicationContext) :
     fun updateWidgetData(jsonString: String, promise: Promise) {
         try {
             val ctx = reactApplicationContext
+            Log.d(TAG, "updateWidgetData: jsonLength=${jsonString.length}")
             WidgetDataStore.saveCalendarJson(ctx, jsonString)
             DayStepCalendarWidgetProvider.reloadAll(ctx)
+            Log.d(TAG, "updateWidgetData: reloadAll dispatched")
             promise.resolve(null)
         } catch (e: Exception) {
+            Log.e(TAG, "updateWidgetData failed", e)
             promise.reject("ERR_WIDGET_UPDATE", e.message, e)
         }
     }
@@ -27,10 +31,16 @@ class DayStepWidgetModule(reactContext: ReactApplicationContext) :
     @ReactMethod
     fun reloadWidgetTimelines(promise: Promise) {
         try {
+            Log.d(TAG, "reloadWidgetTimelines")
             DayStepCalendarWidgetProvider.reloadAll(reactApplicationContext)
             promise.resolve(null)
         } catch (e: Exception) {
+            Log.e(TAG, "reloadWidgetTimelines failed", e)
             promise.reject("ERR_WIDGET_RELOAD", e.message, e)
         }
+    }
+
+    companion object {
+        private const val TAG = "DayStepWidget"
     }
 }
