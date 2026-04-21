@@ -21,7 +21,7 @@ export function PlannerPage2({onMatrixAdd}: PlannerPage2Props) {
       ref={scrollViewRef}
       contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
       showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
+      keyboardShouldPersistTaps="always"
       automaticallyAdjustKeyboardInsets>
       <PriorityMatrixPanel onAddPress={onMatrixAdd} />
       <BrainDumpPanel scrollViewRef={scrollViewRef} />

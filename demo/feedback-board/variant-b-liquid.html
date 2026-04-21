@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=390,initial-scale=1" />
+<title>Variant B — Liquid Glass Luxe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0: #050912;
+  --bg-1: #0b1220;
+  --bg-2: #0f1a2f;
+  --ink: #eef4ff;
+  --ink-2: rgba(238,244,255,0.72);
+  --ink-3: rgba(238,244,255,0.44);
+  --glass-bg: rgba(255,255,255,0.045);
+  --glass-bg-2: rgba(255,255,255,0.085);
+  --glass-border: rgba(255,255,255,0.09);
+  --glass-border-2: rgba(255,255,255,0.14);
+  --blue-1: #3b82f6;
+  --blue-2: #60a5fa;
+  --blue-3: #93c5fd;
+  --lilac: #a78bfa;
+  --mint: #5eead4;
+  --gold: #fde68a;
+  --sans: 'Geist', system-ui, sans-serif;
+  --serif: 'Instrument Serif', 'Times New Roman', serif;
+  --mono: 'Geist Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+html, body { margin: 0; color: var(--ink); font-family: var(--sans); background: var(--bg-0); }
+body { min-height: 100vh; }
+
+.app {
+  position: relative;
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 54px 0 130px;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(59,130,246,0.45), transparent 60%),
+    radial-gradient(100% 60% at 100% 30%, rgba(167,139,250,0.28), transparent 55%),
+    radial-gradient(80% 50% at -20% 60%, rgba(94,234,212,0.18), transparent 55%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 60%);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+/* Subtle film grain */
+.app::before {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='2'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  z-index: 0;
+}
+.app > * { position: relative; z-index: 1; }
+
+/* ─────────── Status bar + header ─────────── */
+.statusbar {
+  padding: 12px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+
+.header {
+  padding: 22px 24px 18px;
+}
+.greet {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.header h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.header h1 em {
+  font-style: italic;
+  background: linear-gradient(120deg, var(--blue-2) 0%, var(--lilac) 50%, var(--blue-3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-right: 2px;
+}
+.header p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  margin: 12px 0 0;
+  max-width: 300px;
+}
+
+/* ─────────── Segmented control ─────────── */
+.seg {
+  margin: 20px 24px 18px;
+  display: flex;
+  padding: 5px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  position: relative;
+  z-index: 3;
+}
+.seg button {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  padding: 9px 0;
+  color: var(--ink-2);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.seg button[data-active="true"] {
+  color: #0b1220;
+  background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
+  box-shadow: 0 2px 10px rgba(147,197,253,0.35), inset 0 1px 0 #fff;
+}
+
+/* ─────────── Summary strip ─────────── */
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 0 24px 18px;
+}
+.summary .cell {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 12px 12px 10px;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+.summary .val {
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.summary .val small {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  margin-left: 3px;
+}
+.summary .lbl {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+.summary .mint { color: var(--mint); }
+.summary .gold { color: var(--gold); }
+
+/* ─────────── Card ─────────── */
+.feed { display: flex; flex-direction: column; gap: 14px; padding: 4px 24px 0; }
+
+.card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 18px 18px 16px;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 20px 40px -24px rgba(2, 6, 23, 0.6);
+  position: relative;
+  overflow: hidden;
+  animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.card::before {
+  /* subtle top specular highlight */
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  z-index: 1;
+  pointer-events: none;
+}
+.card:hover { transform: translateY(-2px); background: var(--glass-bg-2); border-color: var(--glass-border-2); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0);  }
+}
+
+.card .row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  background: rgba(59,130,246,0.14);
+  border: 1px solid rgba(96,165,250,0.28);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--blue-3);
+}
+.type-pill.feature {
+  background: rgba(167,139,250,0.14);
+  border-color: rgba(167,139,250,0.3);
+  color: #c4b5fd;
+}
+.time {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+.status .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink-3);
+  box-shadow: 0 0 8px currentColor;
+}
+.status.open       { color: var(--blue-3); }
+.status.open .dot  { background: var(--blue-3); }
+.status.triaged    { color: var(--gold); }
+.status.triaged .dot { background: var(--gold); }
+.status.under-review { color: var(--lilac); }
+.status.under-review .dot { background: var(--lilac); }
+.status.shipped    { color: var(--mint); }
+.status.shipped .dot { background: var(--mint); }
+.status.wont-fix   { color: var(--ink-3); text-decoration: line-through; }
+
+.title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+.body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  margin: 0 0 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-3);
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.foot .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--ink-2);
+}
+.foot .chip.vote { color: var(--ink); font-weight: 500; }
+.foot .reply {
+  margin-left: auto;
+  color: var(--mint);
+  letter-spacing: 0.1em;
+}
+
+/* ─────────── Private state ─────────── */
+.card.private .title,
+.card.private .body {
+  filter: blur(10px) saturate(0.5);
+  user-select: none;
+  pointer-events: none;
+  transform: scale(1.02);
+  transform-origin: left center;
+}
+.card.private {
+  overflow: hidden;
+}
+.card.private .privacy-badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -20%);
+  padding: 10px 16px 10px 12px;
+  border-radius: 999px;
+  background: rgba(8,14,30,0.55);
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  z-index: 5;
+  box-shadow: 0 20px 40px -18px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.14);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.card.private .privacy-badge .ico {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #93c5fd, #a78bfa);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+.card.private .privacy-badge em {
+  font-style: normal;
+  color: var(--ink-3);
+  margin-left: 4px;
+  font-size: 10.5px;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 20px 40px -18px rgba(0,0,0,0.6), 0 0 0 0 rgba(147,197,253,0.25), inset 0 1px 0 rgba(255,255,255,0.14); }
+  50%      { box-shadow: 0 20px 40px -18px rgba(0,0,0,0.6), 0 0 0 10px rgba(147,197,253,0),  inset 0 1px 0 rgba(255,255,255,0.14); }
+}
+
+/* ─────────── FAB ─────────── */
+.fab {
+  position: fixed;
+  right: 22px;
+  bottom: 26px;
+  height: 56px;
+  padding: 0 22px 0 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--blue-1), var(--lilac));
+  color: #fff;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 18px 40px -10px rgba(59,130,246,0.55),
+    0 8px 20px -6px rgba(167,139,250,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+  cursor: pointer;
+  z-index: 30;
+  transition: transform 0.2s ease;
+}
+.fab:hover { transform: translateY(-2px); }
+.fab .plus {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(255,255,255,0.22);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 18px; line-height: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="statusbar">
+    <span>9:41</span>
+    <span>●●●●● · LTE · 92%</span>
+  </div>
+
+  <header class="header">
+    <div class="greet">FEEDBACK · YOUR VOICE</div>
+    <h1>우리가 고쳐야 할 것을<br/><em>알려주세요.</em></h1>
+    <p>당신의 게시글은 오직 당신과 DayStep 팀만 볼 수 있어요. 다른 분들의 글은 비공개로 표시됩니다.</p>
+  </header>
+
+  <div class="seg">
+    <button data-active="true">All</button>
+    <button data-active="false">🐛 Bug</button>
+    <button data-active="false">✨ Feature</button>
+    <button data-active="false">Mine</button>
+  </div>
+
+  <div class="summary">
+    <div class="cell"><div class="val">02<small>건</small></div><div class="lbl">내 리포트</div></div>
+    <div class="cell"><div class="val mint">01<small>답변</small></div><div class="lbl">팀 답변</div></div>
+    <div class="cell"><div class="val gold">10<small>표</small></div><div class="lbl">받은 공감</div></div>
+  </div>
+
+  <section id="feed" class="feed"></section>
+
+  <button class="fab" type="button">
+    <span class="plus">＋</span>
+    새 피드백
+  </button>
+</div>
+
+<script src="./shared/mock-data.js"></script>
+<script>
+const statusLabel = {
+  open: 'Open',
+  triaged: 'Triaged',
+  'under-review': 'Under review',
+  shipped: 'Shipped',
+  'wont-fix': "Won't fix",
+};
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function renderCard(post, idx) {
+  const visible = window.isVisible(post, window.CURRENT_USER);
+  const typePillClass = post.type === 'feature' ? 'feature' : '';
+  const typeLabel = post.type === 'bug' ? '🐛 Bug' : '✨ Feature';
+
+  const shownTitle = visible ? escapeHtml(post.title) : '• • • • • • • • • • • • • • • • • •';
+  const shownBody  = visible ? escapeHtml(post.body)  : '• • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •';
+
+  return `
+    <article class="card ${visible ? '' : 'private'}" style="animation-delay:${idx * 60}ms">
+      <div class="row-top">
+        <span class="type-pill ${typePillClass}">${typeLabel}</span>
+        <span class="time">${post.createdAt}</span>
+      </div>
+      <div class="status ${post.status}"><span class="dot"></span>${statusLabel[post.status]}</div>
+      <h3 class="title">${shownTitle}</h3>
+      <p class="body">${shownBody}</p>
+      <div class="foot">
+        <span class="chip vote">▲ ${post.votes}</span>
+        <span class="chip">💬 ${post.comments}</span>
+        ${post.hasAdminReply ? '<span class="reply">· TEAM REPLIED</span>' : ''}
+      </div>
+      ${visible ? '' : `
+        <div class="privacy-badge">
+          <span class="ico">🔒</span>
+          비공개 <em>· 작성자만 열람</em>
+        </div>
+      `}
+    </article>
+  `;
+}
+
+window.__renderBoard = function () {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = window.POSTS.map(renderCard).join('');
+};
+
+document.querySelectorAll('.seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.dataset.active = 'false');
+    b.dataset.active = 'true';
+  });
+});
+
+window.__renderBoard();
+</script>
+</body>
+</html>

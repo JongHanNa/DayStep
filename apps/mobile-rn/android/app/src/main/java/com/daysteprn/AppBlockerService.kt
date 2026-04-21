@@ -9,8 +9,10 @@ package com.daysteprn
 import android.app.*
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.Handler
@@ -62,9 +64,20 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         const val CHANNEL_ID = "app_blocker_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_STOP = "com.daysteprn.STOP_BLOCKING"
+        const val ACTION_RELOAD_WHITELIST = "com.daysteprn.RELOAD_WHITELIST"
+        const val EXTRA_MODE = "mode"
+        const val MODE_SLEEP = "sleep"
+        const val MODE_FOCUS = "focus"
 
-        // 허용 앱 패키지명 (DayStep + 시스템 필수 앱)
-        private val ALLOWED_PACKAGES = setOf(
+        const val PREFS_NAME = "app_blocker_prefs"
+        const val KEY_ALLOWED_SLEEP = "allowed_sleep_packages"
+        const val KEY_ALLOWED_FOCUS = "allowed_focus_packages"
+
+        fun prefsKeyForMode(mode: String): String =
+            if (mode == MODE_FOCUS) KEY_ALLOWED_FOCUS else KEY_ALLOWED_SLEEP
+
+        // 시스템 필수 앱 — 사용자 선택과 무관하게 항상 허용
+        private val SYSTEM_ESSENTIALS = setOf(
             "com.daysteprn",                         // DayStep 자체
             "com.android.systemui",                  // 시스템 UI
             "com.android.launcher",                  // 기본 런처
@@ -90,6 +103,22 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     private val handler = Handler(Looper.getMainLooper())
     private var isOverlayShowing = false
 
+    // 현재 세션 모드 (sleep 기본). onStartCommand에서 intent extra로 갱신
+    private var currentMode: String = MODE_SLEEP
+
+    // 병합 화이트리스트 (SYSTEM_ESSENTIALS + 사용자 선택)
+    @Volatile
+    private var allowedPackages: Set<String> = SYSTEM_ESSENTIALS
+
+    private val reloadReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ACTION_RELOAD_WHITELIST) {
+                reloadAllowedPackages()
+            }
+        }
+    }
+    private var reloadReceiverRegistered = false
+
     private val pollRunnable = object : Runnable {
         override fun run() {
             checkForegroundApp()
@@ -103,6 +132,15 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
+
+        val filter = IntentFilter(ACTION_RELOAD_WHITELIST)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(reloadReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(reloadReceiver, filter)
+        }
+        reloadReceiverRegistered = true
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -110,6 +148,13 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             stopSelf()
             return START_NOT_STICKY
         }
+
+        // 세션 모드 수신 (기본 sleep)
+        val mode = intent?.getStringExtra(EXTRA_MODE)
+        if (mode == MODE_SLEEP || mode == MODE_FOCUS) {
+            currentMode = mode
+        }
+        reloadAllowedPackages()
 
         val notification = buildNotification()
         startForeground(NOTIFICATION_ID, notification)
@@ -128,10 +173,30 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         isRunning = false
         handler.removeCallbacks(pollRunnable)
         removeOverlay()
+        if (reloadReceiverRegistered) {
+            try {
+                unregisterReceiver(reloadReceiver)
+            } catch (_: Exception) {}
+            reloadReceiverRegistered = false
+        }
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         super.onDestroy()
+    }
+
+    /**
+     * SharedPreferences에서 현재 모드의 사용자 화이트리스트를 읽어
+     * SYSTEM_ESSENTIALS와 병합한다.
+     */
+    private fun reloadAllowedPackages() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val stored = prefs.getStringSet(prefsKeyForMode(currentMode), emptySet()) ?: emptySet()
+        allowedPackages = SYSTEM_ESSENTIALS + stored
+        android.util.Log.d(
+            "AppBlocker",
+            "reloadAllowedPackages mode=$currentMode user=${stored.size} total=${allowedPackages.size}"
+        )
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -166,9 +231,9 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
     }
 
     private fun isAllowed(packageName: String): Boolean {
-        // 허용 목록에 있거나 시스템 런처인 경우
-        if (ALLOWED_PACKAGES.contains(packageName)) return true
-        // 시스템 UI 관련 패키지는 허용
+        // 사용자 선택 + 시스템 필수 앱
+        if (allowedPackages.contains(packageName)) return true
+        // 시스템 UI/런처 관련 패키지는 항상 허용
         if (packageName.startsWith("com.android.") && (
                 packageName.contains("launcher") ||
                 packageName.contains("home") ||
@@ -225,11 +290,13 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             gravity = Gravity.CENTER
         }
 
+        val isFocusMode = currentMode == MODE_FOCUS
         val composeView = ComposeView(this).apply {
             setViewTreeLifecycleOwner(this@AppBlockerService)
             setViewTreeSavedStateRegistryOwner(this@AppBlockerService)
             setContent {
                 BlockerOverlayContent(
+                    isFocusMode = isFocusMode,
                     onReturnToDayStep = {
                         // DayStep 앱으로 전환
                         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
@@ -264,10 +331,10 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "수면 보호 모드",
+                "앱 차단 모드",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "수면 중 앱 사용 제한 알림"
+                description = "수면/집중 세션 중 앱 사용 제한 알림"
                 setShowBadge(false)
             }
             val nm = getSystemService(NotificationManager::class.java)
@@ -290,9 +357,13 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
+        val isFocusMode = currentMode == MODE_FOCUS
+        val title = if (isFocusMode) "집중 모드 활성화" else "수면 보호 모드 활성화"
+        val text = if (isFocusMode) "집중 중 앱 사용이 제한됩니다" else "수면 중 앱 사용이 제한됩니다"
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("수면 보호 모드 활성화")
-            .setContentText("수면 중 앱 사용이 제한됩니다")
+            .setContentTitle(title)
+            .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_lock_idle_lock)
             .setOngoing(true)
             .setContentIntent(launchPendingIntent)
@@ -304,25 +375,32 @@ class AppBlockerService : Service(), LifecycleOwner, SavedStateRegistryOwner {
 // ─── 차단 오버레이 Compose UI ───
 
 @Composable
-private fun BlockerOverlayContent(onReturnToDayStep: () -> Unit) {
+private fun BlockerOverlayContent(
+    isFocusMode: Boolean,
+    onReturnToDayStep: () -> Unit,
+) {
+    val gradientColors = if (isFocusMode) {
+        listOf(Color(0xFF1E3A8A), Color(0xFF0F172A)) // 집중: 블루 그라데이션
+    } else {
+        listOf(Color(0xFF065F46), Color(0xFF0F172A)) // 수면: 그린→블루
+    }
+    val title = if (isFocusMode) "집중 중입니다" else "수면 중입니다"
+    val subtitle = if (isFocusMode)
+        "몰입을 위해\n앱 사용이 제한되어 있어요"
+    else
+        "좋은 수면을 위해\n앱 사용이 제한되어 있어요"
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF065F46), // 다크 그린
-                        Color(0xFF0F172A), // 다크 블루
-                    )
-                )
-            ),
+            .background(Brush.verticalGradient(colors = gradientColors)),
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(32.dp)
         ) {
-            // 나무 아이콘
+            // 나무 아이콘 (공용)
             Icon(
                 imageVector = Icons.Default.Park,
                 contentDescription = null,
@@ -332,7 +410,7 @@ private fun BlockerOverlayContent(onReturnToDayStep: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 달 아이콘
+            // 보조 아이콘 — 수면: 달, 집중: 달 대신 동일 아이콘 사용(간결)
             Icon(
                 imageVector = Icons.Default.Nightlight,
                 contentDescription = null,
@@ -343,7 +421,7 @@ private fun BlockerOverlayContent(onReturnToDayStep: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "수면 중입니다",
+                text = title,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -352,7 +430,7 @@ private fun BlockerOverlayContent(onReturnToDayStep: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "좋은 수면을 위해\n앱 사용이 제한되어 있어요",
+                text = subtitle,
                 fontSize = 15.sp,
                 color = Color.White.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center,

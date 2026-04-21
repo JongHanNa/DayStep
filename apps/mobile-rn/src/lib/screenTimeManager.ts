@@ -120,8 +120,8 @@ export async function shieldAllExceptAllowed(): Promise<void> {
   console.log('[ScreenTime] shieldAllExceptAllowed called (Android)');
   if (!AndroidBlocker) return;
   try {
-    await AndroidBlocker.startBlocking();
-    console.log('[ScreenTime] Android blocking started');
+    await AndroidBlocker.startBlocking('sleep');
+    console.log('[ScreenTime] Android blocking started (sleep mode)');
   } catch (error) {
     console.error('[ScreenTime] Android startBlocking error:', error);
   }
@@ -239,27 +239,36 @@ export function clearCleaningShield(): void {
 // 집중(포커스) 세션 전용 Shield
 // ============================================
 
-/** 집중 전용 whitelist 토큰 저장 키 (native UserDefaults) */
+/** 집중 전용 whitelist 토큰 저장 키 (native UserDefaults / SharedPreferences) */
 export const FOCUS_WHITELIST_KEY = 'focusUnblockedSelection';
 
 /**
  * 집중 whitelist 적용 — mode 진입 시점에 포커스 전용 selection을 native active whitelist에 로드
- * 이전 whitelist를 clear하고 저장된 focus 토큰이 있으면 push한다.
+ *
+ * iOS: 이전 whitelist를 clear하고 저장된 focus 토큰이 있으면 push한다.
+ * Android: setAllowedPackages가 이미 브로드캐스트를 쏘지만, 세션 시작 시 명시적으로 reload하려면
+ *          동일 배열을 다시 저장하는 방식 대신 services 내부 reload 경로를 활용한다.
+ *          (startBlocking('focus')가 이미 reloadAllowedPackages를 호출하므로 보통 불필요)
  */
 export function applyFocusWhitelist(): void {
-  if (Platform.OS !== 'ios' || !iosModule) return;
-  try {
-    iosModule.clearWhitelistAndUpdateBlock?.('focus-session-apply-whitelist');
-    const token = iosModule.userDefaultsGet?.(FOCUS_WHITELIST_KEY);
-    if (typeof token === 'string' && token.length > 0) {
-      iosModule.addSelectionToWhitelistAndUpdateBlock?.(
-        {activitySelectionToken: token},
-        'focus-session-apply-whitelist',
-      );
+  if (Platform.OS === 'ios') {
+    if (!iosModule) return;
+    try {
+      iosModule.clearWhitelistAndUpdateBlock?.('focus-session-apply-whitelist');
+      const token = iosModule.userDefaultsGet?.(FOCUS_WHITELIST_KEY);
+      if (typeof token === 'string' && token.length > 0) {
+        iosModule.addSelectionToWhitelistAndUpdateBlock?.(
+          {activitySelectionToken: token},
+          'focus-session-apply-whitelist',
+        );
+      }
+    } catch (error) {
+      console.error('[ScreenTime] applyFocusWhitelist error:', error);
     }
-  } catch (error) {
-    console.error('[ScreenTime] applyFocusWhitelist error:', error);
+    return;
   }
+
+  // Android: setAllowedPackages가 Broadcast로 이미 처리. 별도 no-op.
 }
 
 /**
@@ -282,7 +291,7 @@ export async function shieldForFocus(): Promise<void> {
 
   if (!AndroidBlocker) return;
   try {
-    await AndroidBlocker.startBlocking();
+    await AndroidBlocker.startBlocking('focus');
   } catch (error) {
     console.error('[ScreenTime] Android focus startBlocking error:', error);
   }
@@ -363,5 +372,64 @@ export function cancelDailyAutoShield(): void {
     console.log('[ScreenTime] cancelDailyAutoShield: stopped');
   } catch (error) {
     console.error('[ScreenTime] cancelDailyAutoShield error:', error);
+  }
+}
+
+// ============================================
+// 허용 앱 관리 (Android 전용 — iOS는 네이티브 DeviceActivitySelectionView가 처리)
+// ============================================
+
+export type AllowedMode = 'sleep' | 'focus';
+
+export interface InstalledAppInfo {
+  packageName: string;
+  appName: string;
+  iconPath: string | null; // file:// URI or null
+}
+
+/**
+ * 런처에 노출되는 설치 앱 목록 조회 (Android 전용)
+ * iOS에서는 빈 배열 반환 (iOS는 네이티브 picker 사용)
+ */
+export async function getInstalledApps(): Promise<InstalledAppInfo[]> {
+  if (Platform.OS !== 'android' || !AndroidBlocker) return [];
+  try {
+    const apps = await AndroidBlocker.getInstalledApps();
+    return Array.isArray(apps) ? (apps as InstalledAppInfo[]) : [];
+  } catch (error) {
+    console.error('[ScreenTime] getInstalledApps error:', error);
+    return [];
+  }
+}
+
+/**
+ * 허용 앱 목록 저장 (Android 전용)
+ * 세션이 진행 중이면 네이티브 서비스가 브로드캐스트로 즉시 반영
+ */
+export async function setAllowedPackages(
+  mode: AllowedMode,
+  packages: string[],
+): Promise<void> {
+  if (Platform.OS !== 'android' || !AndroidBlocker) return;
+  try {
+    await AndroidBlocker.setAllowedPackages(mode, packages);
+  } catch (error) {
+    console.error('[ScreenTime] setAllowedPackages error:', error);
+  }
+}
+
+/**
+ * 저장된 허용 앱 목록 조회 (Android 전용)
+ */
+export async function getAllowedPackages(
+  mode: AllowedMode,
+): Promise<string[]> {
+  if (Platform.OS !== 'android' || !AndroidBlocker) return [];
+  try {
+    const pkgs = await AndroidBlocker.getAllowedPackages(mode);
+    return Array.isArray(pkgs) ? (pkgs as string[]) : [];
+  } catch (error) {
+    console.error('[ScreenTime] getAllowedPackages error:', error);
+    return [];
   }
 }

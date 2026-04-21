@@ -12,6 +12,14 @@
     <!-- 광고 ID 미사용 — SDK가 자동 병합하는 AD_ID 권한 제거 -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
+    <!-- Android 11+ 패키지 가시성: 런처에 노출되는 앱만 조회 (허용 앱 피커용) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"

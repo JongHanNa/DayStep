@@ -316,7 +316,7 @@ export default function SleepGardenScreen() {
         </AnimatedCard>
 
         {/* 허용 앱 관리 링크 */}
-        {screenTimeLinkEnabled && Platform.OS === 'ios' && (
+        {screenTimeLinkEnabled && (
           <Pressable
             onPress={openScreenTimeApps}
             style={styles.screenTimeLink}>
