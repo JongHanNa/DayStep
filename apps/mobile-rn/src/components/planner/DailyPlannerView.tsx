@@ -159,10 +159,6 @@ function SleepWakeCard({type, time, onTimeChange}: {
   );
 }
 
-// iOS 네이티브 달력이 collapsed 상태에서 emit하는 totalHeight
-// (state.headerHeight + state.weekdayHeight + state.weekHeight + padding)
-const IOS_COLLAPSED_CAL_H = 111;
-
 export function DailyPlannerView({menuItems, onMenuSelect}: DailyPlannerViewProps): React.ReactElement {
   return (
     <DndProvider>
@@ -327,12 +323,9 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
   }, [todos, selectedDate, sleepGoalTime, wakeGoalTime]);
 
   const calendarHeight = useSharedValue(0);
-  // iOS: wrapper height는 React state로 관리 — Reanimated useAnimatedStyle의 height
-  // 업데이트가 Fabric 환경의 absolute 포지션 래퍼에서 Yoga 재계산을 안정적으로
-  // 트리거하지 못하는 이슈 회피. 콘텐츠의 translateY는 Reanimated로 부드럽게 유지.
-  const [iosWrapperHeight, setIosWrapperHeight] = useState(IOS_COLLAPSED_CAL_H);
-  const iosContentStyle = useAnimatedStyle(() => ({
-    transform: [{translateY: Math.max(0, calendarHeight.value - IOS_COLLAPSED_CAL_H)}],
+  const calendarHeightStyle = useAnimatedStyle(() => ({
+    height: calendarHeight.value > 0 ? calendarHeight.value : undefined,
+    overflow: 'hidden' as const,
   }));
 
   const handleToggle = useCallback(
@@ -471,11 +464,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
       {/* 주간 스트립 캘린더 + LiquidGlassMenu 오버레이 */}
       <View style={{position: 'relative'}}>
         {Platform.OS === 'ios' ? (
-          /* iOS: absolute 래퍼 + React state로 height 관리 (Yoga 강제 재계산) */
-          <View style={[
-            styles.iosCalendarWrapper,
-            {position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, height: iosWrapperHeight},
-          ]}>
+          <Animated.View style={calendarHeightStyle}>
             <NativeWeekStripCalendarNative
               selectedDate={selectedDate}
               primaryColor={primaryColor}
@@ -486,14 +475,12 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
               gradientEndY={gradient.end.y}
               onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
               onHeightChange={(e) => {
-                const h = e.nativeEvent.height;
-                calendarHeight.value = h;
-                setIosWrapperHeight(Math.max(IOS_COLLAPSED_CAL_H, h));
+                calendarHeight.value = e.nativeEvent.height;
               }}
               onExpandChange={() => {}}
               style={StyleSheet.absoluteFill}
             />
-          </View>
+          </Animated.View>
         ) : (
           /* Android: absolute 래퍼 + 동적 높이 (터치 영역, Yoga 분리) */
           <Animated.View style={[
@@ -545,11 +532,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
         </View>
       )}
 
-      <Animated.View style={[
-        {flex: 1, marginTop: Platform.OS === 'android' ? androidCalHeight : Platform.OS === 'ios' ? IOS_COLLAPSED_CAL_H : 0},
-        Platform.OS === 'android' && androidContentStyle,
-        Platform.OS === 'ios' && iosContentStyle,
-      ]}>
+      <Animated.View style={[{flex: 1, marginTop: Platform.OS === 'android' ? androidCalHeight : 0}, Platform.OS === 'android' && androidContentStyle]}>
       <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging} onPageChange={handlePageChange}>
         {/* Page 0: 시간대별 할일 리스트 */}
         <View style={{flex: 1}}>
@@ -670,9 +653,6 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
 }
 
 const styles = StyleSheet.create({
-  iosCalendarWrapper: {
-    overflow: 'hidden',
-  },
   menuOverlay: {
     position: 'absolute',
     top: 8,

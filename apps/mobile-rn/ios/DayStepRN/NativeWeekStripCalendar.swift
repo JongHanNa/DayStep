@@ -626,10 +626,6 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     let gridTop = state.headerHeight + state.weekdayHeight
     let gridVisibleHeight = state.weekHeight + (state.monthFullHeight - state.weekHeight) * state.expandProgress
     gridContainerView.frame = CGRect(x: 0, y: gridTop, width: w, height: gridVisibleHeight)
-    // Force mask re-evaluation — iOS가 frame.height만 바뀌고 clip 영역은 동일 viewport일
-    // 때 mask를 재계산하지 않는 현상 방지. 토글로 명시적으로 mask를 dirty 상태로.
-    gridContainerView.layer.masksToBounds = false
-    gridContainerView.layer.masksToBounds = true
 
     // 모드 전환: 축소 완전 상태(progress≈0)에서만 weekScrollView를 보여 주 단위 스와이프 허용.
     // 드래그가 시작되는 순간 gridScrollView로 전환되어, 한 줄(선택된 주)에서 점진적으로
@@ -857,7 +853,6 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     } else if scrollView === weekScrollView {
       updateCurrentWeekFromScroll()
     }
-    flushLayoutAfterPaging()
   }
 
   func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
@@ -866,21 +861,6 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     } else if scrollView === weekScrollView {
       updateCurrentWeekFromScroll()
     }
-    flushLayoutAfterPaging()
-  }
-
-  // Paging 종료 직후 CoreAnimation pipeline을 강제 flush.
-  // animateCollapse의 UIView.animate { layoutSubviews() } 패턴을 그대로 복제하여,
-  // duration 0 animation block으로 명시적 CATransaction begin/commit을 유발.
-  // 단순한 setNeedsLayout/layoutIfNeeded/CATransaction.flush보다 더 강하게 render
-  // server에 commit을 강제.
-  private func flushLayoutAfterPaging() {
-    UIView.animate(withDuration: 0, animations: { [weak self] in
-      guard let self = self else { return }
-      self.setNeedsLayout()
-      self.layoutIfNeeded()
-      self.layoutSubviews()
-    })
   }
 
   private func updateCurrentWeekFromScroll() {
@@ -956,8 +936,6 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     case .began:
       state.isDragging = true
       state.panDirectionResolved = false
-      // 방어: 이전 paging에서 flush가 race로 지연됐을 경우를 대비해 여기서도 강제 flush
-      flushLayoutAfterPaging()
 
     case .changed:
       let ty = translation.y
