@@ -236,6 +236,82 @@ export function clearCleaningShield(): void {
 }
 
 // ============================================
+// 집중(포커스) 세션 전용 Shield
+// ============================================
+
+/** 집중 전용 whitelist 토큰 저장 키 (native UserDefaults) */
+export const FOCUS_WHITELIST_KEY = 'focusUnblockedSelection';
+
+/**
+ * 집중 whitelist 적용 — mode 진입 시점에 포커스 전용 selection을 native active whitelist에 로드
+ * 이전 whitelist를 clear하고 저장된 focus 토큰이 있으면 push한다.
+ */
+export function applyFocusWhitelist(): void {
+  if (Platform.OS !== 'ios' || !iosModule) return;
+  try {
+    iosModule.clearWhitelistAndUpdateBlock?.('focus-session-apply-whitelist');
+    const token = iosModule.userDefaultsGet?.(FOCUS_WHITELIST_KEY);
+    if (typeof token === 'string' && token.length > 0) {
+      iosModule.addSelectionToWhitelistAndUpdateBlock?.(
+        {activitySelectionToken: token},
+        'focus-session-apply-whitelist',
+      );
+    }
+  } catch (error) {
+    console.error('[ScreenTime] applyFocusWhitelist error:', error);
+  }
+}
+
+/**
+ * 집중 세션 시작 시 차단 활성화
+ * iOS: focus 전용 whitelist 적용 후 블록 올 모드 활성
+ * Android: AppBlocker foreground service 시작 (현재 whitelist는 Android 구현 내부에서 처리)
+ */
+export async function shieldForFocus(): Promise<void> {
+  if (Platform.OS === 'ios') {
+    if (!iosModule) return;
+    try {
+      await iosModule.requestAuthorization('individual');
+      applyFocusWhitelist();
+      iosModule.enableBlockAllMode('focus-session');
+    } catch (error) {
+      console.error('[ScreenTime] shieldForFocus error:', error);
+    }
+    return;
+  }
+
+  if (!AndroidBlocker) return;
+  try {
+    await AndroidBlocker.startBlocking();
+  } catch (error) {
+    console.error('[ScreenTime] Android focus startBlocking error:', error);
+  }
+}
+
+/**
+ * 집중 세션 종료/중단 시 차단 해제
+ */
+export async function clearFocusShield(): Promise<void> {
+  if (Platform.OS === 'ios') {
+    if (!iosModule) return;
+    try {
+      iosModule.disableBlockAllMode('focus-session-end');
+      iosModule.resetBlocks('focus-session-end');
+    } catch (error) {
+      console.error('[ScreenTime] clearFocusShield error:', error);
+    }
+    return;
+  }
+
+  if (!AndroidBlocker) return;
+  try {
+    await AndroidBlocker.stopBlocking();
+  } catch (error) {
+    console.error('[ScreenTime] Android focus stopBlocking error:', error);
+  }
+}
+
+// ============================================
 // 자동 수면 차단 (iOS 전용 — DeviceActivity daily 스케줄)
 // ============================================
 

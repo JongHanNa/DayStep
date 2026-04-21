@@ -5,15 +5,22 @@
  *
  * 무료 사용자: 앱 + 카테고리 합계 1개까지 (소프트 제한 — 배너 표시)
  * Pro 사용자: 제한 없음
+ *
+ * route.params.mode:
+ *   'sleep' (기본) — currentUnblockedSelection 키 (수면/청소 공유)
+ *   'focus'        — focusUnblockedSelection 키 (집중 전용)
  */
 import React, {useState, useCallback, useRef} from 'react';
 import {View, Text, StyleSheet, Pressable, Platform} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import type {RouteProp} from '@react-navigation/native';
 import {ChevronLeft, Crown} from 'lucide-react-native';
 import {useTheme} from '@/theme';
 import LinearGradient from 'react-native-linear-gradient';
 import {ScreenContainer} from '@/components/core';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
+import {FOCUS_WHITELIST_KEY, applyFocusWhitelist} from '@/lib/screenTimeManager';
+import {usePomodoroStore} from '@/stores/pomodoroStore';
 import type {NativeSyntheticEvent} from 'react-native';
 
 // react-native-device-activity의 DeviceActivitySelectionView 컴포넌트
@@ -26,17 +33,27 @@ try {
   // 패키지 미설치 시 무시
 }
 
-// Shared.swift의 CURRENT_WHITELIST_KEY
-const CURRENT_WHITELIST_KEY = 'currentUnblockedSelection';
+// Shared.swift의 CURRENT_WHITELIST_KEY (수면/청소 공용)
+const SLEEP_WHITELIST_KEY = 'currentUnblockedSelection';
 
 const FREE_ALLOWED_TOTAL = 1; // 무료: 앱 + 카테고리 합계 1개
 
+type Mode = 'sleep' | 'focus';
+type ScreenTimeAppsRouteParams = {mode?: Mode};
+
 export default function ScreenTimeAppsScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<RouteProp<Record<string, ScreenTimeAppsRouteParams>, string>>();
+  const mode: Mode = route.params?.mode ?? 'sleep';
+  const whitelistKey = mode === 'focus' ? FOCUS_WHITELIST_KEY : SLEEP_WHITELIST_KEY;
+
   const {primaryColor} = useTheme();
   const hasActiveSubscription = useSubscriptionStore(
     s => s.hasActiveSubscription,
   );
+  const focusBlockerEnabled = usePomodoroStore(s => s.screenTimeLinkEnabled);
+  const pomodoroTimer = usePomodoroStore(s => s.timerState);
+
   const [appCount, setAppCount] = useState(0);
   const [categoryCount, setCategoryCount] = useState(0);
 
@@ -44,11 +61,11 @@ export default function ScreenTimeAppsScreen() {
   const latestSelectionRef = useRef<string | null>(null);
   const hasChangesRef = useRef(false);
 
-  // 마운트 시 직전 whitelist를 읽어 picker 초기값으로 사용 (다음 방문 시 복원)
+  // 마운트 시 해당 mode의 저장 whitelist를 읽어 picker 초기값으로 사용
   const [initialSelection] = useState<string | null>(() => {
     if (Platform.OS !== 'ios' || !nativeDA) return null;
     try {
-      const stored = nativeDA.userDefaultsGet?.(CURRENT_WHITELIST_KEY);
+      const stored = nativeDA.userDefaultsGet?.(whitelistKey);
       return typeof stored === 'string' && stored.length > 0 ? stored : null;
     } catch {
       return null;
@@ -74,22 +91,34 @@ export default function ScreenTimeAppsScreen() {
   const handleDone = useCallback(() => {
     if (hasChangesRef.current && Platform.OS === 'ios' && nativeDA) {
       try {
-        // picker는 체크 해제도 포함한 전체 상태를 emit하므로,
-        // UNION 의미인 add 전에 clear로 기존 whitelist를 초기화해야 제거가 반영된다.
-        nativeDA.clearWhitelistAndUpdateBlock?.('sleep-allowed-apps-update');
         const token = latestSelectionRef.current;
-        if (token) {
-          nativeDA.addSelectionToWhitelistAndUpdateBlock?.(
-            {activitySelectionToken: token},
-            'sleep-allowed-apps-update',
-          );
+
+        if (mode === 'focus') {
+          // 집중 전용 — 자체 UserDefaults 키에만 저장
+          nativeDA.userDefaultsSet?.(FOCUS_WHITELIST_KEY, token ?? '');
+
+          // 집중 차단이 현재 활성화돼 있고 세션 진행 중이라면 native whitelist에 즉시 반영
+          const focusSessionActive =
+            focusBlockerEnabled && (pomodoroTimer.isRunning || pomodoroTimer.isPaused);
+          if (focusSessionActive) {
+            applyFocusWhitelist();
+          }
+        } else {
+          // 수면/청소 — 기존 패턴 그대로
+          nativeDA.clearWhitelistAndUpdateBlock?.('sleep-allowed-apps-update');
+          if (token) {
+            nativeDA.addSelectionToWhitelistAndUpdateBlock?.(
+              {activitySelectionToken: token},
+              'sleep-allowed-apps-update',
+            );
+          }
         }
       } catch (error) {
         console.error('[ScreenTimeApps] whitelist update error:', error);
       }
     }
     navigation.goBack();
-  }, [navigation]);
+  }, [navigation, mode, focusBlockerEnabled, pomodoroTimer.isRunning, pomodoroTimer.isPaused]);
 
   const handleUpgrade = () => {
     navigation.navigate('Settings' as never);
@@ -98,6 +127,11 @@ export default function ScreenTimeAppsScreen() {
   const headerText = hasActiveSubscription
     ? undefined
     : `무료 플랜: 앱 또는 카테고리 ${FREE_ALLOWED_TOTAL}개까지`;
+
+  const description =
+    mode === 'focus'
+      ? '집중 중에도 사용할 수 있는 앱을 선택하세요.\n선택하지 않은 앱은 집중 시간 동안 차단됩니다.'
+      : '수면 중 사용할 수 있는 앱을 선택하세요.\n선택하지 않은 앱은 수면 시간 동안 차단됩니다.';
 
   return (
     <ScreenContainer>
@@ -115,10 +149,7 @@ export default function ScreenTimeAppsScreen() {
       <View style={styles.content}>
         {Platform.OS === 'ios' && DeviceActivitySelectionView ? (
           <>
-            <Text style={styles.description}>
-              수면 중 사용할 수 있는 앱을 선택하세요.{'\n'}
-              선택하지 않은 앱은 수면 시간 동안 차단됩니다.
-            </Text>
+            <Text style={styles.description}>{description}</Text>
 
             {/* 선택 현황 */}
             {totalSelected > 0 && (

@@ -36,6 +36,7 @@ import SleepGoalScreen from '../screens/SleepGoalScreen';
 import ScreenTimeAppsScreen from '../screens/ScreenTimeAppsScreen';
 import SleepADHDInfoScreen from '../screens/SleepADHDInfoScreen';
 import CleaningADHDInfoScreen from '../screens/CleaningADHDInfoScreen';
+import FocusGardenScreen from '../screens/FocusGardenScreen';
 
 /** MonthlyPlanner 리다이렉트: Planner 탭으로 이동 + viewMode='monthlyPlanner' */
 function MonthlyPlannerRedirect() {
@@ -76,7 +77,25 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
       <HomeStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
       <HomeStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
+      <HomeStack.Screen name="FocusGarden" component={FocusGardenScreen} />
     </HomeStack.Navigator>
+  );
+}
+
+// Execute Stack — 집중 화면 + 집중 정원 + 허용 앱 관리
+const ExecuteStack = createNativeStackNavigator();
+
+function ExecuteStackNavigator() {
+  return (
+    <ExecuteStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+      }}>
+      <ExecuteStack.Screen name="ExecuteMain" component={ExecutionScreen} />
+      <ExecuteStack.Screen name="FocusGarden" component={FocusGardenScreen} />
+      <ExecuteStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
+    </ExecuteStack.Navigator>
   );
 }
 
@@ -107,6 +126,7 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
       <MoreStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
       <MoreStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
+      <MoreStack.Screen name="FocusGarden" component={FocusGardenScreen} />
     </MoreStack.Navigator>
   );
 }
@@ -121,7 +141,7 @@ export default function MainTabNavigator() {
         screenOptions={{headerShown: false}}>
         <Tab.Screen name="Home" component={HomeStackNavigator} />
         <Tab.Screen name="Planner" component={PlannerScreen} />
-        <Tab.Screen name="Execute" component={ExecutionScreen} />
+        <Tab.Screen name="Execute" component={ExecuteStackNavigator} />
         <Tab.Screen name="Notes" component={NotesScreen} />
         <Tab.Screen name="More" component={MoreStackNavigator} />
       </Tab.Navigator>

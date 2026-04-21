@@ -332,6 +332,85 @@ export default function RecordScreen() {
   const [meetingNote, setMeetingNote] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const loadFilterData = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      // 관계
+      const {data: rels} = await supabase
+        .from('relationships')
+        .select('id, name, color')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('name');
+      if (rels) setRelationships(rels);
+
+      const {data: relLinks} = await supabase
+        .from('person_relationships')
+        .select('person_id, relationship_id')
+        .eq('user_id', user.id);
+      if (relLinks) {
+        const map = new Map<string, string[]>();
+        relLinks.forEach((l: {person_id: string; relationship_id: string}) => {
+          const existing = map.get(l.person_id) || [];
+          map.set(l.person_id, [...existing, l.relationship_id]);
+        });
+        setPersonRelationshipMap(map);
+      } else {
+        setPersonRelationshipMap(new Map());
+      }
+
+      // 역할
+      const {data: roleList} = await supabase
+        .from('roles')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('name');
+      if (roleList) setRoles(roleList);
+
+      const {data: roleLinks} = await supabase
+        .from('person_roles')
+        .select('person_id, role_id')
+        .eq('user_id', user.id);
+      if (roleLinks) {
+        const map = new Map<string, string[]>();
+        roleLinks.forEach((l: {person_id: string; role_id: string}) => {
+          const existing = map.get(l.person_id) || [];
+          map.set(l.person_id, [...existing, l.role_id]);
+        });
+        setPersonRoleMap(map);
+      } else {
+        setPersonRoleMap(new Map());
+      }
+
+      // 부서
+      const {data: depts} = await supabase
+        .from('departments')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('name');
+      if (depts) setDepartments(depts);
+
+      const {data: deptLinks} = await supabase
+        .from('person_departments')
+        .select('person_id, department_id')
+        .eq('user_id', user.id);
+      if (deptLinks) {
+        const map = new Map<string, string[]>();
+        deptLinks.forEach((l: {person_id: string; department_id: string}) => {
+          const existing = map.get(l.person_id) || [];
+          map.set(l.person_id, [...existing, l.department_id]);
+        });
+        setPersonDepartmentMap(map);
+      } else {
+        setPersonDepartmentMap(new Map());
+      }
+    } catch (err) {
+      console.error('[RecordScreen] Failed to load filter data:', err);
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (user?.id) {
       loadPeople(user.id);
@@ -344,79 +423,26 @@ export default function RecordScreen() {
           needsAttention: s.needsAttention,
         });
       });
-
-      // 관계/역할/부서 마스터 + 매핑 로드
-      (async () => {
-        try {
-          // 관계
-          const {data: rels} = await supabase
-            .from('relationships')
-            .select('id, name, color')
-            .eq('user_id', user.id)
-            .eq('is_active', true)
-            .order('name');
-          if (rels) setRelationships(rels);
-
-          const {data: relLinks} = await supabase
-            .from('person_relationships')
-            .select('person_id, relationship_id')
-            .eq('user_id', user.id);
-          if (relLinks) {
-            const map = new Map<string, string[]>();
-            relLinks.forEach((l: {person_id: string; relationship_id: string}) => {
-              const existing = map.get(l.person_id) || [];
-              map.set(l.person_id, [...existing, l.relationship_id]);
-            });
-            setPersonRelationshipMap(map);
-          }
-
-          // 역할
-          const {data: roleList} = await supabase
-            .from('roles')
-            .select('id, name')
-            .eq('user_id', user.id)
-            .eq('is_active', true)
-            .order('name');
-          if (roleList) setRoles(roleList);
-
-          const {data: roleLinks} = await supabase
-            .from('person_roles')
-            .select('person_id, role_id')
-            .eq('user_id', user.id);
-          if (roleLinks) {
-            const map = new Map<string, string[]>();
-            roleLinks.forEach((l: {person_id: string; role_id: string}) => {
-              const existing = map.get(l.person_id) || [];
-              map.set(l.person_id, [...existing, l.role_id]);
-            });
-            setPersonRoleMap(map);
-          }
-
-          // 부서
-          const {data: depts} = await supabase
-            .from('departments')
-            .select('id, name')
-            .eq('user_id', user.id);
-          if (depts) setDepartments(depts);
-
-          const {data: deptLinks} = await supabase
-            .from('person_departments')
-            .select('person_id, department_id')
-            .eq('user_id', user.id);
-          if (deptLinks) {
-            const map = new Map<string, string[]>();
-            deptLinks.forEach((l: {person_id: string; department_id: string}) => {
-              const existing = map.get(l.person_id) || [];
-              map.set(l.person_id, [...existing, l.department_id]);
-            });
-            setPersonDepartmentMap(map);
-          }
-        } catch (err) {
-          console.error('[RecordScreen] Failed to load filter data:', err);
-        }
-      })();
+      loadFilterData();
     }
-  }, [user?.id]);
+  }, [user?.id, loadFilterData]);
+
+  const affectedPersonCount = useCallback(
+    (kind: 'relationship' | 'role' | 'department', categoryId: string) => {
+      const map =
+        kind === 'relationship'
+          ? personRelationshipMap
+          : kind === 'role'
+            ? personRoleMap
+            : personDepartmentMap;
+      let count = 0;
+      map.forEach(ids => {
+        if (ids.includes(categoryId)) count++;
+      });
+      return count;
+    },
+    [personRelationshipMap, personRoleMap, personDepartmentMap],
+  );
 
   // 안부 버튼에서 넘어온 경우 자동 선택
   const autoSelectedRef = useRef(false);
@@ -1180,6 +1206,7 @@ export default function RecordScreen() {
             loadPeople(user.id);
             loadRecommendations(user.id);
             getRecentNotesPerPerson(user.id).then(setNotesPerPerson);
+            loadFilterData();
           }
         }}
         onPersonDeleted={() => {
@@ -1187,8 +1214,11 @@ export default function RecordScreen() {
             loadPeople(user.id);
             loadRecommendations(user.id);
             getRecentNotesPerPerson(user.id).then(setNotesPerPerson);
+            loadFilterData();
           }
         }}
+        onCategoriesChanged={loadFilterData}
+        affectedPersonCount={affectedPersonCount}
         addPerson={addPerson}
         updatePerson={updatePerson}
         deletePerson={deletePerson}

@@ -41,6 +41,8 @@
 		A43C013B2F6CB8DF001C082C /* ShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C01322F6CB8DF001C082C /* ShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A476069A2F9175C900375BC1 /* DayStepShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A47606902F9175C900375BC1 /* DayStepShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A47606AD2F9177BD00375BC1 /* CallKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A47606AC2F9177BD00375BC1 /* CallKit.framework */; };
+		A49F65942F97DF7100E608ED /* NativeFocusGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */; };
+		A49F65952F97DF7100E608ED /* NativeFocusGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */; };
 		A4F440BE2F9180CD00C25E59 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */; };
 		A4F440BF2F9180CD00C25E59 /* DayStepShareModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */; };
 		A4F440C02F9180CD00C25E59 /* DayStepShareModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */; };
@@ -183,6 +185,8 @@
 		A43C01322F6CB8DF001C082C /* ShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A47606902F9175C900375BC1 /* DayStepShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A47606AC2F9177BD00375BC1 /* CallKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CallKit.framework; path = System/Library/Frameworks/CallKit.framework; sourceTree = SDKROOT; };
+		A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeFocusGarden.swift; path = DayStepRN/NativeFocusGarden.swift; sourceTree = "<group>"; };
+		A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeFocusGardenBridge.m; path = DayStepRN/NativeFocusGardenBridge.m; sourceTree = "<group>"; };
 		A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeWeekStripCalendarBridge.m; path = DayStepRN/NativeWeekStripCalendarBridge.m; sourceTree = "<group>"; };
 		A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AddTodoIntent.swift; path = DayStepRN/AddTodoIntent.swift; sourceTree = "<group>"; };
 		A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppShortcuts.swift; path = DayStepRN/AppShortcuts.swift; sourceTree = "<group>"; };
@@ -323,6 +327,8 @@
 		13B07FAE1A68108700A75B9A /* DayStepRN */ = {
 			isa = PBXGroup;
 			children = (
+				A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */,
+				A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */,
 				A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */,
 				A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */,
 				A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */,
@@ -844,6 +850,8 @@
 				A41F7D8C2F500BD800A4C1D8 /* DayStepWidgetModule.swift in Sources */,
 				A41F7D8D2F500BD800A4C1D8 /* DayStepWidgetModule.m in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				A49F65942F97DF7100E608ED /* NativeFocusGarden.swift in Sources */,
+				A49F65952F97DF7100E608ED /* NativeFocusGardenBridge.m in Sources */,
 				051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */,
 				63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */,
 				F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */,

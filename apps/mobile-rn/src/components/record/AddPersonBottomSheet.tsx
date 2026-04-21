@@ -12,7 +12,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import {View, Text, StyleSheet, ScrollView, ActionSheetIOS} from 'react-native';
+import {View, Text, StyleSheet, ActionSheetIOS, type TextInput} from 'react-native';
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
@@ -25,7 +25,13 @@ import {useLimitCheck} from '@/hooks/useLimitCheck';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {supabase} from '@/lib/supabase';
 import {hexWithOpacity} from '@/lib/todoUtils';
-import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
+import {
+  useCherishedPeopleStore,
+  type CherishedPerson,
+  type CategoryKind,
+  type CategoryItem,
+} from '@/stores/cherishedPeopleStore';
+import {EditableTagSection} from './EditableTagSection';
 
 export interface AddPersonBottomSheetRef {
   open: (prefillName?: string) => void;
@@ -37,29 +43,40 @@ interface AddPersonBottomSheetProps {
   onPersonAdded: (person: CherishedPerson) => void;
   onPersonUpdated?: () => void;
   onPersonDeleted?: () => void;
+  onCategoriesChanged?: () => void;
   addPerson: (userId: string, data: {name: string; nickname?: string}) => Promise<CherishedPerson | null>;
   updatePerson: (userId: string, personId: string, data: Partial<{name: string; nickname: string}>) => Promise<boolean>;
   deletePerson: (userId: string, personId: string) => Promise<boolean>;
   userId: string | undefined;
-}
-
-interface TagItem {
-  id: string;
-  name: string;
-  color?: string;
+  affectedPersonCount?: (kind: CategoryKind, categoryId: string) => number;
 }
 
 export const AddPersonBottomSheet = forwardRef<
   AddPersonBottomSheetRef,
   AddPersonBottomSheetProps
 >(function AddPersonBottomSheet(
-  {onPersonAdded, onPersonUpdated, onPersonDeleted, addPerson, updatePerson, deletePerson, userId},
+  {
+    onPersonAdded,
+    onPersonUpdated,
+    onPersonDeleted,
+    onCategoriesChanged,
+    addPerson,
+    updatePerson,
+    deletePerson,
+    userId,
+    affectedPersonCount,
+  },
   ref,
 ) {
   const {primaryColor} = useTheme();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const nameRef = useRef<TextInput>(null);
+  const nicknameRef = useRef<TextInput>(null);
   const [saving, setSaving] = useState(false);
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
+  const addCategory = useCherishedPeopleStore(state => state.addCategory);
+  const updateCategory = useCherishedPeopleStore(state => state.updateCategory);
+  const deleteCategory = useCherishedPeopleStore(state => state.deleteCategory);
 
   // 모드
   const [editingPerson, setEditingPerson] = useState<CherishedPerson | null>(null);
@@ -70,15 +87,15 @@ export const AddPersonBottomSheet = forwardRef<
   const [nickname, setNickname] = useState('');
 
   // 태그 데이터
-  const [allRelationships, setAllRelationships] = useState<TagItem[]>([]);
-  const [allRoles, setAllRoles] = useState<TagItem[]>([]);
-  const [allDepartments, setAllDepartments] = useState<TagItem[]>([]);
+  const [allRelationships, setAllRelationships] = useState<CategoryItem[]>([]);
+  const [allRoles, setAllRoles] = useState<CategoryItem[]>([]);
+  const [allDepartments, setAllDepartments] = useState<CategoryItem[]>([]);
 
   const [selectedRelIds, setSelectedRelIds] = useState<string[]>([]);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [selectedDeptIds, setSelectedDeptIds] = useState<string[]>([]);
 
-  const snapPoints = useMemo(() => [isEditMode ? '75%' : '35%'], [isEditMode]);
+  const snapPoints = useMemo(() => [isEditMode ? '92%' : '35%'], [isEditMode]);
 
   // 마스터 데이터 로드
   const loadTagData = useCallback(async () => {
@@ -86,12 +103,12 @@ export const AddPersonBottomSheet = forwardRef<
     try {
       const [{data: rels}, {data: roleList}, {data: depts}] = await Promise.all([
         supabase.from('relationships').select('id, name, color').eq('user_id', userId).eq('is_active', true).order('name'),
-        supabase.from('roles').select('id, name').eq('user_id', userId).eq('is_active', true).order('name'),
-        supabase.from('departments').select('id, name').eq('user_id', userId),
+        supabase.from('roles').select('id, name, color').eq('user_id', userId).eq('is_active', true).order('name'),
+        supabase.from('departments').select('id, name, color').eq('user_id', userId).eq('is_active', true).order('name'),
       ]);
-      if (rels) setAllRelationships(rels);
-      if (roleList) setAllRoles(roleList);
-      if (depts) setAllDepartments(depts);
+      if (rels) setAllRelationships(rels as CategoryItem[]);
+      if (roleList) setAllRoles(roleList as CategoryItem[]);
+      if (depts) setAllDepartments(depts as CategoryItem[]);
     } catch (err) {
       console.error('[AddPersonBottomSheet] Failed to load tags:', err);
     }
@@ -116,14 +133,20 @@ export const AddPersonBottomSheet = forwardRef<
 
   useImperativeHandle(ref, () => ({
     open: (prefillName?: string) => {
+      const initial = prefillName?.trim() ?? '';
       setEditingPerson(null);
-      setName(prefillName?.trim() ?? '');
+      setName(initial);
       setNickname('');
       setSelectedRelIds([]);
       setSelectedRoleIds([]);
       setSelectedDeptIds([]);
       setSaving(false);
       bottomSheetRef.current?.present();
+      // uncontrolled input 동기화 (defaultValue는 mount 시에만 적용)
+      requestAnimationFrame(() => {
+        nameRef.current?.setNativeProps({text: initial});
+        nicknameRef.current?.setNativeProps({text: ''});
+      });
     },
     openEdit: (person: CherishedPerson) => {
       setEditingPerson(person);
@@ -133,6 +156,10 @@ export const AddPersonBottomSheet = forwardRef<
       loadTagData();
       loadPersonTags(person.id);
       bottomSheetRef.current?.present();
+      requestAnimationFrame(() => {
+        nameRef.current?.setNativeProps({text: person.name});
+        nicknameRef.current?.setNativeProps({text: person.nickname ?? ''});
+      });
     },
     close: () => {
       bottomSheetRef.current?.dismiss();
@@ -258,44 +285,65 @@ export const AddPersonBottomSheet = forwardRef<
     [],
   );
 
-  const renderTagSection = (
-    label: string,
-    items: TagItem[],
-    selected: string[],
-    setSelected: (ids: string[]) => void,
-  ) => {
-    if (items.length === 0) return null;
-    return (
-      <View style={s.tagSection}>
-        <Text style={s.tagLabel}>{label}</Text>
-        <View style={s.tagRow}>
-          {items.map(item => {
-            const isSelected = selected.includes(item.id);
-            return (
-              <AnimatedPressable
-                key={item.id}
-                onPress={() => toggleTag(item.id, selected, setSelected)}
-                hapticType="light"
-                scaleValue={0.95}
-                style={[
-                  s.tag,
-                  isSelected
-                    ? {backgroundColor: primaryColor}
-                    : {backgroundColor: '#F3F4F6'},
-                ]}>
-                <Text style={[
-                  s.tagText,
-                  {color: isSelected ? 'white' : '#6B7280'},
-                ]}>
-                  {item.name}
-                </Text>
-              </AnimatedPressable>
-            );
-          })}
-        </View>
-      </View>
-    );
-  };
+  const handleCategoryChanged = useCallback(() => {
+    loadTagData();
+    onCategoriesChanged?.();
+  }, [loadTagData, onCategoriesChanged]);
+
+  // snapPoints가 단일 값이므로 expand는 no-op.
+  // 카테고리 추가 폼이 펼쳐지면 BottomSheetScrollView가 알아서 스크롤 처리.
+  const expandSheet = useCallback(() => {}, []);
+
+  const toggleSelectedFor = useCallback(
+    (kind: CategoryKind, id: string) => {
+      if (kind === 'relationship') {
+        toggleTag(id, selectedRelIds, setSelectedRelIds);
+      } else if (kind === 'role') {
+        toggleTag(id, selectedRoleIds, setSelectedRoleIds);
+      } else {
+        toggleTag(id, selectedDeptIds, setSelectedDeptIds);
+      }
+    },
+    [toggleTag, selectedRelIds, selectedRoleIds, selectedDeptIds],
+  );
+
+  const countAffected = useCallback(
+    (kind: CategoryKind, categoryId: string) =>
+      affectedPersonCount?.(kind, categoryId) ?? 0,
+    [affectedPersonCount],
+  );
+
+  const onAddCategory = useCallback(
+    (kind: CategoryKind, name: string, color: string) => {
+      if (!userId) return Promise.resolve(null);
+      return addCategory(userId, kind, {name, color});
+    },
+    [addCategory, userId],
+  );
+
+  const onUpdateCategory = useCallback(
+    (kind: CategoryKind, id: string, patch: {name?: string; color?: string}) => {
+      if (!userId) return Promise.resolve(false);
+      return updateCategory(userId, kind, id, patch);
+    },
+    [updateCategory, userId],
+  );
+
+  const onDeleteCategory = useCallback(
+    (kind: CategoryKind, id: string) => {
+      if (!userId) return Promise.resolve(false);
+      // 선택 상태에서도 제거
+      if (kind === 'relationship') {
+        setSelectedRelIds(ids => ids.filter(x => x !== id));
+      } else if (kind === 'role') {
+        setSelectedRoleIds(ids => ids.filter(x => x !== id));
+      } else {
+        setSelectedDeptIds(ids => ids.filter(x => x !== id));
+      }
+      return deleteCategory(userId, kind, id);
+    },
+    [deleteCategory, userId],
+  );
 
   return (
     <>
@@ -304,6 +352,9 @@ export const AddPersonBottomSheet = forwardRef<
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         enableDynamicSizing={false}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
         handleIndicatorStyle={s.handleIndicator}>
         {isEditMode ? (
           <BottomSheetScrollView contentContainerStyle={s.sheet}>
@@ -318,7 +369,8 @@ export const AddPersonBottomSheet = forwardRef<
             {/* 이름 */}
             <Text style={s.fieldLabel}>이름</Text>
             <BottomSheetTextInput
-              value={name}
+              ref={nameRef as any}
+              defaultValue={name}
               onChangeText={setName}
               placeholder="이름"
               placeholderTextColor="#9CA3AF"
@@ -328,7 +380,8 @@ export const AddPersonBottomSheet = forwardRef<
             {/* 별명 */}
             <Text style={s.fieldLabel}>별명 (선택)</Text>
             <BottomSheetTextInput
-              value={nickname}
+              ref={nicknameRef as any}
+              defaultValue={nickname}
               onChangeText={setNickname}
               placeholder="나만의 별명"
               placeholderTextColor="#9CA3AF"
@@ -336,13 +389,49 @@ export const AddPersonBottomSheet = forwardRef<
             />
 
             {/* 관계 태그 */}
-            {renderTagSection('관계', allRelationships, selectedRelIds, setSelectedRelIds)}
+            <EditableTagSection
+              label="관계"
+              kind="relationship"
+              items={allRelationships}
+              selectedIds={selectedRelIds}
+              onToggle={id => toggleSelectedFor('relationship', id)}
+              onAdd={onAddCategory}
+              onUpdate={onUpdateCategory}
+              onDelete={onDeleteCategory}
+              onChanged={handleCategoryChanged}
+              affectedPersonCount={id => countAffected('relationship', id)}
+              onExpandRequest={expandSheet}
+            />
 
             {/* 역할 태그 */}
-            {renderTagSection('역할/직분', allRoles, selectedRoleIds, setSelectedRoleIds)}
+            <EditableTagSection
+              label="역할/직분"
+              kind="role"
+              items={allRoles}
+              selectedIds={selectedRoleIds}
+              onToggle={id => toggleSelectedFor('role', id)}
+              onAdd={onAddCategory}
+              onUpdate={onUpdateCategory}
+              onDelete={onDeleteCategory}
+              onChanged={handleCategoryChanged}
+              affectedPersonCount={id => countAffected('role', id)}
+              onExpandRequest={expandSheet}
+            />
 
             {/* 부서 태그 */}
-            {renderTagSection('부서/소속', allDepartments, selectedDeptIds, setSelectedDeptIds)}
+            <EditableTagSection
+              label="부서/소속"
+              kind="department"
+              items={allDepartments}
+              selectedIds={selectedDeptIds}
+              onToggle={id => toggleSelectedFor('department', id)}
+              onAdd={onAddCategory}
+              onUpdate={onUpdateCategory}
+              onDelete={onDeleteCategory}
+              onChanged={handleCategoryChanged}
+              affectedPersonCount={id => countAffected('department', id)}
+              onExpandRequest={expandSheet}
+            />
 
             {/* 저장 버튼 */}
             <AnimatedPressable
@@ -364,7 +453,8 @@ export const AddPersonBottomSheet = forwardRef<
             <Text style={s.subtitle}>소중한 분의 이름을 입력하세요</Text>
 
             <BottomSheetTextInput
-              value={name}
+              ref={nameRef as any}
+              defaultValue={name}
               onChangeText={setName}
               placeholder="이름"
               placeholderTextColor="#9CA3AF"
@@ -446,29 +536,6 @@ const s = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     marginBottom: 16,
-  },
-  tagSection: {
-    marginBottom: 16,
-  },
-  tagLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginBottom: 8,
-  },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  tagText: {
-    fontSize: 13,
-    fontWeight: '500',
   },
   confirmBtn: {
     paddingVertical: 14,

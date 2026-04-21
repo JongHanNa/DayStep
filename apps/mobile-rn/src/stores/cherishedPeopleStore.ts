@@ -33,6 +33,26 @@ export interface ContactRecommendation {
   priority: 'high' | 'medium' | 'normal';
 }
 
+export type CategoryKind = 'relationship' | 'role' | 'department';
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  color: string;
+}
+
+const TABLE_BY_KIND: Record<CategoryKind, string> = {
+  relationship: 'relationships',
+  role: 'roles',
+  department: 'departments',
+};
+
+const JUNCTION_BY_KIND: Record<CategoryKind, {table: string; fk: string}> = {
+  relationship: {table: 'person_relationships', fk: 'relationship_id'},
+  role: {table: 'person_roles', fk: 'role_id'},
+  department: {table: 'person_departments', fk: 'department_id'},
+};
+
 interface CherishedPeopleState {
   people: CherishedPerson[];
   recommendations: ContactRecommendation[];
@@ -71,6 +91,20 @@ interface CherishedPeopleState {
   // 통계 (신규)
   getDetailedStats: (userId: string) => Promise<DetailedStats>;
   getRelationshipStats: (userId: string) => Promise<RelationshipStats>;
+
+  // 카테고리 CRUD (관계/역할/부서)
+  addCategory: (
+    userId: string,
+    kind: CategoryKind,
+    data: {name: string; color: string},
+  ) => Promise<CategoryItem | null>;
+  updateCategory: (
+    userId: string,
+    kind: CategoryKind,
+    id: string,
+    patch: {name?: string; color?: string},
+  ) => Promise<boolean>;
+  deleteCategory: (userId: string, kind: CategoryKind, id: string) => Promise<boolean>;
 }
 
 /** 오늘 날짜 YYYY-MM-DD (KST) */
@@ -623,6 +657,68 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Relationship stats error:', err);
           return {totalPeople: 0, activeThisWeek: 0, needsAttention: 0, totalInteractions: 0};
+        }
+      },
+
+      // ── 카테고리 CRUD (관계/역할/부서) ──
+
+      addCategory: async (userId, kind, data) => {
+        try {
+          const {data: created, error} = await supabase
+            .from(TABLE_BY_KIND[kind])
+            .insert({user_id: userId, name: data.name, color: data.color, is_active: true})
+            .select('id, name, color')
+            .single();
+
+          if (error) throw error;
+          return created as CategoryItem;
+        } catch (err: any) {
+          console.error(`[CherishedPeopleStore] Add ${kind} error:`, err);
+          return null;
+        }
+      },
+
+      updateCategory: async (userId, kind, id, patch) => {
+        try {
+          const {error} = await supabase
+            .from(TABLE_BY_KIND[kind])
+            .update(patch)
+            .eq('id', id)
+            .eq('user_id', userId);
+
+          if (error) throw error;
+          return true;
+        } catch (err: any) {
+          console.error(`[CherishedPeopleStore] Update ${kind} error:`, err);
+          return false;
+        }
+      },
+
+      deleteCategory: async (userId, kind, id) => {
+        try {
+          const junction = JUNCTION_BY_KIND[kind];
+
+          // 1. 정션 테이블 hard delete
+          const {error: junctionError} = await supabase
+            .from(junction.table)
+            .delete()
+            .eq(junction.fk, id)
+            .eq('user_id', userId);
+
+          if (junctionError) throw junctionError;
+
+          // 2. 카테고리 soft delete
+          const {error: categoryError} = await supabase
+            .from(TABLE_BY_KIND[kind])
+            .update({is_active: false})
+            .eq('id', id)
+            .eq('user_id', userId);
+
+          if (categoryError) throw categoryError;
+          return true;
+        } catch (err: any) {
+          console.error(`[CherishedPeopleStore] Delete ${kind} error:`, err);
+          return false;
         }
       },
     }),

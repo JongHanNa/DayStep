@@ -27,8 +27,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ChevronRight, Square, Pause, Play, Check, Sparkles, Clock} from 'lucide-react-native';
+import {ChevronRight, Square, Pause, Play, Check, Sparkles, Clock, TreePine, MoreHorizontal} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable, GlassBackground} from '@/components/core';
+import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {FocusPickerModal} from '@/components/execution/FocusPickerModal';
 import {FocusStatsModal} from '@/components/execution/FocusStatsModal';
@@ -143,6 +144,8 @@ export default function ExecutionScreen() {
     resumeTimer,
     stopTimer,
     completeSession,
+    screenTimeLinkEnabled,
+    toggleScreenTimeLink,
   } = usePomodoroStore();
   const {toggleTodoCompletion} = useTodoStore();
 
@@ -418,19 +421,60 @@ export default function ExecutionScreen() {
           // IDLE 상태
           // ============================
           <View style={styles.flex}>
-            {/* 상단 헤더: 통계 버튼 */}
+            {/* 상단 헤더: 3-zone (좌: 통계 / 중: 메뉴 / 우: 집중 정원) */}
             <Animated.View entering={FadeIn.duration(300)} style={styles.idleHeaderRow}>
+              {/* 좌측: 통계 */}
               <AnimatedPressable
                 onPress={() => setStatsVisible(true)}
                 hapticType="light"
                 scaleValue={0.9}
-                style={styles.glassStatsBtn}>
+                style={styles.glassBtn}>
                 <GlassBackground
                   blurAmount={16}
                   overlayColor="rgba(255,255,255,0.55)"
-                  style={styles.glassStatsBtnInner}>
-                  <View style={styles.glassStatsBtnContent}>
+                  style={styles.glassBtnInner}>
+                  <View style={styles.glassBtnContent}>
                     <Clock size={20} color="#6B7280" />
+                  </View>
+                </GlassBackground>
+              </AnimatedPressable>
+
+              {/* 중앙: 앱 차단 메뉴 */}
+              <LiquidGlassMenu
+                systemIconName="ellipsis.circle"
+                iconColor="#6B7280"
+                size={40}
+                menuItems={[
+                  {
+                    key: 'toggleBlocker',
+                    title: screenTimeLinkEnabled ? '앱 차단 끄기' : '앱 차단 켜기',
+                  },
+                  ...(screenTimeLinkEnabled
+                    ? [{key: 'manageApps', title: '허용 앱 관리'}]
+                    : []),
+                ]}
+                onSelect={async (key) => {
+                  if (key === 'toggleBlocker') {
+                    await toggleScreenTimeLink();
+                  } else if (key === 'manageApps') {
+                    navigation.navigate('ScreenTimeApps', {mode: 'focus'});
+                  }
+                }}
+                fallbackIcon={<MoreHorizontal size={20} color="#6B7280" />}
+              />
+
+              {/* 우측: 집중 정원 */}
+              <AnimatedPressable
+                onPress={() => navigation.navigate('FocusGarden')}
+                hapticType="light"
+                scaleValue={0.9}
+                style={styles.glassBtn}>
+                <GlassBackground
+                  blurAmount={16}
+                  overlayColor="rgba(255,255,255,0.55)"
+                  style={styles.glassBtnInner}>
+                  <View style={styles.glassBtnContent}>
+                    <TreePine size={20} color={primaryColor} />
                   </View>
                 </GlassBackground>
               </AnimatedPressable>
@@ -632,24 +676,26 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  // ---- Idle header (stats button) ----
+  // ---- Idle header (3-zone) ----
   idleHeaderRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 8,
   },
-  glassStatsBtn: {
+  glassBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
     overflow: 'hidden',
   },
-  glassStatsBtnInner: {
+  glassBtnInner: {
     width: 40,
     height: 40,
     borderRadius: 20,
   },
-  glassStatsBtnContent: {
+  glassBtnContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',

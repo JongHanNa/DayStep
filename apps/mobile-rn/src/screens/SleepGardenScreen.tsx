@@ -142,6 +142,18 @@ export default function SleepGardenScreen() {
   }, []); // 최초 마운트 시만
 
   const gardenData = useMemo(() => getGardenData(), [getGardenData, records]);
+
+  // 수면 중에는 허용 앱 관리 진입 차단 — 활성 세션 중 변경 방지
+  const openScreenTimeApps = useCallback(() => {
+    if (sessionState.status === 'running') {
+      Alert.alert(
+        '수면 중에는 변경할 수 없어요',
+        '수면 세션을 종료한 후 허용 앱을 변경해주세요.',
+      );
+      return;
+    }
+    navigation.navigate('ScreenTimeApps');
+  }, [navigation, sessionState.status]);
   const streak = getStreak();
   const goalMinutes = getGoalDurationMinutes();
   const goalHours = Math.floor(goalMinutes / 60);
@@ -306,7 +318,7 @@ export default function SleepGardenScreen() {
         {/* 허용 앱 관리 링크 */}
         {screenTimeLinkEnabled && Platform.OS === 'ios' && (
           <Pressable
-            onPress={() => navigation.navigate('ScreenTimeApps')}
+            onPress={openScreenTimeApps}
             style={styles.screenTimeLink}>
             <Shield size={18} color="#6366F1" />
             <Text style={styles.screenTimeLinkText}>허용 앱 관리</Text>
