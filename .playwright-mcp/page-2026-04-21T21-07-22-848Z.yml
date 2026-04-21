@@ -1,0 +1,147 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: ISSUE 042 / APR 2026
+      - generic [ref=e7]: KR · v1.9.3
+    - heading "BUG · REQUEST — LEDGER 피드백 대장" [level=1] [ref=e8]:
+      - emphasis [ref=e9]: BUG · REQUEST — LEDGER
+      - text: 피드백
+      - text: 대장
+    - paragraph [ref=e10]:
+      - text: 모든 리포트는 작성자와 관리자만 볼 수 있습니다.
+      - text: 타인의 글은 ▀▀▀ 처리됩니다.
+  - navigation [ref=e11]:
+    - button "ALL 08" [ref=e12] [cursor=pointer]
+    - button "BUG 04" [ref=e13] [cursor=pointer]
+    - button "FEATURE 04" [ref=e14] [cursor=pointer]
+    - button "MINE 02" [ref=e15] [cursor=pointer]
+  - generic [ref=e16]:
+    - generic [ref=e17]: 08 RECORDS
+    - generic [ref=e18]: SORT · NEWEST ↓
+  - generic [ref=e19]:
+    - generic [ref=e20]: 금주
+    - article [ref=e21] [cursor=pointer]:
+      - generic [ref=e22]: "001"
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic [ref=e26]: BUG
+            - generic [ref=e27]: TRIAGED
+            - generic [ref=e28]: ▲ 03
+          - generic [ref=e29]: 2시간 전
+        - heading "플래너에서 주간 스트립 스크롤이 끊깁니다" [level=3] [ref=e30]
+        - paragraph [ref=e31]: 주간 뷰에서 좌우로 넘길 때 가끔 두 프레임 정도 끊기는 느낌이 있어요. iPhone 13, iOS 17.4. 재현율은 30% 정도.
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - img [ref=e34]
+            - text: 3 VOTES
+          - generic [ref=e36]: 💬 1
+          - generic [ref=e37]: · TEAM REPLIED
+    - article [ref=e38] [cursor=pointer]:
+      - generic [ref=e39]: "002"
+      - generic [ref=e40]:
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - generic [ref=e43]: FEAT
+            - generic [ref=e44]: OPEN
+            - generic [ref=e45]: ▲ 12
+          - generic [ref=e46]: 5시간 전
+        - generic [ref=e47]:
+          - generic: AUTHOR-ONLY
+        - generic [ref=e50]:
+          - generic [ref=e51]: ▲ 12
+          - generic [ref=e52]: 💬 4
+          - generic [ref=e53]: · REDACTED
+    - article [ref=e54] [cursor=pointer]:
+      - generic [ref=e55]: "003"
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]: BUG
+            - generic [ref=e60]: SHIPPED
+            - generic [ref=e61]: ▲ 01
+          - generic [ref=e62]: 어제
+        - generic [ref=e63]:
+          - generic: AUTHOR-ONLY
+        - generic [ref=e66]:
+          - generic [ref=e67]: ▲ 1
+          - generic [ref=e68]: 💬 2
+          - generic [ref=e69]: · REDACTED
+    - article [ref=e70] [cursor=pointer]:
+      - generic [ref=e71]: "004"
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - generic [ref=e75]: FEAT
+            - generic [ref=e76]: REVIEW
+            - generic [ref=e77]: ▲ 07
+          - generic [ref=e78]: 3일 전
+        - heading "포커스 모드에서 알림 음소거 강도 단계 조절" [level=3] [ref=e79]
+        - paragraph [ref=e80]: 포커스 중에도 가족/긴급 연락은 받고 싶어요. 3단계 정도로 나눠서 — 전부차단 / 즐겨찾기만 / 전부허용 — 선택할 수 있으면 좋겠습니다.
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - img [ref=e83]
+            - text: 7 VOTES
+          - generic [ref=e85]: 💬 0
+    - generic [ref=e86]: 이전 기록
+    - article [ref=e87] [cursor=pointer]:
+      - generic [ref=e88]: "005"
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - generic [ref=e92]: BUG
+            - generic [ref=e93]: OPEN
+            - generic [ref=e94]: ▲ 09
+          - generic [ref=e95]: 4일 전
+        - generic [ref=e96]:
+          - generic: AUTHOR-ONLY
+        - generic [ref=e99]:
+          - generic [ref=e100]: ▲ 9
+          - generic [ref=e101]: 💬 3
+          - generic [ref=e102]: · REDACTED
+    - article [ref=e103] [cursor=pointer]:
+      - generic [ref=e104]: "006"
+      - generic [ref=e105]:
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - generic [ref=e108]: FEAT
+            - generic [ref=e109]: WON'T FIX
+            - generic [ref=e110]: ▲ 02
+          - generic [ref=e111]: 지난주
+        - generic [ref=e112]:
+          - generic: AUTHOR-ONLY
+        - generic [ref=e115]:
+          - generic [ref=e116]: ▲ 2
+          - generic [ref=e117]: 💬 5
+          - generic [ref=e118]: · REDACTED
+    - article [ref=e119] [cursor=pointer]:
+      - generic [ref=e120]: "007"
+      - generic [ref=e121]:
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - generic [ref=e124]: FEAT
+            - generic [ref=e125]: REVIEW
+            - generic [ref=e126]: ▲ 18
+          - generic [ref=e127]: 지난주
+        - generic [ref=e128]:
+          - generic: AUTHOR-ONLY
+        - generic [ref=e131]:
+          - generic [ref=e132]: ▲ 18
+          - generic [ref=e133]: 💬 6
+          - generic [ref=e134]: · REDACTED
+    - article [ref=e135] [cursor=pointer]:
+      - generic [ref=e136]: "008"
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e139]:
+            - generic [ref=e140]: BUG
+            - generic [ref=e141]: TRIAGED
+            - generic [ref=e142]: ▲ 04
+          - generic [ref=e143]: 2주 전
+        - generic [ref=e144]:
+          - generic: AUTHOR-ONLY
+        - generic [ref=e147]:
+          - generic [ref=e148]: ▲ 4
+          - generic [ref=e149]: 💬 1
+          - generic [ref=e150]: · REDACTED
+  - button "＋" [ref=e151] [cursor=pointer]

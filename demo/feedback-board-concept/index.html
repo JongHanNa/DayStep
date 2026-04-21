@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>버그 신고 & 기능 요청 게시판 — 디자인 시안 3종</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --primary: #3B82F6;
+    --primary-08: rgba(59,130,246,0.08);
+    --primary-15: rgba(59,130,246,0.15);
+    --error: #DC2626;
+    --success: #22C55E;
+    --ink-900: #0A0A0A;
+    --ink-700: #3A3A3C;
+    --ink-500: #8E8E93;
+    --ink-400: #AEAEB2;
+    --ink-300: #C7C7CC;
+    --bg: #F2F2F7;
+    --surface: #FFFFFF;
+    --hairline: rgba(60,60,67,0.12);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    background: linear-gradient(135deg, #F5F3EF 0%, #ECE8E0 50%, #E8E2D6 100%);
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink-900);
+  }
+  .container { max-width: 1240px; margin: 0 auto; padding: 56px 48px 96px; }
+  header.hero { margin-bottom: 56px; }
+  .eyebrow { font-size: 12px; font-weight: 600; color: var(--primary); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+  header.hero h1 { font-size: 44px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px; color: #1C1C1E; }
+  header.hero p { font-size: 17px; line-height: 1.55; color: var(--ink-700); max-width: 760px; }
+  .brief { background: white; border-radius: 18px; padding: 24px 28px; margin: 32px 0 48px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; box-shadow: 0 2px 12px -2px rgba(0,0,0,0.06); }
+  .brief .item h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-500); font-weight: 600; margin-bottom: 6px; }
+  .brief .item p { font-size: 14px; color: var(--ink-900); font-weight: 500; line-height: 1.35; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 64px; }
+  .card { background: white; border-radius: 24px; padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 20px; text-decoration: none; color: inherit; box-shadow: 0 4px 24px -6px rgba(0,0,0,0.08); transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid rgba(0,0,0,0.04); }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px -12px rgba(0,0,0,0.15); }
+  .card .badge-row { display: flex; justify-content: space-between; align-items: center; }
+  .card .letter { width: 36px; height: 36px; background: var(--primary-15); color: var(--primary); border-radius: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 16px; letter-spacing: -0.02em; }
+  .card .open-link { font-size: 12px; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 4px; }
+  .card h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink-900); }
+  .card h3 + p.model { font-size: 14px; color: var(--ink-500); margin-top: 4px; line-height: 1.4; }
+
+  .thumb { background: var(--bg); border-radius: 16px; aspect-ratio: 430 / 600; position: relative; overflow: hidden; padding: 14px 14px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .thumb .thumb-status { display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; color: var(--ink-700); margin-bottom: 2px; }
+  .thumb .thumb-title { font-size: 18px; font-weight: 700; color: var(--ink-900); letter-spacing: -0.02em; padding: 0 4px; }
+  .thumb .thumb-caption { font-size: 9px; color: var(--ink-500); padding: 0 4px; }
+
+  .thumb.a .strip { background: white; border-radius: 6px; padding: 8px 6px; display: flex; margin-top: 4px; }
+  .thumb.a .strip div { flex: 1; text-align: center; font-size: 14px; font-weight: 700; color: var(--ink-900); }
+  .thumb.a .strip div .l { font-size: 8px; font-weight: 500; color: var(--ink-500); display: block; }
+  .thumb.a .row { background: white; border-radius: 6px; padding: 6px 8px; display: flex; gap: 6px; align-items: center; font-size: 10px; }
+  .thumb.a .row .pill { flex-shrink: 0; font-size: 8px; padding: 1px 5px; border-radius: 4px; font-weight: 600; }
+  .thumb.a .row .pill.b { background: var(--primary-15); color: var(--primary); }
+  .thumb.a .row .pill.g { background: rgba(34,197,94,0.12); color: var(--success); }
+  .thumb.a .row .pill.gr { background: rgba(142,142,147,0.15); color: var(--ink-500); }
+  .thumb.a .row .t { flex: 1; color: var(--ink-900); font-weight: 500; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thumb.a .fab-mini { position: absolute; right: 14px; bottom: 22px; width: 28px; height: 28px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px -2px rgba(59,130,246,0.5); }
+
+  .thumb.b .seg { background: rgba(118,118,128,0.12); border-radius: 6px; padding: 2px; display: flex; height: 22px; }
+  .thumb.b .seg div { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 500; color: var(--ink-700); }
+  .thumb.b .seg div.act { background: white; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 600; }
+  .thumb.b .sec-h { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; color: var(--ink-700); padding: 0 4px; }
+  .thumb.b .sec-h .d { width: 5px; height: 5px; border-radius: 50%; }
+  .thumb.b .c { background: white; border-radius: 6px; padding: 6px 8px; font-size: 10px; color: var(--ink-900); font-weight: 500; display: flex; flex-direction: column; gap: 2px; }
+  .thumb.b .c .tag { font-size: 8px; padding: 1px 5px; border-radius: 3px; font-weight: 600; display: inline-block; align-self: flex-start; }
+  .thumb.b .c .tag.b { background: rgba(220,38,38,0.1); color: var(--error); }
+  .thumb.b .c .tag.f { background: var(--primary-15); color: var(--primary); }
+  .thumb.b .dim { background: rgba(142,142,147,0.06); border-radius: 6px; padding: 5px 8px; font-size: 9px; color: var(--ink-400); }
+  .thumb.b .disc { background: white; border-radius: 6px; padding: 6px 8px; display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink-900); font-weight: 500; }
+  .thumb.b .disc .d { width: 5px; height: 5px; border-radius: 50%; }
+  .thumb.b .disc .cnt { margin-left: auto; color: var(--ink-400); font-size: 9px; font-weight: 400; }
+
+  .thumb.c .pin { background: var(--primary-08); border-radius: 6px; padding: 5px 8px; font-size: 9px; color: var(--ink-700); display: flex; align-items: center; gap: 5px; }
+  .thumb.c .pin .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; }
+  .thumb.c .th { background: white; border-radius: 6px; padding: 8px; display: flex; gap: 7px; align-items: flex-start; position: relative; }
+  .thumb.c .th .ud { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+  .thumb.c .th .av { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #4F87F9, #3B82F6); color: white; font-weight: 700; font-size: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .thumb.c .th .av.done { background: linear-gradient(135deg, #AEAEB2, #8E8E93); }
+  .thumb.c .th .mn { flex: 1; min-width: 0; }
+  .thumb.c .th .ti { font-size: 10px; font-weight: 600; color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thumb.c .th .ti.done { color: var(--ink-500); font-weight: 500; }
+  .thumb.c .th .sn { font-size: 8px; color: var(--ink-500); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thumb.c .th .sn .adm { color: var(--primary); font-weight: 500; }
+
+  .card ul.meta { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .card ul.meta li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink-700); line-height: 1.4; }
+  .card ul.meta li strong { color: var(--ink-900); font-weight: 600; min-width: 58px; flex-shrink: 0; }
+  .card .cta { margin-top: 4px; padding: 10px 14px; background: var(--primary); color: white; border-radius: 10px; font-size: 14px; font-weight: 600; text-align: center; letter-spacing: -0.01em; }
+
+  .compare { background: white; border-radius: 20px; padding: 32px; box-shadow: 0 4px 24px -6px rgba(0,0,0,0.06); }
+  .compare h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; color: var(--ink-900); }
+  .compare .lead { font-size: 14px; color: var(--ink-500); margin-bottom: 24px; }
+  .compare table { width: 100%; border-collapse: collapse; }
+  .compare th, .compare td { padding: 14px 16px; text-align: left; font-size: 13px; vertical-align: top; border-bottom: 1px solid var(--hairline); }
+  .compare th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-500); font-weight: 600; }
+  .compare th:first-child, .compare td:first-child { font-weight: 600; color: var(--ink-900); width: 22%; }
+  .compare tr:last-child td { border-bottom: none; }
+  .compare td { color: var(--ink-700); }
+
+  .footnote { margin-top: 48px; padding: 20px 24px; background: rgba(255,255,255,0.6); border-radius: 14px; font-size: 13px; color: var(--ink-700); line-height: 1.55; border-left: 3px solid var(--primary); }
+  .footnote strong { color: var(--ink-900); }
+
+  .restore-banner { margin-bottom: 24px; padding: 12px 16px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 10px; font-size: 13px; color: #166534; display: flex; align-items: center; gap: 8px; }
+  .restore-banner strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="restore-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    <span><strong>복원됨</strong> — 다른 세션이 <code>demo/feedback-board/</code>를 덮어썼기에 이 폴더(<code>demo/feedback-board-concept/</code>)에 시안 A/B/C를 재생성했습니다.</span>
+  </div>
+
+  <header class="hero">
+    <div class="eyebrow">DayStep · Mobile · 설정 → 지원 & 피드백</div>
+    <h1>버그 신고 & 기능 요청 게시판<br/><span style="color:var(--ink-500);font-weight:600">디자인 시안 3종</span></h1>
+    <p>
+      작성자와 관리자만 내용을 열람할 수 있는 피드백 게시판입니다. 타인 게시물은 "비공개"로 처리되며, 각 시안은 이 프라이버시 제약을 다른 멘탈 모델로 해석합니다. 모든 인터랙티브 요소는 네이티브 SwiftUI/Kotlin 컨트롤 우선으로 설계되었으며, 각 페이지에 어떤 네이티브 컨트롤이 매핑되는지 노란 콜아웃으로 명시되어 있습니다.
+    </p>
+  </header>
+
+  <div class="brief">
+    <div class="item">
+      <h4>진입점</h4>
+      <p>Settings → 지원 & 피드백 → push</p>
+    </div>
+    <div class="item">
+      <h4>열람 권한</h4>
+      <p>작성자 + 관리자(users.role='admin')</p>
+    </div>
+    <div class="item">
+      <h4>상태</h4>
+      <p>검토중 · 진행중 · 완료 · 보류</p>
+    </div>
+    <div class="item">
+      <h4>타입</h4>
+      <p>버그 · 기능 요청</p>
+    </div>
+  </div>
+
+  <div class="cards">
+
+    <a class="card" href="concept-a.html">
+      <div class="badge-row">
+        <div class="letter">A</div>
+        <div class="open-link">열어보기 →</div>
+      </div>
+      <div>
+        <h3>개인 저널</h3>
+        <p class="model">"내가 개발팀에게 보낸 편지 서류함"</p>
+      </div>
+
+      <div class="thumb a">
+        <div class="thumb-status"><span>9:41</span><span>●●● ⎌ ▮</span></div>
+        <div class="thumb-title">내 제보</div>
+        <div class="thumb-caption">전체 사용자 48건 제보 중 · 이번 주 12건 반영됨</div>
+        <div class="strip">
+          <div><span class="n">3</span><span class="l">내 제보</span></div>
+          <div><span class="n" style="color:var(--primary)">1</span><span class="l">진행중</span></div>
+          <div><span class="n">2</span><span class="l">완료</span></div>
+        </div>
+        <div class="row"><span class="pill b">진행중</span><span class="t">다크모드 폰트 잔상</span></div>
+        <div class="row"><span class="pill g">완료</span><span class="t">시간 블록 색상</span></div>
+        <div class="row"><span class="pill gr">검토중</span><span class="t">반복 할 일 종료일</span></div>
+        <div class="fab-mini">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+
+      <ul class="meta">
+        <li><strong>주 동기</strong><span>기록/주인의식 — 내 로그 누적의 만족감</span></li>
+        <li><strong>타인 처리</strong><span>상단 집계 "48건" 한 줄로만 → 리스트 배제</span></li>
+        <li><strong>Primary CTA</strong><span>우하단 FAB (primaryColor 독점)</span></li>
+      </ul>
+
+      <div class="cta">시안 A 자세히 보기</div>
+    </a>
+
+    <a class="card" href="concept-b.html">
+      <div class="badge-row">
+        <div class="letter">B</div>
+        <div class="open-link">열어보기 →</div>
+      </div>
+      <div>
+        <h3>상태 보드</h3>
+        <p class="model">"내 제보들의 진행 칸반"</p>
+      </div>
+
+      <div class="thumb b">
+        <div class="thumb-status"><span>9:41</span><span>●●● ⎌ ▮</span></div>
+        <div class="thumb-title" style="font-size:14px;text-align:center">제보 현황</div>
+        <div class="seg"><div class="act">전체</div><div>버그</div><div>기능</div></div>
+        <div class="sec-h"><span class="d" style="background:#B0B0B5"></span>검토중 · 2</div>
+        <div class="c"><span class="tag b">버그</span>다크모드 폰트 잔상</div>
+        <div class="c"><span class="tag f">기능</span>반복 할 일 종료일</div>
+        <div class="dim">🔒 비공개 · 14건</div>
+        <div class="sec-h"><span class="d" style="background:var(--primary)"></span>진행중 · 1</div>
+        <div class="c"><span class="tag b">버그</span>주간 스트립 끊김</div>
+        <div class="disc"><span class="d" style="background:var(--success)"></span>완료<span class="cnt">2 · 비공개 9건</span></div>
+      </div>
+
+      <ul class="meta">
+        <li><strong>주 동기</strong><span>진척감 — "죽지 않고 움직이는" 내 제보</span></li>
+        <li><strong>타인 처리</strong><span>섹션별 "비공개 · N건" dimmed row</span></li>
+        <li><strong>Primary CTA</strong><span>우상단 <code style="font-size:12px">+</code> (조용한 toolbar)</span></li>
+      </ul>
+
+      <div class="cta">시안 B 자세히 보기</div>
+    </a>
+
+    <a class="card" href="concept-c.html">
+      <div class="badge-row">
+        <div class="letter">C</div>
+        <div class="open-link">열어보기 →</div>
+      </div>
+      <div>
+        <h3>DM 스레드</h3>
+        <p class="model">"개발팀과의 1:1 메신저"</p>
+      </div>
+
+      <div class="thumb c">
+        <div class="thumb-status"><span>9:41</span><span>●●● ⎌ ▮</span></div>
+        <div class="thumb-title" style="font-size:14px;text-align:center">개발팀</div>
+        <div class="pin"><span class="dot">i</span>개발팀이 보통 <strong style="color:var(--ink-900)">2일 내</strong> 답장</div>
+        <div class="th"><span class="ud"></span><div class="av">DS</div><div class="mn"><div class="ti">다크모드 폰트 잔상</div><div class="sn"><span class="adm">개발팀:</span> 잔상 재현 확인했고...</div></div></div>
+        <div class="th"><div class="av">DS</div><div class="mn"><div class="ti">반복 할 일 종료일</div><div class="sn"><span class="adm">개발팀:</span> 좋은 제안 감사합니다...</div></div></div>
+        <div class="th"><div class="av done">DS</div><div class="mn"><div class="ti done">시간 블록 색상</div><div class="sn"><span class="adm" style="color:var(--success)">개발팀:</span> v1.4.2 반영 완료!</div></div></div>
+        <div class="th"><div class="av">DS</div><div class="mn"><div class="ti">포모도로 백그라운드 알림</div><div class="sn"><span class="adm">개발팀:</span> 포커스 모드 설정...</div></div></div>
+      </div>
+
+      <ul class="meta">
+        <li><strong>주 동기</strong><span>관계성 — 답장 받고 싶은 reciprocity</span></li>
+        <li><strong>타인 처리</strong><span>완전 비가시 (1:1 모델 내장)</span></li>
+        <li><strong>Primary CTA</strong><span>우상단 ✎ (Messages.app 관습)</span></li>
+      </ul>
+
+      <div class="cta">시안 C 자세히 보기</div>
+    </a>
+
+  </div>
+
+  <div class="compare">
+    <h2>한눈에 비교</h2>
+    <div class="lead">같은 기능을 세 가지 멘탈 모델로 해석했을 때의 핵심 차이</div>
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>A · 개인 저널</th>
+          <th>B · 상태 보드</th>
+          <th>C · DM 스레드</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>멘탈 모델</td>
+          <td>내가 보낸 편지 서류함</td>
+          <td>내 제보의 칸반 트래커</td>
+          <td>개발팀과의 1:1 메신저</td>
+        </tr>
+        <tr>
+          <td>주 동기</td>
+          <td>기록 / 주인의식</td>
+          <td>진척감</td>
+          <td>답장 / 관계성</td>
+        </tr>
+        <tr>
+          <td>타인 게시물 처리</td>
+          <td>집계 한 줄만 ("48건 제보 중")</td>
+          <td>섹션별 dimmed row ("비공개 · 14건")</td>
+          <td>완전 비가시 (모델 내장)</td>
+        </tr>
+        <tr>
+          <td>Primary CTA</td>
+          <td>우하단 FAB · primaryColor</td>
+          <td>우상단 <code>+</code> · toolbar</td>
+          <td>우상단 ✎ · Messages 관습</td>
+        </tr>
+        <tr>
+          <td>정보 계층</td>
+          <td>수직 timeline (시간순)</td>
+          <td>수평 status grouping</td>
+          <td>스레드 단위 (최근 활동순)</td>
+        </tr>
+        <tr>
+          <td>핵심 네이티브 컨트롤</td>
+          <td>.navigationTitle(.large), List(.plain), .glassEffect() FAB, .sheet(.large)</td>
+          <td>Picker(.segmented), LazyVStack sticky, DisclosureGroup, matchedGeometryEffect</td>
+          <td>.searchable, .badge(), .symbolEffect, List + .swipeActions, Messages chat bubble</td>
+        </tr>
+        <tr>
+          <td>신규 브리지 필요</td>
+          <td>없음 (기존 LiquidGlass + 시트)</td>
+          <td>SegmentedControl 래퍼</td>
+          <td>.searchable 래퍼 + chat UI</td>
+        </tr>
+        <tr>
+          <td>적합한 사용자</td>
+          <td>기록 자체에 의미를 두는 사용자</td>
+          <td>제품 운영 신뢰도를 중시하는 사용자</td>
+          <td>답장 기반 관계를 선호하는 사용자</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footnote">
+    <strong>범례</strong> — 각 시안 페이지의 <span style="background:#FFF5B1;border:1px solid #E8D76A;padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11px">iOS</span> 콜아웃은 사용할 SwiftUI 컨트롤, <span style="background:#9B1C1C;color:#FFE5E5;padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11px;font-weight:700">GAP</span> 표시는 현재 RN repo에 아직 래퍼가 없어 신규 Swift 브리지나 추가 라이브러리가 필요한 항목을 의미합니다. 사용자가 시안을 선택하면 후속 작업으로 Supabase <code>feedback_posts</code> 테이블 마이그레이션, <code>FeedbackBoardScreen</code> RN 구현, 필요한 네이티브 브리지 작성을 진행할 수 있습니다.
+  </div>
+
+</div>
+
+</body>
+</html>
