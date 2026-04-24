@@ -37,6 +37,7 @@ import ScreenTimeAppsScreen from '../screens/ScreenTimeAppsScreen';
 import SleepADHDInfoScreen from '../screens/SleepADHDInfoScreen';
 import CleaningADHDInfoScreen from '../screens/CleaningADHDInfoScreen';
 import FocusGardenScreen from '../screens/FocusGardenScreen';
+import FeedbackBoardScreen from '../screens/FeedbackBoardScreen';
 
 /** MonthlyPlanner 리다이렉트: Planner 탭으로 이동 + viewMode='monthlyPlanner' */
 function MonthlyPlannerRedirect() {
@@ -78,6 +79,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
       <HomeStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
       <HomeStack.Screen name="FocusGarden" component={FocusGardenScreen} />
+      <HomeStack.Screen name="FeedbackBoard" component={FeedbackBoardScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -127,6 +129,7 @@ function MoreStackNavigator() {
       <MoreStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
       <MoreStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
       <MoreStack.Screen name="FocusGarden" component={FocusGardenScreen} />
+      <MoreStack.Screen name="FeedbackBoard" component={FeedbackBoardScreen} />
     </MoreStack.Navigator>
   );
 }

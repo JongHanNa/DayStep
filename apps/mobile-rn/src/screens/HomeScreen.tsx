@@ -44,6 +44,7 @@ import {
   Trash2,
   Cpu,
   SprayCan,
+  MessageSquare,
 } from 'lucide-react-native';
 import {useTheme} from '@/theme';
 
@@ -235,6 +236,21 @@ export default function HomeScreen() {
     [navigation, primaryColor],
   );
 
+  const supportItems: FeatureItem[] = useMemo(
+    () => [
+      {
+        id: 'feedback-board',
+        icon: <MessageSquare size={20} color={primaryColor} />,
+        label: '버그 신고 & 기능 요청',
+        description: '개발팀에 직접 전달돼요',
+        iconBgColor: PRIMARY_BG,
+        iconColor: primaryColor,
+        onPress: () => navigation.navigate('FeedbackBoard'),
+      },
+    ],
+    [navigation, primaryColor],
+  );
+
   return (
     <ScreenContainer gradient="warmBackground">
       <SwipeablePages>
@@ -349,6 +365,16 @@ export default function HomeScreen() {
               title="생각과 기억"
               items={thoughtItems}
               enterDelay={600}
+            />
+          </View>
+
+          {/* 7. 지원 & 피드백 */}
+          <View className="mt-6">
+            <GroupSection
+              dotColor={primaryColor}
+              title="지원 & 피드백"
+              items={supportItems}
+              enterDelay={700}
             />
           </View>
 

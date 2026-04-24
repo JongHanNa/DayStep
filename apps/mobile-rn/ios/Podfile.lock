@@ -2309,6 +2309,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-segmented-control (2.5.7):
+    - React-Core
   - react-native-skia (2.4.19):
     - boost
     - DoubleConversion
@@ -3445,6 +3447,7 @@ DEPENDENCIES:
   - react-native-bottom-tabs (from `../../../node_modules/react-native-bottom-tabs`)
   - react-native-config (from `../../../node_modules/react-native-config`)
   - react-native-safe-area-context (from `../../../node_modules/react-native-safe-area-context`)
+  - "react-native-segmented-control (from `../../../node_modules/@react-native-segmented-control/segmented-control`)"
   - "react-native-skia (from `../../../node_modules/@shopify/react-native-skia`)"
   - React-NativeModulesApple (from `../../../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../../../node_modules/react-native/ReactCommon/react/networking`)
@@ -3641,6 +3644,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native-config"
   react-native-safe-area-context:
     :path: "../../../node_modules/react-native-safe-area-context"
+  react-native-segmented-control:
+    :path: "../../../node_modules/@react-native-segmented-control/segmented-control"
   react-native-skia:
     :path: "../../../node_modules/@shopify/react-native-skia"
   React-NativeModulesApple:
@@ -3815,6 +3820,7 @@ SPEC CHECKSUMS:
   react-native-bottom-tabs: e33312fc663d163f0be73d3474dfb448ba38dad8
   react-native-config: 2249b7e68644c86ea68358f5a0d746d1c648f900
   react-native-safe-area-context: c00143b4823773bba23f2f19f85663ae89ceb460
+  react-native-segmented-control: bf6e0032726727498e18dd437ae88afcdbc18e99
   react-native-skia: 899c87145f60ea0829d01f4f4ca0cca14bbdac1a
   React-NativeModulesApple: a2c3d2cbec893956a5b3e4060322db2984fff75b
   React-networking: 3f98bd96893a294376e7e03730947a08d474c380
@@ -3860,7 +3866,7 @@ SPEC CHECKSUMS:
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNPurchases: 462fb7edb0304dba1db46e3d38368a271ebe4cc2
   RNReactNativeHapticFeedback: be4f1b4bf0398c30b59b76ed92ecb0a2ff3a69c6
-  RNReanimated: 1b2801d653ac22f273cb3f7bb91e5e0bf48f6021
+  RNReanimated: b84b4a747d27faeda5f34dd1e222bd335fa4cba9
   RNScreens: afaf526a9c804c3b4503f950cf3e67ed81e29ada
   RNSVG: 595abfa0f9ac26d56afcaaedf4e37a00f54cab71
   RNWorklets: 6842755a1353955d55ac03778ac42f334616eafa

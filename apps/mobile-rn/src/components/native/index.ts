@@ -3,6 +3,12 @@ export {LiquidGlassMotivationCardNative} from './LiquidGlassMotivationCard';
 export {LiquidGlassBackgroundNative} from './LiquidGlassBackground';
 export {LiquidGlassMenu} from './LiquidGlassMenu';
 export {NativeCleanupAccordionNative} from './NativeCleanupAccordion';
+export {
+  NativeFeedbackSectionNative,
+  isNativeFeedbackSectionAvailable,
+  type FeedbackItem,
+  type NativeFeedbackSectionProps,
+} from './NativeFeedbackSection';
 export {NativeTimelineAccordionNative} from './NativeTimelineAccordion';
 export {NativeWeekStripCalendarNative} from './NativeWeekStripCalendar';
 export {NativeMonthCalendarNative} from './NativeMonthCalendar';

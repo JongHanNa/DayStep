@@ -3,6 +3,7 @@
  */
 import React, {useCallback, useEffect, useState} from 'react';
 import {View, Text, ScrollView, Alert, StyleSheet, Image, Switch} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 import {AnimatedCard} from '@/components/core';
 import {SettingsRow} from './SettingsRow';
 import {useSettingsStore} from '@/stores/settingsStore';
@@ -20,6 +21,7 @@ import {
   Crown,
   ClipboardCheck,
   Megaphone,
+  MessageSquare,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
@@ -32,6 +34,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const {primaryColor, colors} = useTheme();
   const {user, signOut} = useAuthStore();
   const settings = useSettingsStore();
+  const navigation = useNavigation<any>();
   const {isConnected, connectGoogleCalendar, disconnectGoogleCalendar} =
     useCalendarStore();
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
@@ -176,6 +179,20 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           title="테마/색상"
           showChevron
           onPress={() => onNavigate('theme')}
+          primaryColor={primaryColor}
+        />
+      </View>
+
+      {/* 지원 & 피드백 */}
+      <Text style={styles.sectionTitle}>지원 & 피드백</Text>
+      <View style={styles.section}>
+        <SettingsRow
+          icon={MessageSquare}
+          iconColor={primaryColor}
+          title="버그 신고 & 기능 요청"
+          subtitle="개발팀에 직접 전달됩니다"
+          showChevron
+          onPress={() => navigation.navigate('FeedbackBoard')}
           primaryColor={primaryColor}
         />
       </View>
