@@ -1,4 +1,5 @@
 import './global.css';
+import './src/i18n';
 import React, {useEffect} from 'react';
 import {AppState, Linking, LogBox, StatusBar, useColorScheme} from 'react-native';
 import {SafeAreaProvider, initialWindowMetrics} from 'react-native-safe-area-context';

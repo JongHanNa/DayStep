@@ -4,6 +4,7 @@
     "types": [
       "jest"
     ],
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "@daystep/shared-core": [

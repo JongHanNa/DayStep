@@ -1,0 +1,44 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "OK",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "close": "Close",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "user": "User"
+  },
+  "tabs": {
+    "home": "Home",
+    "planner": "Planner",
+    "execute": "Focus",
+    "notes": "Notes",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "sectionApp": "App Settings",
+    "sectionAdmin": "Admin",
+    "sectionDev": "Developer",
+    "subscription": "Subscription",
+    "themeColor": "Theme & Color",
+    "language": "Language",
+    "planLimits": "Plan Limits",
+    "planLimitsDesc": "Configure Free/Pro entity limits",
+    "notificationSchedule": "Notification Schedule",
+    "notificationScheduleDesc": "View scheduled notifications",
+    "signOut": "Sign Out",
+    "signOutConfirmTitle": "Sign Out",
+    "signOutConfirmMessage": "Are you sure you want to sign out?"
+  },
+  "language": {
+    "title": "Language",
+    "systemDefault": "System Default",
+    "ko": "한국어",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

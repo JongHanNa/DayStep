@@ -1,0 +1,44 @@
+{
+  "common": {
+    "cancel": "취소",
+    "confirm": "확인",
+    "save": "저장",
+    "delete": "삭제",
+    "edit": "편집",
+    "back": "뒤로",
+    "close": "닫기",
+    "loading": "로딩 중...",
+    "retry": "다시 시도",
+    "user": "사용자"
+  },
+  "tabs": {
+    "home": "홈",
+    "planner": "플래너",
+    "execute": "실행",
+    "notes": "노트",
+    "settings": "설정"
+  },
+  "settings": {
+    "title": "설정",
+    "sectionApp": "앱 설정",
+    "sectionAdmin": "관리자",
+    "sectionDev": "개발자 도구",
+    "subscription": "구독 관리",
+    "themeColor": "테마/색상",
+    "language": "언어",
+    "planLimits": "플랜 한도 관리",
+    "planLimitsDesc": "Free/Pro 엔티티 한도 설정",
+    "notificationSchedule": "알림 스케줄",
+    "notificationScheduleDesc": "스케줄된 알림 목록 확인",
+    "signOut": "로그아웃",
+    "signOutConfirmTitle": "로그아웃",
+    "signOutConfirmMessage": "정말 로그아웃하시겠어요?"
+  },
+  "language": {
+    "title": "언어",
+    "systemDefault": "시스템 기본",
+    "ko": "한국어",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

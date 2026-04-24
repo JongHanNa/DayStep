@@ -1,0 +1,44 @@
+{
+  "common": {
+    "cancel": "キャンセル",
+    "confirm": "OK",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "back": "戻る",
+    "close": "閉じる",
+    "loading": "読み込み中...",
+    "retry": "再試行",
+    "user": "ユーザー"
+  },
+  "tabs": {
+    "home": "ホーム",
+    "planner": "プランナー",
+    "execute": "集中",
+    "notes": "ノート",
+    "settings": "設定"
+  },
+  "settings": {
+    "title": "設定",
+    "sectionApp": "アプリ設定",
+    "sectionAdmin": "管理者",
+    "sectionDev": "開発者ツール",
+    "subscription": "サブスクリプション",
+    "themeColor": "テーマ・カラー",
+    "language": "言語",
+    "planLimits": "プラン上限管理",
+    "planLimitsDesc": "Free/Proエンティティ上限を設定",
+    "notificationSchedule": "通知スケジュール",
+    "notificationScheduleDesc": "スケジュール済み通知を確認",
+    "signOut": "ログアウト",
+    "signOutConfirmTitle": "ログアウト",
+    "signOutConfirmMessage": "本当にログアウトしますか？"
+  },
+  "language": {
+    "title": "言語",
+    "systemDefault": "システム既定",
+    "ko": "한국어",
+    "en": "English",
+    "ja": "日本語"
+  }
+}

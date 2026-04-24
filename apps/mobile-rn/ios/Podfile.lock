@@ -3044,6 +3044,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNLocalize (3.7.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNNotifee (9.1.8):
     - React-Core
     - RNNotifee/NotifeeCore (= 9.1.8)
@@ -3489,6 +3517,7 @@ DEPENDENCIES:
   - "RNDateTimePicker (from `../../../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../../../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../../../node_modules/@react-native-google-signin/google-signin`)"
+  - RNLocalize (from `../../../node_modules/react-native-localize`)
   - "RNNotifee (from `../../../node_modules/@notifee/react-native`)"
   - RNPurchases (from `../../../node_modules/react-native-purchases`)
   - RNReactNativeHapticFeedback (from `../../../node_modules/react-native-haptic-feedback`)
@@ -3728,6 +3757,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native-gesture-handler"
   RNGoogleSignin:
     :path: "../../../node_modules/@react-native-google-signin/google-signin"
+  RNLocalize:
+    :path: "../../../node_modules/react-native-localize"
   RNNotifee:
     :path: "../../../node_modules/@notifee/react-native"
   RNPurchases:
@@ -3863,6 +3894,7 @@ SPEC CHECKSUMS:
   RNDateTimePicker: 97a86d7c8b51f2d51f694a9dddfe5996dfd9a407
   RNGestureHandler: cd4be101cfa17ea6bbd438710caa02e286a84381
   RNGoogleSignin: 4122717989e2544988cb4cec3e917da3ebc969a5
+  RNLocalize: 1aedbc2c15073861a364174919d23c31c5924b16
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   RNPurchases: 462fb7edb0304dba1db46e3d38368a271ebe4cc2
   RNReactNativeHapticFeedback: be4f1b4bf0398c30b59b76ed92ecb0a2ff3a69c6

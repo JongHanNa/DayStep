@@ -22,6 +22,7 @@ import {
   ClipboardCheck,
   Megaphone,
   MessageSquare,
+  Languages,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
@@ -180,6 +181,14 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           showChevron
           onPress={() => onNavigate('theme')}
           primaryColor={primaryColor}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          icon={Languages}
+          iconColor="#0EA5E9"
+          title="언어"
+          showChevron
+          onPress={() => onNavigate('language')}
         />
       </View>
 
