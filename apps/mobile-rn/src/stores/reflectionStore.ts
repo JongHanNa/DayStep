@@ -64,13 +64,10 @@ export const useReflectionStore = create<ReflectionState>()(
             set(state => ({
               reflections: {...state.reflections, [date]: data},
             }));
-          } else {
-            // DB에 없으면 캐시도 클리어 (stale data 방지)
-            set(state => {
-              const {[date]: _, ...rest} = state.reflections;
-              return {reflections: rest};
-            });
           }
+          // DB에 데이터가 없을 때 캐시를 클리어하지 않음:
+          // 진행 중인 upsertReflection의 optimistic 캐시가 손실되어
+          // 화면 이동 후 입력 내용이 사라지는 race condition을 유발함
         } catch (err: any) {
           console.error('[ReflectionStore] Load error:', err);
           set({error: err.message ?? 'Failed to load reflection'});
