@@ -5,7 +5,6 @@
  */
 import React, {useCallback} from 'react';
 import {View, Text, TextInput, StyleSheet, ScrollView} from 'react-native';
-import {useTodoStore} from '@/stores/todoStore';
 import {useReflectionField} from '@/hooks/useReflectionField';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
@@ -15,7 +14,6 @@ interface BrainDumpPanelProps {
 }
 
 export function BrainDumpPanel({scrollViewRef}: BrainDumpPanelProps) {
-  const {selectedDate} = useTodoStore();
   const {value, setValue, save} = useReflectionField('thought_archive');
   const {primaryColor} = useTheme();
 
@@ -26,7 +24,7 @@ export function BrainDumpPanel({scrollViewRef}: BrainDumpPanelProps) {
   }, [scrollViewRef]);
 
   return (
-    <View key={selectedDate} className="mb-4">
+    <View className="mb-4">
       <View className="flex-row items-center justify-between mb-3">
         <Text className="text-base font-semibold text-gray-800">
           브레인 덤프
@@ -36,7 +34,6 @@ export function BrainDumpPanel({scrollViewRef}: BrainDumpPanelProps) {
         style={{backgroundColor: hexWithOpacity(primaryColor, 0.08)}}
         className="rounded-2xl p-4">
         <TextInput
-          key={selectedDate}
           value={value}
           onChangeText={setValue}
           onFocus={handleFocus}

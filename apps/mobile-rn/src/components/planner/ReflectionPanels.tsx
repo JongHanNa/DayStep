@@ -5,7 +5,6 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import {View, Text, TextInput, StyleSheet, ScrollView} from 'react-native';
 import {useAuthStore} from '@/stores/authStore';
-import {useTodoStore} from '@/stores/todoStore';
 import {useReflectionField} from '@/hooks/useReflectionField';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
@@ -17,7 +16,6 @@ interface ReflectionPanelsProps {
 
 export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
   const user = useAuthStore(s => s.user);
-  const {selectedDate} = useTodoStore();
   const {primaryColor} = useTheme();
 
   const period = useReflectionField('current_period');
@@ -45,7 +43,7 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
   }, [scrollViewRef]);
 
   return (
-    <View key={selectedDate}>
+    <View>
       {/* 현재 무슨 기간인지 상기해보기 */}
       <View className="mb-4">
         <View className="flex-row items-center mb-2">
@@ -55,7 +53,6 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
         </View>
         <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.07)}} className="rounded-2xl p-4">
           <TextInput
-            key={selectedDate}
             value={period.value}
             onChangeText={period.setValue}
             onFocus={handleInputFocus}
@@ -79,7 +76,6 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
         </View>
         <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.08)}} className="rounded-2xl p-4">
           <TextInput
-            key={selectedDate}
             value={resolution.value}
             onChangeText={resolution.setValue}
             onFocus={handleInputFocus}
@@ -104,7 +100,6 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
           </View>
           <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.09)}} className="rounded-2xl p-4">
             <TextInput
-              key={selectedDate}
               value={prayer.value}
               onChangeText={prayer.setValue}
               onFocus={handleInputFocus}
@@ -129,7 +124,6 @@ export function ReflectionPanels({scrollViewRef}: ReflectionPanelsProps) {
         </View>
         <View style={{backgroundColor: hexWithOpacity(primaryColor, 0.06)}} className="rounded-2xl p-4">
           <TextInput
-            key={selectedDate}
             value={lesson.value}
             onChangeText={lesson.setValue}
             onFocus={handleInputFocus}

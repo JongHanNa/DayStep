@@ -5,6 +5,7 @@
  */
 import React, {useRef} from 'react';
 import {ScrollView} from 'react-native';
+import {useTodoStore} from '@/stores/todoStore';
 import {PriorityMatrixPanel} from './PriorityMatrixPanel';
 import {BrainDumpPanel} from './BrainDumpPanel';
 import {ReflectionPanels} from './ReflectionPanels';
@@ -15,6 +16,7 @@ interface PlannerPage2Props {
 
 export function PlannerPage2({onMatrixAdd}: PlannerPage2Props) {
   const scrollViewRef = useRef<ScrollView>(null);
+  const {selectedDate} = useTodoStore();
 
   return (
     <ScrollView
@@ -24,8 +26,8 @@ export function PlannerPage2({onMatrixAdd}: PlannerPage2Props) {
       keyboardShouldPersistTaps="always"
       automaticallyAdjustKeyboardInsets>
       <PriorityMatrixPanel onAddPress={onMatrixAdd} />
-      <BrainDumpPanel scrollViewRef={scrollViewRef} />
-      <ReflectionPanels scrollViewRef={scrollViewRef} />
+      <BrainDumpPanel key={selectedDate} scrollViewRef={scrollViewRef} />
+      <ReflectionPanels key={selectedDate} scrollViewRef={scrollViewRef} />
     </ScrollView>
   );
 }
