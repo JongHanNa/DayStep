@@ -36,6 +36,7 @@ export function BrainDumpPanel({scrollViewRef}: BrainDumpPanelProps) {
         style={{backgroundColor: hexWithOpacity(primaryColor, 0.08)}}
         className="rounded-2xl p-4">
         <TextInput
+          key={selectedDate}
           value={value}
           onChangeText={setValue}
           onFocus={handleFocus}
