@@ -384,13 +384,13 @@ const styles = StyleSheet.create({
   },
   cta: {
     paddingVertical: spacing.lg,
-    borderRadius: radius.button,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ctaText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
   },
   learnMoreBtn: {
