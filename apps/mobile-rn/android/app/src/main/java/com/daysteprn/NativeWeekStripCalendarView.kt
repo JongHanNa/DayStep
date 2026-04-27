@@ -370,7 +370,6 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
 
                     MonthGridView(visibleRows, selectedDate, today, primaryColor, visibleOffset) { date ->
                         onDateSelectCallback?.invoke(date.toString())
-                        if (isExpandedState.value) animateToTarget(false)
                     }
                 }
             }

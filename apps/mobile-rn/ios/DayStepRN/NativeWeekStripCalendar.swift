@@ -535,11 +535,6 @@ class NativeWeekStripCalendarUIView: UIView, UIGestureRecognizerDelegate, UIScro
     }
 
     updateUI()
-
-    // 날짜 선택 후 주간 모드로 축소
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-      self?.animateCollapse()
-    }
   }
 
   private func animateCollapse() {
