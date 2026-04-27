@@ -23,6 +23,8 @@ import {
   Megaphone,
   MessageSquare,
   Languages,
+  HelpCircle,
+  BookOpen,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
@@ -189,6 +191,32 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
           title="언어"
           showChevron
           onPress={() => onNavigate('language')}
+        />
+      </View>
+
+      {/* 도움말 */}
+      <Text style={styles.sectionTitle}>도움말</Text>
+      <View style={styles.section}>
+        <SettingsRow
+          icon={HelpCircle}
+          iconColor={primaryColor}
+          title="튜토리얼 다시 보기"
+          subtitle="홈 화면 안내를 처음부터 다시 봅니다"
+          showChevron
+          onPress={() => {
+            settings.setHasSeenHomeOnboarding(false);
+            navigation.navigate('Home', {screen: 'HomeMain'});
+          }}
+          primaryColor={primaryColor}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          icon={BookOpen}
+          iconColor="#0EA5E9"
+          title="참고 문헌 / 디스클레이머"
+          subtitle="ADHD 관련 콘텐츠의 학술적 근거"
+          showChevron
+          onPress={() => navigation.navigate('OnboardingReferences')}
         />
       </View>
 

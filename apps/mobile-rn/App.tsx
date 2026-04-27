@@ -9,6 +9,8 @@ import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import notifee from '@notifee/react-native';
 import {ThemeProvider} from './src/theme/ThemeProvider';
 import RootNavigator from './src/navigation/RootNavigator';
+import {CoachmarkProvider} from './src/components/coachmark';
+import {HomeCopilotProvider} from './src/components/coachmark-copilot';
 import {setupNotificationChannel} from './src/lib/notifications';
 import {reloadWidgetTimelines} from './src/lib/widgetBridge';
 import {useSleepStore} from './src/stores/sleepStore';
@@ -144,7 +146,11 @@ function App() {
               <StatusBar
                 barStyle={isDarkMode ? 'light-content' : 'dark-content'}
               />
-              <RootNavigator />
+              <CoachmarkProvider>
+                <HomeCopilotProvider>
+                  <RootNavigator />
+                </HomeCopilotProvider>
+              </CoachmarkProvider>
             </BottomSheetModalProvider>
           </NavigationContainer>
         </ThemeProvider>

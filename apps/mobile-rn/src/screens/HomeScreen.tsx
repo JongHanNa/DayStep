@@ -3,10 +3,19 @@
  * Page 0: 메인 허브 (인사 → 진행률 → 미션 → 3그룹 그리드)
  * Page 1: 영감 페이지 (원동력 → 연락할 사람 → 하루 한 줄)
  */
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import {Text, View, ScrollView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
+import {
+  CoachmarkTarget,
+  HOME_COACHMARK_STEPS,
+  HOME_TARGET_IDS,
+  useCoachmark,
+  COACHMARK_VARIANT,
+} from '@/components/coachmark';
+import {CopilotTarget, useCopilot} from '@/components/coachmark-copilot';
+import {useSettingsStore} from '@/stores/settingsStore';
 import Animated, {
   FadeInDown,
   FadeIn,
@@ -91,6 +100,42 @@ export default function HomeScreen() {
   const user = useAuthStore(s => s.user);
   const {notes, fetchMotivationNotes, getRandomMotivationNote} = useMotivationStore();
   const {recommendations, loadRecommendations} = useCherishedPeopleStore();
+
+  // 코치마크: 첫 진입 시 자동 시작 (변형 A 또는 B)
+  const hasSeenHomeOnboarding = useSettingsStore(s => s.hasSeenHomeOnboarding);
+  const setHasSeenHomeOnboarding = useSettingsStore(s => s.setHasSeenHomeOnboarding);
+  const {start: startCoachmark, active: coachmarkActive} = useCoachmark();
+  const {start: startCopilot, copilotEvents} = useCopilot();
+
+  useEffect(() => {
+    if (hasSeenHomeOnboarding || coachmarkActive) return;
+    const timer = setTimeout(() => {
+      if (COACHMARK_VARIANT === 'A') {
+        startCoachmark(HOME_COACHMARK_STEPS, () => {
+          setHasSeenHomeOnboarding(true);
+        });
+      } else {
+        startCopilot();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [
+    hasSeenHomeOnboarding,
+    coachmarkActive,
+    startCoachmark,
+    startCopilot,
+    setHasSeenHomeOnboarding,
+  ]);
+
+  // PoC B 종료 시 hasSeenHomeOnboarding 처리
+  useEffect(() => {
+    if (COACHMARK_VARIANT !== 'B') return;
+    const handler = () => setHasSeenHomeOnboarding(true);
+    copilotEvents?.on?.('stop', handler);
+    return () => {
+      copilotEvents?.off?.('stop', handler);
+    };
+  }, [copilotEvents, setHasSeenHomeOnboarding]);
 
   // 화면 포커스 시 todo + 부가 데이터 재조회
   useFocusRefetch(useCallback(() => {
@@ -276,8 +321,9 @@ export default function HomeScreen() {
           </View>
 
           {/* 2. 진행률 카드 */}
-          <View className="px-4 mt-4">
-            {isIOS26Plus ? (
+          <CoachmarkTarget id={HOME_TARGET_IDS.progress} style={{paddingHorizontal: 16, marginTop: 16}}>
+            <CopilotTarget order={1} i18nKey="onboarding.home.step2" name="progress">
+              {isIOS26Plus ? (
               <Animated.View entering={FadeInDown.delay(200).duration(400)}>
                 <Animated.View style={progressCardHeightStyle}>
                   <NativeProgressCardNative
@@ -326,27 +372,32 @@ export default function HomeScreen() {
                 </View>
               </AnimatedCard>
             )}
-          </View>
+            </CopilotTarget>
+          </CoachmarkTarget>
 
           {/* 3. 오늘의 미션 */}
-          <View className="mt-5">
-            <MissionCard
-              todos={todos}
-              onNavigateToExecute={() => navigation.navigate('Execute')}
-              onNavigateToPlanner={() => navigation.navigate('Planner')}
-              enterDelay={300}
-            />
-          </View>
+          <CoachmarkTarget id={HOME_TARGET_IDS.mission} style={{marginTop: 20}}>
+            <CopilotTarget order={2} i18nKey="onboarding.home.step3" name="mission">
+              <MissionCard
+                todos={todos}
+                onNavigateToExecute={() => navigation.navigate('Execute')}
+                onNavigateToPlanner={() => navigation.navigate('Planner')}
+                enterDelay={300}
+              />
+            </CopilotTarget>
+          </CoachmarkTarget>
 
           {/* 4. 일상 돌보기 (Emerald) */}
-          <View className="mt-6">
-            <GroupSection
-              dotColor={primaryColor}
-              title="일상 돌보기"
-              items={careItems}
-              enterDelay={400}
-            />
-          </View>
+          <CoachmarkTarget id={HOME_TARGET_IDS.dailyCare} style={{marginTop: 24}}>
+            <CopilotTarget order={3} i18nKey="onboarding.home.step4" name="dailyCare">
+              <GroupSection
+                dotColor={primaryColor}
+                title="일상 돌보기"
+                items={careItems}
+                enterDelay={400}
+              />
+            </CopilotTarget>
+          </CoachmarkTarget>
 
           {/* 5. 계획 세우기 (Blue) */}
           <View className="mt-6">

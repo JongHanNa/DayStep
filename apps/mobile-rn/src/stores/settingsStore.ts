@@ -34,6 +34,9 @@ interface SettingsState {
   // 통화 후 리마인더
   callReminderEnabled: boolean;
 
+  // 온보딩 — 홈 화면 코치마크 첫 진입 안내 완료 플래그
+  hasSeenHomeOnboarding: boolean;
+
   // 동기화
   _lastSyncedAt: string | null;
 
@@ -46,6 +49,7 @@ interface SettingsState {
   setPlannerViewMode: (mode: PlannerViewMode) => void;
   setMorePanelShowLabels: (show: boolean) => void;
   setCallReminderEnabled: (enabled: boolean) => void;
+  setHasSeenHomeOnboarding: (seen: boolean) => void;
   loadFromDB: (settings: Record<string, any>) => void;
 }
 
@@ -60,6 +64,7 @@ export const useSettingsStore = create<SettingsState>()(
       plannerViewMode: 'dailyPlanner',
       morePanelShowLabels: true,
       callReminderEnabled: false,
+      hasSeenHomeOnboarding: false,
       _lastSyncedAt: null,
 
       setColorTheme: (theme) => set({colorTheme: theme}),
@@ -70,6 +75,7 @@ export const useSettingsStore = create<SettingsState>()(
       setPlannerViewMode: (mode) => set({plannerViewMode: mode}),
       setMorePanelShowLabels: (show) => set({morePanelShowLabels: show}),
       setCallReminderEnabled: (enabled) => set({callReminderEnabled: enabled}),
+      setHasSeenHomeOnboarding: (seen) => set({hasSeenHomeOnboarding: seen}),
       loadFromDB: (settings) =>
         set((state) => ({
           ...state,
