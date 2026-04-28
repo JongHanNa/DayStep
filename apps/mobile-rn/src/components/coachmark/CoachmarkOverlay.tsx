@@ -176,9 +176,9 @@ export function CoachmarkOverlay() {
     </View>
   );
 
+  const ctaWidth = SCREEN.width - spacing.lg * 2;
   const Footer = (
     <View
-      pointerEvents="box-none"
       style={[
         styles.footer,
         {paddingBottom: insets.bottom + spacing.md, paddingHorizontal: spacing.lg},
@@ -188,7 +188,11 @@ export function CoachmarkOverlay() {
         hitSlop={hitSlop.md}
         style={({pressed}) => [
           styles.cta,
-          {backgroundColor: primaryColor, opacity: pressed ? 0.85 : 1},
+          {
+            width: ctaWidth,
+            backgroundColor: primaryColor,
+            opacity: pressed ? 0.85 : 1,
+          },
         ]}>
         <Text style={styles.ctaText}>
           {isLast ? t('onboarding.done') : t('onboarding.next')}
@@ -381,8 +385,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     gap: spacing.sm,
+    alignItems: 'stretch',
   },
   cta: {
+    alignSelf: 'stretch',
     paddingVertical: spacing.lg,
     borderRadius: radius.full,
     alignItems: 'center',
@@ -392,6 +398,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '700',
+    textAlign: 'center',
   },
   learnMoreBtn: {
     paddingVertical: spacing.sm,
