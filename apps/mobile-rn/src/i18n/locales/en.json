@@ -54,30 +54,30 @@
     "stepIndicator": "{{current}} / {{total}}",
     "learnMore": "Learn more",
     "home": {
-      "step1": {
-        "title": "Welcome to DayStep",
-        "body": "A daily-life companion designed for adult ADHD.",
-        "rationale": "We'll walk you through the main screens in under a minute. You can skip any time."
-      },
-      "step2": {
+      "progress": {
         "title": "Today's progress",
         "body": "See completed and remaining tasks at a glance.",
         "rationale": "ADHD brains rely on visualized progress to stay motivated. The large progress ring lets even small wins register."
       },
-      "step3": {
+      "mission": {
         "title": "Today's mission",
         "body": "Pick one thing to focus on first.",
         "rationale": "One thing at a time — multitasking is the heaviest load on an ADHD brain. Narrowing to a single mission lowers the start barrier."
       },
-      "step4": {
+      "dailyCare": {
         "title": "Daily care",
-        "body": "Sleep, ADHD basics, and tidying — three core axes.",
-        "rationale": "Sleep, focus, and a tidy environment are the three load-bearing axes of ADHD daily life. They live in one place so the flow doesn't break."
+        "body": "Opens Sleep Garden, ADHD Basics, and Tidy-up screens.",
+        "rationale": "Sleep, self-understanding, and a tidy environment are the three load-bearing axes of ADHD daily life — gathered here so the flow doesn't break."
       },
-      "step5": {
-        "title": "Five tabs at the bottom",
-        "body": "Home, Planner, Focus, Notes, More — that's it.",
-        "rationale": "Too many options trigger decision paralysis. Five tabs keeps the choice simple."
+      "planning": {
+        "title": "Planning",
+        "body": "Daily plan, projects, AI planning, data cleanup screens.",
+        "rationale": "The act of planning itself is a heavy cognitive load for ADHD. AI assistance and a visual planner lower the start barrier."
+      },
+      "thoughts": {
+        "title": "Thoughts & memory",
+        "body": "Opens Motivations and People-record screens.",
+        "rationale": "ADHD makes it easy to forget your motivation and the people who matter. A short note about why and who helps next time you get stuck."
       }
     },
     "references": {

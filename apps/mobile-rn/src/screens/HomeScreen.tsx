@@ -3,8 +3,8 @@
  * Page 0: 메인 허브 (인사 → 진행률 → 미션 → 3그룹 그리드)
  * Page 1: 영감 페이지 (원동력 → 연락할 사람 → 하루 한 줄)
  */
-import React, {useCallback, useEffect, useMemo} from 'react';
-import {Text, View, ScrollView} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
+import {Text, View, ScrollView, Dimensions} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
 import {
@@ -104,8 +104,33 @@ export default function HomeScreen() {
   // 코치마크: 첫 진입 시 자동 시작 (변형 A 또는 B)
   const hasSeenHomeOnboarding = useSettingsStore(s => s.hasSeenHomeOnboarding);
   const setHasSeenHomeOnboarding = useSettingsStore(s => s.setHasSeenHomeOnboarding);
-  const {start: startCoachmark, active: coachmarkActive} = useCoachmark();
+  const {
+    start: startCoachmark,
+    active: coachmarkActive,
+    currentStep: coachmarkStep,
+    getTargetMeasure: getCoachmarkMeasure,
+  } = useCoachmark();
   const {start: startCopilot, copilotEvents} = useCopilot();
+
+  // 코치마크 step 변경 시 타겟이 화면 밖이면 자동 스크롤
+  const mainScrollRef = useRef<ScrollView>(null);
+  const scrollOffsetRef = useRef(0);
+  useEffect(() => {
+    if (!coachmarkActive || !coachmarkStep?.targetId) return;
+    const measure = getCoachmarkMeasure(coachmarkStep.targetId);
+    if (!measure) return;
+    measure().then(rect => {
+      if (!rect || !mainScrollRef.current) return;
+      const screenH = Dimensions.get('window').height;
+      // 타겟이 화면 상단 30% 위치에 오도록 계산 (헤더/푸터 회피)
+      const desiredTop = screenH * 0.3;
+      const delta = rect.y - desiredTop;
+      if (Math.abs(delta) > 40) {
+        const nextOffset = Math.max(0, scrollOffsetRef.current + delta);
+        mainScrollRef.current.scrollTo({y: nextOffset, animated: true});
+      }
+    });
+  }, [coachmarkStep, coachmarkActive, getCoachmarkMeasure]);
 
   useEffect(() => {
     if (hasSeenHomeOnboarding || coachmarkActive) return;
@@ -301,6 +326,11 @@ export default function HomeScreen() {
       <SwipeablePages>
         {/* ═══ Page 0: 메인 허브 ═══ */}
         <ScrollView
+          ref={mainScrollRef}
+          onScroll={e => {
+            scrollOffsetRef.current = e.nativeEvent.contentOffset.y;
+          }}
+          scrollEventThrottle={16}
           contentContainerStyle={{paddingBottom: 100}}
           showsVerticalScrollIndicator={false}>
           {/* 1. 날짜 + 인사말 */}
@@ -322,7 +352,7 @@ export default function HomeScreen() {
 
           {/* 2. 진행률 카드 */}
           <CoachmarkTarget id={HOME_TARGET_IDS.progress} style={{paddingHorizontal: 16, marginTop: 16}}>
-            <CopilotTarget order={1} i18nKey="onboarding.home.step2" name="progress">
+            <CopilotTarget order={1} i18nKey="onboarding.home.progress" name="progress">
               {isIOS26Plus ? (
               <Animated.View entering={FadeInDown.delay(200).duration(400)}>
                 <Animated.View style={progressCardHeightStyle}>
@@ -377,7 +407,7 @@ export default function HomeScreen() {
 
           {/* 3. 오늘의 미션 */}
           <CoachmarkTarget id={HOME_TARGET_IDS.mission} style={{marginTop: 20}}>
-            <CopilotTarget order={2} i18nKey="onboarding.home.step3" name="mission">
+            <CopilotTarget order={2} i18nKey="onboarding.home.mission" name="mission">
               <MissionCard
                 todos={todos}
                 onNavigateToExecute={() => navigation.navigate('Execute')}
@@ -389,7 +419,7 @@ export default function HomeScreen() {
 
           {/* 4. 일상 돌보기 (Emerald) */}
           <CoachmarkTarget id={HOME_TARGET_IDS.dailyCare} style={{marginTop: 24}}>
-            <CopilotTarget order={3} i18nKey="onboarding.home.step4" name="dailyCare">
+            <CopilotTarget order={3} i18nKey="onboarding.home.dailyCare" name="dailyCare">
               <GroupSection
                 dotColor={primaryColor}
                 title="일상 돌보기"
@@ -400,24 +430,28 @@ export default function HomeScreen() {
           </CoachmarkTarget>
 
           {/* 5. 계획 세우기 (Blue) */}
-          <View className="mt-6">
-            <GroupSection
-              dotColor={primaryColor}
-              title="계획 세우기"
-              items={planItems}
-              enterDelay={500}
-            />
-          </View>
+          <CoachmarkTarget id={HOME_TARGET_IDS.planning} style={{marginTop: 24}}>
+            <CopilotTarget order={4} i18nKey="onboarding.home.planning" name="planning">
+              <GroupSection
+                dotColor={primaryColor}
+                title="계획 세우기"
+                items={planItems}
+                enterDelay={500}
+              />
+            </CopilotTarget>
+          </CoachmarkTarget>
 
           {/* 6. 생각과 기억 (Violet) */}
-          <View className="mt-6">
-            <GroupSection
-              dotColor={primaryColor}
-              title="생각과 기억"
-              items={thoughtItems}
-              enterDelay={600}
-            />
-          </View>
+          <CoachmarkTarget id={HOME_TARGET_IDS.thoughts} style={{marginTop: 24}}>
+            <CopilotTarget order={5} i18nKey="onboarding.home.thoughts" name="thoughts">
+              <GroupSection
+                dotColor={primaryColor}
+                title="생각과 기억"
+                items={thoughtItems}
+                enterDelay={600}
+              />
+            </CopilotTarget>
+          </CoachmarkTarget>
 
           {/* 7. 지원 & 피드백 */}
           <View className="mt-6">

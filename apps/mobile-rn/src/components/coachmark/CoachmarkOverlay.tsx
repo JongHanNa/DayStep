@@ -18,6 +18,7 @@ import {
   View,
   Text,
   Pressable,
+  TouchableOpacity,
   StyleSheet,
   Dimensions,
   StatusBar,
@@ -98,13 +99,25 @@ export function CoachmarkOverlay() {
         clearTimeout(timer);
       };
     }
+    // 1차 측정 (즉시) — 자동 스크롤 전 위치
     measure().then(rect => {
       if (cancelled) return;
       setTargetRect(rect);
       setIsMeasured(true);
     });
+    // 2차 측정 (스크롤 완료 후) — 자동 스크롤이 끝난 정확한 위치로 보정
+    const reMeasureTimer = setTimeout(() => {
+      if (cancelled) return;
+      const m = getTargetMeasure(currentStep.targetId!);
+      if (!m) return;
+      m().then(rect => {
+        if (cancelled || !rect) return;
+        setTargetRect(rect);
+      });
+    }, 450);
     return () => {
       cancelled = true;
+      clearTimeout(reMeasureTimer);
     };
   }, [active, currentStep, currentIndex, getTargetMeasure]);
 
@@ -183,21 +196,18 @@ export function CoachmarkOverlay() {
         styles.footer,
         {paddingBottom: insets.bottom + spacing.md, paddingHorizontal: spacing.lg},
       ]}>
-      <Pressable
+      <TouchableOpacity
         onPress={next}
+        activeOpacity={0.85}
         hitSlop={hitSlop.md}
-        style={({pressed}) => [
+        style={[
           styles.cta,
-          {
-            width: ctaWidth,
-            backgroundColor: primaryColor,
-            opacity: pressed ? 0.85 : 1,
-          },
+          {width: ctaWidth, backgroundColor: primaryColor},
         ]}>
         <Text style={styles.ctaText}>
           {isLast ? t('onboarding.done') : t('onboarding.next')}
         </Text>
-      </Pressable>
+      </TouchableOpacity>
       {isLast && (
         <Pressable
           onPress={handleLearnMore}

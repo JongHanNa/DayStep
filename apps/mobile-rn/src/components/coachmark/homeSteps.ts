@@ -1,61 +1,48 @@
 /**
  * 홈 화면 코치마크 step 정의
  *
- * targetId는 HomeScreen.tsx의 <CoachmarkTarget> id와 매칭되어야 한다.
- * step1은 targetId 없음 → 화면 전체 dim + 중앙 말풍선 (welcome)
- * step5는 staticRect 사용 — 탭바는 absolute positioning이라 measure 불가
+ * 5단계 — 홈에서 접근 가능한 핵심 카드/그룹을 차례로 강조하며
+ * 각 화면이 ADHD에 어떤 도움을 주는지 설명한다.
  */
-import {Dimensions} from 'react-native';
 import type {CoachmarkStep} from './types';
 
 export const HOME_TARGET_IDS = {
   progress: 'home-progress',
   mission: 'home-mission',
   dailyCare: 'home-daily-care',
-  tabBar: 'home-tab-bar',
+  planning: 'home-planning',
+  thoughts: 'home-thoughts',
 } as const;
-
-// 탭바 좌표 — CustomTabBar의 NATIVE_COLLAPSED 높이(80) + 일반 safe area 여유
-const TAB_BAR_HEIGHT = 80;
-const TAB_BAR_BOTTOM_PADDING = 24;
-const TAB_BAR_HORIZONTAL_INSET = 16;
 
 export const HOME_COACHMARK_STEPS: CoachmarkStep[] = [
   {
-    id: 'home-step-1',
-    i18nKey: 'onboarding.home.step1',
-    preferredPlacement: 'auto',
-  },
-  {
-    id: 'home-step-2',
+    id: 'home-progress',
     targetId: HOME_TARGET_IDS.progress,
-    i18nKey: 'onboarding.home.step2',
+    i18nKey: 'onboarding.home.progress',
     preferredPlacement: 'bottom',
   },
   {
-    id: 'home-step-3',
+    id: 'home-mission',
     targetId: HOME_TARGET_IDS.mission,
-    i18nKey: 'onboarding.home.step3',
+    i18nKey: 'onboarding.home.mission',
     preferredPlacement: 'bottom',
   },
   {
-    id: 'home-step-4',
+    id: 'home-daily-care',
     targetId: HOME_TARGET_IDS.dailyCare,
-    i18nKey: 'onboarding.home.step4',
+    i18nKey: 'onboarding.home.dailyCare',
     preferredPlacement: 'top',
   },
   {
-    id: 'home-step-5',
-    i18nKey: 'onboarding.home.step5',
+    id: 'home-planning',
+    targetId: HOME_TARGET_IDS.planning,
+    i18nKey: 'onboarding.home.planning',
     preferredPlacement: 'top',
-    staticRect: () => {
-      const {width, height} = Dimensions.get('window');
-      return {
-        x: TAB_BAR_HORIZONTAL_INSET,
-        y: height - TAB_BAR_HEIGHT - TAB_BAR_BOTTOM_PADDING,
-        width: width - TAB_BAR_HORIZONTAL_INSET * 2,
-        height: TAB_BAR_HEIGHT,
-      };
-    },
+  },
+  {
+    id: 'home-thoughts',
+    targetId: HOME_TARGET_IDS.thoughts,
+    i18nKey: 'onboarding.home.thoughts',
+    preferredPlacement: 'top',
   },
 ];
