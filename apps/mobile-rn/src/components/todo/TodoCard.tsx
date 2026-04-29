@@ -17,7 +17,7 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
-import {format} from 'date-fns';
+import {format, isSameDay} from 'date-fns';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor, hexWithOpacity} from '@/lib/todoUtils';
 import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
@@ -81,10 +81,25 @@ export function TodoCard({
   }));
 
   const isAnytime = todo.schedule_type === 'anytime' || !todo.start_time;
-  const timeStr = (!isAnytime && todo.start_time)
-    ? format(new Date(todo.start_time), 'HH:mm') +
-      (todo.end_time ? ` ~ ${format(new Date(todo.end_time), 'HH:mm')}` : '')
-    : null;
+  const timeStr = (() => {
+    if (isAnytime || !todo.start_time) return null;
+    const startDate = new Date(todo.start_time);
+    const endDate = todo.end_time ? new Date(todo.end_time) : null;
+
+    // 종일: 단일이면 '종일', 다일이면 '4/29 → 5/1 종일'
+    if (todo.schedule_type === 'all_day') {
+      if (!endDate || isSameDay(startDate, endDate)) return '종일';
+      return `${format(startDate, 'M/d')} → ${format(endDate, 'M/d')} 종일`;
+    }
+
+    // 시간 지정: 같은 날이면 'HH:mm ~ HH:mm', 다일이면 'M/d HH:mm → M/d HH:mm'
+    const startStr = format(startDate, 'HH:mm');
+    if (!endDate) return startStr;
+    if (isSameDay(startDate, endDate)) {
+      return `${startStr} ~ ${format(endDate, 'HH:mm')}`;
+    }
+    return `${format(startDate, 'M/d HH:mm')} → ${format(endDate, 'M/d HH:mm')}`;
+  })();
 
   const priorityColor = getPriorityColor(todo.importance, todo.urgency, primaryColor);
 

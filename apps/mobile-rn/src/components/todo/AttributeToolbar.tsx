@@ -6,7 +6,7 @@
 import React, {useRef} from 'react';
 import {ScrollView, View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
-import {format, parseISO, isToday, isTomorrow} from 'date-fns';
+import {format, parseISO, isToday, isTomorrow, isSameDay} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {getAlarmsLabel} from '@/lib/notifications';
 import {
@@ -63,8 +63,18 @@ interface AttributeToolbarProps {
 // Helpers
 // ============================================
 
-function getDateChipLabel(dateStr: string): string {
-  const date = parseISO(dateStr);
+function getDateChipLabel(form: ToolbarForm): string {
+  // 다일(시간 지정 또는 종일)이면 시작/끝 날짜를 함께 표시
+  if (
+    (form.scheduleType === 'timed' || form.scheduleType === 'all_day') &&
+    form.startTime &&
+    form.endTime &&
+    !isSameDay(form.startTime, form.endTime)
+  ) {
+    return `${format(form.startTime, 'M/d')} → ${format(form.endTime, 'M/d')}`;
+  }
+
+  const date = parseISO(form.scheduledDate);
   if (isToday(date)) return '오늘';
   if (isTomorrow(date)) return '내일';
   return format(date, 'M/d (EEE)', {locale: ko});
@@ -76,7 +86,16 @@ function getTimeChipLabel(form: ToolbarForm): string {
     const end = form.endTime ? format(form.endTime, 'HH:mm') : '';
     return end ? `${start}~${end}` : start;
   }
-  if (form.scheduleType === 'all_day') return '종일';
+  if (form.scheduleType === 'all_day') {
+    if (
+      form.startTime &&
+      form.endTime &&
+      !isSameDay(form.startTime, form.endTime)
+    ) {
+      return '다일 종일';
+    }
+    return '종일';
+  }
   return '언제든지';
 }
 
@@ -155,7 +174,7 @@ export function AttributeToolbar({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.toolbar, {flexGrow: 1}]}
         keyboardShouldPersistTaps="always">
-        <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
+        <Chip icon={Calendar} label={getDateChipLabel(form)} onPress={onDatePress} />
 
         {(form.importance || form.urgency) && (
           <View ref={priorityChipRef} collapsable={false}>
@@ -209,7 +228,7 @@ export function AttributeToolbar({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.toolbar}
       keyboardShouldPersistTaps="handled">
-      <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
+      <Chip icon={Calendar} label={getDateChipLabel(form)} onPress={onDatePress} />
       {onTimePress && (
         <Chip icon={Clock} label={getTimeChipLabel(form)} onPress={onTimePress} />
       )}

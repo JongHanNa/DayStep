@@ -202,7 +202,12 @@ export function useTodoForm() {
       const alarmOffsets = alarmData?.map(r => r.offset_minutes) ?? [];
 
       const startTime = todo.start_time ? new Date(todo.start_time) : null;
-      const endTime = todo.end_time ? new Date(todo.end_time) : null;
+      let endTime = todo.end_time ? new Date(todo.end_time) : null;
+
+      // 종일: DB는 inclusive end(23:59:59.999) — UI는 그 날 자체로 표시되도록 시간 0 정규화
+      if (todo.schedule_type === 'all_day' && endTime) {
+        endTime.setHours(0, 0, 0, 0);
+      }
 
       // timed인데 endTime이 없으면 자동 설정
       const resolvedEndTime =
@@ -272,23 +277,18 @@ export function useTodoForm() {
           baseData.start_time = dayStart.toISOString();
           baseData.anytime_duration = form.anytimeDuration;
         } else if (form.scheduleType === 'all_day') {
-          // 종일: form.startTime/endTime이 있으면 그대로 (다일 종일 지원),
-          // 없으면 scheduledDate 기준 단일 종일로 폴백
-          if (form.startTime) {
-            const dayStart = new Date(form.startTime);
-            dayStart.setHours(0, 0, 0, 0);
-            baseData.start_time = dayStart.toISOString();
-          } else {
-            const dayStart = new Date(form.scheduledDate + 'T00:00:00');
-            baseData.start_time = dayStart.toISOString();
-          }
-          if (form.endTime) {
-            const dayEnd = new Date(form.endTime);
-            dayEnd.setHours(0, 0, 0, 0);
-            baseData.end_time = dayEnd.toISOString();
-          } else {
-            baseData.end_time = null;
-          }
+          // 종일: 시작은 그 날 00:00, 끝은 그 날 23:59:59.999 (inclusive end)
+          // 다일이면 form.endTime의 날짜를 그대로 살리고, 단일이면 startTime과 같은 날
+          const start = form.startTime
+            ? new Date(form.startTime)
+            : new Date(form.scheduledDate + 'T00:00:00');
+          start.setHours(0, 0, 0, 0);
+          baseData.start_time = start.toISOString();
+
+          const endBase = form.endTime ?? start;
+          const end = new Date(endBase);
+          end.setHours(23, 59, 59, 999);
+          baseData.end_time = end.toISOString();
         }
 
         if (form.recurrencePattern === 'weekly') {

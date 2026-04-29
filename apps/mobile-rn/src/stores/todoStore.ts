@@ -299,8 +299,12 @@ export const useTodoStore = create<TodoState>()(
               [
                 // 시간 지정 할일 (해당 날짜에 시작)
                 `and(schedule_type.eq.timed,start_time.gte.${dayStart},start_time.lte.${dayEnd},recurrence_pattern.eq.none)`,
-                // 크로스데이 할일 (전날 시작했지만 이 날짜까지 걸침)
+                // 크로스데이 시간 지정 (전날 시작했지만 이 날짜까지 걸침)
                 `and(schedule_type.eq.timed,start_time.lt.${dayStart},end_time.gt.${dayStart},recurrence_pattern.eq.none)`,
+                // 종일 할일 (해당 날짜에 시작) — 단일·다일 모두 시작일에서 매치
+                `and(schedule_type.eq.all_day,start_time.gte.${dayStart},start_time.lte.${dayEnd},recurrence_pattern.eq.none)`,
+                // 크로스데이 종일 (전날 이전 시작, end_time이 이 날짜 안까지 — inclusive end 23:59:59.999 저장 가정)
+                `and(schedule_type.eq.all_day,start_time.lt.${dayStart},end_time.gt.${dayStart},recurrence_pattern.eq.none)`,
                 // 매일 반복 (종료일 필터 포함)
                 `and(recurrence_pattern.eq.daily,start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
                 // 주간 반복 (해당 요일, 종료일 필터 포함)
@@ -432,7 +436,12 @@ export const useTodoStore = create<TodoState>()(
             .eq('user_id', userId)
             .or(
               [
+                // 시간 지정: 범위 내 시작 또는 범위에 걸침
                 `and(schedule_type.eq.timed,start_time.gte.${rangeStart},start_time.lte.${rangeEnd},recurrence_pattern.eq.none)`,
+                `and(schedule_type.eq.timed,start_time.lt.${rangeStart},end_time.gt.${rangeStart},recurrence_pattern.eq.none)`,
+                // 종일: 범위 내 시작 또는 범위에 걸침 (다일 종일 포함)
+                `and(schedule_type.eq.all_day,start_time.gte.${rangeStart},start_time.lte.${rangeEnd},recurrence_pattern.eq.none)`,
+                `and(schedule_type.eq.all_day,start_time.lt.${rangeStart},end_time.gt.${rangeStart},recurrence_pattern.eq.none)`,
                 `and(schedule_type.eq.anytime,start_time.gte.${rangeStart},start_time.lte.${rangeEnd})`,
                 `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${startDate}))`,
                 `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${startDate}))`,
@@ -469,6 +478,19 @@ export const useTodoStore = create<TodoState>()(
                 if ((todo as any).recurrence_end_date && (todo as any).recurrence_end_date <= dateStr) return false;
                 return (todo as any).recurrence_days_of_week?.includes(dayOfWeek) ?? false;
               }
+              // 다일 종일·시간 지정 — dateStr이 [start_date, end_date] 범위 안이면 매치 (inclusive)
+              if (
+                (todo.schedule_type === 'all_day' || todo.schedule_type === 'timed') &&
+                todo.start_time &&
+                todo.end_time
+              ) {
+                const startStr = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                const endStr = format(parseISO(todo.end_time), 'yyyy-MM-dd');
+                if (startStr !== endStr) {
+                  return dateStr >= startStr && dateStr <= endStr;
+                }
+              }
+              // 단일/기본
               if (todo.start_time) {
                 return format(parseISO(todo.start_time), 'yyyy-MM-dd') === dateStr;
               }

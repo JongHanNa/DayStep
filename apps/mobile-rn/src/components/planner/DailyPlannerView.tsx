@@ -49,7 +49,7 @@ interface DailyPlannerViewProps {
   onMenuSelect: (key: string) => void;
 }
 
-type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime' | 'deferred';
+type TimePeriod = 'allDay' | 'morning' | 'afternoon' | 'evening' | 'anytime' | 'deferred';
 
 interface TodoSection {
   title: string;
@@ -58,6 +58,7 @@ interface TodoSection {
 }
 
 function categorizeTodos(todos: Todo[]): TodoSection[] {
+  const allDay: Todo[] = [];
   const morning: Todo[] = [];
   const afternoon: Todo[] = [];
   const evening: Todo[] = [];
@@ -65,6 +66,10 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   const deferred: Todo[] = [];
 
   for (const todo of todos) {
+    if (todo.schedule_type === 'all_day') {
+      allDay.push(todo);
+      continue;
+    }
     if (!todo.start_time || todo.schedule_type === 'anytime') {
       if ((todo as any).original_start_time) {
         deferred.push(todo);
@@ -82,11 +87,13 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   const byStartTime = (a: Todo, b: Todo) =>
     new Date(a.start_time!).getTime() - new Date(b.start_time!).getTime();
 
+  allDay.sort(byStartTime);
   morning.sort(byStartTime);
   afternoon.sort(byStartTime);
   evening.sort(byStartTime);
 
   const sections: TodoSection[] = [];
+  if (allDay.length > 0) sections.push({title: '종일', period: 'allDay', data: allDay});
   if (anytime.length > 0) sections.push({title: '언제든지', period: 'anytime', data: anytime});
   if (deferred.length > 0) sections.push({title: '미룸', period: 'deferred', data: deferred});
   if (morning.length > 0) sections.push({title: '오전', period: 'morning', data: morning});
