@@ -102,6 +102,18 @@ export function getDateSummary(form: FormData): string {
     return `${startStr} → ${endStr}`;
   }
 
+  // 다일 종일 — 시작일과 끝일이 다르면 양쪽 날짜 모두 표시
+  if (
+    form.scheduleType === 'all_day' &&
+    form.startTime &&
+    form.endTime &&
+    !isSameDay(form.startTime, form.endTime)
+  ) {
+    const startStr = format(form.startTime, 'M월 d일 (EEE)', {locale: ko});
+    const endStr = format(form.endTime, 'M월 d일 (EEE)', {locale: ko});
+    return `${startStr} → ${endStr} 종일`;
+  }
+
   const parts: string[] = [];
   if (isToday(date)) {
     parts.push(`오늘, ${format(date, 'M월 d일', {locale: ko})}`);
@@ -260,8 +272,23 @@ export function useTodoForm() {
           baseData.start_time = dayStart.toISOString();
           baseData.anytime_duration = form.anytimeDuration;
         } else if (form.scheduleType === 'all_day') {
-          const dayStart = new Date(form.scheduledDate + 'T00:00:00');
-          baseData.start_time = dayStart.toISOString();
+          // 종일: form.startTime/endTime이 있으면 그대로 (다일 종일 지원),
+          // 없으면 scheduledDate 기준 단일 종일로 폴백
+          if (form.startTime) {
+            const dayStart = new Date(form.startTime);
+            dayStart.setHours(0, 0, 0, 0);
+            baseData.start_time = dayStart.toISOString();
+          } else {
+            const dayStart = new Date(form.scheduledDate + 'T00:00:00');
+            baseData.start_time = dayStart.toISOString();
+          }
+          if (form.endTime) {
+            const dayEnd = new Date(form.endTime);
+            dayEnd.setHours(0, 0, 0, 0);
+            baseData.end_time = dayEnd.toISOString();
+          } else {
+            baseData.end_time = null;
+          }
         }
 
         if (form.recurrencePattern === 'weekly') {

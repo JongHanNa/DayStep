@@ -38,8 +38,8 @@ interface InlineTimePickerProps {
   onChange: (date: Date) => void;
   height?: number;
   minuteInterval?: number;
-  /** 'time': 시·분만 (Android 네이티브 휠 사용 가능) | 'datetime': 날짜+시·분 통합 휠 */
-  mode?: 'time' | 'datetime';
+  /** 'time': 시·분만 (Android 네이티브 휠 사용 가능) | 'datetime': 날짜+시·분 통합 휠 | 'date': 날짜만 */
+  mode?: 'time' | 'datetime' | 'date';
   style?: StyleProp<ViewStyle>;
 }
 

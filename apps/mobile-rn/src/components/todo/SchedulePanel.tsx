@@ -68,7 +68,16 @@ function getTimeLabel(form: FormData): string {
     }
     return `${format(form.startTime, 'M/d HH:mm')} → ${format(form.endTime, 'M/d HH:mm')}`;
   }
-  if (form.scheduleType === 'all_day') return '종일';
+  if (form.scheduleType === 'all_day') {
+    if (
+      form.startTime &&
+      form.endTime &&
+      !isSameDay(form.startTime, form.endTime)
+    ) {
+      return `${format(form.startTime, 'M/d')} ~ ${format(form.endTime, 'M/d')} 종일`;
+    }
+    return '종일';
+  }
   if (form.scheduleType === 'anytime') {
     return form.anytimeDuration ? `언제든지 · ${form.anytimeDuration}분` : '언제든지';
   }
@@ -337,9 +346,29 @@ function TimePopoverContent({
         nextHour.setFullYear(y, m - 1, d);
         updateField('startTime', nextHour);
         updateField('endTime', addHours(nextHour, 1));
+        return;
+      }
+      if (type === 'all_day') {
+        // 시작·끝을 그 날 00:00으로 정규화. startTime이 없으면 scheduledDate에서 생성.
+        let baseStart = form.startTime;
+        if (!baseStart) {
+          const [y, m, d] = form.scheduledDate.split('-').map(Number);
+          baseStart = new Date(y, m - 1, d, 0, 0, 0, 0);
+        }
+        const normalizedStart = new Date(baseStart);
+        normalizedStart.setHours(0, 0, 0, 0);
+
+        // endTime이 있으면 dayDiff 보존하면서 00:00 정규화, 없으면 startTime과 같은 날
+        const baseEnd = form.endTime ?? baseStart;
+        const normalizedEnd = new Date(baseEnd);
+        normalizedEnd.setHours(0, 0, 0, 0);
+
+        updateField('startTime', normalizedStart);
+        updateField('endTime', normalizedEnd);
+        return;
       }
     },
-    [haptic, updateField, form.startTime, form.scheduledDate],
+    [haptic, updateField, form.startTime, form.endTime, form.scheduledDate],
   );
 
   // 시작 시각 변경 — 끝 시각이 시작 시각보다 빨라지면 동일한 dayDiff·시간차 보존
@@ -484,6 +513,87 @@ function TimePopoverContent({
               {' '}
               ({isInverted ? '시작이 끝보다 늦음' : getDurLabel(durMins)})
             </Text>
+          </View>
+        </>
+      )}
+
+      {/* All-day: 시작/끝 날짜 탭 + date 휠피커 */}
+      {form.scheduleType === 'all_day' && form.startTime && form.endTime && (
+        <>
+          <View style={popContentStyles.segmentRow}>
+            {(['start', 'end'] as const).map(tab => (
+              <Pressable
+                key={tab}
+                onPress={() => {
+                  haptic.selection();
+                  setActiveTab(tab);
+                }}
+                style={[
+                  popContentStyles.segmentBtn,
+                  activeTab === tab && {backgroundColor: primaryColor},
+                ]}>
+                <Text
+                  style={[
+                    popContentStyles.segmentText,
+                    activeTab === tab && {color: '#FFFFFF', fontWeight: '700'},
+                  ]}>
+                  {tab === 'start' ? '시작' : '끝'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <InlineTimePicker
+            mode="date"
+            value={activeTab === 'start' ? form.startTime : form.endTime}
+            onChange={(date) => {
+              const normalized = new Date(date);
+              normalized.setHours(0, 0, 0, 0);
+              if (activeTab === 'start') {
+                // 시작일 변경 — 끝 날짜는 dayDiff 보존
+                const prevStart = form.startTime!;
+                updateField('startTime', normalized);
+                if (form.endTime) {
+                  const diff = form.endTime.getTime() - prevStart.getTime();
+                  updateField('endTime', new Date(normalized.getTime() + diff));
+                }
+              } else {
+                updateField('endTime', normalized);
+              }
+            }}
+            height={180}
+            style={popContentStyles.datetimePicker}
+          />
+
+          {/* 미리보기 바 — 다일이면 두 날짜 모두, 같은 날이면 하나만 */}
+          <View
+            style={[
+              popContentStyles.previewBar,
+              {
+                borderColor: isInverted ? '#DC262633' : primaryColor + '33',
+                backgroundColor: isInverted ? '#DC262614' : primaryColor + '14',
+              },
+            ]}>
+            {isMultiDay ? (
+              <Text
+                style={[
+                  popContentStyles.previewText,
+                  {color: isInverted ? '#DC2626' : primaryColor},
+                ]}>
+                {format(form.startTime, 'M월 d일 (EEE)', {locale: ko})}
+                {' → '}
+                {format(form.endTime, 'M월 d일 (EEE)', {locale: ko})} 종일
+              </Text>
+            ) : (
+              <Text style={[popContentStyles.previewText, {color: primaryColor}]}>
+                {format(form.startTime, 'M월 d일 (EEE)', {locale: ko})} 종일
+              </Text>
+            )}
+            {isInverted && (
+              <Text style={[popContentStyles.previewDur, {color: '#DC2626'}]}>
+                {' '}(시작이 끝보다 늦음)
+              </Text>
+            )}
           </View>
         </>
       )}
