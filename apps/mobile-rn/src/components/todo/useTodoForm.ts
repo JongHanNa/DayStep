@@ -8,7 +8,7 @@ import {Alert} from 'react-native';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
-import {format, addHours, parseISO, isToday} from 'date-fns';
+import {format, addHours, parseISO, isToday, isSameDay} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {getAlarmsLabel} from '@/lib/notifications';
 import type {Todo} from '@daystep/shared-core';
@@ -88,9 +88,21 @@ export function getRecurrenceLabel(form: FormData): string {
 }
 
 export function getDateSummary(form: FormData): string {
-  const parts: string[] = [];
-
   const date = parseISO(form.scheduledDate);
+
+  // 다일 시간 지정 — 시작일과 끝일이 다르면 양쪽 날짜 모두 표시
+  if (
+    form.scheduleType === 'timed' &&
+    form.startTime &&
+    form.endTime &&
+    !isSameDay(form.startTime, form.endTime)
+  ) {
+    const startStr = format(form.startTime, 'M월 d일 (EEE) HH:mm', {locale: ko});
+    const endStr = format(form.endTime, 'M월 d일 (EEE) HH:mm', {locale: ko});
+    return `${startStr} → ${endStr}`;
+  }
+
+  const parts: string[] = [];
   if (isToday(date)) {
     parts.push(`오늘, ${format(date, 'M월 d일', {locale: ko})}`);
   } else {

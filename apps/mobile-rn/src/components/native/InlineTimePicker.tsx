@@ -38,6 +38,8 @@ interface InlineTimePickerProps {
   onChange: (date: Date) => void;
   height?: number;
   minuteInterval?: number;
+  /** 'time': 시·분만 (Android 네이티브 휠 사용 가능) | 'datetime': 날짜+시·분 통합 휠 */
+  mode?: 'time' | 'datetime';
   style?: StyleProp<ViewStyle>;
 }
 
@@ -46,6 +48,7 @@ export function InlineTimePicker({
   onChange,
   height = 150,
   minuteInterval = 1,
+  mode = 'time',
   style,
 }: InlineTimePickerProps) {
   // Debounce to prevent rapid re-renders
@@ -76,12 +79,12 @@ export function InlineTimePicker({
     [onChange],
   );
 
-  // ─── iOS: 기존 DateTimePicker 사용 ───
+  // ─── iOS: 기존 DateTimePicker 사용 (datetime 모드는 동일 컴포넌트, mode만 변경) ───
   if (Platform.OS === 'ios') {
     return (
       <DateTimePicker
         value={value}
-        mode={'time' as const}
+        mode={mode as any}
         display={'spinner' as const}
         locale="ko"
         minuteInterval={minuteInterval as any}
@@ -91,8 +94,8 @@ export function InlineTimePicker({
     );
   }
 
-  // ─── Android: 네이티브 휠 피커 ───
-  if (AndroidNativeTimePicker) {
+  // ─── Android: time 모드는 네이티브 휠 피커, datetime 모드는 라이브러리 폴백 ───
+  if (mode === 'time' && AndroidNativeTimePicker) {
     return (
       <View style={[{height, overflow: 'hidden'}, style]}>
         <AndroidNativeTimePicker
@@ -107,11 +110,11 @@ export function InlineTimePicker({
     );
   }
 
-  // ─── Fallback: 네이티브 모듈 없는 경우 기존 DateTimePicker ───
+  // ─── Fallback: time/datetime 공통 — 라이브러리 기본 DateTimePicker ───
   return (
     <DateTimePicker
       value={value}
-      mode={'time' as const}
+      mode={mode as any}
       display={'spinner' as const}
       locale="ko"
       minuteInterval={minuteInterval as any}

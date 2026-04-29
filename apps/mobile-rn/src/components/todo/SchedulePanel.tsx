@@ -5,7 +5,7 @@
  * TodoCreatePanel 위에 별도 시트로 열림 → create UI를 완전히 덮음
  */
 import React, {useCallback, useMemo, useState, useRef, forwardRef, useImperativeHandle} from 'react';
-import {View, Text, StyleSheet, Pressable, ScrollView, Modal, Platform} from 'react-native';
+import {View, Text, StyleSheet, Pressable, ScrollView} from 'react-native';
 import {BottomSheetModal, BottomSheetBackdrop, BottomSheetView} from '@gorhom/bottom-sheet';
 import {AnimatedPressable, Popover} from '@/components/core';
 import {useTheme} from '@/theme';
@@ -28,6 +28,7 @@ import {
   endOfMonth,
   startOfWeek,
   endOfWeek,
+  startOfDay,
   addDays,
   addHours,
   addMonths,
@@ -61,8 +62,11 @@ interface SchedulePanelProps {
 function getTimeLabel(form: FormData): string {
   if (form.scheduleType === 'timed' && form.startTime) {
     const start = format(form.startTime, 'HH:mm');
-    const end = form.endTime ? format(form.endTime, 'HH:mm') : '';
-    return end ? `${start} ~ ${end}` : start;
+    if (!form.endTime) return start;
+    if (isSameDay(form.startTime, form.endTime)) {
+      return `${start} ~ ${format(form.endTime, 'HH:mm')}`;
+    }
+    return `${format(form.startTime, 'M/d HH:mm')} → ${format(form.endTime, 'M/d HH:mm')}`;
   }
   if (form.scheduleType === 'all_day') return '종일';
   if (form.scheduleType === 'anytime') {
@@ -257,71 +261,25 @@ const calStyles = StyleSheet.create({
 });
 
 // ============================================
-// AndroidDurationPicker — mode="countdown" 대체
-// ============================================
-
-function AndroidDurationPicker({
-  durationSeconds,
-  onChange,
-  primaryColor,
-}: {
-  durationSeconds: number;
-  onChange: (seconds: number) => void;
-  primaryColor: string;
-}) {
-  const totalMins = Math.max(0, Math.floor(durationSeconds / 60));
-  const hours = Math.floor(totalMins / 60);
-  const mins = totalMins % 60;
-
-  const HOUR_OPTIONS = Array.from({length: 6}, (_, i) => i); // 0~5시간
-  const MIN_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 45];
-
-  return (
-    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, paddingVertical: 16}}>
-      {/* 시간 */}
-      <View style={{alignItems: 'center'}}>
-        <Text style={{fontSize: 12, color: '#9CA3AF', marginBottom: 8}}>시간</Text>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', maxWidth: 120}}>
-          {HOUR_OPTIONS.map(h => (
-            <Pressable
-              key={h}
-              onPress={() => onChange((h * 60 + mins) * 60)}
-              style={{
-                paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
-                backgroundColor: hours === h ? primaryColor : '#F3F4F6',
-              }}>
-              <Text style={{fontSize: 14, fontWeight: '600', color: hours === h ? '#FFF' : '#374151'}}>{h}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <Text style={{fontSize: 18, color: '#9CA3AF', marginTop: 20}}>:</Text>
-
-      {/* 분 */}
-      <View style={{alignItems: 'center'}}>
-        <Text style={{fontSize: 12, color: '#9CA3AF', marginBottom: 8}}>분</Text>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', maxWidth: 160}}>
-          {MIN_OPTIONS.map(m => (
-            <Pressable
-              key={m}
-              onPress={() => onChange((hours * 60 + m) * 60)}
-              style={{
-                paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8,
-                backgroundColor: mins === m ? primaryColor : '#F3F4F6',
-              }}>
-              <Text style={{fontSize: 14, fontWeight: '600', color: mins === m ? '#FFF' : '#374151'}}>{String(m).padStart(2, '0')}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// ============================================
 // TimePopoverContent
 // ============================================
+
+/**
+ * 분 단위 시간을 일/시간/분으로 포맷
+ * 1시간 → "1시간", 25시간 → "1일 1시간", 90분 → "1시간 30분"
+ */
+function getDurLabel(mins: number): string {
+  if (mins <= 0) return '0분';
+  const days = Math.floor(mins / (60 * 24));
+  const rest = mins - days * 60 * 24;
+  const hours = Math.floor(rest / 60);
+  const m = rest % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}일`);
+  if (hours > 0) parts.push(`${hours}시간`);
+  if (m > 0) parts.push(`${m}분`);
+  return parts.join(' ');
+}
 
 function TimePopoverContent({
   form,
@@ -334,7 +292,10 @@ function TimePopoverContent({
 }) {
   const haptic = useHaptic();
   const DURATIONS = [5, 10, 15, 20, 30, 45, 60, 90, 120];
-  const TIMED_DURATIONS = [15, 30, 60, 90, 120];
+  const QUICK_END_DURATIONS = [15, 30, 60, 90, 120];
+
+  // 시작/끝 탭 상태
+  const [activeTab, setActiveTab] = useState<'start' | 'end'>('start');
 
   // 현재 소요 시간 (분)
   const durMins =
@@ -342,18 +303,18 @@ function TimePopoverContent({
       ? Math.round((form.endTime.getTime() - form.startTime.getTime()) / 60000)
       : 60;
 
-  const [durationPickerVisible, setDurationPickerVisible] = useState(false);
-  const [tempDuration, setTempDuration] = useState(durMins * 60); // 초 단위
+  const isMultiDay =
+    !!form.startTime &&
+    !!form.endTime &&
+    !isSameDay(form.startTime, form.endTime);
 
-  function getDurLabel(mins: number): string {
-    if (mins < 60) return `${mins}분`;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m === 0 ? `${h}시간` : `${h}시간 ${m}분`;
-  }
+  const isInverted =
+    !!form.startTime &&
+    !!form.endTime &&
+    form.endTime.getTime() < form.startTime.getTime();
 
-  // 소요 시간 칩 설정
-  const setTimedDur = useCallback(
+  // 빠른 끝 시각 칩
+  const setQuickEnd = useCallback(
     (mins: number) => {
       haptic.selection();
       if (!form.startTime) return;
@@ -381,6 +342,19 @@ function TimePopoverContent({
     [haptic, updateField, form.startTime, form.scheduledDate],
   );
 
+  // 시작 시각 변경 — 끝 시각이 시작 시각보다 빨라지면 동일한 dayDiff·시간차 보존
+  const handleStartChange = useCallback(
+    (date: Date) => {
+      const prevStart = form.startTime;
+      updateField('startTime', date);
+      if (prevStart && form.endTime) {
+        const dur = form.endTime.getTime() - prevStart.getTime();
+        updateField('endTime', new Date(date.getTime() + dur));
+      }
+    },
+    [form.startTime, form.endTime, updateField],
+  );
+
   return (
     <ScrollView style={popContentStyles.container} showsVerticalScrollIndicator={false}>
       {/* Schedule type chips */}
@@ -405,114 +379,111 @@ function TimePopoverContent({
         ))}
       </View>
 
-      {/* Timed: 시작 시간 + 소요 시간 */}
-      {form.scheduleType === 'timed' && form.startTime && (
+      {/* Timed: 시작/끝 탭 + datetime 휠피커 */}
+      {form.scheduleType === 'timed' && form.startTime && form.endTime && (
         <>
-          {/* 시작 시간 */}
-          <Text style={popContentStyles.sectionLabel}>시작 시간</Text>
-          <InlineTimePicker
-            value={form.startTime}
-            onChange={(date) => {
-              if (form.endTime) {
-                const dur = form.endTime.getTime() - form.startTime!.getTime();
-                updateField('endTime', new Date(date.getTime() + dur));
-              }
-              updateField('startTime', date);
-            }}
-            height={100}
-            style={popContentStyles.startTimePicker}
-          />
-
-          {/* 소요 시간 */}
-          <Text style={popContentStyles.sectionLabel}>소요 시간</Text>
-          <View style={popContentStyles.durChipRow}>
-            {TIMED_DURATIONS.map(d => (
-              <AnimatedPressable
-                key={d}
-                onPress={() => setTimedDur(d)}
-                haptic={false}
+          {/* 시작/끝 세그먼트 */}
+          <View style={popContentStyles.segmentRow}>
+            {(['start', 'end'] as const).map(tab => (
+              <Pressable
+                key={tab}
+                onPress={() => {
+                  haptic.selection();
+                  setActiveTab(tab);
+                }}
                 style={[
-                  popContentStyles.durationChip,
-                  durMins === d && {backgroundColor: primaryColor},
+                  popContentStyles.segmentBtn,
+                  activeTab === tab && {backgroundColor: primaryColor},
                 ]}>
                 <Text
                   style={[
-                    popContentStyles.chipText,
-                    durMins === d && {color: '#FFFFFF'},
+                    popContentStyles.segmentText,
+                    activeTab === tab && {color: '#FFFFFF', fontWeight: '700'},
                   ]}>
-                  {d >= 60 ? `${d / 60}시간` : `${d}분`}
+                  {tab === 'start' ? '시작' : '끝'}
                 </Text>
-              </AnimatedPressable>
+              </Pressable>
             ))}
           </View>
 
-          {/* 직접 입력 → 소요 시간 휠 피커 모달 */}
-          <Pressable
-            onPress={() => {
-              setTempDuration(durMins * 60);
-              setDurationPickerVisible(true);
+          {/* datetime 휠피커 — 활성 탭에 따라 시작/끝 편집 */}
+          <InlineTimePicker
+            mode="datetime"
+            value={activeTab === 'start' ? form.startTime : form.endTime}
+            onChange={(date) => {
+              if (activeTab === 'start') {
+                handleStartChange(date);
+              } else {
+                updateField('endTime', date);
+              }
             }}
-            style={popContentStyles.directToggle}>
-            <Text style={popContentStyles.directToggleText}>직접 입력 ▸</Text>
-          </Pressable>
+            height={180}
+            style={popContentStyles.datetimePicker}
+          />
 
-          <Modal transparent visible={durationPickerVisible} animationType="fade">
-            <Pressable
-              style={[StyleSheet.absoluteFill, {backgroundColor: 'rgba(0,0,0,0.3)'}]}
-              onPress={() => setDurationPickerVisible(false)}
-            />
-            <View style={popContentStyles.durationModal}>
-              <Text style={popContentStyles.durationModalTitle}>소요 시간</Text>
-              {Platform.OS === 'ios' ? (
-                <InlineTimePicker
-                  value={(() => {
-                    const d = new Date(0);
-                    d.setHours(Math.floor(tempDuration / 3600));
-                    d.setMinutes(Math.floor((tempDuration % 3600) / 60));
-                    return d;
-                  })()}
-                  onChange={(date) => {
-                    const hours = date.getHours();
-                    const minutes = date.getMinutes();
-                    setTempDuration((hours * 60 + minutes) * 60);
-                  }}
-                  minuteInterval={5}
-                  height={180}
-                />
-              ) : (
-                <AndroidDurationPicker
-                  durationSeconds={tempDuration}
-                  onChange={setTempDuration}
-                  primaryColor={primaryColor}
-                />
-              )}
-              <Pressable
-                onPress={() => {
-                  const newDurMins = Math.max(1, Math.floor(tempDuration / 60));
-                  if (form.startTime)
-                    updateField('endTime', new Date(form.startTime.getTime() + newDurMins * 60000));
-                  setDurationPickerVisible(false);
-                }}
-                style={[popContentStyles.durationConfirmBtn, {backgroundColor: primaryColor}]}>
-                <Text style={popContentStyles.durationConfirmText}>확인</Text>
-              </Pressable>
-            </View>
-          </Modal>
+          {/* 끝 탭에서만 빠른 끝 시각 칩 노출 */}
+          {activeTab === 'end' && (
+            <>
+              <Text style={popContentStyles.sectionLabel}>시작 + N분</Text>
+              <View style={popContentStyles.durChipRow}>
+                {QUICK_END_DURATIONS.map(d => (
+                  <AnimatedPressable
+                    key={d}
+                    onPress={() => setQuickEnd(d)}
+                    haptic={false}
+                    style={[
+                      popContentStyles.durationChip,
+                      !isMultiDay && durMins === d && {backgroundColor: primaryColor},
+                    ]}>
+                    <Text
+                      style={[
+                        popContentStyles.chipText,
+                        !isMultiDay && durMins === d && {color: '#FFFFFF'},
+                      ]}>
+                      {d >= 60 ? `${d / 60}시간` : `${d}분`}
+                    </Text>
+                  </AnimatedPressable>
+                ))}
+              </View>
+            </>
+          )}
 
-          {/* Preview bar */}
+          {/* Preview bar — 다일이면 날짜+시간, 같은 날이면 시간만 */}
           <View
             style={[
               popContentStyles.previewBar,
-              {borderColor: primaryColor + '33', backgroundColor: primaryColor + '14'},
+              {
+                borderColor: isInverted ? '#DC262633' : primaryColor + '33',
+                backgroundColor: isInverted ? '#DC262614' : primaryColor + '14',
+              },
             ]}>
-            <Text style={[popContentStyles.previewText, {color: primaryColor}]}>
-              {format(form.startTime, 'HH:mm')}
+            {isMultiDay ? (
+              <Text
+                style={[
+                  popContentStyles.previewText,
+                  {color: isInverted ? '#DC2626' : primaryColor},
+                ]}>
+                {format(form.startTime, 'M/d HH:mm')} → {format(form.endTime, 'M/d HH:mm')}
+              </Text>
+            ) : (
+              <>
+                <Text style={[popContentStyles.previewText, {color: primaryColor}]}>
+                  {format(form.startTime, 'HH:mm')}
+                </Text>
+                <Text style={popContentStyles.previewSep}> ~ </Text>
+                <Text style={[popContentStyles.previewText, {color: primaryColor}]}>
+                  {format(form.endTime, 'HH:mm')}
+                </Text>
+              </>
+            )}
+            <Text
+              style={[
+                popContentStyles.previewDur,
+                isInverted && {color: '#DC2626'},
+              ]}>
+              {' '}
+              ({isInverted ? '시작이 끝보다 늦음' : getDurLabel(durMins)})
             </Text>
-            <Text style={popContentStyles.previewSep}> ~ </Text>
-            <Text style={[popContentStyles.previewText, {color: primaryColor}]}>
-              {form.endTime ? format(form.endTime, 'HH:mm') : '--:--'}
-            </Text>
-            <Text style={popContentStyles.previewDur}> ({getDurLabel(durMins)})</Text>
           </View>
         </>
       )}
@@ -728,27 +699,30 @@ const popContentStyles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 4,
   },
-  startTimePicker: {
-    height: 100,
-    marginBottom: 4,
-    alignSelf: 'flex-start' as const,
-    width: 240,
-    transform: [{scale: 0.85}],
-    marginLeft: -30,
-    marginTop: -8,
-  },
-  androidTimeBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  // Start/End segment (datetime 휠피커 위)
+  segmentRow: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    gap: 4,
     backgroundColor: '#F3F4F6',
-    borderRadius: 10,
+    borderRadius: 18,
+    padding: 3,
     marginBottom: 8,
-    alignSelf: 'flex-start' as const,
   },
-  androidTimeBtnText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#1F2937',
+  segmentBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 5,
+    borderRadius: 15,
+  },
+  segmentText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  datetimePicker: {
+    alignSelf: 'center',
+    width: '100%',
+    marginBottom: 4,
   },
   durChipRow: {
     flexDirection: 'row',
@@ -756,21 +730,11 @@ const popContentStyles = StyleSheet.create({
     gap: 5,
     marginBottom: 6,
   },
-  directToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    marginBottom: 4,
-  },
-  directToggleText: {
-    fontSize: 11,
-    color: '#9CA3AF',
-  },
   previewBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flexWrap: 'wrap',
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 6,
@@ -788,39 +752,6 @@ const popContentStyles = StyleSheet.create({
   previewDur: {
     fontSize: 11,
     color: '#9CA3AF',
-  },
-  // Duration picker modal
-  durationModal: {
-    position: 'absolute',
-    bottom: '30%',
-    left: 20,
-    right: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  durationModalTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 8,
-  },
-  durationConfirmBtn: {
-    paddingHorizontal: 32,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginTop: 12,
-  },
-  durationConfirmText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
   // List popovers (alarm, recurrence)
   listContainer: {
@@ -926,9 +857,32 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
 
     const handleDateSelect = useCallback(
       (dateStr: string) => {
+        const oldStart = form.startTime;
+        const oldEnd = form.endTime;
         updateField('scheduledDate', dateStr);
+        if (!oldStart) return;
+
+        // 시작↔끝 일수 차이 보존
+        const dayMs = 86_400_000;
+        const dayDiff = oldEnd
+          ? Math.round(
+              (startOfDay(oldEnd).getTime() - startOfDay(oldStart).getTime()) /
+                dayMs,
+            )
+          : 0;
+
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const newStart = new Date(oldStart);
+        newStart.setFullYear(y, m - 1, d);
+        updateField('startTime', newStart);
+
+        if (oldEnd) {
+          const newEnd = new Date(oldEnd);
+          newEnd.setFullYear(y, m - 1, d + dayDiff);
+          updateField('endTime', newEnd);
+        }
       },
-      [updateField],
+      [updateField, form.startTime, form.endTime],
     );
 
     // 팝오버 열기/닫기
@@ -1040,7 +994,7 @@ export const SchedulePanel = forwardRef<SchedulePanelRef, SchedulePanelProps>(
             visible={activePopover === 'time'}
             onClose={closePopover}
             anchorPosition={popoverAnchor}
-            width={260}>
+            width={320}>
             <TimePopoverContent form={form} updateField={updateField} primaryColor={primaryColor} />
           </Popover>
 
