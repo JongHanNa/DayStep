@@ -18,12 +18,14 @@ struct DayGridTodoItem: Codable, Identifiable {
   let endTime: String?
   let completed: Bool
   let projectColor: String
+  let scheduleType: String?  // "timed" | "all_day" | "anytime"
 
   enum CodingKeys: String, CodingKey {
     case id, title, completed
     case startTime = "start_time"
     case endTime = "end_time"
     case projectColor = "project_color"
+    case scheduleType = "schedule_type"
   }
 }
 
@@ -154,10 +156,15 @@ struct DayTimeGridContent: View {
 
   private var allDaySection: some View {
     let allDayEvents = state.eventItems.filter { $0.isAllDay }
-    let anytimeTodos = state.todoItems.filter { $0.startTime == nil }
+    // all_day, anytime, 또는 startTime 없는 todo 모두 종일 섹션으로
+    let allDayTodos = state.todoItems.filter {
+      $0.scheduleType == "all_day"
+        || $0.scheduleType == "anytime"
+        || $0.startTime == nil
+    }
 
     return Group {
-      if !allDayEvents.isEmpty || !anytimeTodos.isEmpty {
+      if !allDayEvents.isEmpty || !allDayTodos.isEmpty {
         VStack(alignment: .leading, spacing: 3) {
           // 종일 이벤트 — 전체 너비 바
           ForEach(allDayEvents) { event in
@@ -177,11 +184,11 @@ struct DayTimeGridContent: View {
             .cornerRadius(6)
           }
 
-          // 언제든지 할일 — 전체 너비 바
-          ForEach(anytimeTodos) { todo in
+          // 종일·언제든지 할일 — 전체 너비 바
+          ForEach(allDayTodos) { todo in
             Button(action: { onTodoPress?(todo.id) }) {
               HStack(spacing: 6) {
-                Text("언제든지")
+                Text(allDayLabel(for: todo))
                   .font(.system(size: 10, weight: .medium))
                   .foregroundColor(Color(hex: todo.projectColor).opacity(0.6))
                 Circle()
@@ -208,6 +215,34 @@ struct DayTimeGridContent: View {
         Divider()
       }
     }
+  }
+
+  /// 종일 항목의 라벨 ("종일", "언제든지", 다일 종일은 "M/d → M/d")
+  private func allDayLabel(for todo: DayGridTodoItem) -> String {
+    if todo.scheduleType == "anytime" || todo.startTime == nil {
+      return "언제든지"
+    }
+    if todo.scheduleType == "all_day", let startStr = todo.startTime {
+      // 다일 종일 — 시작일과 끝일이 다르면 "M/d → M/d 종일"
+      let isoFrac = TimeUtils.isoFrac
+      let isoNoFrac = TimeUtils.isoNoFrac
+      let startDate = isoFrac.date(from: startStr) ?? isoNoFrac.date(from: startStr)
+      let endDate: Date? = {
+        guard let s = todo.endTime else { return nil }
+        return isoFrac.date(from: s) ?? isoNoFrac.date(from: s)
+      }()
+      if let s = startDate, let e = endDate {
+        let cal = Calendar.current
+        if !cal.isDate(s, inSameDayAs: e) {
+          let f = DateFormatter()
+          f.dateFormat = "M/d"
+          f.locale = Locale(identifier: "ko_KR")
+          return "\(f.string(from: s)) → \(f.string(from: e)) 종일"
+        }
+      }
+      return "종일"
+    }
+    return "종일"
   }
 
   // MARK: - Time Grid Background
@@ -346,7 +381,12 @@ struct DayTimeGridContent: View {
   // MARK: - Helpers
 
   private var timedTodos: [DayGridTodoItem] {
-    state.todoItems.filter { $0.startTime != nil }
+    // 시간 그리드에는 timed만 — all_day/anytime은 종일 섹션으로
+    state.todoItems.filter {
+      $0.startTime != nil
+        && $0.scheduleType != "all_day"
+        && $0.scheduleType != "anytime"
+    }
   }
 
   private var timedEvents: [DayGridEventItem] {

@@ -11,5 +11,6 @@ RCT_EXPORT_VIEW_PROPERTY(eventData, NSString)
 RCT_EXPORT_VIEW_PROPERTY(onDateSelect, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onTodoPress, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onHeightChange, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onTodoEdit, RCTDirectEventBlock)
 
 @end

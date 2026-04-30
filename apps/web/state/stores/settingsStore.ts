@@ -6,6 +6,11 @@ import {
   CompletionBehavior
 } from '@/types/settings';
 import { ColorTheme, DEFAULT_COLOR_THEME } from '@/lib/color-themes';
+import {
+  BackgroundPreset,
+  DEFAULT_BACKGROUND_PRESET,
+  migrateColorThemeToPreset,
+} from '@/lib/color-presets';
 
 export type TimeFormat = '12h' | '24h';
 export type FontFamily = 'system' | 'opendyslexic';
@@ -14,6 +19,7 @@ export type LetterSpacing = number; // -0.2 ~ 0.3 범위의 em 단위
 export type FontSize = number; // 12 ~ 24 범위의 px 단위
 
 export type { ColorTheme } from '@/lib/color-themes';
+export type { BackgroundPreset } from '@/lib/color-presets';
 
 // DB 동기화용 설정 타입 (persist 대상만)
 export interface AppSettings {
@@ -23,7 +29,9 @@ export interface AppSettings {
   letterSpacing: LetterSpacing;
   fontSize: FontSize;
   todoCompletion: TodoCompletionSettings;
+  /** @deprecated 사용자 데이터 호환용. 새 코드는 backgroundPreset 사용. */
   colorTheme: ColorTheme;
+  backgroundPreset: BackgroundPreset;
   showDescriptions: boolean;
   showMotivationBadges: boolean;
   _lastSyncedAt: string | null;
@@ -43,6 +51,7 @@ interface SettingsState extends AppSettings {
   setShowCompletedItems: (show: boolean) => void;
   setCompletedItemsOpacity: (opacity: number) => void;
   setColorTheme: (theme: ColorTheme) => void;
+  setBackgroundPreset: (preset: BackgroundPreset) => void;
   setShowDescriptions: (show: boolean) => void;
   setShowMotivationBadges: (show: boolean) => void;
 
@@ -73,8 +82,11 @@ export const useSettingsStore = create<SettingsState>()(
         // 할일 완료 설정 기본값
         todoCompletion: DEFAULT_TODO_COMPLETION_SETTINGS,
 
-        // 기본값: Ocean Blue 테마
+        // 기본값: Ocean Blue 테마 (deprecated, 호환용)
         colorTheme: DEFAULT_COLOR_THEME,
+
+        // 기본값: calmBackground (모바일과 동일)
+        backgroundPreset: DEFAULT_BACKGROUND_PRESET,
 
         // 기본값: 설명 표시
         showDescriptions: true,
@@ -147,6 +159,11 @@ export const useSettingsStore = create<SettingsState>()(
           set({ colorTheme: theme });
         },
 
+        setBackgroundPreset: (preset: BackgroundPreset) => {
+          console.log('⚙️ 배경 프리셋 변경:', preset);
+          set({ backgroundPreset: preset });
+        },
+
         setShowDescriptions: (show: boolean) => {
           console.log('⚙️ 설명 표시 설정 변경:', show);
           set({ showDescriptions: show });
@@ -172,6 +189,17 @@ export const useSettingsStore = create<SettingsState>()(
       }),
       {
         name: 'settings-store',
+        version: 2,
+        migrate: (persisted: unknown, fromVersion: number) => {
+          const state = (persisted ?? {}) as Partial<AppSettings>;
+          if (fromVersion < 2) {
+            return {
+              ...state,
+              backgroundPreset: migrateColorThemeToPreset(state.colorTheme),
+            };
+          }
+          return state;
+        },
         partialize: (state) => ({
           timeFormat: state.timeFormat,
           fontFamily: state.fontFamily,
@@ -180,6 +208,7 @@ export const useSettingsStore = create<SettingsState>()(
           fontSize: state.fontSize,
           todoCompletion: state.todoCompletion,
           colorTheme: state.colorTheme,
+          backgroundPreset: state.backgroundPreset,
           showDescriptions: state.showDescriptions,
           showMotivationBadges: state.showMotivationBadges,
           _lastSyncedAt: state._lastSyncedAt,
@@ -205,6 +234,7 @@ export function getSettingsForSync(): AppSettings {
     fontSize: state.fontSize,
     todoCompletion: state.todoCompletion,
     colorTheme: state.colorTheme,
+    backgroundPreset: state.backgroundPreset,
     showDescriptions: state.showDescriptions,
     showMotivationBadges: state.showMotivationBadges,
     _lastSyncedAt: state._lastSyncedAt,

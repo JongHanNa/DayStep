@@ -17,6 +17,8 @@ interface NativeDayTimeGridProps {
   onDateSelect: (e: {nativeEvent: {date: string}}) => void;
   onTodoPress: (e: {nativeEvent: {todoId: string}}) => void;
   onHeightChange: (e: {nativeEvent: {height: number}}) => void;
+  /** Long-press + drag로 시간을 변경했을 때 발화. start_time/end_time은 ISO8601 */
+  onTodoEdit?: (e: {nativeEvent: {id: string; start_time: string; end_time: string}}) => void;
   style?: ViewStyle;
 }
 

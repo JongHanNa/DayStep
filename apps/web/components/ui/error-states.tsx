@@ -1,18 +1,19 @@
 'use client';
 
 import React from 'react';
-import { 
-  AlertTriangle, 
-  Wifi, 
-  WifiOff, 
-  RefreshCw, 
-  Home, 
+import {
+  AlertTriangle,
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  Home,
   Search,
   Server,
   Shield,
   Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTheme } from '@/hooks/useTheme';
 
 interface ErrorStateProps {
   onRetry?: () => void;
@@ -21,12 +22,29 @@ interface ErrorStateProps {
 }
 
 /**
+ * 에러 아이콘에 시맨틱 색상 적용
+ */
+function useErrorIconStyle(variant: 'error' | 'warning' | 'neutral' = 'error') {
+  const { colors } = useTheme();
+  switch (variant) {
+    case 'error':
+      return { color: colors.error };
+    case 'warning':
+      return { color: colors.warning };
+    case 'neutral':
+    default:
+      return undefined;
+  }
+}
+
+/**
  * 네트워크 연결 오류
  */
 export function NetworkError({ onRetry, className }: ErrorStateProps) {
+  const iconStyle = useErrorIconStyle('error');
   return (
     <div className={`text-center py-12 ${className}`}>
-      <WifiOff className="h-16 w-16 text-red-500 mx-auto mb-4" />
+      <WifiOff className="h-16 w-16 mx-auto mb-4" style={iconStyle} />
       <h3 className="text-xl font-semibold mb-2">네트워크 연결 오류</h3>
       <p className="text-muted-foreground mb-6 max-w-md mx-auto">
         인터넷 연결을 확인하고 다시 시도해주세요.
@@ -47,9 +65,10 @@ export function NetworkError({ onRetry, className }: ErrorStateProps) {
  * 서버 오류 (500)
  */
 export function ServerError({ onRetry, onGoHome, className }: ErrorStateProps) {
+  const iconStyle = useErrorIconStyle('error');
   return (
     <div className={`text-center py-12 ${className}`}>
-      <Server className="h-16 w-16 text-red-500 mx-auto mb-4" />
+      <Server className="h-16 w-16 mx-auto mb-4" style={iconStyle} />
       <h3 className="text-xl font-semibold mb-2">서버 오류</h3>
       <p className="text-muted-foreground mb-6 max-w-md mx-auto">
         서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.
@@ -99,9 +118,10 @@ export function NotFoundError({ onGoHome, className }: ErrorStateProps) {
  * 권한 없음 (403)
  */
 export function UnauthorizedError({ onGoHome, className }: ErrorStateProps) {
+  const iconStyle = useErrorIconStyle('error');
   return (
     <div className={`text-center py-12 ${className}`}>
-      <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
+      <Shield className="h-16 w-16 mx-auto mb-4" style={iconStyle} />
       <h3 className="text-xl font-semibold mb-2">접근 권한이 없습니다</h3>
       <p className="text-muted-foreground mb-6 max-w-md mx-auto">
         이 페이지에 접근할 권한이 없습니다. 로그인이 필요할 수 있습니다.
@@ -125,9 +145,10 @@ export function UnauthorizedError({ onGoHome, className }: ErrorStateProps) {
  * 요청 시간 초과
  */
 export function TimeoutError({ onRetry, className }: ErrorStateProps) {
+  const iconStyle = useErrorIconStyle('warning');
   return (
     <div className={`text-center py-12 ${className}`}>
-      <Clock className="h-16 w-16 text-orange-500 mx-auto mb-4" />
+      <Clock className="h-16 w-16 mx-auto mb-4" style={iconStyle} />
       <h3 className="text-xl font-semibold mb-2">요청 시간 초과</h3>
       <p className="text-muted-foreground mb-6 max-w-md mx-auto">
         서버 응답이 지연되고 있습니다. 다시 시도해주세요.
@@ -148,9 +169,10 @@ export function TimeoutError({ onRetry, className }: ErrorStateProps) {
  * 일반적인 에러 상태
  */
 export function GenericError({ onRetry, onGoHome, className }: ErrorStateProps) {
+  const iconStyle = useErrorIconStyle('error');
   return (
     <div className={`text-center py-12 ${className}`}>
-      <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+      <AlertTriangle className="h-16 w-16 mx-auto mb-4" style={iconStyle} />
       <h3 className="text-xl font-semibold mb-2">문제가 발생했습니다</h3>
       <p className="text-muted-foreground mb-6 max-w-md mx-auto">
         예상치 못한 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
@@ -176,13 +198,13 @@ export function GenericError({ onRetry, onGoHome, className }: ErrorStateProps) 
 /**
  * 빈 상태 표시
  */
-export function EmptyState({ 
+export function EmptyState({
   title = "아직 항목이 없습니다",
   description = "첫 번째 항목을 추가해보세요.",
   actionLabel,
   onAction,
   icon: Icon = Search,
-  className 
+  className
 }: {
   title?: string;
   description?: string;
@@ -210,11 +232,11 @@ export function EmptyState({
 /**
  * HTTP 상태 코드에 따른 에러 컴포넌트 선택
  */
-export function ErrorByStatus({ 
-  status, 
-  onRetry, 
-  onGoHome, 
-  className 
+export function ErrorByStatus({
+  status,
+  onRetry,
+  onGoHome,
+  className
 }: {
   status: number;
   onRetry?: () => void;

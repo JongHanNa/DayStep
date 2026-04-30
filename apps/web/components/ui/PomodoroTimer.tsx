@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEMANTIC_COLORS } from '@/lib/colors';
 
 interface PomodoroTimerProps {
   /** 현재 진행률 (0-1) */
@@ -38,12 +39,11 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress * circumference);
   
-  // 진행률에 따른 색상 결정 - 그린 계열로 복원
+  // 진행률에 따른 색상 결정 — 완료/활성은 시맨틱 success
   const progressColor = useMemo(() => {
-    if (isCompleted) return '#22C55E'; // green-500 (완료 시)
-    if (isActive) return '#22C55E'; // green-500 (활성화 시 - 그린 계열)
-    return '#E5E7EB'; // gray-200 (비활성)
-  }, [isActive, isCompleted]);
+    if (isCompleted || isActive) return color ?? SEMANTIC_COLORS.success;
+    return '#E5E7EB';
+  }, [isActive, isCompleted, color]);
 
   return (
     <div 

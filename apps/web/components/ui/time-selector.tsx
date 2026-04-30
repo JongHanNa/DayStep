@@ -3,6 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/useTheme';
 
 interface TimeOption {
   value: string;
@@ -21,11 +22,13 @@ interface TimeSelectorProps {
 export function TimeSelector({
   selectedTime,
   onTimeChange,
-  accentColor = '#DBAC6C',
+  accentColor: accentColorProp,
   className,
   maxEndTime = "24:00",
   duration = 60
 }: TimeSelectorProps) {
+  const { primaryColor } = useTheme();
+  const accentColor = accentColorProp ?? primaryColor;
   // 시간 옵션 생성 (30분 간격으로)
   const generateTimeOptions = (): TimeOption[] => {
     const options: TimeOption[] = [];

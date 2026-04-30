@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Wifi, WifiOff, RefreshCw, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 import type { RealtimeConnectionState, RealtimeSyncState } from '@/state/utils/storeUtils';
 
 export interface RealtimeStatusProps {
@@ -21,6 +22,7 @@ export function RealtimeStatus({
   compact = false
 }: RealtimeStatusProps) {
   const [lastUpdate, setLastUpdate] = useState<string>('');
+  const { colors, primaryColor, hexWithOpacity } = useTheme();
 
   useEffect(() => {
     if (syncState.lastSyncTime) {
@@ -47,18 +49,25 @@ export function RealtimeStatus({
     return;
   }, [syncState.lastSyncTime]);
 
-  const getStatusColor = () => {
+  const getAccent = () => {
     switch (connectionState.status) {
       case 'connected':
-        return 'text-green-500 bg-green-50 border-green-200';
+        return colors.success;
       case 'connecting':
-        return 'text-blue-500 bg-blue-50 border-blue-200';
+        return primaryColor;
       case 'error':
-        return 'text-red-500 bg-red-50 border-red-200';
+        return colors.error;
       case 'disconnected':
       default:
-        return 'text-gray-500 bg-gray-50 border-gray-200';
+        return '#6B7280';
     }
+  };
+
+  const accent = getAccent();
+  const accentStyle: React.CSSProperties = {
+    color: accent,
+    backgroundColor: hexWithOpacity(accent, 0.08),
+    borderColor: hexWithOpacity(accent, 0.25),
   };
 
   const getStatusIcon = () => {
@@ -91,11 +100,13 @@ export function RealtimeStatus({
 
   if (compact) {
     return (
-      <div className={cn(
-        'inline-flex items-center gap-2 px-2 py-1 rounded-md border text-xs',
-        getStatusColor(),
-        className
-      )}>
+      <div
+        style={accentStyle}
+        className={cn(
+          'inline-flex items-center gap-2 px-2 py-1 rounded-md border text-xs',
+          className
+        )}
+      >
         {getStatusIcon()}
         <span className="font-medium">{getStatusText()}</span>
         {connectionState.status === 'error' && onReconnect && (
@@ -112,11 +123,13 @@ export function RealtimeStatus({
   }
 
   return (
-    <div className={cn(
-      'p-3 rounded-lg border transition-all',
-      getStatusColor(),
-      className
-    )}>
+    <div
+      style={accentStyle}
+      className={cn(
+        'p-3 rounded-lg border transition-all',
+        className
+      )}
+    >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {getStatusIcon()}

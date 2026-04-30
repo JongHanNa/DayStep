@@ -1,10 +1,10 @@
 /**
- * CreateFeedbackSheet — 버그 신고/기능 요청 작성 바텀시트
+ * CreateFeedbackSheet — 버그 신고/기능 요청 작성 시트
  *
- * - @gorhom/bottom-sheet BottomSheetModal (네이티브 드래그 제스처)
- * - iOS 네이티브 SegmentedControl (@react-native-segmented-control)
- * - BottomSheetTextInput for title + content
- * - 제출 시 feedbackStore.createFeedback 호출
+ * iOS: NativeFeedbackEditor (SwiftUI Form + Picker + TextEditor) — 한글 IME 자모 분리 해결
+ * Fallback (Android · 네이티브 미등록): @gorhom/bottom-sheet BottomSheetModal
+ *
+ * 호출처 API (forwardRef + open/close)는 유지되어 FeedbackBoardScreen 변경 불필요.
  */
 import React, {
   forwardRef,
@@ -14,7 +14,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {StyleSheet, Text, View, Alert} from 'react-native';
+import {Alert, Modal, StyleSheet, Text, View} from 'react-native';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -27,6 +27,7 @@ import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
 import {useFeedbackStore, type FeedbackType} from '@/stores/feedbackStore';
+import {NativeFeedbackEditorNative} from '@/components/native/NativeFeedbackEditor';
 
 export interface CreateFeedbackSheetRef {
   open: () => void;
@@ -39,14 +40,17 @@ const TYPE_VALUES: FeedbackType[] = ['bug', 'feature'];
 export const CreateFeedbackSheet = forwardRef<CreateFeedbackSheetRef>(
   function CreateFeedbackSheet(_props, ref) {
     const {primaryColor} = useTheme();
-    const sheetRef = useRef<BottomSheetModal>(null);
     const createFeedback = useFeedbackStore(s => s.createFeedback);
 
+    // ── 네이티브 모달 visibility ─────────────────────────
+    const [nativeVisible, setNativeVisible] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    // ── 폴백(BottomSheet) 상태 ─────────────────────────
+    const sheetRef = useRef<BottomSheetModal>(null);
     const [typeIndex, setTypeIndex] = useState(0);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-
     const snapPoints = useMemo(() => ['90%'], []);
 
     const reset = useCallback(() => {
@@ -59,39 +63,97 @@ export const CreateFeedbackSheet = forwardRef<CreateFeedbackSheetRef>(
     useImperativeHandle(ref, () => ({
       open: () => {
         reset();
-        sheetRef.current?.present();
+        if (NativeFeedbackEditorNative) {
+          setNativeVisible(true);
+        } else {
+          sheetRef.current?.present();
+        }
       },
-      close: () => sheetRef.current?.dismiss(),
+      close: () => {
+        if (NativeFeedbackEditorNative) {
+          setNativeVisible(false);
+        } else {
+          sheetRef.current?.dismiss();
+        }
+      },
     }));
 
-    const handleSubmit = useCallback(async () => {
-      const trimmedTitle = title.trim();
-      const trimmedContent = content.trim();
-      if (!trimmedTitle) {
-        Alert.alert('제목을 입력해주세요');
-        return;
-      }
-      if (!trimmedContent) {
-        Alert.alert('내용을 입력해주세요');
-        return;
-      }
+    // ── 공통 제출 로직 ─────────────────────────
+    const submit = useCallback(
+      async (type: FeedbackType, rawTitle: string, rawContent: string) => {
+        const t = rawTitle.trim();
+        const c = rawContent.trim();
+        if (!t) {
+          Alert.alert('제목을 입력해주세요');
+          return false;
+        }
+        if (!c) {
+          Alert.alert('내용을 입력해주세요');
+          return false;
+        }
+        setSubmitting(true);
+        const result = await createFeedback({type, title: t, content: c});
+        setSubmitting(false);
+        if (!result) {
+          Alert.alert('제출 실패', '잠시 후 다시 시도해주세요.');
+          return false;
+        }
+        return true;
+      },
+      [createFeedback],
+    );
 
-      setSubmitting(true);
-      const result = await createFeedback({
-        type: TYPE_VALUES[typeIndex]!,
-        title: trimmedTitle,
-        content: trimmedContent,
-      });
-      setSubmitting(false);
+    // ── 네이티브 콜백 ─────────────────────────
+    const handleNativeSubmit = useCallback(
+      async (e: {nativeEvent: {type: FeedbackType; title: string; content: string}}) => {
+        const ok = await submit(
+          e.nativeEvent.type,
+          e.nativeEvent.title,
+          e.nativeEvent.content,
+        );
+        if (ok) setNativeVisible(false);
+      },
+      [submit],
+    );
 
-      if (result) {
-        sheetRef.current?.dismiss();
-      } else {
-        Alert.alert('제출 실패', '잠시 후 다시 시도해주세요.');
-      }
-    }, [title, content, typeIndex, createFeedback]);
+    const handleNativeClose = useCallback(() => {
+      setNativeVisible(false);
+    }, []);
 
-    const canSubmit = title.trim().length > 0 && content.trim().length > 0 && !submitting;
+    // ── 폴백 콜백 ─────────────────────────
+    const handleFallbackSubmit = useCallback(async () => {
+      const ok = await submit(TYPE_VALUES[typeIndex]!, title, content);
+      if (ok) sheetRef.current?.dismiss();
+    }, [submit, typeIndex, title, content]);
+
+    // ============================================
+    // iOS 네이티브 시트
+    // ============================================
+    if (NativeFeedbackEditorNative) {
+      const editorData = JSON.stringify({type: 'bug', title: '', content: ''});
+      return (
+        <Modal
+          visible={nativeVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={handleNativeClose}>
+          <NativeFeedbackEditorNative
+            primaryColor={primaryColor}
+            editorData={editorData}
+            submitting={submitting}
+            onSubmit={handleNativeSubmit}
+            onClose={handleNativeClose}
+            style={{flex: 1}}
+          />
+        </Modal>
+      );
+    }
+
+    // ============================================
+    // 폴백: BottomSheetModal (Android · 네이티브 미등록 iOS)
+    // ============================================
+    const canSubmit =
+      title.trim().length > 0 && content.trim().length > 0 && !submitting;
 
     return (
       <BottomSheetModal
@@ -118,9 +180,7 @@ export const CreateFeedbackSheet = forwardRef<CreateFeedbackSheetRef>(
               <Text style={styles.cancelButton}>취소</Text>
             </AnimatedPressable>
             <Text style={styles.title}>새 제보</Text>
-            <AnimatedPressable
-              disabled={!canSubmit}
-              onPress={handleSubmit}>
+            <AnimatedPressable disabled={!canSubmit} onPress={handleFallbackSubmit}>
               <Text
                 style={[
                   styles.submitButton,
@@ -132,12 +192,12 @@ export const CreateFeedbackSheet = forwardRef<CreateFeedbackSheetRef>(
             </AnimatedPressable>
           </View>
 
-          {/* Segmented Control (iOS UIKit UISegmentedControl native) */}
+          {/* Segmented Control */}
           <View style={styles.segmentedWrapper}>
             <SegmentedControl
               values={[...TYPE_LABELS]}
               selectedIndex={typeIndex}
-              onChange={event =>
+              onChange={(event: {nativeEvent: {selectedSegmentIndex: number}}) =>
                 setTypeIndex(event.nativeEvent.selectedSegmentIndex)
               }
               appearance="light"

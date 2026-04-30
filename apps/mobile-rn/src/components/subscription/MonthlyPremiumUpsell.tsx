@@ -19,16 +19,36 @@ interface MonthlyPremiumUpsellProps {
   onUpgrade: () => void;
   menuItems: {title: string; key: string}[];
   onMenuSelect: (key: string) => void;
+  /** 페이월 제목. 기본값: '월간 캘린더 보기' */
+  title?: string;
+  /** 부제. 기본값: 월간 캘린더 설명 */
+  description?: string;
+  /** 기능 하이라이트 항목들. 기본값: 월간 캘린더 3개 */
+  features?: string[];
+  /** CTA 버튼 라벨. 기본값: 'Pro 구독하기' */
+  ctaText?: string;
+  /** PhoneMockup 안에 들어갈 미리보기. 기본값: <MiniCalendarPreview primaryColor={primaryColor} /> */
+  preview?: React.ReactNode;
 }
+
+const DEFAULT_FEATURES = [
+  '월간 일정 한눈에 보기',
+  '날짜별 할일·일정 통합 뷰',
+  '드래그로 일정 이동',
+];
 
 export function MonthlyPremiumUpsell({
   onUpgrade,
   menuItems,
   onMenuSelect,
+  title = '월간 캘린더 보기',
+  description = '한 달의 일정을 한눈에 확인하고\n체계적으로 계획을 세워보세요',
+  features = DEFAULT_FEATURES,
+  ctaText = 'Pro 구독하기',
+  preview,
 }: MonthlyPremiumUpsellProps) {
   const {primaryColor} = useTheme();
-
-  const ctaText = 'Pro 구독하기';
+  const previewNode = preview ?? <MiniCalendarPreview primaryColor={primaryColor} />;
 
   return (
     <View style={styles.root}>
@@ -61,27 +81,22 @@ export function MonthlyPremiumUpsell({
         <Animated.View
           entering={FadeInDown.delay(100).duration(500)}
           style={styles.mockupContainer}>
-          <PhoneMockup>
-            <MiniCalendarPreview primaryColor={primaryColor} />
-          </PhoneMockup>
+          <PhoneMockup>{previewNode}</PhoneMockup>
         </Animated.View>
 
         {/* 타이틀 */}
         <Animated.View entering={FadeInDown.delay(200).duration(500)}>
-          <Text style={styles.title}>월간 캘린더 보기</Text>
-          <Text style={styles.description}>
-            한 달의 일정을 한눈에 확인하고{'\n'}
-            체계적으로 계획을 세워보세요
-          </Text>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.description}>{description}</Text>
         </Animated.View>
 
         {/* 기능 하이라이트 */}
         <Animated.View
           entering={FadeInDown.delay(300).duration(500)}
           style={styles.features}>
-          <FeatureItem text="월간 일정 한눈에 보기" />
-          <FeatureItem text="날짜별 할일·일정 통합 뷰" />
-          <FeatureItem text="드래그로 일정 이동" />
+          {features.map((feat, i) => (
+            <FeatureItem key={i} text={feat} />
+          ))}
         </Animated.View>
 
         {/* CTA 버튼 */}

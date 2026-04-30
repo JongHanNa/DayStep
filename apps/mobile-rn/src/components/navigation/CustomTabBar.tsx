@@ -289,10 +289,17 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
     return null;
   }
 
-  // 월간 캘린더 업셀 화면 시 탭바 숨김 (grace period 중에는 탭바 유지)
-  const isMonthlyUpsell = focusedRoute.name === 'Planner' && plannerViewMode === 'monthlyPlanner' && !hasActiveSubscription && !isInGracePeriod;
-  if (isMonthlyUpsell) {
-    if (__DEV__) console.warn('[CustomTabBar] HIDDEN: monthly upsell', {plannerViewMode, hasActiveSubscription, isInGracePeriod});
+  // Pro 페이월(월/일/3일/주 뷰) 화면 시 탭바 숨김 (grace period 중에는 탭바 유지)
+  const isPaywallView =
+    focusedRoute.name === 'Planner' &&
+    (plannerViewMode === 'monthlyPlanner' ||
+      plannerViewMode === 'day' ||
+      plannerViewMode === '3day' ||
+      plannerViewMode === 'week') &&
+    !hasActiveSubscription &&
+    !isInGracePeriod;
+  if (isPaywallView) {
+    if (__DEV__) console.warn('[CustomTabBar] HIDDEN: planner paywall', {plannerViewMode, hasActiveSubscription, isInGracePeriod});
     return null;
   }
 

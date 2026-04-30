@@ -164,6 +164,13 @@ class NativeContactNudgeUIView: UIView {
   private let nudgeState = ContactNudgeState()
   private var hostingController: UIHostingController<AnyView>?
   private var hasSetUp = false
+  private var lastEmittedHeight: CGFloat = -1
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    guard hasSetUp, bounds.width > 0 else { return }
+    emitHeight()
+  }
 
   // MARK: Prop Setters
 
@@ -190,7 +197,10 @@ class NativeContactNudgeUIView: UIView {
   private func emitHeight() {
     guard let hc = hostingController, bounds.width > 0 else { return }
     let size = hc.sizeThatFits(in: CGSize(width: bounds.width, height: .greatestFiniteMagnitude))
-    onHeightChange?(["height": size.height])
+    if abs(size.height - lastEmittedHeight) > 0.5 {
+      lastEmittedHeight = size.height
+      onHeightChange?(["height": size.height])
+    }
   }
 
   // MARK: - Setup Once

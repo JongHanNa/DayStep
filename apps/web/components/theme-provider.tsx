@@ -1,8 +1,10 @@
 'use client';
 
 import { ThemeContext, Theme, ThemeContextType } from '@/hooks/useTheme';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSettingsStore } from '@/state/stores/settingsStore';
+import { getMainColorForPreset } from '@/lib/color-presets';
+import { getSemanticColors, hexWithOpacity } from '@/lib/colors';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -12,7 +14,8 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
-  const colorTheme = useSettingsStore((state) => state.colorTheme);
+  const backgroundPreset = useSettingsStore((state) => state.backgroundPreset);
+  const setBackgroundPreset = useSettingsStore((state) => state.setBackgroundPreset);
 
   // 시스템 테마 감지
   const getSystemTheme = (): 'light' | 'dark' => {
@@ -32,7 +35,7 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
     }
   }, []);
 
-  // 테마 적용
+  // 라이트/다크 테마 적용
   useEffect(() => {
     const root = document.documentElement;
 
@@ -52,13 +55,15 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
     root.setAttribute('data-theme', effectiveTheme); // DaisyUI가 CSS 변수 읽기 위해 필수
   }, [theme]);
 
-  // 컬러 테마 적용
+  // 배경 프리셋 → data-color-theme + --color-primary 적용
   useEffect(() => {
     const root = document.documentElement;
-    if (colorTheme) {
-      root.setAttribute('data-color-theme', colorTheme);
+    if (backgroundPreset) {
+      root.setAttribute('data-color-theme', backgroundPreset);
+      // inline style로도 덮어써서 globals.css의 우선순위 의존성 제거
+      root.style.setProperty('--color-primary', getMainColorForPreset(backgroundPreset));
     }
-  }, [colorTheme]);
+  }, [backgroundPreset]);
 
   // 시스템 테마 변경 감지
   useEffect(() => {
@@ -86,10 +91,21 @@ export function ThemeProvider({ children, defaultTheme = 'light' }: ThemeProvide
     }
   };
 
+  const primaryColor = useMemo(
+    () => getMainColorForPreset(backgroundPreset),
+    [backgroundPreset],
+  );
+  const colors = useMemo(() => getSemanticColors(resolvedTheme), [resolvedTheme]);
+
   const value: ThemeContextType = {
     theme,
     resolvedTheme,
     setTheme: updateTheme,
+    backgroundPreset,
+    setBackgroundPreset,
+    primaryColor,
+    colors,
+    hexWithOpacity,
   };
 
   return (

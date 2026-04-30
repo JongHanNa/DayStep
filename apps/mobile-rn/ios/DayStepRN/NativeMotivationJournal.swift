@@ -3,7 +3,9 @@
  *
  * 디자인: Apple Journal 스타일 (reflective journaling)
  * - 큰 날짜 헤더 + 성찰 프롬프트 + TextEditor + 연결된 할일 Section(.swipeActions)
- * - Toolbar: 닫기 / Menu(ellipsis: 고정/삭제) / 저장(.borderedProminent)
+ * - NavigationView + .toolbar (iOS 26 Liquid Glass 자동 캡슐 외관)
+ *   • 메뉴와 저장 버튼은 분리된 ToolbarItem으로 배치 (HStack 묶음 금지 —
+ *     trailing safe-area 침범으로 클리핑 발생)
  *
  * 모드:
  * - "create": 신규 작성 (삭제 없음 · 연결된 할일 없음 · 프롬프트 강조)
@@ -174,38 +176,40 @@ struct MotivationJournalContent: View {
           Button("닫기") { onClose() }
         }
 
-        // 우측: (편집 모드만) 메뉴 + 저장 — 단일 ToolbarItem 안에서 분기하여
-        // iOS 15 호환 (ToolbarContentBuilder의 buildIf는 iOS 16+ 전용)
+        // 메뉴는 EDIT 모드에서만, 별도 ToolbarItem (HStack 사용 금지 — 클리핑 원인)
         ToolbarItem(placement: .navigationBarTrailing) {
-          HStack(spacing: 14) {
-            if !isCreateMode {
-              Menu {
-                Button {
-                  let next = !state.isPinned
-                  state.isPinned = next
-                  onPinToggle(next)
-                } label: {
-                  Label(state.isPinned ? "고정 해제" : "배너에 고정",
-                        systemImage: state.isPinned ? "pin.slash" : "pin")
-                }
-                Divider()
-                Button(role: .destructive) {
-                  onDelete()
-                } label: {
-                  Label("삭제", systemImage: "trash")
-                }
+          if !isCreateMode {
+            Menu {
+              Button {
+                let next = !state.isPinned
+                state.isPinned = next
+                onPinToggle(next)
               } label: {
-                Image(systemName: "ellipsis.circle")
-                  .font(.system(size: 20))
+                Label(state.isPinned ? "고정 해제" : "배너에 고정",
+                      systemImage: state.isPinned ? "pin.slash" : "pin")
               }
+              Divider()
+              Button(role: .destructive) {
+                onDelete()
+              } label: {
+                Label("삭제", systemImage: "trash")
+              }
+            } label: {
+              Image(systemName: "ellipsis.circle")
+                .font(.system(size: 20))
             }
-            Button("저장") {
-              onSave(state.title, state.content, state.isPinned)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(primary)
-            .disabled(!canSave)
           }
+        }
+
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button {
+            onSave(state.title, state.content, state.isPinned)
+          } label: {
+            Text("저장")
+          }
+          .buttonStyle(.borderedProminent)
+          .tint(primary)
+          .disabled(!canSave)
         }
       }
       .onAppear {
@@ -321,6 +325,10 @@ class NativeMotivationJournalUIView: UIView {
 
     let hc = UIHostingController(rootView: AnyView(content))
     hc.view.backgroundColor = .systemGroupedBackground
+    // iOS 26 Liquid Glass: toolbar의 자동 캡슐이 underlying button보다 넓어서
+    // navigation bar의 leading/trailing edge에 닿으면 캡슐 가장자리가 화면 밖으로
+    // 밀려 나감. additionalSafeAreaInsets로 좌우 8pt 여유를 줘서 캡슐을 안쪽으로 정렬.
+    hc.additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
     hostingController = hc
 
     addSubview(hc.view)

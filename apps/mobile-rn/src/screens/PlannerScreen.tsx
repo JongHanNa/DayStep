@@ -4,7 +4,7 @@
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Modal, Platform} from 'react-native';
+import {View, Text, StyleSheet, Modal, Platform, ActionSheetIOS, Alert} from 'react-native';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, type SharedValue} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer, gradientPresets} from '@/components/core';
@@ -12,6 +12,9 @@ import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/nativ
 import {DailyPlannerView} from '@/components/planner/DailyPlannerView';
 import {MonthlyPlannerView} from '@/components/planner/MonthlyPlannerView';
 import {MonthlyPremiumUpsell} from '@/components/subscription/MonthlyPremiumUpsell';
+import {MiniDayPreview} from '@/components/subscription/MiniDayPreview';
+import {MiniThreeDayPreview} from '@/components/subscription/MiniThreeDayPreview';
+import {MiniWeekPreview} from '@/components/subscription/MiniWeekPreview';
 import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import {MonthlyFAB} from '@/components/monthly-planner';
 import {TodoFormBottomSheet, type TodoFormBottomSheetRef} from '@/components/todo/TodoFormBottomSheet';
@@ -153,6 +156,7 @@ export default function PlannerScreen() {
       end_time: t.schedule_type === 'anytime' ? null : t.end_time,
       completed: t.completed,
       project_color: t.color || '#6366F1',
+      schedule_type: t.schedule_type ?? 'timed',
     }));
     // 기상 블록: wakeGoalTime - 30분 ~ wakeGoalTime
     const [wh, wm] = wakeGoalTime.split(':').map(Number);
@@ -167,6 +171,7 @@ export default function PlannerScreen() {
       end_time: wakeEnd.toISOString(),
       completed: false,
       project_color: '#F59E0B',
+      schedule_type: 'timed',
     });
     // 취침 블록: sleepGoalTime ~ sleepGoalTime + 30분
     const [sh, sm] = sleepGoalTime.split(':').map(Number);
@@ -181,6 +186,7 @@ export default function PlannerScreen() {
       end_time: sleepEnd.toISOString(),
       completed: false,
       project_color: '#7C3AED',
+      schedule_type: 'timed',
     });
     return JSON.stringify(items);
   }, [todos, selectedDate, sleepGoalTime, wakeGoalTime]);
@@ -210,6 +216,7 @@ export default function PlannerScreen() {
         end_time: t.end_time,
         completed: t.completed,
         project_color: t.color || '#6366F1',
+        schedule_type: t.schedule_type ?? 'timed',
       }));
     }
     return JSON.stringify(result);
@@ -250,6 +257,66 @@ export default function PlannerScreen() {
       // TODO: 할일 상세 열기
     },
     [],
+  );
+
+  const updateTodo = useTodoStore(s => s.updateTodo);
+  const updateRecurringTodo = useTodoStore(s => s.updateRecurringTodo);
+  const handleTodoEdit = useCallback(
+    (e: {nativeEvent: {id: string; start_time: string; end_time: string; original_date?: string}}) => {
+      const {id, start_time, end_time, original_date} = e.nativeEvent;
+      // 의사-카드(_wake/_sleep) 변경은 무시 — DB에 없음
+      if (id.startsWith('_')) return;
+
+      // 반복 todo면 수정 범위 ActionSheet
+      const todo = todos.find(t => t.id === id);
+      const isRecurring =
+        !!todo && (todo as any).recurrence_pattern && (todo as any).recurrence_pattern !== 'none';
+      const occurrenceDate = original_date ?? selectedDate;
+      const updates = {start_time, end_time} as any;
+
+      if (!isRecurring) {
+        updateTodo(id, updates);
+        return;
+      }
+
+      const onSelect = (idx: number) => {
+        if (idx === 0) {
+          updateRecurringTodo(id, updates, 'this', occurrenceDate);
+        } else if (idx === 1) {
+          updateRecurringTodo(id, updates, 'future', occurrenceDate);
+        } else {
+          // 취소 — 다음 fetch 시 native UI 원위치
+          fetchTodosForDateRange(
+            format(addDays(new Date(selectedDate), -7), 'yyyy-MM-dd'),
+            format(addDays(new Date(selectedDate), 7), 'yyyy-MM-dd'),
+          );
+        }
+      };
+
+      if (Platform.OS === 'ios') {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            title: '반복 작업의 시간을 수정하고 있습니다',
+            message: '수정 범위를 확인해주세요',
+            options: ['지금 반복', '모든 미완료 반복 주기', '취소'],
+            cancelButtonIndex: 2,
+          },
+          onSelect,
+        );
+      } else {
+        Alert.alert(
+          '반복 작업의 시간을 수정하고 있습니다',
+          '수정 범위를 확인해주세요',
+          [
+            {text: '지금 반복', onPress: () => onSelect(0)},
+            {text: '모든 미완료 반복 주기', onPress: () => onSelect(1)},
+            {text: '취소', style: 'cancel', onPress: () => onSelect(2)},
+          ],
+          {cancelable: false},
+        );
+      }
+    },
+    [updateTodo, updateRecurringTodo, todos, selectedDate, fetchTodosForDateRange],
   );
 
   const handleDateRangeChange = useCallback(
@@ -311,6 +378,23 @@ export default function PlannerScreen() {
           />
         );
       case 'day':
+        if (!hasActiveSubscription && !isInGracePeriod) {
+          return (
+            <MonthlyPremiumUpsell
+              onUpgrade={handleUpgrade}
+              menuItems={MENU_ITEMS}
+              onMenuSelect={handleMenuSelect}
+              title="일간 시간표 보기"
+              description={'하루의 시간 흐름을 한눈에 확인하고\n시간대별로 일정을 관리하세요'}
+              features={[
+                '하루 시간대 그리드',
+                '꾹 눌러 시작·끝 시간 조절',
+                '드래그로 시간 이동',
+              ]}
+              preview={<MiniDayPreview primaryColor={primaryColor} />}
+            />
+          );
+        }
         return (
           <View style={{flex: 1}}>
             <View style={{position: 'relative'}}>
@@ -358,6 +442,7 @@ export default function PlannerScreen() {
                 eventData={dayEventData}
                 onDateSelect={handleDayDateSelect}
                 onTodoPress={handleTodoPress}
+                onTodoEdit={handleTodoEdit}
                 onHeightChange={() => {}}
                 style={{flex: 1}}
               />
@@ -366,6 +451,42 @@ export default function PlannerScreen() {
         );
       case '3day':
       case 'week':
+        if (!hasActiveSubscription && !isInGracePeriod) {
+          const isWeek = viewMode === 'week';
+          return (
+            <MonthlyPremiumUpsell
+              onUpgrade={handleUpgrade}
+              menuItems={MENU_ITEMS}
+              onMenuSelect={handleMenuSelect}
+              title={isWeek ? '주간 시간표 보기' : '3일 시간표 보기'}
+              description={
+                isWeek
+                  ? '한 주의 일정을 한눈에 확인하고\n시간대별로 균형 있게 계획하세요'
+                  : '3일 치 일정을 집중력 있게\n시간대별로 관리하세요'
+              }
+              features={
+                isWeek
+                  ? [
+                      '종일·언제든지 상단 별도 라인',
+                      '주간 시간대 그리드',
+                      '드래그로 다른 요일·시간 이동',
+                    ]
+                  : [
+                      '3일 시간대 그리드',
+                      '꾹 눌러 시작·끝 시간 조절',
+                      '드래그로 다른 날·시간 이동',
+                    ]
+              }
+              preview={
+                isWeek ? (
+                  <MiniWeekPreview primaryColor={primaryColor} />
+                ) : (
+                  <MiniThreeDayPreview primaryColor={primaryColor} />
+                )
+              }
+            />
+          );
+        }
         return (
           <View style={{flex: 1}}>
             <View style={styles.multiDayToolbar}>
@@ -390,6 +511,7 @@ export default function PlannerScreen() {
               eventData={multiDayEventDataJson}
               onDateSelect={handleDayDateSelect}
               onTodoPress={handleTodoPress}
+              onTodoEdit={handleTodoEdit}
               onDateRangeChange={handleDateRangeChange}
               onHeightChange={() => {}}
               style={{flex: 1}}
@@ -416,7 +538,8 @@ export default function PlannerScreen() {
         style={{flex: 1}}>
         {renderView()}
       </Animated.View>
-      {(viewMode === 'day' || viewMode === '3day' || viewMode === 'week') && (
+      {(viewMode === 'day' || viewMode === '3day' || viewMode === 'week') &&
+        (hasActiveSubscription || isInGracePeriod) && (
         <MonthlyFAB onPress={() => formSheetRef.current?.openCreate(selectedDate)} />
       )}
       <TodoFormBottomSheet ref={formSheetRef} />

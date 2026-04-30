@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @deprecated 모바일과 동일한 4개 BackgroundPreset 시스템으로 대체됨.
+ * 신규 코드는 `BackgroundPresetModal`을 사용. 이 컴포넌트는 잠재적 호출자 호환성을 위해 남겨둔다.
+ */
+
 import { X, Check } from 'lucide-react';
 import { COLOR_THEMES, ColorTheme, getColorThemeConfig } from '@/lib/color-themes';
 import { useSettingsStore } from '@/state/stores/settingsStore';

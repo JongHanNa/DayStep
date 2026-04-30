@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2, AlertCircle, CheckCircle, RotateCcw } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 
 export interface OptimisticIndicatorProps {
   isProcessing: boolean;
@@ -24,6 +25,7 @@ export function OptimisticIndicator({
   className
 }: OptimisticIndicatorProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const { colors, primaryColor, hexWithOpacity } = useTheme();
 
   useEffect(() => {
     setIsVisible(isProcessing || hasError || pendingCount > 0);
@@ -33,12 +35,12 @@ export function OptimisticIndicator({
     return null;
   }
 
-  const getStatusColor = () => {
-    if (hasError) return 'text-red-500 bg-red-50 border-red-200';
-    if (retryingCount > 0) return 'text-yellow-500 bg-yellow-50 border-yellow-200';
-    if (isProcessing) return 'text-blue-500 bg-blue-50 border-blue-200';
-    return 'text-green-500 bg-green-50 border-green-200';
-  };
+  const accent = (() => {
+    if (hasError) return colors.error;
+    if (retryingCount > 0) return colors.warning;
+    if (isProcessing) return primaryColor;
+    return colors.success;
+  })();
 
   const getStatusIcon = () => {
     if (hasError) return <AlertCircle className="w-4 h-4" />;
@@ -54,17 +56,25 @@ export function OptimisticIndicator({
     return '모든 작업 완료';
   };
 
+  const containerStyle: React.CSSProperties = {
+    color: accent,
+    backgroundColor: hexWithOpacity(accent, 0.08),
+    borderColor: hexWithOpacity(accent, 0.25),
+  };
+
   return (
-    <div className={cn(
-      'fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all duration-300',
-      getStatusColor(),
-      className
-    )}>
+    <div
+      style={containerStyle}
+      className={cn(
+        'fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-2 rounded-lg border shadow-sm transition-all duration-300',
+        className
+      )}
+    >
       {getStatusIcon()}
       <span className="text-sm font-medium">
         {getStatusText()}
       </span>
-      
+
       {hasError && onRetry && (
         <button
           onClick={onRetry}
@@ -74,7 +84,7 @@ export function OptimisticIndicator({
           <RotateCcw className="w-3 h-3" />
         </button>
       )}
-      
+
       {(hasError || pendingCount > 0) && onClear && (
         <button
           onClick={onClear}
