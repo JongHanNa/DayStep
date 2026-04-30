@@ -325,10 +325,10 @@ class NativeMotivationJournalUIView: UIView {
 
     let hc = UIHostingController(rootView: AnyView(content))
     hc.view.backgroundColor = .systemGroupedBackground
-    // iOS 26 Liquid Glass: toolbar의 자동 캡슐이 underlying button보다 넓어서
-    // navigation bar의 leading/trailing edge에 닿으면 캡슐 가장자리가 화면 밖으로
-    // 밀려 나감. additionalSafeAreaInsets로 좌우 8pt 여유를 줘서 캡슐을 안쪽으로 정렬.
-    hc.additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 8)
+    // iOS 26 Liquid Glass: toolbar의 자동 캡슐이 underlying button보다 크게 그려져서
+    // navigation bar edge에 닿으면 가장자리가 클리핑됨. additionalSafeAreaInsets로
+    // 상하좌우 여유를 줘서 캡슐 전체가 안전영역 안쪽에 정렬되도록 함.
+    hc.additionalSafeAreaInsets = UIEdgeInsets(top: 8, left: 8, bottom: 0, right: 8)
     hostingController = hc
 
     addSubview(hc.view)
