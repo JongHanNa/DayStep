@@ -444,6 +444,7 @@ class NativeDayTimeGridUIView: UIView {
   @objc var onDateSelect: RCTDirectEventBlock?
   @objc var onTodoPress: RCTDirectEventBlock?
   @objc var onHeightChange: RCTDirectEventBlock?
+  @objc var onTodoEdit: RCTDirectEventBlock?
 
   private let gridState = DayTimeGridState()
   private var hostingController: UIHostingController<AnyView>?

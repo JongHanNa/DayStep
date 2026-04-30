@@ -64,20 +64,51 @@ interface AttributeToolbarProps {
 // ============================================
 
 function getDateChipLabel(form: ToolbarForm): string {
-  // 다일(시간 지정 또는 종일)이면 시작/끝 날짜를 함께 표시
-  if (
+  // ── 날짜 부분 ──
+  const isMultiDay =
     (form.scheduleType === 'timed' || form.scheduleType === 'all_day') &&
-    form.startTime &&
-    form.endTime &&
-    !isSameDay(form.startTime, form.endTime)
-  ) {
-    return `${format(form.startTime, 'M/d')} → ${format(form.endTime, 'M/d')}`;
+    !!form.startTime &&
+    !!form.endTime &&
+    !isSameDay(form.startTime, form.endTime);
+
+  let datePart: string;
+  if (isMultiDay) {
+    datePart = `${format(form.startTime!, 'M/d')} → ${format(form.endTime!, 'M/d')}`;
+  } else {
+    const date = parseISO(form.scheduledDate);
+    if (isToday(date)) datePart = '오늘';
+    else if (isTomorrow(date)) datePart = '내일';
+    else datePart = format(date, 'M/d (EEE)', {locale: ko});
   }
 
-  const date = parseISO(form.scheduledDate);
-  if (isToday(date)) return '오늘';
-  if (isTomorrow(date)) return '내일';
-  return format(date, 'M/d (EEE)', {locale: ko});
+  // ── 시간 부분 ──
+  let timePart = '';
+  if (form.scheduleType === 'timed' && form.startTime) {
+    const start = format(form.startTime, 'HH:mm');
+    const end = form.endTime ? format(form.endTime, 'HH:mm') : '';
+    timePart = end ? `${start}~${end}` : start;
+  } else if (form.scheduleType === 'all_day') {
+    timePart = '종일';
+  } else if (form.scheduleType === 'anytime') {
+    timePart = form.anytimeDuration ? `언제든지 ${form.anytimeDuration}분` : '언제든지';
+  }
+
+  // ── 반복 부분 ──
+  let recPart = '';
+  if (form.recurrencePattern === 'daily') {
+    recPart = '매일';
+  } else if (form.recurrencePattern === 'weekly') {
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    const days = form.recurrenceDaysOfWeek
+      .sort()
+      .map(d => dayNames[d])
+      .join(',');
+    recPart = days ? `매주 ${days}` : '매주';
+  } else if (form.recurrencePattern === 'monthly') {
+    recPart = '매월';
+  }
+
+  return [datePart, timePart, recPart].filter(Boolean).join(' · ');
 }
 
 function getTimeChipLabel(form: ToolbarForm): string {

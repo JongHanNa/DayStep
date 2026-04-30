@@ -4,7 +4,7 @@
  * — TodoCreatePanel, TodoEditOverlay 양쪽에서 사용
  */
 import {useCallback, useState} from 'react';
-import {Alert} from 'react-native';
+import {Alert, ActionSheetIOS, Platform} from 'react-native';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
@@ -388,24 +388,107 @@ export function useTodoForm() {
   const handleDelete = useCallback(
     (onSuccess?: () => void) => {
       if (!editingTodo) return;
-      const {deleteTodo} = useTodoStore.getState();
+      const isRecurring =
+        !!(editingTodo as any).recurrence_pattern &&
+        (editingTodo as any).recurrence_pattern !== 'none';
 
-      Alert.alert('할일 삭제', '정말 삭제하시겠어요?', [
-        {text: '취소', style: 'cancel'},
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            const {cancelAllTodoAlarms} = await import('@/lib/notifications');
-            await cancelAllTodoAlarms(editingTodo.id);
-            await deleteTodo(editingTodo.id);
-            haptic.medium();
-            onSuccess?.();
+      // 비반복 — 단순 삭제
+      if (!isRecurring) {
+        Alert.alert('할일 삭제', '정말 삭제하시겠어요?', [
+          {text: '취소', style: 'cancel'},
+          {
+            text: '삭제',
+            style: 'destructive',
+            onPress: async () => {
+              const {cancelAllTodoAlarms} = await import('@/lib/notifications');
+              const {deleteTodo} = useTodoStore.getState();
+              await cancelAllTodoAlarms(editingTodo.id);
+              await deleteTodo(editingTodo.id);
+              haptic.medium();
+              onSuccess?.();
+            },
           },
-        },
-      ]);
+        ]);
+        return;
+      }
+
+      // 반복 — 삭제 범위 ActionSheet (지금/지금부터/모든 미완료/취소)
+      const occurrenceDate = editingTodo.start_time
+        ? format(new Date(editingTodo.start_time), 'yyyy-MM-dd')
+        : selectedDate;
+
+      const performDelete = async (deleteType: 'this' | 'future' | 'all') => {
+        try {
+          const {supabase} = await import('@/lib/supabase');
+          const {useAuthStore} = await import('@/stores/authStore');
+          const {cancelAllTodoAlarms} = await import('@/lib/notifications');
+          const userId = useAuthStore.getState().user?.id;
+          if (!userId) throw new Error('Not authenticated');
+
+          if (deleteType === 'this') {
+            // 이 occurrence만 exclusion 등록 (다른 회차는 유지)
+            const {error} = await supabase.from('todo_exclusions').insert({
+              parent_todo_id: editingTodo.id,
+              excluded_date: occurrenceDate,
+              user_id: userId,
+              exclusion_reason: 'deleted',
+            });
+            if (error) throw error;
+            await useTodoStore.getState().fetchTodosForDate(occurrenceDate);
+          } else if (deleteType === 'future') {
+            // recurrence_end_date를 이 occurrence 직전 날짜로 설정 → 이 occurrence부터 사라짐
+            const prev = new Date(parseISO(occurrenceDate).getTime() - 86_400_000);
+            const prevStr = format(prev, 'yyyy-MM-dd');
+            const {error} = await supabase
+              .from('todos')
+              .update({recurrence_end_date: prevStr})
+              .eq('id', editingTodo.id);
+            if (error) throw error;
+            await cancelAllTodoAlarms(editingTodo.id);
+            await useTodoStore.getState().fetchTodosForDate(occurrenceDate);
+          } else {
+            // 'all' — 원본 todo 삭제 (모든 occurrence 사라짐)
+            await cancelAllTodoAlarms(editingTodo.id);
+            await useTodoStore.getState().deleteTodo(editingTodo.id);
+          }
+
+          haptic.medium();
+          onSuccess?.();
+        } catch (e) {
+          haptic.error();
+          Alert.alert('오류', '삭제에 실패했습니다');
+        }
+      };
+
+      if (Platform.OS === 'ios') {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            title: '반복 작업을 삭제하고 있습니다',
+            message: '삭제 범위를 확인해주세요',
+            options: ['지금 반복', '지금부터 모든 반복', '모든 미완료 반복 주기', '취소'],
+            cancelButtonIndex: 3,
+            destructiveButtonIndex: 2,
+          },
+          (idx) => {
+            if (idx === 0) performDelete('this');
+            else if (idx === 1) performDelete('future');
+            else if (idx === 2) performDelete('all');
+          },
+        );
+      } else {
+        Alert.alert('반복 작업을 삭제하고 있습니다', '삭제 범위를 확인해주세요', [
+          {text: '지금 반복', onPress: () => performDelete('this')},
+          {text: '지금부터 모든 반복', onPress: () => performDelete('future')},
+          {
+            text: '모든 미완료 반복 주기',
+            style: 'destructive',
+            onPress: () => performDelete('all'),
+          },
+          {text: '취소', style: 'cancel'},
+        ]);
+      }
     },
-    [editingTodo, haptic],
+    [editingTodo, haptic, selectedDate],
   );
 
   return {
