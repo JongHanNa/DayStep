@@ -27,7 +27,7 @@ import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {useSleepStore} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
 import {Calendar} from 'lucide-react-native';
-import {format, addDays, subDays} from 'date-fns';
+import {format, addDays, subDays, parseISO} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
 
 const MENU_ITEMS = [
@@ -54,6 +54,7 @@ export default function PlannerScreen() {
   const backgroundPreset = useSettingsStore(s => s.backgroundPreset);
   const calendarGradient = gradientPresets[backgroundPreset];
   const {selectedDate, setSelectedDate, todos, fetchTodosForDateRange} = useTodoStore();
+  const dataVersion = useTodoStore(s => s.dataVersion);
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
   const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
@@ -133,7 +134,7 @@ export default function PlannerScreen() {
         fetchEventsForMonth(ey, em);
       }
     }
-  }, [multiDayRange, fetchTodosForDateRange, isConnected, fetchEventsForMonth]);
+  }, [multiDayRange, fetchTodosForDateRange, isConnected, fetchEventsForMonth, dataVersion]);
 
   // 일 뷰 날짜 변경 시 데이터 로드
   useEffect(() => {
@@ -278,8 +279,13 @@ export default function PlannerScreen() {
       // 의사-카드(_wake/_sleep) 변경은 무시 — DB에 없음
       if (id.startsWith('_')) return;
 
-      // 반복 todo면 수정 범위 ActionSheet
-      const todo = todos.find(t => t.id === id);
+      // todo 조회 — store.todos는 selectedDate 기준이라 주/3일 뷰에서는 stale 가능.
+      // multiDayTodoMap에서도 검색 (raw 데이터 — recurrence_pattern, 진짜 start_time 보존).
+      const allTodos = useTodoStore.getState().todos;
+      const multiDayTodo = Object.values(multiDayTodoMap)
+        .flat()
+        .find(t => t.id === id) as any;
+      const todo = multiDayTodo || allTodos.find(t => t.id === id);
       const isRecurring =
         !!todo && (todo as any).recurrence_pattern && (todo as any).recurrence_pattern !== 'none';
       const occurrenceDate = original_date ?? selectedDate;
@@ -290,45 +296,68 @@ export default function PlannerScreen() {
         return;
       }
 
+      // 시작 occurrence 여부 — multiDayTodo의 raw start_time::date 기준
+      const todoStartDate = multiDayTodo?.start_time
+        ? format(parseISO(multiDayTodo.start_time), 'yyyy-MM-dd')
+        : null;
+      const isFirstOccurrence = todoStartDate === occurrenceDate;
+
+      // 시작 occurrence: [지금 반복 / 모든 미완료 반복 주기 / 취소] (3개)
+      // 이후 occurrence: [지금 반복 / 지금부터 모든 반복 / 모든 미완료 반복 주기 / 취소] (4개)
       const onSelect = (idx: number) => {
-        if (idx === 0) {
-          updateRecurringTodo(id, updates, 'this', occurrenceDate).then(() =>
-            reloadMultiDayMap(),
-          );
-        } else if (idx === 1) {
-          updateRecurringTodo(id, updates, 'future', occurrenceDate).then(() =>
-            reloadMultiDayMap(),
-          );
+        const handlers = isFirstOccurrence
+          ? [
+              () => updateRecurringTodo(id, updates, 'this', occurrenceDate),
+              () => updateRecurringTodo(id, updates, 'all', occurrenceDate),
+            ]
+          : [
+              () => updateRecurringTodo(id, updates, 'this', occurrenceDate),
+              () => updateRecurringTodo(id, updates, 'future', occurrenceDate),
+              () => updateRecurringTodo(id, updates, 'all', occurrenceDate),
+            ];
+
+        if (idx >= 0 && idx < handlers.length) {
+          handlers[idx]().then(() => reloadMultiDayMap());
         } else {
           // 취소 — multiDayTodoMap 재로드해 native 카드 원위치 복원
           reloadMultiDayMap();
         }
       };
 
-      if (Platform.OS === 'ios') {
-        ActionSheetIOS.showActionSheetWithOptions(
-          {
-            title: '반복 작업의 시간을 수정하고 있습니다',
-            message: '수정 범위를 확인해주세요',
-            options: ['지금 반복', '모든 미완료 반복 주기', '취소'],
-            cancelButtonIndex: 2,
-          },
-          onSelect,
-        );
-      } else {
-        Alert.alert(
-          '반복 작업의 시간을 수정하고 있습니다',
-          '수정 범위를 확인해주세요',
-          [
-            {text: '지금 반복', onPress: () => onSelect(0)},
-            {text: '모든 미완료 반복 주기', onPress: () => onSelect(1)},
-            {text: '취소', style: 'cancel', onPress: () => onSelect(2)},
-          ],
-          {cancelable: false},
-        );
-      }
+      // ActionSheet 호출을 다음 tick으로 지연 — long-press .ended 직후 native gesture가
+      // 즉시 호출된 ActionSheet를 dismiss 시킬 수 있어 안전하게 setTimeout(0)
+      const options = isFirstOccurrence
+        ? ['지금 반복', '모든 미완료 반복 주기', '취소']
+        : ['지금 반복', '지금부터 모든 반복', '모든 미완료 반복 주기', '취소'];
+      const cancelButtonIndex = options.length - 1;
+
+      const showSheet = () => {
+        if (Platform.OS === 'ios') {
+          ActionSheetIOS.showActionSheetWithOptions(
+            {
+              title: '반복 작업의 시간을 수정하고 있습니다',
+              message: '수정 범위를 확인해주세요',
+              options,
+              cancelButtonIndex,
+            },
+            onSelect,
+          );
+        } else {
+          Alert.alert(
+            '반복 작업의 시간을 수정하고 있습니다',
+            '수정 범위를 확인해주세요',
+            options.map((label, i) => ({
+              text: label,
+              style: i === cancelButtonIndex ? ('cancel' as const) : undefined,
+              onPress: () => onSelect(i),
+            })),
+            {cancelable: false},
+          );
+        }
+      };
+      setTimeout(showSheet, 0);
     },
-    [updateTodo, updateRecurringTodo, todos, selectedDate, reloadMultiDayMap],
+    [updateTodo, updateRecurringTodo, selectedDate, reloadMultiDayMap, multiDayTodoMap],
   );
 
   const handleDateRangeChange = useCallback(

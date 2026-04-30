@@ -86,10 +86,15 @@ interface TodoState {
   monthViewData: Record<string, MonthTodoSummary[]> | null;
   monthViewLoading: boolean;
 
+  /** 모든 todo mutation에서 +1. 각 화면이 useEffect dep으로 listen해 자동 reload. */
+  dataVersion: number;
+
   // 오프라인 큐
   offlineQueue: OfflineAction[];
 
   // 액션
+  /** 모든 todo mutation에서 호출 — 각 화면 useEffect dep으로 자동 reload trigger */
+  bumpDataVersion: () => void;
   fetchTodosForDate: (date: string) => Promise<void>;
   fetchTodosForDateRange: (startDate: string, endDate: string) => Promise<Record<string, Todo[]>>;
   fetchTodosForMonthView: (year: number, month: number) => Promise<void>;
@@ -270,6 +275,9 @@ export const useTodoStore = create<TodoState>()(
       offlineQueue: [],
       monthViewData: null,
       monthViewLoading: false,
+      dataVersion: 0,
+
+      bumpDataVersion: () => set(s => ({dataVersion: s.dataVersion + 1})),
 
       setSelectedDate: (date: string) => {
         set({selectedDate: date});
@@ -451,6 +459,29 @@ export const useTodoStore = create<TodoState>()(
           if (error) throw error;
 
           const todos = (data ?? []) as Todo[];
+
+          // 반복 할일 exclusions 조회 — "지금 반복" 등으로 분리된 occurrence를 부모로부터 숨기기 위함
+          const recurringIds = todos
+            .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
+            .map(t => t.id);
+
+          const exclusionMap = new Map<string, Set<string>>();
+          if (recurringIds.length > 0) {
+            const {data: exclusions} = await supabase
+              .from('todo_exclusions')
+              .select('parent_todo_id, excluded_date, exclusion_reason')
+              .gte('excluded_date', startDate)
+              .lte('excluded_date', endDate)
+              .in('parent_todo_id', recurringIds);
+
+            for (const e of exclusions ?? []) {
+              if (e.exclusion_reason !== 'deleted' && e.exclusion_reason !== 'postponed') continue;
+              const set = exclusionMap.get(e.excluded_date) ?? new Set<string>();
+              set.add(e.parent_todo_id);
+              exclusionMap.set(e.excluded_date, set);
+            }
+          }
+
           const result: Record<string, Todo[]> = {};
 
           // 범위 내 각 날짜별 할일 매핑
@@ -462,8 +493,12 @@ export const useTodoStore = create<TodoState>()(
           for (const day of days) {
             const dateStr = format(day, 'yyyy-MM-dd');
             const dayOfWeek = getDay(day);
+            const excludedForDay = exclusionMap.get(dateStr);
 
             result[dateStr] = todos.filter(todo => {
+              // 해당 날짜에 deleted/postponed 처리된 반복 할일은 숨김
+              if (excludedForDay && excludedForDay.has(todo.id)) return false;
+
               if (todo.recurrence_pattern === 'daily') {
                 if (!todo.start_time) return false;
                 const todoStartDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
@@ -554,6 +589,7 @@ export const useTodoStore = create<TodoState>()(
             todos: state.todos.map(t =>
               t.id === tempId ? parseTodo(data) : t,
             ),
+            dataVersion: state.dataVersion + 1,
           }));
 
           // 위젯 동기화 (3개월 풀셋 재쿼리 — fire-and-forget)
@@ -579,6 +615,7 @@ export const useTodoStore = create<TodoState>()(
             todos: state.todos.map(t =>
               t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
             ),
+            dataVersion: state.dataVersion + 1,
           }));
 
           const {error} = await supabase
@@ -621,6 +658,7 @@ export const useTodoStore = create<TodoState>()(
           // Optimistic delete
           set(state => ({
             todos: state.todos.filter(t => t.id !== id),
+            dataVersion: state.dataVersion + 1,
           }));
 
           const {error} = await supabase
@@ -688,6 +726,7 @@ export const useTodoStore = create<TodoState>()(
                 user_id: userId,
                 completion_date: date,
               }],
+          dataVersion: state.dataVersion + 1,
         }));
 
         try {
@@ -789,6 +828,7 @@ export const useTodoStore = create<TodoState>()(
                   ...state.todos.filter(t => t.id !== id),
                   parseTodo(newTodo),
                 ],
+                dataVersion: state.dataVersion + 1,
               }));
               break;
             }
@@ -808,6 +848,7 @@ export const useTodoStore = create<TodoState>()(
                 todos: state.todos.map(t =>
                   t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
                 ),
+                dataVersion: state.dataVersion + 1,
               }));
               break;
             }
@@ -825,6 +866,7 @@ export const useTodoStore = create<TodoState>()(
                 todos: state.todos.map(t =>
                   t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
                 ),
+                dataVersion: state.dataVersion + 1,
               }));
               break;
             }

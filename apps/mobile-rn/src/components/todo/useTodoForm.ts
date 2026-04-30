@@ -435,6 +435,7 @@ export function useTodoForm() {
             });
             if (error) throw error;
             await useTodoStore.getState().fetchTodosForDate(occurrenceDate);
+            useTodoStore.getState().bumpDataVersion();
           } else if (deleteType === 'future') {
             // recurrence_end_date를 이 occurrence 직전 날짜로 설정 → 이 occurrence부터 사라짐
             const prev = new Date(parseISO(occurrenceDate).getTime() - 86_400_000);
@@ -446,8 +447,10 @@ export function useTodoForm() {
             if (error) throw error;
             await cancelAllTodoAlarms(editingTodo.id);
             await useTodoStore.getState().fetchTodosForDate(occurrenceDate);
+            useTodoStore.getState().bumpDataVersion();
           } else {
             // 'all' — 원본 todo 삭제 (모든 occurrence 사라짐)
+            // deleteTodo가 자체적으로 bumpDataVersion 함
             await cancelAllTodoAlarms(editingTodo.id);
             await useTodoStore.getState().deleteTodo(editingTodo.id);
           }

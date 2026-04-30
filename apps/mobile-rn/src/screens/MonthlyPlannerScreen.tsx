@@ -24,6 +24,7 @@ export default function MonthlyPlannerScreen() {
   const {primaryColor} = useTheme();
   const {monthViewData, fetchTodosForMonthView, setSelectedDate, selectedDate} =
     useTodoStore();
+  const dataVersion = useTodoStore(s => s.dataVersion);
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
 
   const insets = useSafeAreaInsets();
@@ -44,7 +45,7 @@ export default function MonthlyPlannerScreen() {
 
   useEffect(() => {
     loadMonth(currentMonth);
-  }, [currentMonth, loadMonth]);
+  }, [currentMonth, loadMonth, dataVersion]);
 
   const handleDayPress = useCallback(
     (dateStr: string) => {
