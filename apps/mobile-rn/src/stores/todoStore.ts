@@ -779,8 +779,18 @@ export const useTodoStore = create<TodoState>()(
           const userId = await getCurrentUserId();
           if (!userId) throw new Error('Not authenticated');
 
-          const todo = get().todos.find(t => t.id === id);
-          if (!todo) throw new Error('Todo not found');
+          // store.todos는 selectedDate 기준이라 주/3일/월간 뷰에서 호출 시 stale일 수 있음.
+          // 못 찾으면 supabase에서 직접 fetch (raw 데이터, recurrence_pattern 등 보존).
+          let todo: any = get().todos.find(t => t.id === id);
+          if (!todo) {
+            const {data, error: fetchErr} = await supabase
+              .from('todos')
+              .select('*')
+              .eq('id', id)
+              .maybeSingle();
+            if (fetchErr || !data) throw new Error('Todo not found');
+            todo = data;
+          }
 
           switch (updateType) {
             case 'this': {
