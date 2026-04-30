@@ -140,9 +140,27 @@ private class TodoLongPressGesture: UILongPressGestureRecognizer {
   var todoId: String = ""
 }
 
+// MARK: - Pan Gesture with todoId (selected 카드에서 즉시 drag)
+
+private class TodoPanGesture: UIPanGestureRecognizer {
+  var todoId: String = ""
+}
+
+// MARK: - Todo Card View — selected 시 hit test 영역을 위/아래 14pt 확장
+
+private class TodoCardView: UIView {
+  /// 선택 모드(핸들 표시 중)이면 hit test 영역을 위/아래로 14pt 확장 → 카드 밖 핸들 점도 long-press가 잡힘
+  var isSelectedForResize: Bool = false
+
+  override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+    let inset: CGFloat = isSelectedForResize ? -14 : 0
+    return bounds.insetBy(dx: 0, dy: inset).contains(point)
+  }
+}
+
 // MARK: - 4-Quadrant Grid View
 
-class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
+class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate, UIGestureRecognizerDelegate {
 
   // RCT callbacks
   @objc var onDateSelect: RCTDirectEventBlock?
@@ -798,6 +816,10 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
     // Remove existing block views (keep gridLinesLayer on the layer)
     gridContentView.subviews.forEach { $0.removeFromSuperview() }
     currentTimeView = nil
+    // 카드가 새로 만들어지므로 이전 selected ref는 stale — 클리어
+    selectedTodoId = nil
+    draggingHandleTop = nil
+    draggingHandleBottom = nil
 
     guard columnWidth > 0 else { return }
 
@@ -807,6 +829,8 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
       let events = gridState.eventMap[dateStr] ?? []
 
       // Todo blocks — timed만 시간 그리드에 표시 (all_day/anytime은 종일 라인으로)
+      // (NOTE: 매일 반복 todo는 같은 id가 여러 컬럼에 분포하므로 layoutBlocks에서
+      //  selected UI를 자동 복원하지 않음. 데이터 변경 시 selected가 풀리는 게 정상.)
       for todo in todos where todo.startTime != nil
         && todo.scheduleType != "all_day"
         && todo.scheduleType != "anytime" {
@@ -815,11 +839,6 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
         let blockView = makeTodoBlock(todo: todo, width: columnWidth - 4, height: h)
         blockView.frame = CGRect(x: x + 2, y: pos.topOffset, width: columnWidth - 4, height: h)
         gridContentView.addSubview(blockView)
-
-        // 이전에 선택된 카드면 selected UI 즉시 복원 (data 갱신으로 layoutBlocks 재호출 시)
-        if todo.id == selectedTodoId {
-          applySelectionUI(to: blockView, animated: false)
-        }
       }
 
       // Event blocks — 시간 지정 이벤트만
@@ -834,7 +853,9 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
   }
 
   private func makeTodoBlock(todo: DayGridTodoItem, width: CGFloat, height: CGFloat) -> UIView {
-    let view = UIView()
+    // 자식 핸들의 autoresizingMask가 정상 동작하려면 view의 bounds를 미리 (w,h)로 설정해야 함.
+    // TodoCardView 서브클래스로 selected 시 hit test 영역을 핸들 위치까지 확장 (point(inside:) 오버라이드)
+    let view = TodoCardView(frame: CGRect(x: 0, y: 0, width: width, height: height))
     let bgColor = UIColor(hex: todo.projectColor) ?? .systemIndigo
     view.backgroundColor = bgColor.withAlphaComponent(todo.completed ? 0.05 : 0.15)
     view.layer.cornerRadius = 3
@@ -859,7 +880,10 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
       label.textColor = UIColor(hex: "#1F2937")
     }
     label.numberOfLines = gridState.dayCount <= 3 ? 2 : 1
-    label.frame = CGRect(x: 2, y: 1, width: width - 4, height: height - 2)
+    // 제목을 카드 상단에 정렬 — label height을 텍스트 줄 수에 맞게 작게 잡음
+    let lineHeight = fontSize + 3
+    let textHeight = lineHeight * CGFloat(label.numberOfLines)
+    label.frame = CGRect(x: 4, y: 3, width: width - 8, height: min(textHeight, height - 4))
     view.addSubview(label)
 
     // Tap gesture (편집 시트 오픈)
@@ -867,22 +891,37 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
     tap.todoId = todo.id
     view.addGestureRecognizer(tap)
 
-    // Long-press gesture (move/resize)
+    // Long-press gesture — unselected 카드 진입 (delegate에서 selected이면 fail)
     let lp = TodoLongPressGesture(target: self, action: #selector(handleTodoLongPress(_:)))
     lp.minimumPressDuration = 0.4
     lp.todoId = todo.id
+    lp.delegate = self
     tap.require(toFail: lp)
     view.addGestureRecognizer(lp)
 
+    // Pan gesture — selected 카드에서 즉시 drag (delegate에서 unselected이면 fail)
+    let pan = TodoPanGesture(target: self, action: #selector(handleTodoPan(_:)))
+    pan.todoId = todo.id
+    pan.delegate = self
+    tap.require(toFail: pan)
+    view.addGestureRecognizer(pan)
+
     // 위/아래 핸들 (평소 alpha 0, long-press 시 fade-in)
+    // 12x12 — 시각/터치 모두 키움. 절반(6pt)은 카드 밖, 절반은 카드 안.
+    // autoresizingMask로 카드 frame 변경 시 자동 추적.
+    let handleSize: CGFloat = 12
+    let handleHalf: CGFloat = handleSize / 2
+
     let handleTop = makeHandleDot(color: bgColor)
-    handleTop.frame = CGRect(x: width / 2 - 4, y: -4, width: 8, height: 8)
+    handleTop.frame = CGRect(x: width / 2 - handleHalf, y: -handleHalf, width: handleSize, height: handleSize)
+    handleTop.autoresizingMask = [.flexibleBottomMargin]
     handleTop.tag = 9001
     handleTop.alpha = 0
     view.addSubview(handleTop)
 
     let handleBottom = makeHandleDot(color: bgColor)
-    handleBottom.frame = CGRect(x: width / 2 - 4, y: height - 4, width: 8, height: 8)
+    handleBottom.frame = CGRect(x: width / 2 - handleHalf, y: height - handleHalf, width: handleSize, height: handleSize)
+    handleBottom.autoresizingMask = [.flexibleTopMargin]
     handleBottom.tag = 9002
     handleBottom.alpha = 0
     view.addSubview(handleBottom)
@@ -892,10 +931,11 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
   }
 
   private func makeHandleDot(color: UIColor) -> UIView {
+    // 호출처에서 frame.size로 (12,12) 설정 — cornerRadius = width/2로 원형
     let dot = UIView()
     dot.backgroundColor = color
-    dot.layer.cornerRadius = 4
-    dot.layer.borderWidth = 1.5
+    dot.layer.cornerRadius = 6
+    dot.layer.borderWidth = 2
     dot.layer.borderColor = UIColor.white.cgColor
     return dot
   }
@@ -922,138 +962,189 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
     onTodoPress?(["todoId": gesture.todoId])
   }
 
-  // MARK: - Long-press Drag (move + resize)
+  // MARK: - Long-press / Pan Drag (move + resize)
+  //
+  // 인터랙션 모델:
+  // - Unselected 카드: long-press 0.4s → 즉시 drag 시작 + selected 진입 (handleTodoLongPress)
+  // - Selected 카드: long-press fail, pan으로 즉시 drag (handleTodoPan)
+  // 두 핸들러 모두 공통 drag 함수(beginDrag/updateDrag/endDrag) 호출.
 
   @objc private func handleTodoLongPress(_ g: TodoLongPressGesture) {
-    guard let card = g.view else { return }
-    let touchInGrid = g.location(in: gridContentView)
-
+    guard let card = g.view as? TodoCardView else { return }
     switch g.state {
     case .began:
-      // 다른 카드가 선택 중이면 그 카드 핸들/강조 해제
-      if selectedTodoId != nil && selectedTodoId != g.todoId {
-        clearSelection()
-      }
-
-      // 시작 위치로 mode 결정 — 카드 내부 좌표
-      let touchInCard = g.location(in: card)
-      let edge: CGFloat = 10
-      if touchInCard.y < edge {
-        draggingMode = .resizeTop
-      } else if touchInCard.y > card.bounds.height - edge {
-        draggingMode = .resizeBottom
-      } else {
-        draggingMode = .move
-      }
-      draggingCard = card
-      draggingTodoId = g.todoId
+      // unselected → selected 진입 (시각 강조 + 햅틱 + 핸들 fade-in)
+      clearOtherCardsSelection(except: card)
       selectedTodoId = g.todoId
-      draggingInitialFrame = card.frame
-      draggingInitialTouchInGrid = touchInGrid
-
-      // 핸들 fade-in + 카드 강조 (선택 모드 진입)
-      let handleTop = card.viewWithTag(9001)
-      let handleBottom = card.viewWithTag(9002)
-      draggingHandleTop = handleTop
-      draggingHandleBottom = handleBottom
-
-      gridContentView.bringSubviewToFront(card)
-      contentScrollView.isScrollEnabled = false
-
       applySelectionUI(to: card, animated: true)
-
       let gen = UIImpactFeedbackGenerator(style: .medium)
       gen.impactOccurred()
-
+      // drag 시작
+      beginDrag(
+        card: card,
+        todoId: g.todoId,
+        touchInGrid: g.location(in: gridContentView),
+        touchInCard: g.location(in: card)
+      )
     case .changed:
-      let dx = touchInGrid.x - draggingInitialTouchInGrid.x
-      let dy = touchInGrid.y - draggingInitialTouchInGrid.y
-      var newFrame = draggingInitialFrame
-
-      switch draggingMode {
-      case .move:
-        newFrame.origin.x += dx
-        newFrame.origin.y += dy
-      case .resizeTop:
-        let newY = draggingInitialFrame.origin.y + dy
-        let maxY = draggingInitialFrame.maxY - 18
-        newFrame.origin.y = min(maxY, max(0, newY))
-        newFrame.size.height = draggingInitialFrame.maxY - newFrame.origin.y
-      case .resizeBottom:
-        newFrame.size.height = max(18, draggingInitialFrame.size.height + dy)
-      }
-
-      // 그리드 영역 내로 clamping
-      newFrame.origin.x = max(0, min(newFrame.origin.x, gridContentView.bounds.width - newFrame.width))
-      newFrame.origin.y = max(0, min(newFrame.origin.y, gridContentView.bounds.height - newFrame.height))
-
-      card.frame = newFrame
-
+      updateDrag(touchInGrid: g.location(in: gridContentView))
     case .ended, .cancelled, .failed:
-      let frame = card.frame
-
-      // 컬럼/시간 매핑 (snap)
-      let snapMinutes: CGFloat = 5
-      let yToMinutes: (CGFloat) -> CGFloat = { y in
-        let mins = y / self.hourHeight * 60
-        return round(mins / snapMinutes) * snapMinutes
-      }
-
-      var startMinutes: CGFloat = 0
-      var endMinutes: CGFloat = 0
-      var colIndex = Int(round(frame.origin.x / max(self.columnWidth, 1)))
-
-      switch draggingMode {
-      case .move:
-        startMinutes = yToMinutes(frame.origin.y)
-        let dur = draggingInitialFrame.height / self.hourHeight * 60
-        endMinutes = startMinutes + dur
-      case .resizeTop:
-        // 컬럼은 변경 안 됨
-        colIndex = Int(round(draggingInitialFrame.origin.x / max(self.columnWidth, 1)))
-        startMinutes = yToMinutes(frame.origin.y)
-        endMinutes = round(draggingInitialFrame.maxY / self.hourHeight * 60 / snapMinutes) * snapMinutes
-      case .resizeBottom:
-        colIndex = Int(round(draggingInitialFrame.origin.x / max(self.columnWidth, 1)))
-        startMinutes = round(draggingInitialFrame.origin.y / self.hourHeight * 60 / snapMinutes) * snapMinutes
-        endMinutes = yToMinutes(frame.maxY)
-      }
-
-      // 컬럼 범위 clamp
-      colIndex = max(0, min(colIndex, allDates.count - 1))
-      // 시간 범위 clamp
-      startMinutes = max(0, min(startMinutes, 24 * 60 - 5))
-      endMinutes = max(startMinutes + 5, min(endMinutes, 24 * 60))
-
-      // ISO 변환
-      let dateStr = allDates[colIndex]
-      // 원본 occurrence 날짜 — drag 시작 시점의 컬럼
-      let initialColIndex = max(0, min(
-        Int(round(draggingInitialFrame.origin.x / max(self.columnWidth, 1))),
-        allDates.count - 1
-      ))
-      let originalDate = allDates[initialColIndex]
-
-      if let startISO = isoStringFor(dateStr: dateStr, minutes: startMinutes),
-         let endISO = isoStringFor(dateStr: dateStr, minutes: endMinutes) {
-        onTodoEdit?([
-          "id": draggingTodoId,
-          "start_time": startISO,
-          "end_time": endISO,
-          "original_date": originalDate,
-        ])
-      }
-
-      // 선택 모드 유지 — 핸들/transform/shadow 그대로
-      contentScrollView.isScrollEnabled = true
-      draggingCard = nil
-
+      endDrag(card: card)
     default: break
     }
   }
 
-  /// 선택 UI 적용 (핸들 fade-in, transform, shadow)
+  @objc private func handleTodoPan(_ g: TodoPanGesture) {
+    guard let card = g.view as? TodoCardView else { return }
+    switch g.state {
+    case .began:
+      // 이미 selected — 추가 강조 없이 drag 시작 (long-press 대기 없음)
+      beginDrag(
+        card: card,
+        todoId: g.todoId,
+        touchInGrid: g.location(in: gridContentView),
+        touchInCard: g.location(in: card)
+      )
+    case .changed:
+      updateDrag(touchInGrid: g.location(in: gridContentView))
+    case .ended, .cancelled, .failed:
+      endDrag(card: card)
+    default: break
+    }
+  }
+
+  /// drag 시작 — mode 결정 + 시각 상태 보존 + ScrollView 비활성
+  private func beginDrag(card: UIView, todoId: String, touchInGrid: CGPoint, touchInCard: CGPoint) {
+    // 시작 위치로 mode 결정 — 카드 내부 좌표 (음수/초과는 핸들 영역)
+    let edge: CGFloat = 14
+    if touchInCard.y < edge {
+      draggingMode = .resizeTop
+    } else if touchInCard.y > card.bounds.height - edge {
+      draggingMode = .resizeBottom
+    } else {
+      draggingMode = .move
+    }
+    draggingCard = card
+    draggingTodoId = todoId
+    draggingInitialFrame = card.frame
+    draggingInitialTouchInGrid = touchInGrid
+
+    draggingHandleTop = card.viewWithTag(9001)
+    draggingHandleBottom = card.viewWithTag(9002)
+
+    gridContentView.bringSubviewToFront(card)
+    contentScrollView.isScrollEnabled = false
+  }
+
+  /// drag 업데이트 — 손가락 이동에 따라 카드 frame 변형
+  private func updateDrag(touchInGrid: CGPoint) {
+    guard let card = draggingCard else { return }
+    let dx = touchInGrid.x - draggingInitialTouchInGrid.x
+    let dy = touchInGrid.y - draggingInitialTouchInGrid.y
+    var newFrame = draggingInitialFrame
+
+    switch draggingMode {
+    case .move:
+      newFrame.origin.x += dx
+      newFrame.origin.y += dy
+    case .resizeTop:
+      let newY = draggingInitialFrame.origin.y + dy
+      let maxY = draggingInitialFrame.maxY - 18
+      newFrame.origin.y = min(maxY, max(0, newY))
+      newFrame.size.height = draggingInitialFrame.maxY - newFrame.origin.y
+    case .resizeBottom:
+      newFrame.size.height = max(18, draggingInitialFrame.size.height + dy)
+    }
+
+    newFrame.origin.x = max(0, min(newFrame.origin.x, gridContentView.bounds.width - newFrame.width))
+    newFrame.origin.y = max(0, min(newFrame.origin.y, gridContentView.bounds.height - newFrame.height))
+
+    card.frame = newFrame
+  }
+
+  /// drag 종료 — 시간 매핑 + onTodoEdit + 카드 frame 복원 (cancel 자동 처리)
+  private func endDrag(card: UIView) {
+    // 호환성을 위해 기존 .ended 분기 코드 흐름을 함수로 옮김
+    handleDragEnd(card: card)
+  }
+
+  /// 기존 .ended 처리 — drag threshold + 시간 매핑 + onTodoEdit + frame 복원
+  private func handleDragEnd(card: UIView) {
+
+    let frame = card.frame
+
+    // drag 거리 threshold — 5pt 미만이면 변경 없음으로 간주, onTodoEdit 발화 skip
+    let dxFromInit = abs(frame.origin.x - draggingInitialFrame.origin.x)
+    let dyFromInit = abs(frame.origin.y - draggingInitialFrame.origin.y)
+    let dhFromInit = abs(frame.size.height - draggingInitialFrame.size.height)
+    let didMove = dxFromInit > 5 || dyFromInit > 5 || dhFromInit > 5
+
+    if didMove {
+        // 컬럼/시간 매핑 (snap)
+        let snapMinutes: CGFloat = 5
+        let yToMinutes: (CGFloat) -> CGFloat = { y in
+          let mins = y / self.hourHeight * 60
+          return round(mins / snapMinutes) * snapMinutes
+        }
+
+        var startMinutes: CGFloat = 0
+        var endMinutes: CGFloat = 0
+        var colIndex = Int(round(frame.origin.x / max(self.columnWidth, 1)))
+
+        switch draggingMode {
+        case .move:
+          startMinutes = yToMinutes(frame.origin.y)
+          let dur = draggingInitialFrame.height / self.hourHeight * 60
+          endMinutes = startMinutes + dur
+        case .resizeTop:
+          colIndex = Int(round(draggingInitialFrame.origin.x / max(self.columnWidth, 1)))
+          startMinutes = yToMinutes(frame.origin.y)
+          endMinutes = round(draggingInitialFrame.maxY / self.hourHeight * 60 / snapMinutes) * snapMinutes
+        case .resizeBottom:
+          colIndex = Int(round(draggingInitialFrame.origin.x / max(self.columnWidth, 1)))
+          startMinutes = round(draggingInitialFrame.origin.y / self.hourHeight * 60 / snapMinutes) * snapMinutes
+          endMinutes = yToMinutes(frame.maxY)
+        }
+
+        colIndex = max(0, min(colIndex, allDates.count - 1))
+        startMinutes = max(0, min(startMinutes, 24 * 60 - 5))
+        endMinutes = max(startMinutes + 5, min(endMinutes, 24 * 60))
+
+        let dateStr = allDates[colIndex]
+        let initialColIndex = max(0, min(
+          Int(round(draggingInitialFrame.origin.x / max(self.columnWidth, 1))),
+          allDates.count - 1
+        ))
+        let originalDate = allDates[initialColIndex]
+
+        if let startISO = isoStringFor(dateStr: dateStr, minutes: startMinutes),
+           let endISO = isoStringFor(dateStr: dateStr, minutes: endMinutes) {
+          onTodoEdit?([
+            "id": draggingTodoId,
+            "start_time": startISO,
+            "end_time": endISO,
+            "original_date": originalDate,
+          ])
+        }
+        // 카드 frame을 원위치로 부드럽게 복원.
+        // - RN updateTodo 성공 시: setTodoData → layoutBlocks가 새 데이터의 시각으로 카드 재배치 (변경 반영)
+        // - RN cancel 시: setTodoData 미발동 → 카드는 원위치 그대로 유지
+        UIView.animate(withDuration: 0.18) {
+          card.frame = self.draggingInitialFrame
+        }
+      } else {
+        // 미세 떨림 — 카드 원위치 복원, onTodoEdit 발화 안 함 (선택 모드만 유지)
+        card.frame = draggingInitialFrame
+      }
+
+    // 선택 모드 유지 — 핸들/transform/shadow 그대로
+    contentScrollView.isScrollEnabled = true
+    draggingCard = nil
+  }
+
+  /// 선택 UI 적용 (핸들 fade-in, transform, shadow) + hit test 영역 확장
   private func applySelectionUI(to card: UIView, animated: Bool) {
+    (card as? TodoCardView)?.isSelectedForResize = true
     let handleTop = card.viewWithTag(9001)
     let handleBottom = card.viewWithTag(9002)
     let block: () -> Void = {
@@ -1081,12 +1172,29 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
     if selectedTodoId != nil { clearSelection() }
   }
 
+  /// 지정된 카드를 제외한 모든 카드의 selected UI 해제
+  private func clearOtherCardsSelection(except keepCard: UIView) {
+    for sub in gridContentView.subviews {
+      if sub === keepCard { continue }
+      if let handleTop = sub.viewWithTag(9001), handleTop.alpha > 0 {
+        (sub as? TodoCardView)?.isSelectedForResize = false
+        UIView.animate(withDuration: 0.15) {
+          handleTop.alpha = 0
+          sub.viewWithTag(9002)?.alpha = 0
+          sub.transform = .identity
+          sub.layer.shadowOpacity = 0
+        }
+      }
+    }
+  }
+
   /// 현재 선택 해제 — 핸들 fade-out, transform/shadow 복원
   private func clearSelection() {
     selectedTodoId = nil
     // gridContentView의 모든 카드를 순회해 핸들이 떠 있는 카드 복원
     for sub in gridContentView.subviews {
       if let handleTop = sub.viewWithTag(9001), handleTop.alpha > 0 {
+        (sub as? TodoCardView)?.isSelectedForResize = false
         UIView.animate(withDuration: 0.15) {
           handleTop.alpha = 0
           sub.viewWithTag(9002)?.alpha = 0
@@ -1225,6 +1333,22 @@ class NativeMultiDayTimeGridUIView: UIView, UIScrollViewDelegate {
         self?.layoutCurrentTimeLine()
       }
     }
+  }
+
+  // MARK: - UIGestureRecognizerDelegate (UIView의 동명 메서드를 override)
+
+  override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+    // Long-press: selected 카드면 fail (즉시 pan으로 처리)
+    if gestureRecognizer is TodoLongPressGesture {
+      guard let card = gestureRecognizer.view as? TodoCardView else { return true }
+      return !card.isSelectedForResize
+    }
+    // Pan: selected 카드일 때만 활성 (unselected는 long-press 0.4s 후에만 drag 가능)
+    if gestureRecognizer is TodoPanGesture {
+      guard let card = gestureRecognizer.view as? TodoCardView else { return false }
+      return card.isSelectedForResize
+    }
+    return super.gestureRecognizerShouldBegin(gestureRecognizer)
   }
 
   deinit {

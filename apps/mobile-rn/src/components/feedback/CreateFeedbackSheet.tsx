@@ -202,8 +202,8 @@ export const CreateFeedbackSheet = forwardRef<CreateFeedbackSheetRef>(
               }
               appearance="light"
               tintColor="#FFFFFF"
-              fontStyle={{fontSize: 14, fontWeight: '500'}}
-              activeFontStyle={{fontSize: 14, fontWeight: '600'}}
+              fontStyle={{fontSize: 14, fontWeight: '500', color: '#000000'}}
+              activeFontStyle={{fontSize: 14, fontWeight: '600', color: '#000000'}}
             />
           </View>
 

@@ -136,8 +136,8 @@ export default function FeedbackBoardScreen() {
             }}
             appearance="light"
             tintColor="#FFFFFF"
-            fontStyle={{fontSize: 13, fontWeight: '500'}}
-            activeFontStyle={{fontSize: 13, fontWeight: '600'}}
+            fontStyle={{fontSize: 13, fontWeight: '500', color: '#000000'}}
+            activeFontStyle={{fontSize: 13, fontWeight: '600', color: '#000000'}}
           />
         </View>
 

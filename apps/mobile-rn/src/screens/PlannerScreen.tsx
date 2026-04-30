@@ -261,6 +261,17 @@ export default function PlannerScreen() {
 
   const updateTodo = useTodoStore(s => s.updateTodo);
   const updateRecurringTodo = useTodoStore(s => s.updateRecurringTodo);
+
+  // 변경 후 multiDayTodoMap 강제 갱신 — native setTodoData → layoutBlocks 트리거
+  const reloadMultiDayMap = useCallback(async () => {
+    if (!multiDayRange) return;
+    const result = await fetchTodosForDateRange(
+      multiDayRange.startDate,
+      multiDayRange.endDate,
+    );
+    setMultiDayTodoMap(prev => ({...prev, ...result}));
+  }, [multiDayRange, fetchTodosForDateRange]);
+
   const handleTodoEdit = useCallback(
     (e: {nativeEvent: {id: string; start_time: string; end_time: string; original_date?: string}}) => {
       const {id, start_time, end_time, original_date} = e.nativeEvent;
@@ -275,21 +286,22 @@ export default function PlannerScreen() {
       const updates = {start_time, end_time} as any;
 
       if (!isRecurring) {
-        updateTodo(id, updates);
+        updateTodo(id, updates).then(() => reloadMultiDayMap());
         return;
       }
 
       const onSelect = (idx: number) => {
         if (idx === 0) {
-          updateRecurringTodo(id, updates, 'this', occurrenceDate);
-        } else if (idx === 1) {
-          updateRecurringTodo(id, updates, 'future', occurrenceDate);
-        } else {
-          // 취소 — 다음 fetch 시 native UI 원위치
-          fetchTodosForDateRange(
-            format(addDays(new Date(selectedDate), -7), 'yyyy-MM-dd'),
-            format(addDays(new Date(selectedDate), 7), 'yyyy-MM-dd'),
+          updateRecurringTodo(id, updates, 'this', occurrenceDate).then(() =>
+            reloadMultiDayMap(),
           );
+        } else if (idx === 1) {
+          updateRecurringTodo(id, updates, 'future', occurrenceDate).then(() =>
+            reloadMultiDayMap(),
+          );
+        } else {
+          // 취소 — multiDayTodoMap 재로드해 native 카드 원위치 복원
+          reloadMultiDayMap();
         }
       };
 
@@ -316,7 +328,7 @@ export default function PlannerScreen() {
         );
       }
     },
-    [updateTodo, updateRecurringTodo, todos, selectedDate, fetchTodosForDateRange],
+    [updateTodo, updateRecurringTodo, todos, selectedDate, reloadMultiDayMap],
   );
 
   const handleDateRangeChange = useCallback(
