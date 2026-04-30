@@ -28,6 +28,8 @@ import {useSleepStore} from '@/stores/sleepStore';
 import {useTheme} from '@/theme';
 import {Calendar} from 'lucide-react-native';
 import {format, addDays, subDays, parseISO} from 'date-fns';
+import {useMMKVBoolean} from 'react-native-mmkv';
+import {storage as mmkvStorage} from '@/lib/mmkv';
 import type {Todo} from '@daystep/shared-core';
 
 const MENU_ITEMS = [
@@ -56,8 +58,14 @@ export default function PlannerScreen() {
   const {selectedDate, setSelectedDate, todos, fetchTodosForDateRange} = useTodoStore();
   const dataVersion = useTodoStore(s => s.dataVersion);
   const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
-  const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
+  const hasActiveSubscriptionRaw = useSubscriptionStore(s => s.hasActiveSubscription);
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
+  const adminOverrideStore = useSubscriptionStore(s => s.adminOverride);
+  // MMKV에서 직접 reactive 읽기 — zustand persist hydration timing 무관하게
+  // 첫 렌더에서도 sync로 정확한 adminOverride 값 보장
+  const [adminOverrideMMKV] = useMMKVBoolean('admin_subscription_override', mmkvStorage);
+  const hasActiveSubscription =
+    hasActiveSubscriptionRaw || adminOverrideStore || !!adminOverrideMMKV;
   const [showPaywallModal, setShowPaywallModal] = useState(false);
   // Android: 캘린더 확장/축소 — Reanimated SharedValue로 UI thread 60fps 제어
   const [androidCalHeight] = useState(130);

@@ -833,21 +833,61 @@ export const useTodoStore = create<TodoState>()(
               break;
             }
             case 'future': {
-              // 부모 ID 찾기
-              const parentId = (todo as any).parent_todo_id || id;
-              const {error} = await supabase
+              // 매일/주간 반복은 한 부모 todo가 모든 occurrence를 표현하므로
+              // (1) 부모의 recurrence_end_date를 occurrenceDate 직전 날로 단축
+              // (2) occurrenceDate부터 새 시간으로 시작하는 새 반복 todo 생성
+              const occDate = parseISO(occurrenceDate);
+              const prevDate = new Date(occDate.getTime() - 86_400_000);
+              const prevDateStr = format(prevDate, 'yyyy-MM-dd');
+
+              const {error: updateErr} = await supabase
                 .from('todos')
-                .update({...updates, updated_at: new Date().toISOString()})
-                .or(`id.eq.${parentId},parent_todo_id.eq.${parentId}`)
-                .gte('start_time', new Date(occurrenceDate).toISOString());
+                .update({
+                  recurrence_end_date: prevDateStr,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', id);
+              if (updateErr) throw updateErr;
 
-              if (error) throw error;
+              // 새 반복 todo — occurrenceDate부터 시작, 새 시간/폭, 같은 recurrence 패턴
+              const newTodoData: Record<string, any> = {
+                title: todo.title,
+                schedule_type: todo.schedule_type || 'timed',
+                icon: (todo as any).icon ?? null,
+                color: (todo as any).color ?? null,
+                user_id: userId,
+                completed: false,
+                order_index: (todo as any).order_index ?? 0,
+                importance: (todo as any).importance ?? null,
+                urgency: (todo as any).urgency ?? null,
+                is_reluctant_must_do: (todo as any).is_reluctant_must_do ?? false,
+                recurrence_pattern: (todo as any).recurrence_pattern,
+                recurrence_days_of_week: (todo as any).recurrence_days_of_week ?? null,
+                recurrence_end_date: null,
+                ...updates,
+              };
 
-              // 로컬 상태 업데이트
+              const {data: newTodo, error: createErr} = await supabase
+                .from('todos')
+                .insert(newTodoData)
+                .select()
+                .single();
+              if (createErr) throw createErr;
+
+              // 로컬 상태: 원본의 recurrence_end_date 갱신 + 새 todo 추가
               set(state => ({
-                todos: state.todos.map(t =>
-                  t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
-                ),
+                todos: [
+                  ...state.todos.map(t =>
+                    t.id === id
+                      ? {
+                          ...t,
+                          recurrence_end_date: prevDateStr,
+                          updated_at: new Date().toISOString(),
+                        }
+                      : t,
+                  ),
+                  parseTodo(newTodo),
+                ],
                 dataVersion: state.dataVersion + 1,
               }));
               break;

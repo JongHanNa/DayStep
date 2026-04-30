@@ -11,6 +11,8 @@
  *            그리드 + 탭 아이콘이 함께 표시됨 (어두운 배경 없음)
  */
 import React, {useState, useCallback, useEffect} from 'react';
+import {useMMKVBoolean} from 'react-native-mmkv';
+import {storage as mmkvStorage} from '@/lib/mmkv';
 import {View, Pressable, StyleSheet, useWindowDimensions, type ViewStyle} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Animated, {
@@ -119,8 +121,12 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
   const timerState = usePomodoroStore(s => s.timerState);
   const isTimerActive = timerState.isRunning || timerState.isPaused;
   const plannerViewMode = useSettingsStore(s => s.plannerViewMode);
-  const hasActiveSubscription = useSubscriptionStore(s => s.hasActiveSubscription);
+  const hasActiveSubscriptionRaw = useSubscriptionStore(s => s.hasActiveSubscription);
   const isInGracePeriod = useSubscriptionStore(s => s.isInGracePeriod);
+  const adminOverrideStore = useSubscriptionStore(s => s.adminOverride);
+  const [adminOverrideMMKV] = useMMKVBoolean('admin_subscription_override', mmkvStorage);
+  const hasActiveSubscription =
+    hasActiveSubscriptionRaw || adminOverrideStore || !!adminOverrideMMKV;
   const isBottomSheetOpen = useUIStore(s => s.isBottomSheetOpen);
   const {tabBarHorizontalInset, isTablet} = useResponsiveLayout();
   const [morePanelVisible, setMorePanelVisible] = useState(false);

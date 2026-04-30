@@ -31,6 +31,9 @@ interface SubscriptionState {
   daysRemainingInTrial: number | null;
   _recentPurchase: boolean; // RevenueCat 구매 직후 플래그 (MMKV 미저장)
 
+  /** 개발/관리자용 강제 Pro 토글. true면 fetchSubscription 결과 무시하고 hasActiveSubscription=true 유지 (persist됨) */
+  adminOverride: boolean;
+
   // Grace period (신규 가입 7일 Pro 화면 접근)
   userCreatedAt: string | null;
   isInGracePeriod: boolean;
@@ -60,6 +63,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       isInGracePeriod: false,
       gracePeriodDaysRemaining: 0,
       graceChecked: false,
+      adminOverride: false,
 
       fetchSubscription: async (userId: string) => {
         try {
@@ -156,13 +160,24 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       },
 
       updateComputedStates: () => {
-        const {subscriptionInfo, userCreatedAt} = get();
+        const {subscriptionInfo, userCreatedAt, adminOverride} = get();
 
         // Grace period 갱신
         const graceUpdate = {
           isInGracePeriod: checkGracePeriod(userCreatedAt),
           gracePeriodDaysRemaining: calcGraceDays(userCreatedAt),
         };
+
+        // 관리자 강제 Pro 토글 — 다른 모든 로직보다 우선
+        if (adminOverride) {
+          set({
+            hasActiveSubscription: true,
+            isInTrial: false,
+            daysRemainingInTrial: null,
+            ...graceUpdate,
+          });
+          return;
+        }
 
         if (!subscriptionInfo) {
           set({
@@ -208,6 +223,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       storage: createJSONStorage(() => zustandMMKVStorage),
       partialize: (state) => ({
         subscriptionInfo: state.subscriptionInfo,
+        adminOverride: state.adminOverride,
         // userCreatedAt은 persist하지 않음 — 매번 auth에서 최신 값을 가져옴
       }),
       onRehydrateStorage: () => (state) => {

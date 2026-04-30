@@ -10,6 +10,7 @@ import {useSettingsStore} from '@/stores/settingsStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useTheme} from '@/theme';
 import {supabase} from '@/lib/supabase';
+import {storage as mmkvStorage} from '@/lib/mmkv';
 import {
   User,
   Palette,
@@ -295,13 +296,70 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                 onValueChange={async (value) => {
                   if (!user?.id) return;
                   try {
+                    // 1. subscriptions 테이블 동기화 — fetchSubscription이 보는 본진
+                    //    RLS가 INSERT를 차단할 수 있으므로 row 존재 여부 확인 후 update/insert 분기
+                    const {data: existingSub} = await supabase
+                      .from('subscriptions')
+                      .select('id')
+                      .eq('user_id', user.id)
+                      .maybeSingle();
+
+                    if (value) {
+                      if (existingSub) {
+                        const {error: subErr} = await supabase
+                          .from('subscriptions')
+                          .update({
+                            status: 'active' as const,
+                            platform: 'ios' as const,
+                            product_id: 'admin_override',
+                            subscription_start_date: new Date().toISOString(),
+                            subscription_end_date: null,
+                            auto_renew_enabled: false,
+                            updated_at: new Date().toISOString(),
+                          })
+                          .eq('user_id', user.id);
+                        if (subErr) throw subErr;
+                      } else {
+                        const {error: subErr} = await supabase
+                          .from('subscriptions')
+                          .insert({
+                            user_id: user.id,
+                            status: 'active' as const,
+                            platform: 'ios' as const,
+                            product_id: 'admin_override',
+                            subscription_start_date: new Date().toISOString(),
+                            subscription_end_date: null,
+                            auto_renew_enabled: false,
+                            updated_at: new Date().toISOString(),
+                          });
+                        if (subErr) throw subErr;
+                      }
+                    } else if (existingSub) {
+                      // OFF: row가 있을 때만 status='expired'로 update
+                      const {error: subErr} = await supabase
+                        .from('subscriptions')
+                        .update({
+                          status: 'expired' as const,
+                          subscription_end_date: new Date().toISOString(),
+                          updated_at: new Date().toISOString(),
+                        })
+                        .eq('user_id', user.id);
+                      if (subErr) throw subErr;
+                    }
+                    // OFF + row 없음 → 이미 free 상태이므로 no-op
+
+                    // 2. users 테이블도 함께 (다른 곳에서 has_active_subscription 사용하는 경우 일관성)
                     const {error} = await supabase.from('users').update({
                       has_active_subscription: value,
                       subscription_type: value ? 'pro_monthly' : 'free',
                     }).eq('id', user.id);
                     if (error) throw error;
-                    // Store 즉시 갱신 (subscriptionInfo도 함께 업데이트해야 updateComputedStates 재계산 시 유지됨)
+                    // 3. MMKV에 직접 저장 — zustand persist hydration timing과 무관하게
+                    //    다음 reload의 첫 렌더에서도 sync 읽기로 즉시 반영됨
+                    mmkvStorage.set('admin_subscription_override', value);
+                    // Store 즉시 갱신 — adminOverride를 persist해서 reload 후에도 유지됨
                     useSubscriptionStore.setState({
+                      adminOverride: value,
                       hasActiveSubscription: value,
                       subscriptionInfo: value
                         ? {
