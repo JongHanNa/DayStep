@@ -23,6 +23,7 @@ import {useMotivationStore} from '@/stores/motivationStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
 import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
+import {useRotatingNote} from '@/hooks/useRotatingNote';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {isIOS26Plus, NativeTimelineAccordionNative} from '@/components/native';
 import {useTheme} from '@/theme';
@@ -90,11 +91,12 @@ export default function NotesScreen() {
     }
   }, [user?.id, fetchMotivationNotes]);
 
-  // 파생 데이터
-  const pinnedNote = useMemo(
-    () => notes.find(n => n.is_banner_pinned) ?? null,
+  // 파생 데이터: 핀된 원동력을 8초 간격으로 회전 (없으면 null)
+  const pinnedNotes = useMemo(
+    () => notes.filter(n => n.is_banner_pinned === true),
     [notes],
   );
+  const pinnedNote = useRotatingNote(pinnedNotes, 8000);
 
   const timelineSections = useMemo(
     () => groupNotesByDate(notes),

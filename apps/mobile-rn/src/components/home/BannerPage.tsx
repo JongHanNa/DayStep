@@ -5,19 +5,20 @@
  */
 import React, {useEffect, useMemo} from 'react';
 import {View, Text, ScrollView} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import Animated, {FadeIn, FadeInDown, FadeOut} from 'react-native-reanimated';
 import {AnimatedCard} from '@/components/core';
 import {GradientBackground} from '@/components/core';
 import {useMotivationStore} from '@/stores/motivationStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
+import {useRotatingNote} from '@/hooks/useRotatingNote';
 import {Flame, Heart, Sparkles, Phone} from 'lucide-react-native';
 import {useTheme} from '@/theme';
 
 export function BannerPage() {
   const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
-  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useMotivationStore();
+  const {notes, fetchMotivationNotes} = useMotivationStore();
   const {recommendations, loadRecommendations, getRandomRecommendation} =
     useCherishedPeopleStore();
 
@@ -28,7 +29,12 @@ export function BannerPage() {
     }
   }, [user?.id]);
 
-  const motivationNote = useMemo(() => getRandomMotivationNote(), [notes]);
+  // pinned 원동력이 있으면 그것만 회전, 없으면 전체 노트 회전 (8초 간격)
+  const motivationPool = useMemo(() => {
+    const pinned = notes.filter(n => n.is_banner_pinned === true);
+    return pinned.length > 0 ? pinned : notes;
+  }, [notes]);
+  const motivationNote = useRotatingNote(motivationPool, 8000);
   const recommendation = useMemo(
     () => getRandomRecommendation(),
     [recommendations],
@@ -62,16 +68,19 @@ export function BannerPage() {
             </Text>
           </View>
           {motivationNote ? (
-            <>
+            <Animated.View
+              key={motivationNote.id}
+              entering={FadeIn.duration(220)}
+              exiting={FadeOut.duration(140)}>
               {motivationNote.title && (
                 <Text className="text-base font-medium text-amber-900 mb-1">
                   {motivationNote.title}
                 </Text>
               )}
-              <Text className="text-sm text-amber-800/80 leading-5">
+              <Text className="text-sm text-amber-800/80 leading-5" numberOfLines={4}>
                 {motivationNote.content}
               </Text>
-            </>
+            </Animated.View>
           ) : (
             <Text className="text-sm text-amber-800/60">
               아직 원동력이 없어요.{'\n'}

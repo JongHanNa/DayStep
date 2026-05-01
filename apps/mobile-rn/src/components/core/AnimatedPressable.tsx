@@ -51,12 +51,11 @@ export function AnimatedPressable({
   const handlePressIn = useCallback(
     (e: any) => {
       scale.value = withSpring(scaleValue, springs[springPreset]);
-      if (haptic) {
-        hapticFn();
-      }
+      // 햅틱은 onPress(탭 확정) 시점으로 이동 — onPressIn 햅틱은 ScrollView 안에서
+      // 손가락이 닿는 즉시 발사되어 스크롤 중에도 진동을 발생시킴.
       onPressIn?.(e);
     },
-    [scale, scaleValue, springPreset, haptic, hapticFn, onPressIn],
+    [scale, scaleValue, springPreset, onPressIn],
   );
 
   const handlePressOut = useCallback(
@@ -67,11 +66,21 @@ export function AnimatedPressable({
     [scale, springPreset, onPressOut],
   );
 
+  const handlePress = useCallback(
+    (e: any) => {
+      if (haptic) {
+        hapticFn();
+      }
+      onPress?.(e);
+    },
+    [haptic, hapticFn, onPress],
+  );
+
   return (
     <AnimatedPressableBase
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      onPress={onPress}
+      onPress={handlePress}
       style={[animatedStyle, style]}
       {...props}>
       {children}

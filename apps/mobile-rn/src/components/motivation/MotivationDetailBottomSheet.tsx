@@ -283,35 +283,47 @@ export const MotivationDetailBottomSheet = forwardRef<MotivationDetailBottomShee
 
     const todoCount = note?.todos?.length ?? 0;
 
-    // iOS 네이티브 저널 컴포넌트가 등록된 경우 네이티브 렌더
+    // 네이티브 저널 컴포넌트가 등록된 경우 네이티브 렌더 (iOS / Android)
     if (NativeMotivationJournalNative && note) {
+      const nativeProps = {
+        mode: 'edit' as const,
+        primaryColor,
+        noteData: noteDataJSON,
+        linkedTodosData: linkedTodosDataJSON,
+        onSave: handleNativeSave,
+        onPinToggle: handleNativePinToggle,
+        onDelete: handleNativeDelete,
+        onUnlinkTodo: handleNativeUnlinkTodo,
+        onLinkTodoRequest: () => setShowTodoPicker(true),
+        onClose: closeSelf,
+      };
+      const todoPicker = (
+        <TodoPickerModal
+          visible={showTodoPicker}
+          motivationId={note.id}
+          linkedTodoIds={linkedTodoIds}
+          onToggle={handlePickerToggle}
+          onClose={() => setShowTodoPicker(false)}
+        />
+      );
+      if (Platform.OS === 'ios') {
+        return (
+          <Modal
+            visible={visible}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={closeSelf}>
+            <NativeMotivationJournalNative {...nativeProps} style={{flex: 1}} />
+            {todoPicker}
+          </Modal>
+        );
+      }
+      // Android: 네이티브 view 내부 ModalBottomSheet 가 표현 — Modal 래퍼 없이 직접 렌더
       return (
-        <Modal
-          visible={visible}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={closeSelf}>
-          <NativeMotivationJournalNative
-            mode="edit"
-            primaryColor={primaryColor}
-            noteData={noteDataJSON}
-            linkedTodosData={linkedTodosDataJSON}
-            onSave={handleNativeSave}
-            onPinToggle={handleNativePinToggle}
-            onDelete={handleNativeDelete}
-            onUnlinkTodo={handleNativeUnlinkTodo}
-            onLinkTodoRequest={() => setShowTodoPicker(true)}
-            onClose={closeSelf}
-            style={{flex: 1}}
-          />
-          <TodoPickerModal
-            visible={showTodoPicker}
-            motivationId={note.id}
-            linkedTodoIds={linkedTodoIds}
-            onToggle={handlePickerToggle}
-            onClose={() => setShowTodoPicker(false)}
-          />
-        </Modal>
+        <>
+          <NativeMotivationJournalNative {...nativeProps} isOpen={visible} />
+          {todoPicker}
+        </>
       );
     }
 
