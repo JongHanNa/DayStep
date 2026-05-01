@@ -165,22 +165,73 @@ export function useTodoForm() {
   );
 
   const resetForCreate = useCallback(
-    (date?: string) => {
+    (date?: string, preset?: 'allDay' | 'anytime' | 'morning' | 'afternoon' | 'evening') => {
       const targetDate = date ?? selectedDate;
-      const nextHour = getNextHour();
-      // targetDate의 날짜에 맞춰 startTime/endTime 조정
       const [year, month, day] = targetDate.split('-').map(Number);
-      const startTime = new Date(nextHour);
-      startTime.setFullYear(year, month - 1, day);
-      const endTime = addHours(startTime, 1);
+
+      // preset에 따라 schedule_type 및 시간대 default 결정
+      let scheduleType: ScheduleType = 'timed';
+      let startTime: Date | null = null;
+      let endTime: Date | null = null;
+      let anytimeDuration: number | null = null;
+
+      const makeAt = (h: number, m = 0) => {
+        const d = new Date();
+        d.setFullYear(year, month - 1, day);
+        d.setHours(h, m, 0, 0);
+        return d;
+      };
+
+      switch (preset) {
+        case 'allDay': {
+          scheduleType = 'all_day';
+          startTime = makeAt(0);
+          endTime = makeAt(0);
+          break;
+        }
+        case 'anytime': {
+          scheduleType = 'anytime';
+          startTime = null;
+          endTime = null;
+          anytimeDuration = 30;
+          break;
+        }
+        case 'morning': {
+          scheduleType = 'timed';
+          startTime = makeAt(9);
+          endTime = makeAt(10);
+          break;
+        }
+        case 'afternoon': {
+          scheduleType = 'timed';
+          startTime = makeAt(14);
+          endTime = makeAt(15);
+          break;
+        }
+        case 'evening': {
+          scheduleType = 'timed';
+          startTime = makeAt(19);
+          endTime = makeAt(20);
+          break;
+        }
+        default: {
+          // 기존 동작 — 다음 정시
+          const nextHour = getNextHour();
+          startTime = new Date(nextHour);
+          startTime.setFullYear(year, month - 1, day);
+          endTime = addHours(startTime, 1);
+        }
+      }
 
       setMode('create');
       setEditingTodo(null);
       setForm({
         ...DEFAULT_FORM,
         scheduledDate: targetDate,
+        scheduleType,
         startTime,
         endTime,
+        anytimeDuration,
         projectId: null,
       });
     },

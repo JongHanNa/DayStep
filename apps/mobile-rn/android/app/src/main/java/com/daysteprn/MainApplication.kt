@@ -12,6 +12,9 @@ import com.daysteprn.calendar.NativeMultiDayTimeGridPackage
 import com.daysteprn.calendar.NativeWeekStripCalendarPackage
 import com.daysteprn.calldetector.CallDetectorPackage
 import com.daysteprn.designsystem.NativeTabBarPackage
+import com.daysteprn.form.NativeAddPersonPackage
+import com.daysteprn.form.NativeMotivationJournalPackage
+import com.daysteprn.form.NativeProjectFormPackage
 import com.daysteprn.form.NativeTimePickerPackage
 import com.daysteprn.form.NativeTodoPickerPackage
 import com.daysteprn.garden.NativeCleaningGardenPackage
@@ -46,6 +49,9 @@ class MainApplication : Application(), ReactApplication {
           add(AnimatedOffsetPackage())
           add(NativeTodoPickerPackage())
           add(NativeTimePickerPackage())
+          add(NativeMotivationJournalPackage())
+          add(NativeProjectFormPackage())
+          add(NativeAddPersonPackage())
           add(ShareIntentPackage())
           add(CallDetectorPackage())
           add(DayStepWidgetPackage())

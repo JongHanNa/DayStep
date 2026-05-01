@@ -11,7 +11,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, Text, StyleSheet, Keyboard, Modal} from 'react-native';
+import {View, Text, StyleSheet, Keyboard, Modal, Platform} from 'react-native';
 import BottomSheet, {BottomSheetBackdrop, BottomSheetView, BottomSheetTextInput} from '@gorhom/bottom-sheet';
 import {Sparkles} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
@@ -123,28 +123,31 @@ export const MotivationInputBottomSheet = forwardRef<
 
   // ── Native render (iOS with module registered) ──
   if (hasNative && NativeMotivationJournalNative) {
-    return (
-      <Modal
-        visible={visible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handleNativeClose}>
-        <NativeMotivationJournalNative
-          mode="create"
-          primaryColor={primaryColor}
-          prompt="🌱 오늘 당신을 움직인 것은 무엇인가요?"
-          noteData={noteDataJSON}
-          linkedTodosData="[]"
-          onSave={handleNativeSave}
-          onPinToggle={noop}
-          onDelete={noop}
-          onUnlinkTodo={noop}
-          onLinkTodoRequest={noop}
-          onClose={handleNativeClose}
-          style={styles.flex1}
-        />
-      </Modal>
-    );
+    const nativeProps = {
+      mode: 'create' as const,
+      primaryColor,
+      prompt: '🌱 오늘 당신을 움직인 것은 무엇인가요?',
+      noteData: noteDataJSON,
+      linkedTodosData: '[]',
+      onSave: handleNativeSave,
+      onPinToggle: noop,
+      onDelete: noop,
+      onUnlinkTodo: noop,
+      onLinkTodoRequest: noop,
+      onClose: handleNativeClose,
+    };
+    if (Platform.OS === 'ios') {
+      return (
+        <Modal
+          visible={visible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={handleNativeClose}>
+          <NativeMotivationJournalNative {...nativeProps} style={styles.flex1} />
+        </Modal>
+      );
+    }
+    return <NativeMotivationJournalNative {...nativeProps} isOpen={visible} />;
   }
 
   // ── JS Fallback (Android / 네이티브 미등록 iOS) ──

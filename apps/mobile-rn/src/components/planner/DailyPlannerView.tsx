@@ -40,7 +40,7 @@ import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
 import {format} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
-import {Inbox, Calendar, Moon, Sun} from 'lucide-react-native';
+import {Inbox, Calendar, Moon, Sun, Plus} from 'lucide-react-native';
 import {NativeMenu} from '@/components/native';
 import {InlineTimePicker} from '@/components/native/InlineTimePicker';
 
@@ -92,13 +92,14 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   afternoon.sort(byStartTime);
   evening.sort(byStartTime);
 
+  // 5개 핵심 섹션은 0개여도 항상 표시 (헤더 + 버튼). 미룸은 있을 때만 표시.
   const sections: TodoSection[] = [];
-  if (allDay.length > 0) sections.push({title: '종일', period: 'allDay', data: allDay});
-  if (anytime.length > 0) sections.push({title: '언제든지', period: 'anytime', data: anytime});
+  sections.push({title: '종일', period: 'allDay', data: allDay});
+  sections.push({title: '언제든지', period: 'anytime', data: anytime});
   if (deferred.length > 0) sections.push({title: '미룸', period: 'deferred', data: deferred});
-  if (morning.length > 0) sections.push({title: '오전', period: 'morning', data: morning});
-  if (afternoon.length > 0) sections.push({title: '오후', period: 'afternoon', data: afternoon});
-  if (evening.length > 0) sections.push({title: '저녁', period: 'evening', data: evening});
+  sections.push({title: '오전', period: 'morning', data: morning});
+  sections.push({title: '오후', period: 'afternoon', data: afternoon});
+  sections.push({title: '저녁', period: 'evening', data: evening});
 
   return sections;
 }
@@ -565,6 +566,16 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
               <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
             }
             renderSectionHeader={({section}) => {
+              const period = section.period;
+              const presetMap: Record<string, 'allDay' | 'anytime' | 'morning' | 'afternoon' | 'evening' | undefined> = {
+                allDay: 'allDay',
+                anytime: 'anytime',
+                morning: 'morning',
+                afternoon: 'afternoon',
+                evening: 'evening',
+                deferred: undefined,
+              };
+              const preset = presetMap[period];
               return (
                 <View className="flex-row items-center mt-4 mb-2">
                   <Text className="text-sm font-semibold text-gray-500">
@@ -573,6 +584,22 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
                   <Text className="text-xs text-gray-400 ml-2">
                     {section.data.length}개
                   </Text>
+                  <View style={{flex: 1}} />
+                  {preset && (
+                    <AnimatedPressable
+                      onPress={() => formRef.current?.openCreate(selectedDate, preset)}
+                      hapticType="selection"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 14,
+                        backgroundColor: hexWithOpacity(primaryColor, 0.1),
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Plus size={16} color={primaryColor} strokeWidth={2.5} />
+                    </AnimatedPressable>
+                  )}
                 </View>
               );
             }}

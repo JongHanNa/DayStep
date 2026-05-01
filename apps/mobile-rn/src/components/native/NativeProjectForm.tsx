@@ -40,6 +40,8 @@ interface NativeProjectFormProps {
   statusBadgeColor: string;
   statusBadgeBg: string;
   loadingTodos: boolean;
+  /** Android: 시트 표시 여부 (네이티브가 ModalBottomSheet 토글). iOS는 RN Modal이 가시성 제어 — 미사용. */
+  isOpen?: boolean;
   onSave: (e: {nativeEvent: {title: string; description: string; color: string; icon: string}}) => void;
   onStatusChange: (e: {nativeEvent: {status: string}}) => void;
   onUnlinkTodo: (e: {nativeEvent: {todoId: string}}) => void;

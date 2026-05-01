@@ -30,6 +30,8 @@ interface NativeAddPersonProps {
   selectedDepartmentIds: string;
   defaultColorByKind: string;          // JSON of {relationship,role,department: hex}
   paletteColors: string;               // JSON of string[]
+  /** Android: 시트 표시 여부. iOS 미사용. */
+  isOpen?: boolean;
 
   onSave: (e: {nativeEvent: {
     name: string;

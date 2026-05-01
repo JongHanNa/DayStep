@@ -12,7 +12,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import {View, Text, StyleSheet, ActionSheetIOS, Modal, type TextInput} from 'react-native';
+import {View, Text, StyleSheet, ActionSheetIOS, Modal, Platform, type TextInput} from 'react-native';
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
@@ -560,35 +560,39 @@ export const AddPersonBottomSheet = forwardRef<
   );
 
   if (hasNative && NativeAddPersonNative) {
+    const nativeProps = {
+      mode: (isEditMode ? 'edit' : 'create') as 'create' | 'edit',
+      primaryColor,
+      personData: nativePersonDataJson,
+      relationships: nativeRelationshipsJson,
+      roles: nativeRolesJson,
+      departments: nativeDepartmentsJson,
+      selectedRelationshipIds: nativeSelectedRelIdsJson,
+      selectedRoleIds: nativeSelectedRoleIdsJson,
+      selectedDepartmentIds: nativeSelectedDeptIdsJson,
+      defaultColorByKind: nativeDefaultColorJson,
+      paletteColors: nativePaletteJson,
+      onSave: handleNativeSave,
+      onDelete: handleDelete,
+      onClose: () => setNativeVisible(false),
+      onCategoryAdd: handleNativeCategoryAdd,
+      onCategoryRename: handleNativeCategoryRename,
+      onCategoryRecolor: handleNativeCategoryRecolor,
+      onCategoryDelete: handleNativeCategoryDelete,
+    };
     return (
       <>
-        <Modal
-          visible={nativeVisible}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => setNativeVisible(false)}>
-          <NativeAddPersonNative
-            mode={isEditMode ? 'edit' : 'create'}
-            primaryColor={primaryColor}
-            personData={nativePersonDataJson}
-            relationships={nativeRelationshipsJson}
-            roles={nativeRolesJson}
-            departments={nativeDepartmentsJson}
-            selectedRelationshipIds={nativeSelectedRelIdsJson}
-            selectedRoleIds={nativeSelectedRoleIdsJson}
-            selectedDepartmentIds={nativeSelectedDeptIdsJson}
-            defaultColorByKind={nativeDefaultColorJson}
-            paletteColors={nativePaletteJson}
-            onSave={handleNativeSave}
-            onDelete={handleDelete}
-            onClose={() => setNativeVisible(false)}
-            onCategoryAdd={handleNativeCategoryAdd}
-            onCategoryRename={handleNativeCategoryRename}
-            onCategoryRecolor={handleNativeCategoryRecolor}
-            onCategoryDelete={handleNativeCategoryDelete}
-            style={{flex: 1}}
-          />
-        </Modal>
+        {Platform.OS === 'ios' ? (
+          <Modal
+            visible={nativeVisible}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setNativeVisible(false)}>
+            <NativeAddPersonNative {...nativeProps} style={{flex: 1}} />
+          </Modal>
+        ) : (
+          <NativeAddPersonNative {...nativeProps} isOpen={nativeVisible} />
+        )}
         <LimitReachedModal
           visible={isLimitReached}
           onClose={closeLimitModal}

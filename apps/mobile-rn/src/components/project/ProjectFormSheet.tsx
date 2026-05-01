@@ -12,7 +12,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, Text, StyleSheet, Keyboard, Modal} from 'react-native';
+import {View, Text, StyleSheet, Keyboard, Modal, Platform} from 'react-native';
 import Animated, {
   SlideInRight,
   SlideOutLeft,
@@ -391,32 +391,36 @@ export const ProjectFormSheet = forwardRef<
   );
 
   if (hasNative && NativeProjectFormNative) {
-    return (
-      <Modal
-        visible={nativeVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setNativeVisible(false)}>
-        <NativeProjectFormNative
-          mode={editingProject ? 'edit' : 'create'}
-          primaryColor={primaryColor}
-          projectData={nativeProjectDataJson}
-          linkedTodosData={nativeLinkedTodosJson}
-          paletteColors={nativePaletteColorsJson}
-          paletteIcons={nativePaletteIconsJson}
-          statusMenuItemsData={nativeStatusMenuItemsJson}
-          statusLabel={nativeStatusLabel}
-          statusBadgeColor={nativeStatusBadgeColor}
-          statusBadgeBg={nativeStatusBadgeBg}
-          loadingTodos={loadingTodos}
-          onSave={handleNativeSave}
-          onStatusChange={handleNativeStatusChange}
-          onUnlinkTodo={handleNativeUnlinkTodo}
-          onClose={() => setNativeVisible(false)}
-          style={{flex: 1}}
-        />
-      </Modal>
-    );
+    const nativeProps = {
+      mode: (editingProject ? 'edit' : 'create') as 'create' | 'edit',
+      primaryColor,
+      projectData: nativeProjectDataJson,
+      linkedTodosData: nativeLinkedTodosJson,
+      paletteColors: nativePaletteColorsJson,
+      paletteIcons: nativePaletteIconsJson,
+      statusMenuItemsData: nativeStatusMenuItemsJson,
+      statusLabel: nativeStatusLabel,
+      statusBadgeColor: nativeStatusBadgeColor,
+      statusBadgeBg: nativeStatusBadgeBg,
+      loadingTodos,
+      onSave: handleNativeSave,
+      onStatusChange: handleNativeStatusChange,
+      onUnlinkTodo: handleNativeUnlinkTodo,
+      onClose: () => setNativeVisible(false),
+    };
+    if (Platform.OS === 'ios') {
+      return (
+        <Modal
+          visible={nativeVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setNativeVisible(false)}>
+          <NativeProjectFormNative {...nativeProps} style={{flex: 1}} />
+        </Modal>
+      );
+    }
+    // Android: 네이티브 view 가 자체 Material 3 ModalBottomSheet 표현
+    return <NativeProjectFormNative {...nativeProps} isOpen={nativeVisible} />;
   }
 
   return (

@@ -26,6 +26,8 @@ interface NativeMotivationJournalProps {
   prompt?: string;
   noteData: string; // JSON of NativeMotivationJournalNoteData
   linkedTodosData: string; // JSON of NativeMotivationJournalLinkedTodo[]
+  /** Android: 시트 표시 여부. iOS 미사용. */
+  isOpen?: boolean;
   onSave: (e: {nativeEvent: {title: string; content: string; isPinned: boolean}}) => void;
   onPinToggle: (e: {nativeEvent: {isPinned: boolean}}) => void;
   onDelete: (e: {nativeEvent: {}}) => void;

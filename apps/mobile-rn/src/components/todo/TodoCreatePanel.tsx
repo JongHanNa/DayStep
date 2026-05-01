@@ -218,7 +218,7 @@ export const TodoCreatePanel = forwardRef<TodoCreatePanelRef, TodoCreatePanelPro
           maxDynamicContentSize={200}
           enablePanDownToClose
           keyboardBehavior="interactive"
-          keyboardBlurBehavior="none"
+          keyboardBlurBehavior="restore"
           android_keyboardInputMode="adjustResize"
           handleComponent={null}
           backdropComponent={renderBackdrop}

@@ -29,7 +29,10 @@ import type {Todo} from '@daystep/shared-core';
 // ============================================
 
 export interface TodoFormBottomSheetRef {
-  openCreate: (date?: string) => void;
+  openCreate: (
+    date?: string,
+    preset?: 'allDay' | 'anytime' | 'morning' | 'afternoon' | 'evening',
+  ) => void;
   openEdit: (todo: Todo) => Promise<void>;
   close: () => void;
 }
@@ -53,8 +56,8 @@ export const TodoFormBottomSheet = forwardRef<TodoFormBottomSheetRef, {}>(
     // Imperative handle (기존 API 유지)
     // ------------------------------------------
     useImperativeHandle(ref, () => ({
-      openCreate: (date?: string) => {
-        formHook.resetForCreate(date);
+      openCreate: (date, preset) => {
+        formHook.resetForCreate(date, preset);
         createSheetRef.current?.expand();
       },
       openEdit: async (todo: Todo) => {
