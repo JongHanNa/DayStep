@@ -41,7 +41,7 @@ import {hexWithOpacity} from '@/lib/todoUtils';
 import {format} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
 import {Inbox, Calendar, Moon, Sun} from 'lucide-react-native';
-import {LiquidGlassMenu} from '@/components/native';
+import {NativeMenu} from '@/components/native';
 import {InlineTimePicker} from '@/components/native/InlineTimePicker';
 
 interface DailyPlannerViewProps {
@@ -468,7 +468,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
 
   return (
     <View style={{flex: 1}}>
-      {/* 주간 스트립 캘린더 + LiquidGlassMenu 오버레이 */}
+      {/* 주간 스트립 캘린더 + NativeMenu 오버레이 */}
       <View style={{position: 'relative'}}>
         {Platform.OS === 'ios' ? (
           <Animated.View style={calendarHeightStyle}>
@@ -512,7 +512,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
         )}
         {Platform.OS === 'ios' && (
           <View style={styles.menuOverlay} pointerEvents="box-none">
-            <LiquidGlassMenu
+            <NativeMenu
               systemIconName="calendar"
               iconColor="#9CA3AF"
               size={36}
@@ -527,7 +527,7 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
 
       {Platform.OS === 'android' && (
         <View style={styles.menuOverlay} pointerEvents="box-none">
-          <LiquidGlassMenu
+          <NativeMenu
             systemIconName="calendar"
             iconColor="#9CA3AF"
             size={36}

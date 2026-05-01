@@ -12,7 +12,7 @@ import {
   type TodoFormBottomSheetRef,
 } from '@/components/todo/TodoFormBottomSheet';
 import {MonthlyFAB} from '@/components/monthly-planner';
-import {NativeMonthCalendarNative, LiquidGlassMenu} from '@/components/native';
+import {NativeMonthCalendarNative, NativeMenu} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSettingsStore} from '@/stores/settingsStore';
@@ -115,7 +115,7 @@ export function MonthlyPlannerView({menuItems, onMenuSelect}: MonthlyPlannerView
           style={{flex: 1}}
         />
         <View style={styles.menuOverlay} pointerEvents="box-none">
-          <LiquidGlassMenu
+          <NativeMenu
             systemIconName="calendar"
             iconColor={primaryColor}
             size={36}

@@ -1,5 +1,5 @@
 /**
- * LiquidGlassButton — 네이티브 글라스 버튼 TypeScript 래퍼
+ * NativeButton — 네이티브 글라스 버튼 TypeScript 래퍼
  * iOS 26+: 네이티브 SwiftUI glassEffect 버튼
  * iOS 25-: 기존 AnimatedPressable + GlassBackground 폴백
  *
@@ -10,7 +10,7 @@ import {Platform, requireNativeComponent, View, StyleSheet} from 'react-native';
 import {AnimatedPressable, GlassBackground} from '@/components/core';
 import {isIOS26Plus} from './utils';
 
-interface NativeLiquidGlassButtonProps {
+interface NativeButtonViewProps {
   systemIconName: string;
   iconColor?: string;
   size?: number;
@@ -20,11 +20,11 @@ interface NativeLiquidGlassButtonProps {
 }
 
 // iOS 전용 네이티브 컴포넌트 — Android에서는 등록하지 않음
-const NativeLiquidGlassButton = Platform.OS === 'ios'
-  ? requireNativeComponent<NativeLiquidGlassButtonProps>('LiquidGlassButton')
+const NativeButtonView = Platform.OS === 'ios'
+  ? requireNativeComponent<NativeButtonViewProps>('NativeButton')
   : null;
 
-interface LiquidGlassButtonProps {
+interface NativeButtonProps {
   systemIconName: string;
   iconColor?: string;
   size?: number;
@@ -35,17 +35,17 @@ interface LiquidGlassButtonProps {
   fallbackIcon?: React.ReactNode;
 }
 
-export function LiquidGlassButton({
+export function NativeButton({
   systemIconName,
   iconColor = '#6B7280',
   size = 40,
   iconSize,
   onPress,
   fallbackIcon,
-}: LiquidGlassButtonProps): React.ReactElement {
-  if (isIOS26Plus && NativeLiquidGlassButton) {
+}: NativeButtonProps): React.ReactElement {
+  if (isIOS26Plus && NativeButtonView) {
     return (
-      <NativeLiquidGlassButton
+      <NativeButtonView
         systemIconName={systemIconName}
         iconColor={iconColor}
         size={size}

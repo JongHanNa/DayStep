@@ -1,7 +1,7 @@
-export {LiquidGlassTabBarNative, type NativeTabData, type NativeMenuItemData} from './LiquidGlassTabBar';
-export {LiquidGlassMotivationCardNative} from './LiquidGlassMotivationCard';
-export {LiquidGlassBackgroundNative} from './LiquidGlassBackground';
-export {LiquidGlassMenu} from './LiquidGlassMenu';
+export {NativeTabBarNative, type NativeTabData, type NativeMenuItemData} from './NativeTabBar';
+export {NativeMotivationCardNative} from './NativeMotivationCard';
+export {NativeBackgroundNative} from './NativeBackground';
+export {NativeMenu} from './NativeMenu';
 export {NativeCleanupAccordionNative} from './NativeCleanupAccordion';
 export {
   NativeFeedbackSectionNative,
@@ -21,7 +21,7 @@ export {NativeContactNudgeNative} from './NativeContactNudge';
 export {NativeSleepActionButton} from './NativeSleepActionButton';
 export {NativeSleepGardenNative} from './NativeSleepGarden';
 export {NativeCleaningGardenNative} from './NativeCleaningGarden';
-export {LiquidGlassButton} from './LiquidGlassButton';
+export {NativeButton} from './NativeButton';
 export {NativeTodoPickerNative} from './NativeTodoPicker';
 export {
   NativeMotivationJournalNative,

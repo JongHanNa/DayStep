@@ -1,12 +1,12 @@
 /**
  * ADHDUnderstandingScreen — ADHD 이해하기 메인 화면
- * Design C(비주얼 맵) 기본 + LiquidGlassMenu로 A/B/C 전환
+ * Design C(비주얼 맵) 기본 + NativeMenu로 A/B/C 전환
  */
 import React, {useState, useCallback} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {Menu} from 'lucide-react-native';
 import {ScreenContainer} from '@/components/core';
-import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeMenu} from '@/components/native/NativeMenu';
 import {useTheme} from '@/theme';
 import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {VisualMapView} from '@/components/adhd-understanding/VisualMapView';
@@ -34,7 +34,7 @@ export default function ADHDUnderstandingScreen() {
     <ScreenContainer>
       {/* 상단 네비게이션 바 */}
       <View style={styles.navBar}>
-        <LiquidGlassMenu
+        <NativeMenu
           systemIconName="line.3.horizontal"
           iconColor="#9CA3AF"
           size={40}

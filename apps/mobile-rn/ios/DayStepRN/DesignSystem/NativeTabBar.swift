@@ -1,5 +1,5 @@
 /**
- * LiquidGlassTabBar — Phase 3
+ * NativeTabBar — Phase 3
  * iOS 26+: 단일 뷰 구조 — 탭바 아이콘 항상 고정, 패널만 슬라이드업
  * iOS 25-: JS 폴백 (GlassBackground) 사용 — 이 파일의 뷰는 렌더링 안됨
  *
@@ -42,7 +42,7 @@ class TabBarState: ObservableObject {
 
 // MARK: - SwiftUI View (iOS 26+)
 @available(iOS 26.0, *)
-struct LiquidGlassTabBarContent: View {
+struct NativeTabBarContent: View {
   @ObservedObject var state: TabBarState
   var onTabPress: ((Int) -> Void)?
   var onMenuItemPress: ((String) -> Void)?
@@ -244,7 +244,7 @@ struct LiquidGlassTabBarContent: View {
 }
 
 // MARK: - UIView Wrapper
-class LiquidGlassTabBarUIView: UIView {
+class NativeTabBarUIView: UIView {
 
   // RN Props
   @objc var onTabPress: RCTDirectEventBlock?
@@ -346,7 +346,7 @@ class LiquidGlassTabBarUIView: UIView {
       return
     }
 
-    let swiftUIView = LiquidGlassTabBarContent(
+    let swiftUIView = NativeTabBarContent(
       state: tabState,
       onTabPress: { [weak self] index in
         self?.onTabPress?(["index": index])
@@ -388,10 +388,10 @@ class LiquidGlassTabBarUIView: UIView {
 }
 
 // MARK: - RCTViewManager
-@objc(LiquidGlassTabBarManager)
-class LiquidGlassTabBarManager: RCTViewManager {
+@objc(NativeTabBarManager)
+class NativeTabBarManager: RCTViewManager {
   override func view() -> UIView! {
-    return LiquidGlassTabBarUIView()
+    return NativeTabBarUIView()
   }
 
   @objc override static func requiresMainQueueSetup() -> Bool {

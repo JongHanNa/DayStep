@@ -1,5 +1,5 @@
 /**
- * LiquidGlassMenu — 리퀴드 글라스 모핑 메뉴 TypeScript 래퍼
+ * NativeMenu — 리퀴드 글라스 모핑 메뉴 TypeScript 래퍼
  * iOS 26+: 네이티브 SwiftUI glassEffectID 모핑 (원형 버튼 ↔ 사각형 메뉴)
  * iOS 25-: AnimatedPressable + ActionSheetIOS 폴백
  * Android: AnimatedPressable + Modal 드롭다운 메뉴
@@ -28,7 +28,7 @@ interface MenuItem {
   key: string;
 }
 
-interface NativeLiquidGlassMenuProps {
+interface NativeMenuViewProps {
   systemIconName: string;
   iconColor?: string;
   size?: number;
@@ -38,11 +38,11 @@ interface NativeLiquidGlassMenuProps {
 }
 
 // iOS에서만 모듈 레벨에서 1회 등록 (Android에는 네이티브 뷰 없음)
-const NativeLiquidGlassMenu = Platform.OS === 'ios'
-  ? requireNativeComponent<NativeLiquidGlassMenuProps>('LiquidGlassMenu')
+const NativeMenuView = Platform.OS === 'ios'
+  ? requireNativeComponent<NativeMenuViewProps>('NativeMenu')
   : null;
 
-interface LiquidGlassMenuProps {
+interface NativeMenuProps {
   systemIconName: string;
   iconColor?: string;
   size?: number;
@@ -54,7 +54,7 @@ interface LiquidGlassMenuProps {
   testID?: string;
 }
 
-export function LiquidGlassMenu({
+export function NativeMenu({
   systemIconName,
   iconColor = '#6B7280',
   size = 40,
@@ -62,7 +62,7 @@ export function LiquidGlassMenu({
   onSelect,
   fallbackIcon,
   testID,
-}: LiquidGlassMenuProps): React.ReactElement {
+}: NativeMenuProps): React.ReactElement {
   // Android 드롭다운 상태
   const [menuVisible, setMenuVisible] = useState(false);
   const [buttonLayout, setButtonLayout] = useState({x: 0, y: 0, width: 0, height: 0});
@@ -78,9 +78,9 @@ export function LiquidGlassMenu({
   }, []);
 
   // iOS 26+: 네이티브 SwiftUI
-  if (isIOS26Plus && NativeLiquidGlassMenu) {
+  if (isIOS26Plus && NativeMenuView) {
     return (
-      <NativeLiquidGlassMenu
+      <NativeMenuView
         systemIconName={systemIconName}
         iconColor={iconColor}
         size={size}

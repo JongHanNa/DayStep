@@ -8,7 +8,7 @@ import {View, Text, ScrollView, StyleSheet} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import {Crown, Sparkles, ChevronRight} from 'lucide-react-native';
 import {AnimatedPressable} from '@/components/core';
-import {LiquidGlassMenu} from '@/components/native';
+import {NativeMenu} from '@/components/native';
 import {PhoneMockup} from './PhoneMockup';
 import {MiniCalendarPreview} from './MiniCalendarPreview';
 import {useTheme} from '@/theme';
@@ -52,9 +52,9 @@ export function MonthlyPremiumUpsell({
 
   return (
     <View style={styles.root}>
-      {/* 상단 메뉴 (기존 LiquidGlassMenu 유지) */}
+      {/* 상단 메뉴 (기존 NativeMenu 유지) */}
       <View style={styles.menuBar}>
-        <LiquidGlassMenu
+        <NativeMenu
           systemIconName="calendar"
           iconColor="#1F2937"
           size={36}

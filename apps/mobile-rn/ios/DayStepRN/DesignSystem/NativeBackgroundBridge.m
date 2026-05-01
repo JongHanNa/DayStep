@@ -1,8 +1,8 @@
 #import <React/RCTViewManager.h>
 
-// LiquidGlassBackground — Phase 3 ObjC Bridge
-// ViewManager 이름: LiquidGlassBackgroundManager → JS requireNativeComponent('LiquidGlassBackground')
+// NativeBackground — Phase 3 ObjC Bridge
+// ViewManager 이름: NativeBackgroundManager → JS requireNativeComponent('NativeBackground')
 
-@interface RCT_EXTERN_MODULE(LiquidGlassBackgroundManager, RCTViewManager)
+@interface RCT_EXTERN_MODULE(NativeBackgroundManager, RCTViewManager)
 
 @end

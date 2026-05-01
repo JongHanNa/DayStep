@@ -1,5 +1,5 @@
 /**
- * LiquidGlassMenu — SwiftUI Menu 기반 리퀴드 글라스 메뉴
+ * NativeMenu — SwiftUI Menu 기반 리퀴드 글라스 메뉴
  * iOS 26+: SwiftUI Menu → 리퀴드 글라스 스타일 자동 적용
  * iOS 25-: JS 폴백 (RN 래퍼에서 ActionSheetIOS 처리)
  */
@@ -19,7 +19,7 @@ class GlassMenuState: ObservableObject {
 
 // MARK: - SwiftUI View (iOS 26+)
 @available(iOS 26.0, *)
-struct LiquidGlassMenuContent: View {
+struct NativeMenuContent: View {
   @ObservedObject var state: GlassMenuState
 
   var onMenuItemSelect: ((String) -> Void)?
@@ -45,7 +45,7 @@ struct LiquidGlassMenuContent: View {
 }
 
 // MARK: - UIView Wrapper
-class LiquidGlassMenuUIView: UIView {
+class NativeMenuUIView: UIView {
 
   // RN Props
   @objc var onMenuItemSelect: RCTDirectEventBlock?
@@ -103,7 +103,7 @@ class LiquidGlassMenuUIView: UIView {
       return
     }
 
-    let swiftUIView = LiquidGlassMenuContent(
+    let swiftUIView = NativeMenuContent(
       state: menuState,
       onMenuItemSelect: { [weak self] key in
         self?.onMenuItemSelect?(["key": key])
@@ -127,10 +127,10 @@ class LiquidGlassMenuUIView: UIView {
 }
 
 // MARK: - RCTViewManager
-@objc(LiquidGlassMenuManager)
-class LiquidGlassMenuManager: RCTViewManager {
+@objc(NativeMenuManager)
+class NativeMenuManager: RCTViewManager {
   override func view() -> UIView! {
-    return LiquidGlassMenuUIView()
+    return NativeMenuUIView()
   }
 
   @objc override static func requiresMainQueueSetup() -> Bool {

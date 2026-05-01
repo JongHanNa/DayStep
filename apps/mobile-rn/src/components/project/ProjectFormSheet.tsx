@@ -25,7 +25,7 @@ import {
   BottomSheetScrollView,
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
-import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeMenu} from '@/components/native/NativeMenu';
 import {NativeProjectFormNative} from '@/components/native/NativeProjectForm';
 import {AnimatedPressable} from '@/components/core';
 import {SummaryRow} from '@/components/todo/SummaryRow';
@@ -112,7 +112,7 @@ function StatusRow({
             {STATUS_LABELS[project.status]?.label}
           </Text>
         </View>
-        <LiquidGlassMenu
+        <NativeMenu
           systemIconName="arrow.triangle.2.circlepath"
           iconColor="#9CA3AF"
           size={32}

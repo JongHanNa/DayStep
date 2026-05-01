@@ -1,12 +1,12 @@
 /**
  * PinnedBanner — "오늘의 원동력" 배너
  * is_banner_pinned 노트를 화면 상단에 표시
- * LiquidGlassMenu로 "배너 해제" 컨텍스트메뉴
+ * NativeMenu로 "배너 해제" 컨텍스트메뉴
  */
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {Sparkles} from 'lucide-react-native';
-import {LiquidGlassMenu} from '@/components/native';
+import {NativeMenu} from '@/components/native';
 import {hexWithOpacity} from '@/lib/todoUtils';
 import {Pin} from 'lucide-react-native';
 import type {Note} from '@/stores/motivationStore';
@@ -24,7 +24,7 @@ export function PinnedBanner({note, primaryColor, onUnpin}: PinnedBannerProps) {
         <Sparkles size={16} color={primaryColor} strokeWidth={2} />
         <Text style={[styles.label, {color: primaryColor}]}>오늘의 원동력</Text>
         <View style={styles.spacer} />
-        <LiquidGlassMenu
+        <NativeMenu
           systemIconName="pin.slash"
           iconColor={primaryColor}
           size={28}

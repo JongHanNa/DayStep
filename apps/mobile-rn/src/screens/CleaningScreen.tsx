@@ -9,8 +9,8 @@ import {useNavigation} from '@react-navigation/native';
 import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
 import {List, X, Minus, Plus, MoreHorizontal} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable} from '@/components/core';
-import {LiquidGlassButton} from '@/components/native';
-import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeButton} from '@/components/native';
+import {NativeMenu} from '@/components/native/NativeMenu';
 import {EnergySelector} from '@/components/cleaning/EnergySelector';
 import {FocusCard} from '@/components/cleaning/FocusCard';
 import {TaskQueue} from '@/components/cleaning/TaskQueue';
@@ -226,7 +226,7 @@ export default function CleaningScreen() {
             paddingTop: 8,
             paddingBottom: 12,
           }}>
-          <LiquidGlassButton
+          <NativeButton
             systemIconName="list.bullet"
             fallbackIcon={<List size={16} color="#6B7280" />}
             iconColor="#6B7280"
@@ -237,7 +237,7 @@ export default function CleaningScreen() {
 
           <View style={{flex: 1}} />
 
-          <LiquidGlassMenu
+          <NativeMenu
             systemIconName="ellipsis.circle"
             iconColor="#9CA3AF"
             size={40}

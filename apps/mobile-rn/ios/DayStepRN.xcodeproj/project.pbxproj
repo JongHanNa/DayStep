@@ -17,17 +17,17 @@
 		04CC33DD44EE55FF66778899 /* NativeProjectFormBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */; };
 		05AA11BB22CC33DD44EE55F6 /* NativeAddPerson.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */; };
 		05CC33DD44EE55FF66778899 /* NativeAddPersonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */; };
-		03A711A6634CCE600EF8A599 /* LiquidGlassMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */; };
-		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
-		0B3C275442CA372D372F51C4 /* LiquidGlassMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */; };
-		117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */; };
+		03A711A6634CCE600EF8A599 /* NativeMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */; };
+		051A3F3962BD4CA6AC7F4177 /* NativeUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* NativeUtils.swift */; };
+		0B3C275442CA372D372F51C4 /* NativeMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* NativeMotivationCardBridge.m */; };
+		117B8C9D0E1F2A3B4C5D6E7F /* NativeMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* NativeMenuBridge.m */; };
 		124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1F11AF99A05E5B04B2E2585D /* NativeProgressCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */; };
 		2471C3C4D3E00A76861BDF22 /* NativeProgressCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */; };
 		4EA6F8C29F16FFE12737528C /* NativeMissionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */; };
-		63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */; };
-		671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */; };
+		63A98DDE31BBA1B7DC82E704 /* NativeTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8261A30623C9454D703B9FB7 /* NativeTabBar.swift */; };
+		671C9C480796F50BF822F737 /* NativeBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFDECFAAAA2C0F7988EEC88 /* NativeBackground.swift */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */; };
@@ -56,13 +56,13 @@
 		A4F440C22F9180CD00C25E59 /* CallDetectorModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */; };
 		A4F440C32F9180CD00C25E59 /* CallDetectorModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */; };
 		A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */; };
-		AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */; };
-		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
+		AA1B2C3D4E5F6A7B8C9D0E1F /* NativeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* NativeButton.swift */; };
+		B0474C71554CEB2C206F066A /* NativeBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* NativeBackgroundBridge.m */; };
 		C3CAAEF0626409E6D2C3155C /* NativeMissionCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */; };
 		C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */; };
 		C6F8A1669C5EDFADDD08FB8D /* NativeContactNudge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59502988256F1D4368F740C1 /* NativeContactNudge.swift */; };
 		C7D8E9F0A1B2C3D4E5F6A7B8 /* NativeMonthCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */; };
-		CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */; };
+		CC3D4E5F6A7B8C9D0E1F2A3B /* NativeButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* NativeButtonBridge.m */; };
 		D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */; };
 		DA5E6F7A8B9C0D1E2F3A4B5C /* NativeDayTimeGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */; };
 		DA6F7A8B9C0D1E2F3A4B5C6D /* NativeDayTimeGridBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */; };
@@ -74,10 +74,10 @@
 		EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */; };
 		EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */; };
 		EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E89E96ED34AC96B9B503807 /* ExpoModulesProvider.swift */; };
-		EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */; };
+		EE5F6A7B8C9D0E1F2A3B4C5D /* NativeMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* NativeMenu.swift */; };
 		F1B6C7D8E9F0A1B2C3D4E5F7 /* NativeFeedbackSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B4C5D6E7F8A9B0C1D2E3F5 /* NativeFeedbackSection.swift */; };
 		F1B7C8D9E0F1A2B3C4D5E6F8 /* NativeFeedbackSectionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F1B5C6D7E8F9A0B1C2D3E4F6 /* NativeFeedbackSectionBridge.m */; };
-		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
+		F264FE52D348AB48BFF6D85D /* NativeTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* NativeTabBarBridge.m */; };
 		F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */; };
 		FA1B2C3D4E5F6A7B8C9D0E1F /* NativeSleepGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */; };
 		FA3D4E5F6A7B8C9D0E1F2A3B /* NativeSleepGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */; };
@@ -157,25 +157,25 @@
 		04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeProjectFormBridge.m; path = DayStepRN/NativeModules/Form/NativeProjectFormBridge.m; sourceTree = "<group>"; };
 		05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAddPerson.swift; path = DayStepRN/NativeModules/Form/NativeAddPerson.swift; sourceTree = "<group>"; };
 		05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeAddPersonBridge.m; path = DayStepRN/NativeModules/Form/NativeAddPersonBridge.m; sourceTree = "<group>"; };
-		079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassBackgroundBridge.m; path = DayStepRN/DesignSystem/LiquidGlassBackgroundBridge.m; sourceTree = "<group>"; };
+		079876F8CC97D9070E6729CB /* NativeBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeBackgroundBridge.m; path = DayStepRN/DesignSystem/NativeBackgroundBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DayStepRN/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = DayStepRN/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMotivationCard.swift; path = DayStepRN/DesignSystem/LiquidGlassMotivationCard.swift; sourceTree = "<group>"; };
-		228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMenuBridge.m; path = DayStepRN/DesignSystem/LiquidGlassMenuBridge.m; sourceTree = "<group>"; };
+		1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMotivationCard.swift; path = DayStepRN/NativeModules/Cards/NativeMotivationCard.swift; sourceTree = "<group>"; };
+		228C9D0E1F2A3B4C5D6E7F80 /* NativeMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMenuBridge.m; path = DayStepRN/DesignSystem/NativeMenuBridge.m; sourceTree = "<group>"; };
 		25B5E30421766026F915B4B0 /* NativeGroupSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeGroupSection.swift; path = DayStepRN/NativeModules/Sections/NativeGroupSection.swift; sourceTree = "<group>"; };
-		2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassTabBarBridge.m; path = DayStepRN/DesignSystem/LiquidGlassTabBarBridge.m; sourceTree = "<group>"; };
+		2927152AB13CA4A60605A287 /* NativeTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeTabBarBridge.m; path = DayStepRN/DesignSystem/NativeTabBarBridge.m; sourceTree = "<group>"; };
 		3E89E96ED34AC96B9B503807 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DayStepRN/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassMotivationCardBridge.m; path = DayStepRN/DesignSystem/LiquidGlassMotivationCardBridge.m; sourceTree = "<group>"; };
-		4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassBackgroundView.swift; path = DayStepRN/DesignSystem/LiquidGlassBackgroundView.swift; sourceTree = "<group>"; };
+		42023738D1793F209AFDF171 /* NativeMotivationCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMotivationCardBridge.m; path = DayStepRN/NativeModules/Cards/NativeMotivationCardBridge.m; sourceTree = "<group>"; };
+		4EFDECFAAAA2C0F7988EEC88 /* NativeBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeBackground.swift; path = DayStepRN/DesignSystem/NativeBackground.swift; sourceTree = "<group>"; };
 		59502988256F1D4368F740C1 /* NativeContactNudge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeContactNudge.swift; path = DayStepRN/NativeModules/Cards/NativeContactNudge.swift; sourceTree = "<group>"; };
-		735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassUtils.swift; path = DayStepRN/DesignSystem/LiquidGlassUtils.swift; sourceTree = "<group>"; };
+		735A184A2544A4E64A659FAF /* NativeUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeUtils.swift; path = DayStepRN/DesignSystem/NativeUtils.swift; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DayStepRN/AppDelegate.swift; sourceTree = "<group>"; };
 		7D38102E52F68EAC32641FB1 /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
 		8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeProgressCard.swift; path = DayStepRN/NativeModules/Cards/NativeProgressCard.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = DayStepRN/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassTabBar.swift; path = DayStepRN/DesignSystem/LiquidGlassTabBar.swift; sourceTree = "<group>"; };
+		8261A30623C9454D703B9FB7 /* NativeTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeTabBar.swift; path = DayStepRN/DesignSystem/NativeTabBar.swift; sourceTree = "<group>"; };
 		8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeMissionCardBridge.m; path = DayStepRN/NativeModules/Cards/NativeMissionCardBridge.m; sourceTree = "<group>"; };
 		960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeGroupSectionBridge.m; path = DayStepRN/NativeModules/Sections/NativeGroupSectionBridge.m; sourceTree = "<group>"; };
 		9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeContactNudgeBridge.m; path = DayStepRN/NativeModules/Cards/NativeContactNudgeBridge.m; sourceTree = "<group>"; };
@@ -211,7 +211,7 @@
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeModules/Sections/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
 		B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeMissionCard.swift; path = DayStepRN/NativeModules/Cards/NativeMissionCard.swift; sourceTree = "<group>"; };
 		B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMonthCalendar.swift; path = DayStepRN/NativeModules/Calendar/NativeMonthCalendar.swift; sourceTree = "<group>"; };
-		BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassButton.swift; path = DayStepRN/DesignSystem/LiquidGlassButton.swift; sourceTree = "<group>"; };
+		BB2C3D4E5F6A7B8C9D0E1F2A /* NativeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeButton.swift; path = DayStepRN/DesignSystem/NativeButton.swift; sourceTree = "<group>"; };
 		C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeProgressCardBridge.m; path = DayStepRN/NativeModules/Cards/NativeProgressCardBridge.m; sourceTree = "<group>"; };
 		D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Products.storekit; path = DayStepRN/Products.storekit; sourceTree = "<group>"; };
 		D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMonthCalendarBridge.m; path = DayStepRN/NativeModules/Calendar/NativeMonthCalendarBridge.m; sourceTree = "<group>"; };
@@ -219,7 +219,7 @@
 		DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeDayTimeGridBridge.m; path = DayStepRN/NativeModules/Calendar/NativeDayTimeGridBridge.m; sourceTree = "<group>"; };
 		DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMultiDayTimeGrid.swift; path = DayStepRN/NativeModules/Calendar/NativeMultiDayTimeGrid.swift; sourceTree = "<group>"; };
 		DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMultiDayTimeGridBridge.m; path = DayStepRN/NativeModules/Calendar/NativeMultiDayTimeGridBridge.m; sourceTree = "<group>"; };
-		DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassButtonBridge.m; path = DayStepRN/DesignSystem/LiquidGlassButtonBridge.m; sourceTree = "<group>"; };
+		DD4E5F6A7B8C9D0E1F2A3B4C /* NativeButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeButtonBridge.m; path = DayStepRN/DesignSystem/NativeButtonBridge.m; sourceTree = "<group>"; };
 		EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleaningGarden.swift; path = DayStepRN/NativeModules/Garden/NativeCleaningGarden.swift; sourceTree = "<group>"; };
 		EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleaningGardenBridge.m; path = DayStepRN/NativeModules/Garden/NativeCleaningGardenBridge.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -228,7 +228,7 @@
 		F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeWeekStripCalendar.swift; path = DayStepRN/NativeModules/Calendar/NativeWeekStripCalendar.swift; sourceTree = "<group>"; };
 		FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeSleepGarden.swift; path = DayStepRN/NativeModules/Garden/NativeSleepGarden.swift; sourceTree = "<group>"; };
 		FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeSleepGardenBridge.m; path = DayStepRN/NativeModules/Garden/NativeSleepGardenBridge.m; sourceTree = "<group>"; };
-		FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassMenu.swift; path = DayStepRN/DesignSystem/LiquidGlassMenu.swift; sourceTree = "<group>"; };
+		FF6A7B8C9D0E1F2A3B4C5D6E /* NativeMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMenu.swift; path = DayStepRN/DesignSystem/NativeMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -435,17 +435,15 @@
 		0991000010000000A1B20002 /* DesignSystem */ = {
 			isa = PBXGroup;
 			children = (
-				735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */,
-				4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */,
-				079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */,
-				BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */,
-				DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */,
-				FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */,
-				228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */,
-				1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */,
-				42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */,
-				8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */,
-				2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */,
+				735A184A2544A4E64A659FAF /* NativeUtils.swift */,
+				4EFDECFAAAA2C0F7988EEC88 /* NativeBackground.swift */,
+				079876F8CC97D9070E6729CB /* NativeBackgroundBridge.m */,
+				BB2C3D4E5F6A7B8C9D0E1F2A /* NativeButton.swift */,
+				DD4E5F6A7B8C9D0E1F2A3B4C /* NativeButtonBridge.m */,
+				FF6A7B8C9D0E1F2A3B4C5D6E /* NativeMenu.swift */,
+				228C9D0E1F2A3B4C5D6E7F80 /* NativeMenuBridge.m */,
+				8261A30623C9454D703B9FB7 /* NativeTabBar.swift */,
+				2927152AB13CA4A60605A287 /* NativeTabBarBridge.m */,
 			);
 			name = DesignSystem;
 			sourceTree = "<group>";
@@ -514,6 +512,8 @@
 				9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */,
 				B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */,
 				8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */,
+				1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */,
+				42023738D1793F209AFDF171 /* NativeMotivationCardBridge.m */,
 				8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */,
 				C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */,
 			);
@@ -1003,17 +1003,17 @@
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				A49F65942F97DF7100E608ED /* NativeFocusGarden.swift in Sources */,
 				A49F65952F97DF7100E608ED /* NativeFocusGardenBridge.m in Sources */,
-				051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */,
-				63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */,
-				F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */,
-				03A711A6634CCE600EF8A599 /* LiquidGlassMotivationCard.swift in Sources */,
-				0B3C275442CA372D372F51C4 /* LiquidGlassMotivationCardBridge.m in Sources */,
-				671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */,
-				B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */,
-				AA1B2C3D4E5F6A7B8C9D0E1F /* LiquidGlassButton.swift in Sources */,
-				CC3D4E5F6A7B8C9D0E1F2A3B /* LiquidGlassButtonBridge.m in Sources */,
-				EE5F6A7B8C9D0E1F2A3B4C5D /* LiquidGlassMenu.swift in Sources */,
-				117B8C9D0E1F2A3B4C5D6E7F /* LiquidGlassMenuBridge.m in Sources */,
+				051A3F3962BD4CA6AC7F4177 /* NativeUtils.swift in Sources */,
+				63A98DDE31BBA1B7DC82E704 /* NativeTabBar.swift in Sources */,
+				F264FE52D348AB48BFF6D85D /* NativeTabBarBridge.m in Sources */,
+				03A711A6634CCE600EF8A599 /* NativeMotivationCard.swift in Sources */,
+				0B3C275442CA372D372F51C4 /* NativeMotivationCardBridge.m in Sources */,
+				671C9C480796F50BF822F737 /* NativeBackground.swift in Sources */,
+				B0474C71554CEB2C206F066A /* NativeBackgroundBridge.m in Sources */,
+				AA1B2C3D4E5F6A7B8C9D0E1F /* NativeButton.swift in Sources */,
+				CC3D4E5F6A7B8C9D0E1F2A3B /* NativeButtonBridge.m in Sources */,
+				EE5F6A7B8C9D0E1F2A3B4C5D /* NativeMenu.swift in Sources */,
+				117B8C9D0E1F2A3B4C5D6E7F /* NativeMenuBridge.m in Sources */,
 				A4F440BE2F9180CD00C25E59 /* AppShortcuts.swift in Sources */,
 				A4F440BF2F9180CD00C25E59 /* DayStepShareModule.swift in Sources */,
 				A4F440C02F9180CD00C25E59 /* DayStepShareModule.m in Sources */,

@@ -1,5 +1,5 @@
 /**
- * LiquidGlassMotivationCard — Phase 2
+ * NativeMotivationCard — Phase 2
  * iOS 26+: SwiftUI glassEffectID matched geometry morphing (컴팩트 ↔ 확장 패널)
  * iOS 25-: JS 폴백 (기존 LinearGradient 카드) 사용
  *
@@ -22,7 +22,7 @@ class MotivationCardState: ObservableObject {
 
 // MARK: - SwiftUI View (iOS 26+)
 @available(iOS 26.0, *)
-struct LiquidGlassMotivationCardContent: View {
+struct NativeMotivationCardContent: View {
   @ObservedObject var state: MotivationCardState
   // @Namespace는 setupOnce()로 1회만 생성되는 UIHostingController 안에서 유지됨
   @Namespace private var morphNamespace
@@ -124,7 +124,7 @@ struct LiquidGlassMotivationCardContent: View {
 }
 
 // MARK: - UIView Wrapper
-class LiquidGlassMotivationCardUIView: UIView {
+class NativeMotivationCardUIView: UIView {
 
   // RN Props
   @objc var onExpand: RCTDirectEventBlock?
@@ -193,7 +193,7 @@ class LiquidGlassMotivationCardUIView: UIView {
       return
     }
 
-    let swiftUIView = LiquidGlassMotivationCardContent(
+    let swiftUIView = NativeMotivationCardContent(
       state: cardState,
       onExpand: { [weak self] in
         self?.onExpand?([:])
@@ -224,10 +224,10 @@ class LiquidGlassMotivationCardUIView: UIView {
 }
 
 // MARK: - RCTViewManager
-@objc(LiquidGlassMotivationCardManager)
-class LiquidGlassMotivationCardManager: RCTViewManager {
+@objc(NativeMotivationCardManager)
+class NativeMotivationCardManager: RCTViewManager {
   override func view() -> UIView! {
-    return LiquidGlassMotivationCardUIView()
+    return NativeMotivationCardUIView()
   }
 
   @objc override static func requiresMainQueueSetup() -> Bool {

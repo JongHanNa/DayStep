@@ -3,12 +3,12 @@
  * collapsed: content 2줄 + 시간
  * expanded: 전체내용 + 연결할일
  * emotion은 타임라인 도트 색상으로만 표현 (borderLeft 없음)
- * LiquidGlassMenu: "편집", "배너 고정", "삭제"
+ * NativeMenu: "편집", "배너 고정", "삭제"
  */
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
-import {LiquidGlassMenu} from '@/components/native';
+import {NativeMenu} from '@/components/native';
 import {Link2, Link2Off, MoreHorizontal} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
@@ -57,7 +57,7 @@ export function TimelineMotivationCard({
             <Text style={styles.title} numberOfLines={1}>{note.title}</Text>
           )}
           <View style={styles.spacer} />
-          <LiquidGlassMenu
+          <NativeMenu
             systemIconName="ellipsis"
             iconColor="#9CA3AF"
             size={28}

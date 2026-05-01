@@ -63,7 +63,7 @@ import {
 } from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {hexWithOpacity} from '@/lib/todoUtils';
-import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeMenu} from '@/components/native/NativeMenu';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
 import {format, differenceInDays} from 'date-fns';
@@ -987,7 +987,7 @@ export default function RecordScreen() {
           </Text>
         </View>
 
-        <LiquidGlassMenu
+        <NativeMenu
           systemIconName="ellipsis"
           iconColor="#6B7280"
           size={40}
@@ -1085,7 +1085,7 @@ export default function RecordScreen() {
                     </View>
                     <Text className="text-xs text-gray-400 mr-2">{getPersonMeta(person)}</Text>
                   </AnimatedPressable>
-                  <LiquidGlassMenu
+                  <NativeMenu
                     systemIconName="ellipsis"
                     iconColor="#9CA3AF"
                     size={32}
@@ -1155,7 +1155,7 @@ export default function RecordScreen() {
                               </Text>
                             </View>
                           </AnimatedPressable>
-                          <LiquidGlassMenu
+                          <NativeMenu
                             systemIconName="ellipsis"
                             iconColor="#9CA3AF"
                             size={32}
@@ -1225,7 +1225,7 @@ export default function RecordScreen() {
                             </Text>
                           </View>
                         </AnimatedPressable>
-                        <LiquidGlassMenu
+                        <NativeMenu
                           systemIconName="ellipsis"
                           iconColor="#9CA3AF"
                           size={32}

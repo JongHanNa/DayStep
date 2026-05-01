@@ -2,7 +2,7 @@
  * NativeCleanupAccordion — iOS 26+ DisclosureGroup 기반 아코디언
  * CleanupScreen의 그룹 확장/축소를 네이티브 스프링 물리로 처리
  *
- * 패턴: ObservableObject + setupOnce() (LiquidGlassMotivationCard 참조)
+ * 패턴: ObservableObject + setupOnce() (NativeMotivationCard 참조)
  */
 
 import Foundation

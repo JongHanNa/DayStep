@@ -1,9 +1,9 @@
 /**
- * LiquidGlassButton — 네이티브 글라스 버튼
+ * NativeButton — 네이티브 글라스 버튼
  * iOS 26+: SwiftUI Button + .glassEffect(in: .circle)
  * iOS 25-: JS 폴백 (RN 래퍼에서 처리)
  *
- * 패턴: LiquidGlassMotivationCard.swift 참고 (SwiftUI → UIHostingController → RCTViewManager)
+ * 패턴: NativeMotivationCard.swift 참고 (SwiftUI → UIHostingController → RCTViewManager)
  */
 
 import Foundation
@@ -20,7 +20,7 @@ class GlassButtonState: ObservableObject {
 
 // MARK: - SwiftUI View (iOS 26+)
 @available(iOS 26.0, *)
-struct LiquidGlassButtonContent: View {
+struct NativeButtonContent: View {
   @ObservedObject var state: GlassButtonState
   var onPress: (() -> Void)?
 
@@ -40,7 +40,7 @@ struct LiquidGlassButtonContent: View {
 }
 
 // MARK: - UIView Wrapper
-class LiquidGlassButtonUIView: UIView {
+class NativeButtonUIView: UIView {
 
   // RN Props
   @objc var onButtonPress: RCTDirectEventBlock?
@@ -86,7 +86,7 @@ class LiquidGlassButtonUIView: UIView {
       return
     }
 
-    let swiftUIView = LiquidGlassButtonContent(
+    let swiftUIView = NativeButtonContent(
       state: buttonState,
       onPress: { [weak self] in
         self?.onButtonPress?([:])
@@ -109,10 +109,10 @@ class LiquidGlassButtonUIView: UIView {
 }
 
 // MARK: - RCTViewManager
-@objc(LiquidGlassButtonManager)
-class LiquidGlassButtonManager: RCTViewManager {
+@objc(NativeButtonManager)
+class NativeButtonManager: RCTViewManager {
   override func view() -> UIView! {
-    return LiquidGlassButtonUIView()
+    return NativeButtonUIView()
   }
 
   @objc override static func requiresMainQueueSetup() -> Bool {

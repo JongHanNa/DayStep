@@ -11,7 +11,7 @@ import com.daysteprn.calendar.NativeMonthCalendarPackage
 import com.daysteprn.calendar.NativeMultiDayTimeGridPackage
 import com.daysteprn.calendar.NativeWeekStripCalendarPackage
 import com.daysteprn.calldetector.CallDetectorPackage
-import com.daysteprn.designsystem.LiquidGlassTabBarPackage
+import com.daysteprn.designsystem.NativeTabBarPackage
 import com.daysteprn.form.NativeTimePickerPackage
 import com.daysteprn.form.NativeTodoPickerPackage
 import com.daysteprn.garden.NativeCleaningGardenPackage
@@ -33,7 +33,7 @@ class MainApplication : Application(), ReactApplication {
       context = applicationContext,
       packageList =
         PackageList(this).packages.apply {
-          add(LiquidGlassTabBarPackage())
+          add(NativeTabBarPackage())
           add(NavigationBarPackage())
           add(NativeWeekStripCalendarPackage())
           add(NativeCleanupAccordionPackage())

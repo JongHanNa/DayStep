@@ -29,7 +29,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ChevronRight, Square, Pause, Play, Check, Sparkles, Clock, TreePine, MoreHorizontal} from 'lucide-react-native';
 import {ScreenContainer, AnimatedPressable, GlassBackground} from '@/components/core';
-import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeMenu} from '@/components/native/NativeMenu';
 import {TimerRing, formatTime} from '@/components/core/TimerRing';
 import {FocusPickerModal} from '@/components/execution/FocusPickerModal';
 import {FocusStatsModal} from '@/components/execution/FocusStatsModal';
@@ -440,7 +440,7 @@ export default function ExecutionScreen() {
               </AnimatedPressable>
 
               {/* 중앙: 앱 차단 메뉴 */}
-              <LiquidGlassMenu
+              <NativeMenu
                 systemIconName="ellipsis.circle"
                 iconColor="#6B7280"
                 size={40}

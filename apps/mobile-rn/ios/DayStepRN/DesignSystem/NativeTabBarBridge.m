@@ -1,9 +1,9 @@
 #import <React/RCTViewManager.h>
 
-// LiquidGlassTabBar — Phase 2 ObjC Bridge
-// ViewManager 이름: LiquidGlassTabBarManager → JS requireNativeComponent('LiquidGlassTabBar')
+// NativeTabBar — Phase 2 ObjC Bridge
+// ViewManager 이름: NativeTabBarManager → JS requireNativeComponent('NativeTabBar')
 
-@interface RCT_EXTERN_MODULE(LiquidGlassTabBarManager, RCTViewManager)
+@interface RCT_EXTERN_MODULE(NativeTabBarManager, RCTViewManager)
 
 RCT_EXPORT_VIEW_PROPERTY(tabs, NSArray)
 RCT_EXPORT_VIEW_PROPERTY(selectedIndex, NSNumber)

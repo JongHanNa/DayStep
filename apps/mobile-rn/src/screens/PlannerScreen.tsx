@@ -1,6 +1,6 @@
 /**
  * PlannerScreen — 통합 플래너 화면
- * LiquidGlassMenu로 5개 뷰 전환: 목록 / 월 / 주 / 3일 / 일
+ * NativeMenu로 5개 뷰 전환: 목록 / 월 / 주 / 3일 / 일
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
@@ -8,7 +8,7 @@ import {View, Text, StyleSheet, Modal, Platform, ActionSheetIOS, Alert} from 're
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, type SharedValue} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer, gradientPresets} from '@/components/core';
-import {LiquidGlassMenu, NativeWeekStripCalendarNative} from '@/components/native';
+import {NativeMenu, NativeWeekStripCalendarNative} from '@/components/native';
 import {DailyPlannerView} from '@/components/planner/DailyPlannerView';
 import {MonthlyPlannerView} from '@/components/planner/MonthlyPlannerView';
 import {MonthlyPremiumUpsell} from '@/components/subscription/MonthlyPremiumUpsell';
@@ -391,7 +391,7 @@ export default function PlannerScreen() {
 
   const menuOverlay = (
     <View style={styles.menuOverlay} pointerEvents="box-none">
-      <LiquidGlassMenu
+      <NativeMenu
         systemIconName="calendar"
         iconColor="#6B7280"
         size={36}
@@ -544,7 +544,7 @@ export default function PlannerScreen() {
               <Text style={styles.monthLabel}>
                 {new Date(selectedDate).getMonth() + 1}월
               </Text>
-              <LiquidGlassMenu
+              <NativeMenu
                 systemIconName="calendar"
                 iconColor="#6B7280"
                 size={36}

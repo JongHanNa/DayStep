@@ -1,14 +1,14 @@
 /**
- * LiquidGlassMotivationCard — Phase 2 TypeScript 래퍼
+ * NativeMotivationCard — Phase 2 TypeScript 래퍼
  * iOS 26+ 네이티브 Liquid Glass MotivationCard morph 컴포넌트
  *
  * requireNativeComponent은 모듈 레벨에서 1회만 호출 (조건부 호출 금지)
- * 네이티브 컴포넌트 등록명: 'LiquidGlassMotivationCard' (Swift/ObjC 측과 일치)
+ * 네이티브 컴포넌트 등록명: 'NativeMotivationCard' (Swift/ObjC 측과 일치)
  */
 import React from 'react';
 import {requireNativeComponent, type ViewStyle} from 'react-native';
 
-interface NativeLiquidGlassMotivationCardProps {
+interface NativeMotivationCardViewProps {
   primaryColor?: string;
   noteTitle?: string;
   noteContent?: string;
@@ -21,11 +21,11 @@ interface NativeLiquidGlassMotivationCardProps {
 }
 
 // 모듈 레벨에서 1회 등록
-const NativeLiquidGlassMotivationCard =
-  requireNativeComponent<NativeLiquidGlassMotivationCardProps>('LiquidGlassMotivationCard');
+const NativeMotivationCardView =
+  requireNativeComponent<NativeMotivationCardViewProps>('NativeMotivationCard');
 
-export function LiquidGlassMotivationCardNative(
-  props: NativeLiquidGlassMotivationCardProps,
+export function NativeMotivationCardNative(
+  props: NativeMotivationCardViewProps,
 ): React.ReactElement {
-  return <NativeLiquidGlassMotivationCard {...props} />;
+  return <NativeMotivationCardView {...props} />;
 }

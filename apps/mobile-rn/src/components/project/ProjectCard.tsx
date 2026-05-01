@@ -2,12 +2,12 @@
  * ProjectCard — 프로젝트 카드
  * - 색상 바 제거 → 8px 도트
  * - 상태 뱃지 중립색 통일
- * - 상태 전환 버튼들 → LiquidGlassMenu 1개
+ * - 상태 전환 버튼들 → NativeMenu 1개
  */
 import React, {useMemo} from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
 import {AnimatedCard} from '@/components/core';
-import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeMenu} from '@/components/native/NativeMenu';
 import {Edit3, Trash2, RefreshCw} from 'lucide-react-native';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {STATUS_LABELS, getStatusMenuItems} from './constants';
@@ -79,11 +79,11 @@ export function ProjectCard({
           </Text>
         )}
 
-        {/* 액션 바: LiquidGlassMenu + 편집/삭제 */}
+        {/* 액션 바: NativeMenu + 편집/삭제 */}
         <View className="flex-row items-center justify-between border-t border-gray-100 pt-3 mt-1">
           <View className="flex-row items-center">
             {menuItems.length > 0 && (
-              <LiquidGlassMenu
+              <NativeMenu
                 systemIconName="arrow.triangle.2.circlepath"
                 iconColor="#9CA3AF"
                 size={32}

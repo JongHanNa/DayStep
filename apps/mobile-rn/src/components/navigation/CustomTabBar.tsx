@@ -30,7 +30,7 @@ import {useTheme} from '@/theme';
 import {Home, Calendar, Timer, Flame, Ellipsis} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
 import {
-  LiquidGlassTabBarNative,
+  NativeTabBarNative,
   isIOS26Plus,
   isAndroid,
   type NativeTabData,
@@ -379,7 +379,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             {shadowOpacity: 0, elevation: 0},
           ]}>
           {/* 네이티브 글래스 탭바 — isExpanded 시 expandedView 활성화 */}
-          <LiquidGlassTabBarNative
+          <NativeTabBarNative
             tabs={nativeTabs}
             selectedIndex={isHomeShowingMoreScreen ? state.routes.findIndex(r => r.name === 'More') : state.index}
             primaryColor={primaryColor}
@@ -466,7 +466,7 @@ export function CustomTabBar({state, descriptors, navigation}: BottomTabBarProps
             animatedNativeStyle,
             {shadowOpacity: 0, elevation: 0},
           ]}>
-          <LiquidGlassTabBarNative
+          <NativeTabBarNative
             tabs={androidTabs}
             selectedIndex={
               isHomeShowingMoreScreen

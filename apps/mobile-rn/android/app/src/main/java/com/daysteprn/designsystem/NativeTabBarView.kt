@@ -1,6 +1,6 @@
 /**
- * LiquidGlassTabBar — Android Native (Jetpack Compose)
- * iOS 26+ LiquidGlassTabBar의 Android 동등 구현
+ * NativeTabBar — Android Native (Jetpack Compose)
+ * iOS 26+ NativeTabBar의 Android 동등 구현
  *
  * 디자인:
  *   - Material 3 frosted surface (Android 12+: 반투명 레이어, 12 미만: 불투명 카드)
@@ -126,7 +126,7 @@ internal fun parseColor(hex: String): Color = try {
 
 // ─── 뷰 클래스 ───────────────────────────────────────────────────────────────
 
-class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
+class NativeTabBarView(context: Context) : FrameLayout(context) {
 
     // Compose 상태 — prop 변경 시 자동 recompose
     private val _tabs          = mutableStateOf<List<TabItemData>>(emptyList())
@@ -163,14 +163,14 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        android.util.Log.d("LiquidGlassTabBar", "onAttachedToWindow: contentSet=$contentSet childCount=$childCount")
+        android.util.Log.d("NativeTabBar", "onAttachedToWindow: contentSet=$contentSet childCount=$childCount")
         if (!contentSet) {
             contentSet = true
             composeView = ComposeView(context)
             addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
             composeView.setContent {
                 MaterialTheme {
-                    LiquidGlassTabBarCompose(
+                    NativeTabBarCompose(
                         tabs          = _tabs.value,
                         menuItems     = _menuItems.value,
                         selectedIndex = _selectedIndex.value,
@@ -187,7 +187,7 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
             composeView.viewTreeObserver.addOnGlobalLayoutListener {
                 post { requestLayout() }
             }
-            android.util.Log.d("LiquidGlassTabBar", "onAttachedToWindow: ComposeView installed & content set")
+            android.util.Log.d("NativeTabBar", "onAttachedToWindow: ComposeView installed & content set")
         }
         requestLayout()
     }
@@ -206,7 +206,7 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
     }
 
     override fun onDetachedFromWindow() {
-        android.util.Log.d("LiquidGlassTabBar", "onDetachedFromWindow: contentSet=$contentSet")
+        android.util.Log.d("NativeTabBar", "onDetachedFromWindow: contentSet=$contentSet")
         super.onDetachedFromWindow()
         if (contentSet) {
             removeAllViews()
@@ -227,7 +227,7 @@ class LiquidGlassTabBarView(context: Context) : FrameLayout(context) {
 // ─── 최상위 Compose UI ────────────────────────────────────────────────────────
 
 @Composable
-private fun LiquidGlassTabBarCompose(
+private fun NativeTabBarCompose(
     tabs:          List<TabItemData>,
     menuItems:     List<MenuItemData>,
     selectedIndex: Int,

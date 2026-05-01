@@ -32,7 +32,7 @@ export function formatTodoDate(todo: Todo): string {
   return `${dateStr} ${format(date, 'HH:mm')}`;
 }
 
-/** 상태별 LiquidGlassMenu 메뉴 아이템 생성 */
+/** 상태별 NativeMenu 메뉴 아이템 생성 */
 export function getStatusMenuItems(currentStatus: ProjectStatus) {
   const items: {title: string; key: ProjectStatus}[] = [];
 

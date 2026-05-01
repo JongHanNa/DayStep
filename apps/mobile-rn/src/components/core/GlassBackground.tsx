@@ -2,14 +2,14 @@
  * GlassBackground
  * 절제된 글래스모피즘 — 탭바, 시트 헤더에만 사용
  *
- * iOS 26+: 네이티브 UIGlassEffect (LiquidGlassBackgroundNative)
+ * iOS 26+: 네이티브 UIGlassEffect (NativeBackgroundNative)
  * iOS 25-: @react-native-community/blur 기반 (기존 동일)
  * Android:  반투명 배경 폴백
  */
 import React from 'react';
 import {StyleSheet, ViewStyle, StyleProp, Platform, View} from 'react-native';
 import {BlurView} from '@react-native-community/blur';
-import {LiquidGlassBackgroundNative, isIOS26Plus} from '@/components/native';
+import {NativeBackgroundNative, isIOS26Plus} from '@/components/native';
 
 interface GlassBackgroundProps {
   /** 블러 강도 (default: 20) */
@@ -42,7 +42,7 @@ export function GlassBackground({
   if (isIOS26Plus) {
     return (
       <View style={[styles.container, style]}>
-        <LiquidGlassBackgroundNative />
+        <NativeBackgroundNative />
         <View style={styles.overlay}>{children}</View>
       </View>
     );

@@ -1,7 +1,7 @@
 /**
- * LiquidGlassTabBarManager — Android ViewManager
- * RN Bridge: JS props → LiquidGlassTabBarView setters
- *            LiquidGlassTabBarView events → RN JS callbacks
+ * NativeTabBarManager — Android ViewManager
+ * RN Bridge: JS props → NativeTabBarView setters
+ *            NativeTabBarView events → RN JS callbacks
  */
 package com.daysteprn.designsystem
 
@@ -15,29 +15,29 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.annotations.ReactProp
 
-class LiquidGlassTabBarManager : SimpleViewManager<LiquidGlassTabBarView>() {
+class NativeTabBarManager : SimpleViewManager<NativeTabBarView>() {
 
-    override fun getName(): String = "LiquidGlassTabBar"
+    override fun getName(): String = "NativeTabBar"
 
-    override fun createViewInstance(context: ThemedReactContext): LiquidGlassTabBarView {
-        val view = LiquidGlassTabBarView(context)
+    override fun createViewInstance(context: ThemedReactContext): NativeTabBarView {
+        val view = NativeTabBarView(context)
 
         view.onTabPressCallback = { index ->
-            Log.d("LiquidGlassTabBar", "onTabPress callback: index=$index, viewId=${view.id}")
+            Log.d("NativeTabBar", "onTabPress callback: index=$index, viewId=${view.id}")
             val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
-            Log.d("LiquidGlassTabBar", "dispatcher=$dispatcher")
+            Log.d("NativeTabBar", "dispatcher=$dispatcher")
             if (dispatcher != null) {
                 val event = SimpleEvent(UIManagerHelper.getSurfaceId(context), view.id, "topTabPress",
                     Arguments.createMap().apply { putInt("index", index) })
-                Log.d("LiquidGlassTabBar", "dispatching event: ${event.eventName}")
+                Log.d("NativeTabBar", "dispatching event: ${event.eventName}")
                 dispatcher.dispatchEvent(event)
             } else {
-                Log.e("LiquidGlassTabBar", "EventDispatcher is NULL for viewId=${view.id}")
+                Log.e("NativeTabBar", "EventDispatcher is NULL for viewId=${view.id}")
             }
         }
 
         view.onMenuItemPressCallback = { screenName ->
-            Log.d("LiquidGlassTabBar", "onMenuItemPress callback: screenName=$screenName")
+            Log.d("NativeTabBar", "onMenuItemPress callback: screenName=$screenName")
             val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
             dispatcher?.dispatchEvent(
                 SimpleEvent(UIManagerHelper.getSurfaceId(context), view.id, "topMenuItemPress",
@@ -57,7 +57,7 @@ class LiquidGlassTabBarManager : SimpleViewManager<LiquidGlassTabBarView>() {
     }
 
     @ReactProp(name = "tabs")
-    fun setTabs(view: LiquidGlassTabBarView, tabs: ReadableArray?) {
+    fun setTabs(view: NativeTabBarView, tabs: ReadableArray?) {
         tabs ?: return
         val list = (0 until tabs.size()).mapNotNull { i ->
             val item = tabs.getMap(i) ?: return@mapNotNull null
@@ -70,27 +70,27 @@ class LiquidGlassTabBarManager : SimpleViewManager<LiquidGlassTabBarView>() {
     }
 
     @ReactProp(name = "selectedIndex", defaultInt = 0)
-    fun setSelectedIndex(view: LiquidGlassTabBarView, index: Int) {
+    fun setSelectedIndex(view: NativeTabBarView, index: Int) {
         view.setSelectedIndex(index)
     }
 
     @ReactProp(name = "primaryColor")
-    fun setPrimaryColor(view: LiquidGlassTabBarView, color: String?) {
+    fun setPrimaryColor(view: NativeTabBarView, color: String?) {
         color?.let { view.setPrimaryColorHex(it) }
     }
 
     @ReactProp(name = "timerProgress", defaultFloat = -1f)
-    fun setTimerProgress(view: LiquidGlassTabBarView, progress: Float) {
+    fun setTimerProgress(view: NativeTabBarView, progress: Float) {
         view.setTimerProgress(progress)
     }
 
     @ReactProp(name = "isExpanded", defaultBoolean = false)
-    fun setIsExpanded(view: LiquidGlassTabBarView, expanded: Boolean) {
+    fun setIsExpanded(view: NativeTabBarView, expanded: Boolean) {
         view.setIsExpanded(expanded)
     }
 
     @ReactProp(name = "menuItems")
-    fun setMenuItems(view: LiquidGlassTabBarView, items: ReadableArray?) {
+    fun setMenuItems(view: NativeTabBarView, items: ReadableArray?) {
         items ?: return
         val list = (0 until items.size()).mapNotNull { i ->
             val item = items.getMap(i) ?: return@mapNotNull null
@@ -105,7 +105,7 @@ class LiquidGlassTabBarManager : SimpleViewManager<LiquidGlassTabBarView>() {
     }
 
     @ReactProp(name = "showLabels", defaultBoolean = true)
-    fun setShowLabels(view: LiquidGlassTabBarView, show: Boolean) {
+    fun setShowLabels(view: NativeTabBarView, show: Boolean) {
         view.setShowLabels(show)
     }
 

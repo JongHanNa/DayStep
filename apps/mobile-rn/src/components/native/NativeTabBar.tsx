@@ -1,5 +1,5 @@
 /**
- * LiquidGlassTabBar — Phase 1 TypeScript 래퍼
+ * NativeTabBar — Phase 1 TypeScript 래퍼
  * iOS 26+ 네이티브 Liquid Glass 탭바 컴포넌트
  *
  * requireNativeComponent은 모듈 레벨에서 1회만 호출 (조건부 호출 금지)
@@ -20,7 +20,7 @@ export interface NativeMenuItemData {
   isActive: boolean;
 }
 
-interface NativeLiquidGlassTabBarProps {
+interface NativeTabBarViewProps {
   tabs: NativeTabData[];
   selectedIndex: number;
   primaryColor: string;
@@ -43,11 +43,11 @@ interface NativeLiquidGlassTabBarProps {
 }
 
 // 모듈 레벨에서 1회 등록
-const NativeLiquidGlassTabBar =
-  requireNativeComponent<NativeLiquidGlassTabBarProps>('LiquidGlassTabBar');
+const NativeTabBarView =
+  requireNativeComponent<NativeTabBarViewProps>('NativeTabBar');
 
-export function LiquidGlassTabBarNative(
-  props: NativeLiquidGlassTabBarProps,
+export function NativeTabBarNative(
+  props: NativeTabBarViewProps,
 ): React.ReactElement {
-  return <NativeLiquidGlassTabBar {...props} />;
+  return <NativeTabBarView {...props} />;
 }

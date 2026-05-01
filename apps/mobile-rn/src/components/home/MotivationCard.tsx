@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import type {Note} from '@/stores/motivationStore';
-import {LiquidGlassMotivationCardNative, isIOS26Plus} from '@/components/native';
+import {NativeMotivationCardNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
@@ -41,7 +41,7 @@ export function MotivationCard({note, enterDelay = 0}: MotivationCardProps) {
     return (
       <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
         <Animated.View style={heightStyle}>
-          <LiquidGlassMotivationCardNative
+          <NativeMotivationCardNative
             primaryColor={primaryColor}
             noteTitle={note?.title ?? ''}
             noteContent={note?.content ?? ''}

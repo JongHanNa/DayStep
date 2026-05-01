@@ -3,7 +3,7 @@
  * iOS 26+: SwiftUI Button + .glassEffect + 텍스트
  * iOS 25-: JS 폴백 (RN 래퍼에서 처리)
  *
- * 패턴: LiquidGlassButton.swift 참고
+ * 패턴: NativeButton.swift 참고
  */
 
 import Foundation

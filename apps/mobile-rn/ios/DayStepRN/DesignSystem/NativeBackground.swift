@@ -1,5 +1,5 @@
 /**
- * LiquidGlassBackgroundView — Phase 3
+ * NativeBackgroundView — Phase 3
  * iOS 26+: UIGlassEffect (UIVisualEffect 서브클래스) 적용
  * iOS 25-: UIBlurEffect(systemUltraThinMaterial) 유지 (기존 동일)
  *
@@ -11,7 +11,7 @@ import Foundation
 import UIKit
 
 // MARK: - UIView
-class LiquidGlassBackgroundUIView: UIView {
+class NativeBackgroundUIView: UIView {
 
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -46,10 +46,10 @@ class LiquidGlassBackgroundUIView: UIView {
 }
 
 // MARK: - RCTViewManager
-@objc(LiquidGlassBackgroundManager)
-class LiquidGlassBackgroundManager: RCTViewManager {
+@objc(NativeBackgroundManager)
+class NativeBackgroundManager: RCTViewManager {
   override func view() -> UIView! {
-    return LiquidGlassBackgroundUIView()
+    return NativeBackgroundUIView()
   }
 
   @objc override static func requiresMainQueueSetup() -> Bool {

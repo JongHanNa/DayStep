@@ -1,5 +1,5 @@
 /**
- * LiquidGlassBackground — Phase 3 TypeScript 래퍼
+ * NativeBackground — Phase 3 TypeScript 래퍼
  * iOS 26+: 네이티브 UIGlassEffect 배경
  * iOS 25-: 기존 BlurView (GlassBackground.tsx에서 폴백 처리)
  *
@@ -8,20 +8,20 @@
 import React from 'react';
 import {requireNativeComponent, StyleSheet, type StyleProp, type ViewStyle} from 'react-native';
 
-interface NativeLiquidGlassBackgroundProps {
+interface NativeBackgroundViewProps {
   style?: StyleProp<ViewStyle>;
 }
 
 // 모듈 레벨에서 1회 등록
-const NativeLiquidGlassBackground =
-  requireNativeComponent<NativeLiquidGlassBackgroundProps>(
-    'LiquidGlassBackground',
+const NativeBackgroundView =
+  requireNativeComponent<NativeBackgroundViewProps>(
+    'NativeBackground',
   );
 
-export function LiquidGlassBackgroundNative({
+export function NativeBackgroundNative({
   style,
-}: NativeLiquidGlassBackgroundProps): React.ReactElement {
+}: NativeBackgroundViewProps): React.ReactElement {
   return (
-    <NativeLiquidGlassBackground style={[StyleSheet.absoluteFill, style]} />
+    <NativeBackgroundView style={[StyleSheet.absoluteFill, style]} />
   );
 }

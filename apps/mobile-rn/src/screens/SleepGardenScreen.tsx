@@ -7,7 +7,7 @@ import {View, Text, StyleSheet, ScrollView, Pressable, Modal, Alert, Platform} f
 import Animated, {FadeInDown, useSharedValue, useAnimatedStyle, withSpring} from 'react-native-reanimated';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {TreePine, Moon, Sun, Settings, Shield, ChevronRight, MoreHorizontal} from 'lucide-react-native';
-import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeMenu} from '@/components/native/NativeMenu';
 import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus, getAuthorizationStatusAsync} from '@/lib/screenTimeManager';
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {NativeSleepGardenNative} from '@/components/native';
@@ -226,7 +226,7 @@ export default function SleepGardenScreen() {
         <Animated.View entering={FadeInDown.duration(400)} style={styles.header}>
           <TreePine size={20} color={primaryColor} />
           <Text style={[styles.headerTitle, {flex: 1}]}>수면 정원</Text>
-          <LiquidGlassMenu
+          <NativeMenu
             systemIconName="ellipsis.circle"
             iconColor="#9CA3AF"
             size={36}
