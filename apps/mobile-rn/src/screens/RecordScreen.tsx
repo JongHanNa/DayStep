@@ -15,6 +15,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  Modal,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -299,47 +302,114 @@ function FilterDropdown({
   const selectedItem = items.find(i => i.id === selectedId);
   const displayLabel = selectedItem ? selectedItem.name : `${label} 전체`;
 
+  // Android 드롭다운 상태
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [buttonLayout, setButtonLayout] = useState({x: 0, y: 0, width: 0, height: 0});
+  const buttonRef = useRef<View>(null);
+
   const handlePress = useCallback(() => {
-    const options = [`${label} 전체`, ...items.map(i => i.name), '취소'];
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options,
-        cancelButtonIndex: items.length + 1,
-      },
-      (buttonIndex) => {
-        if (buttonIndex === 0) {
-          onChange(null);
-        } else if (buttonIndex > 0 && buttonIndex <= items.length) {
-          onChange(items[buttonIndex - 1].id);
-        }
-      },
-    );
+    if (Platform.OS === 'ios') {
+      const options = [`${label} 전체`, ...items.map(i => i.name), '취소'];
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: items.length + 1,
+        },
+        buttonIndex => {
+          if (buttonIndex === 0) {
+            onChange(null);
+          } else if (buttonIndex > 0 && buttonIndex <= items.length) {
+            onChange(items[buttonIndex - 1].id);
+          }
+        },
+      );
+    } else {
+      buttonRef.current?.measureInWindow((x, y, width, height) => {
+        setButtonLayout({x, y, width, height});
+        setMenuVisible(true);
+      });
+    }
   }, [label, items, onChange]);
 
   return (
-    <AnimatedPressable
-      onPress={handlePress}
-      hapticType="light"
-      scaleValue={0.95}
-      style={[
-        filterDropdownStyles.button,
-        isActive
-          ? {backgroundColor: primaryColor}
-          : {backgroundColor: 'white'},
-      ]}>
-      <Text
-        style={[
-          filterDropdownStyles.label,
-          {color: isActive ? 'white' : '#6B7280'},
-        ]}
-        numberOfLines={1}>
-        {displayLabel}
-      </Text>
-      <ChevronDown
-        size={14}
-        color={isActive ? 'white' : '#9CA3AF'}
-      />
-    </AnimatedPressable>
+    <>
+      <View ref={buttonRef} collapsable={false}>
+        <AnimatedPressable
+          onPress={handlePress}
+          hapticType="light"
+          scaleValue={0.95}
+          style={[
+            filterDropdownStyles.button,
+            isActive
+              ? {backgroundColor: primaryColor}
+              : {backgroundColor: 'white'},
+          ]}>
+          <Text
+            style={[
+              filterDropdownStyles.label,
+              {color: isActive ? 'white' : '#6B7280'},
+            ]}
+            numberOfLines={1}>
+            {displayLabel}
+          </Text>
+          <ChevronDown size={14} color={isActive ? 'white' : '#9CA3AF'} />
+        </AnimatedPressable>
+      </View>
+
+      {Platform.OS !== 'ios' && (
+        <Modal
+          visible={menuVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setMenuVisible(false)}>
+          <TouchableWithoutFeedback onPress={() => setMenuVisible(false)}>
+            <View style={filterDropdownStyles.modalOverlay}>
+              <View
+                style={[
+                  filterDropdownStyles.dropdownMenu,
+                  {
+                    top: buttonLayout.y + buttonLayout.height + 4,
+                    left: Math.max(16, buttonLayout.x),
+                  },
+                ]}>
+                <TouchableOpacity
+                  style={[
+                    filterDropdownStyles.dropdownItem,
+                    filterDropdownStyles.dropdownItemBorder,
+                  ]}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    onChange(null);
+                  }}
+                  activeOpacity={0.6}>
+                  <Text style={filterDropdownStyles.dropdownItemText}>
+                    {label} 전체
+                  </Text>
+                </TouchableOpacity>
+                {items.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      filterDropdownStyles.dropdownItem,
+                      index < items.length - 1 &&
+                        filterDropdownStyles.dropdownItemBorder,
+                    ]}
+                    onPress={() => {
+                      setMenuVisible(false);
+                      onChange(item.id);
+                    }}
+                    activeOpacity={0.6}>
+                    <Text style={filterDropdownStyles.dropdownItemText}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -356,6 +426,35 @@ const filterDropdownStyles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    minWidth: 160,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 4,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  dropdownItemBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E7EB',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1F2937',
   },
 });
 
