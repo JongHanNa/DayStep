@@ -27,6 +27,7 @@ import {
 } from 'lucide-react-native';
 import Config from 'react-native-config';
 import {useTheme} from '@/theme';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 
 const SUPABASE_URL = Config.SUPABASE_URL ?? '';
 const MCP_AUTH_URL = `${SUPABASE_URL}/functions/v1/mcp-server/auth/init`;
@@ -83,6 +84,7 @@ function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: 
 }
 
 export default function GuideScreen() {
+  useDailyCheckIn('guide');
   const {primaryColor} = useTheme();
   const [expandedStep, setExpandedStep] = useState<number | null>(1);
   const [copiedConfig, setCopiedConfig] = useState(false);

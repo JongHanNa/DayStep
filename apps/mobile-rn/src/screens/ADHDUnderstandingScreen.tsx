@@ -8,6 +8,7 @@ import {Menu} from 'lucide-react-native';
 import {ScreenContainer} from '@/components/core';
 import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
 import {useTheme} from '@/theme';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {VisualMapView} from '@/components/adhd-understanding/VisualMapView';
 import {AccordionGuideView} from '@/components/adhd-understanding/AccordionGuideView';
 import {CardReaderView} from '@/components/adhd-understanding/CardReaderView';
@@ -21,6 +22,7 @@ const MENU_ITEMS = [
 ];
 
 export default function ADHDUnderstandingScreen() {
+  useDailyCheckIn('adhd-understanding');
   const {primaryColor} = useTheme();
   const [activeDesign, setActiveDesign] = useState<DesignType>('visualMap');
 

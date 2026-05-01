@@ -26,9 +26,11 @@ import {
   Languages,
   HelpCircle,
   BookOpen,
+  RotateCcw,
 } from 'lucide-react-native';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
+import {useDailyCheckInStore} from '@/stores/dailyCheckInStore';
 
 interface SettingsMainViewProps {
   onNavigate: (view: string) => void;
@@ -110,6 +112,21 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       },
     ]);
   }, [signOut]);
+
+  const handleResetCheckIn = useCallback(() => {
+    Alert.alert(
+      '화면 체크인 초기화',
+      '오늘 확인한 홈 화면 카드들을 모두 미확인으로 되돌립니다.',
+      [
+        {text: '취소', style: 'cancel'},
+        {
+          text: '초기화',
+          style: 'destructive',
+          onPress: () => useDailyCheckInStore.getState().resetAll(),
+        },
+      ],
+    );
+  }, []);
 
   const displayName =
     user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? '사용자';
@@ -209,6 +226,15 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
             navigation.navigate('Home', {screen: 'HomeMain'});
           }}
           primaryColor={primaryColor}
+        />
+        <View style={styles.divider} />
+        <SettingsRow
+          icon={RotateCcw}
+          iconColor="#EF4444"
+          title="화면 체크인 초기화"
+          subtitle="오늘 확인한 홈 카드를 다시 미확인으로 되돌립니다"
+          showChevron
+          onPress={handleResetCheckIn}
         />
         <View style={styles.divider} />
         <SettingsRow

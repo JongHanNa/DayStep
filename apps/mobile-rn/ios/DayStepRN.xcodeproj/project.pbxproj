@@ -13,6 +13,10 @@
 		02CC33DD44EE55FF66778899 /* NativeMotivationJournalBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */; };
 		03AA11BB22CC33DD44EE55F6 /* NativeFeedbackEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */; };
 		03CC33DD44EE55FF66778899 /* NativeFeedbackEditorBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */; };
+		04AA11BB22CC33DD44EE55F6 /* NativeProjectForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */; };
+		04CC33DD44EE55FF66778899 /* NativeProjectFormBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */; };
+		05AA11BB22CC33DD44EE55F6 /* NativeAddPerson.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */; };
+		05CC33DD44EE55FF66778899 /* NativeAddPersonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */; };
 		03A711A6634CCE600EF8A599 /* LiquidGlassMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */; };
 		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
 		0B3C275442CA372D372F51C4 /* LiquidGlassMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */; };
@@ -149,6 +153,10 @@
 		02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMotivationJournalBridge.m; path = DayStepRN/NativeMotivationJournalBridge.m; sourceTree = "<group>"; };
 		03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeFeedbackEditor.swift; path = DayStepRN/NativeFeedbackEditor.swift; sourceTree = "<group>"; };
 		03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeFeedbackEditorBridge.m; path = DayStepRN/NativeFeedbackEditorBridge.m; sourceTree = "<group>"; };
+		04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeProjectForm.swift; path = DayStepRN/NativeProjectForm.swift; sourceTree = "<group>"; };
+		04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeProjectFormBridge.m; path = DayStepRN/NativeProjectFormBridge.m; sourceTree = "<group>"; };
+		05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAddPerson.swift; path = DayStepRN/NativeAddPerson.swift; sourceTree = "<group>"; };
+		05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeAddPersonBridge.m; path = DayStepRN/NativeAddPersonBridge.m; sourceTree = "<group>"; };
 		079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassBackgroundBridge.m; path = DayStepRN/LiquidGlassBackgroundBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
@@ -456,6 +464,10 @@
 				02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */,
 				03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */,
 				03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */,
+				04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */,
+				04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */,
+				05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */,
+				05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */,
 			);
 			name = DayStepRN;
 			sourceTree = "<group>";
@@ -966,6 +978,10 @@
 				02CC33DD44EE55FF66778899 /* NativeMotivationJournalBridge.m in Sources */,
 				03AA11BB22CC33DD44EE55F6 /* NativeFeedbackEditor.swift in Sources */,
 				03CC33DD44EE55FF66778899 /* NativeFeedbackEditorBridge.m in Sources */,
+				04AA11BB22CC33DD44EE55F6 /* NativeProjectForm.swift in Sources */,
+				04CC33DD44EE55FF66778899 /* NativeProjectFormBridge.m in Sources */,
+				05AA11BB22CC33DD44EE55F6 /* NativeAddPerson.swift in Sources */,
+				05CC33DD44EE55FF66778899 /* NativeAddPersonBridge.m in Sources */,
 				EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

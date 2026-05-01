@@ -21,6 +21,7 @@ import {TodoFormBottomSheet, type TodoFormBottomSheetRef} from '@/components/tod
 import {NativeDayTimeGridNative} from '@/components/native/NativeDayTimeGrid';
 import {NativeMultiDayTimeGridNative} from '@/components/native/NativeMultiDayTimeGrid';
 import {useSettingsStore, type PlannerViewMode} from '@/stores/settingsStore';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {useTodoStore} from '@/stores/todoStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
@@ -49,6 +50,7 @@ const GRADIENT_MAP: Record<PlannerViewMode, 'calmBackground' | 'warmBackground'>
 };
 
 export default function PlannerScreen() {
+  useDailyCheckIn('daily-planner');
   const formSheetRef = useRef<TodoFormBottomSheetRef>(null);
   const viewMode = useSettingsStore(s => s.plannerViewMode);
   const setPlannerViewMode = useSettingsStore(s => s.setPlannerViewMode);

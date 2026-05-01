@@ -12,7 +12,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
-import {View, Text, StyleSheet, ActionSheetIOS, type TextInput} from 'react-native';
+import {View, Text, StyleSheet, ActionSheetIOS, Modal, type TextInput} from 'react-native';
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
@@ -20,11 +20,13 @@ import {
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 import {AnimatedPressable} from '@/components/core';
+import {NativeAddPersonNative} from '@/components/native/NativeAddPerson';
 import {useTheme} from '@/theme';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {supabase} from '@/lib/supabase';
 import {hexWithOpacity} from '@/lib/todoUtils';
+import {CATEGORY_COLOR_PRESETS, DEFAULT_COLOR_BY_KIND} from '@/lib/categoryColors';
 import {
   useCherishedPeopleStore,
   type CherishedPerson,
@@ -73,6 +75,8 @@ export const AddPersonBottomSheet = forwardRef<
   const nameRef = useRef<TextInput>(null);
   const nicknameRef = useRef<TextInput>(null);
   const [saving, setSaving] = useState(false);
+  const hasNative = NativeAddPersonNative != null;
+  const [nativeVisible, setNativeVisible] = useState(false);
   const {checkLimit, isLimitReached, limitedEntity, currentCount, maxCount, closeLimitModal} = useLimitCheck();
   const addCategory = useCherishedPeopleStore(state => state.addCategory);
   const updateCategory = useCherishedPeopleStore(state => state.updateCategory);
@@ -141,12 +145,15 @@ export const AddPersonBottomSheet = forwardRef<
       setSelectedRoleIds([]);
       setSelectedDeptIds([]);
       setSaving(false);
-      bottomSheetRef.current?.present();
-      // uncontrolled input 동기화 (defaultValue는 mount 시에만 적용)
-      requestAnimationFrame(() => {
-        nameRef.current?.setNativeProps({text: initial});
-        nicknameRef.current?.setNativeProps({text: ''});
-      });
+      if (hasNative) {
+        setNativeVisible(true);
+      } else {
+        bottomSheetRef.current?.present();
+        requestAnimationFrame(() => {
+          nameRef.current?.setNativeProps({text: initial});
+          nicknameRef.current?.setNativeProps({text: ''});
+        });
+      }
     },
     openEdit: (person: CherishedPerson) => {
       setEditingPerson(person);
@@ -155,14 +162,22 @@ export const AddPersonBottomSheet = forwardRef<
       setSaving(false);
       loadTagData();
       loadPersonTags(person.id);
-      bottomSheetRef.current?.present();
-      requestAnimationFrame(() => {
-        nameRef.current?.setNativeProps({text: person.name});
-        nicknameRef.current?.setNativeProps({text: person.nickname ?? ''});
-      });
+      if (hasNative) {
+        setNativeVisible(true);
+      } else {
+        bottomSheetRef.current?.present();
+        requestAnimationFrame(() => {
+          nameRef.current?.setNativeProps({text: person.name});
+          nicknameRef.current?.setNativeProps({text: person.nickname ?? ''});
+        });
+      }
     },
     close: () => {
-      bottomSheetRef.current?.dismiss();
+      if (hasNative) {
+        setNativeVisible(false);
+      } else {
+        bottomSheetRef.current?.dismiss();
+      }
     },
   }));
 
@@ -344,6 +359,246 @@ export const AddPersonBottomSheet = forwardRef<
     },
     [deleteCategory, userId],
   );
+
+  // ─── Native (iOS) 경로 ───────────────────────
+  const nativePersonDataJson = useMemo(
+    () =>
+      JSON.stringify({
+        id: editingPerson?.id,
+        name,
+        nickname,
+      }),
+    [editingPerson?.id, name, nickname],
+  );
+  const nativeRelationshipsJson = useMemo(
+    () => JSON.stringify(allRelationships),
+    [allRelationships],
+  );
+  const nativeRolesJson = useMemo(() => JSON.stringify(allRoles), [allRoles]);
+  const nativeDepartmentsJson = useMemo(
+    () => JSON.stringify(allDepartments),
+    [allDepartments],
+  );
+  const nativeSelectedRelIdsJson = useMemo(
+    () => JSON.stringify(selectedRelIds),
+    [selectedRelIds],
+  );
+  const nativeSelectedRoleIdsJson = useMemo(
+    () => JSON.stringify(selectedRoleIds),
+    [selectedRoleIds],
+  );
+  const nativeSelectedDeptIdsJson = useMemo(
+    () => JSON.stringify(selectedDeptIds),
+    [selectedDeptIds],
+  );
+  const nativeDefaultColorJson = useMemo(
+    () => JSON.stringify(DEFAULT_COLOR_BY_KIND),
+    [],
+  );
+  const nativePaletteJson = useMemo(
+    () => JSON.stringify(CATEGORY_COLOR_PRESETS),
+    [],
+  );
+
+  const handleNativeSave = useCallback(
+    async (e: {
+      nativeEvent: {
+        name: string;
+        nickname: string;
+        selectedRelationshipIds: string[];
+        selectedRoleIds: string[];
+        selectedDepartmentIds: string[];
+      };
+    }) => {
+      if (!userId || saving) return;
+      const n = e.nativeEvent.name.trim();
+      if (!n) return;
+      const nn = e.nativeEvent.nickname.trim();
+      const rIds = e.nativeEvent.selectedRelationshipIds;
+      const roleIds = e.nativeEvent.selectedRoleIds;
+      const dIds = e.nativeEvent.selectedDepartmentIds;
+
+      setSaving(true);
+
+      if (isEditMode && editingPerson) {
+        try {
+          await updatePerson(userId, editingPerson.id, {
+            name: n,
+            nickname: nn || undefined,
+          });
+
+          await supabase
+            .from('person_relationships')
+            .delete()
+            .eq('user_id', userId)
+            .eq('person_id', editingPerson.id);
+          if (rIds.length > 0) {
+            await supabase.from('person_relationships').insert(
+              rIds.map(rid => ({
+                user_id: userId,
+                person_id: editingPerson.id,
+                relationship_id: rid,
+              })),
+            );
+          }
+
+          await supabase
+            .from('person_roles')
+            .delete()
+            .eq('user_id', userId)
+            .eq('person_id', editingPerson.id);
+          if (roleIds.length > 0) {
+            await supabase.from('person_roles').insert(
+              roleIds.map(rid => ({
+                user_id: userId,
+                person_id: editingPerson.id,
+                role_id: rid,
+              })),
+            );
+          }
+
+          await supabase
+            .from('person_departments')
+            .delete()
+            .eq('user_id', userId)
+            .eq('person_id', editingPerson.id);
+          if (dIds.length > 0) {
+            await supabase.from('person_departments').insert(
+              dIds.map(did => ({
+                user_id: userId,
+                person_id: editingPerson.id,
+                department_id: did,
+              })),
+            );
+          }
+
+          // JS state 동기화 (다음 openEdit prefetch 정합성)
+          setSelectedRelIds(rIds);
+          setSelectedRoleIds(roleIds);
+          setSelectedDeptIds(dIds);
+
+          setNativeVisible(false);
+          onPersonUpdated?.();
+        } catch (err) {
+          console.error('[AddPersonBottomSheet/native] Save failed:', err);
+        }
+      } else {
+        const allowed = await checkLimit('cherished_people');
+        if (!allowed) {
+          setSaving(false);
+          return;
+        }
+        const person = await addPerson(userId, {
+          name: n,
+          nickname: nn || undefined,
+        });
+        if (person) {
+          setNativeVisible(false);
+          onPersonAdded(person);
+        }
+      }
+      setSaving(false);
+    },
+    [
+      userId,
+      saving,
+      isEditMode,
+      editingPerson,
+      updatePerson,
+      addPerson,
+      checkLimit,
+      onPersonAdded,
+      onPersonUpdated,
+    ],
+  );
+
+  const handleNativeCategoryAdd = useCallback(
+    async (e: {nativeEvent: {kind: string; name: string; color: string}}) => {
+      const r = await onAddCategory(
+        e.nativeEvent.kind as CategoryKind,
+        e.nativeEvent.name,
+        e.nativeEvent.color,
+      );
+      if (r) handleCategoryChanged();
+    },
+    [onAddCategory, handleCategoryChanged],
+  );
+
+  const handleNativeCategoryRename = useCallback(
+    async (e: {nativeEvent: {kind: string; id: string; name: string}}) => {
+      const ok = await onUpdateCategory(
+        e.nativeEvent.kind as CategoryKind,
+        e.nativeEvent.id,
+        {name: e.nativeEvent.name},
+      );
+      if (ok) handleCategoryChanged();
+    },
+    [onUpdateCategory, handleCategoryChanged],
+  );
+
+  const handleNativeCategoryRecolor = useCallback(
+    async (e: {nativeEvent: {kind: string; id: string; color: string}}) => {
+      const ok = await onUpdateCategory(
+        e.nativeEvent.kind as CategoryKind,
+        e.nativeEvent.id,
+        {color: e.nativeEvent.color},
+      );
+      if (ok) handleCategoryChanged();
+    },
+    [onUpdateCategory, handleCategoryChanged],
+  );
+
+  const handleNativeCategoryDelete = useCallback(
+    async (e: {nativeEvent: {kind: string; id: string}}) => {
+      const ok = await onDeleteCategory(
+        e.nativeEvent.kind as CategoryKind,
+        e.nativeEvent.id,
+      );
+      if (ok) handleCategoryChanged();
+    },
+    [onDeleteCategory, handleCategoryChanged],
+  );
+
+  if (hasNative && NativeAddPersonNative) {
+    return (
+      <>
+        <Modal
+          visible={nativeVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setNativeVisible(false)}>
+          <NativeAddPersonNative
+            mode={isEditMode ? 'edit' : 'create'}
+            primaryColor={primaryColor}
+            personData={nativePersonDataJson}
+            relationships={nativeRelationshipsJson}
+            roles={nativeRolesJson}
+            departments={nativeDepartmentsJson}
+            selectedRelationshipIds={nativeSelectedRelIdsJson}
+            selectedRoleIds={nativeSelectedRoleIdsJson}
+            selectedDepartmentIds={nativeSelectedDeptIdsJson}
+            defaultColorByKind={nativeDefaultColorJson}
+            paletteColors={nativePaletteJson}
+            onSave={handleNativeSave}
+            onDelete={handleDelete}
+            onClose={() => setNativeVisible(false)}
+            onCategoryAdd={handleNativeCategoryAdd}
+            onCategoryRename={handleNativeCategoryRename}
+            onCategoryRecolor={handleNativeCategoryRecolor}
+            onCategoryDelete={handleNativeCategoryDelete}
+            style={{flex: 1}}
+          />
+        </Modal>
+        <LimitReachedModal
+          visible={isLimitReached}
+          onClose={closeLimitModal}
+          entityType={limitedEntity}
+          currentCount={currentCount}
+          maxCount={maxCount}
+        />
+      </>
+    );
+  }
 
   return (
     <>

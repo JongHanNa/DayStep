@@ -26,6 +26,8 @@ export interface FeatureItem {
   iconColor: string;
   onPress: () => void;
   isPro?: boolean;
+  // 일일 체크인 미확인 표시 (오늘 아직 진입하지 않은 5개 카드에 빨간 점)
+  unchecked?: boolean;
 }
 
 interface GroupSectionProps {
@@ -77,6 +79,7 @@ export function GroupSection({
         description: item.description,
         sfSymbol: SF_SYMBOL_MAP[item.id] || 'circle',
         isPro: item.isPro ?? false,
+        unchecked: item.unchecked ?? false,
       })),
     );
   }, [items]);
@@ -195,6 +198,20 @@ export function GroupSection({
                     PRO
                   </Text>
                 </View>
+              )}
+              {/* 일일 체크인 미확인 빨간 점 (PRO 뱃지와 동시 노출되지 않도록 isPro 제외) */}
+              {!item.isPro && item.unchecked && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#EF4444',
+                  }}
+                />
               )}
               {/* 아이콘 박스 */}
               <View

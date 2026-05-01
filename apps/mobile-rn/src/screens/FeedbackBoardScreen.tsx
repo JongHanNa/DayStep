@@ -23,6 +23,7 @@ import SegmentedControl from '@react-native-segmented-control/segmented-control'
 import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
 import {ScreenContainer} from '@/components/core';
 import {useTheme} from '@/theme';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {formatDistanceToNow} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {
@@ -52,6 +53,7 @@ const FILTER_LABELS = ['전체', '버그', '기능 요청'] as const;
 const FILTER_VALUES: FeedbackFilter[] = ['all', 'bug', 'feature'];
 
 export default function FeedbackBoardScreen() {
+  useDailyCheckIn('feedback-board');
   const navigation = useNavigation();
   const {primaryColor} = useTheme();
   const sheetRef = useRef<CreateFeedbackSheetRef>(null);

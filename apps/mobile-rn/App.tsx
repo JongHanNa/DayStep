@@ -16,6 +16,7 @@ import {reloadWidgetTimelines} from './src/lib/widgetBridge';
 import {useSleepStore} from './src/stores/sleepStore';
 import {useTodoStore} from './src/stores/todoStore';
 import {useSettingsStore} from './src/stores/settingsStore';
+import {useDailyCheckInStore} from './src/stores/dailyCheckInStore';
 import {storage} from './src/lib/mmkv';
 
 // UI Test 모드: LogBox 완전 비활성화 (스크린샷에 경고 배너 제거)
@@ -102,9 +103,18 @@ function App() {
       if (state === 'active') {
         useTodoStore.getState().syncWidget();
         reloadWidgetTimelines();
+        // 일일 체크인: 자정 넘었으면 카드 리셋 + 앱 아이콘 뱃지 갱신
+        useDailyCheckInStore.getState().resetIfNewDay();
+        useDailyCheckInStore.getState().syncAppBadge();
       }
     });
     return () => sub.remove();
+  }, []);
+
+  // 앱 콜드 스타트 시 앱 아이콘 뱃지 동기화 (notifee persist 큰 충돌 없도록 마운트 1회)
+  useEffect(() => {
+    useDailyCheckInStore.getState().resetIfNewDay();
+    useDailyCheckInStore.getState().syncAppBadge();
   }, []);
 
   // daystep://monthly 딥링크 감지 → 월간 뷰 강제 전환

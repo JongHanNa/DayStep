@@ -22,6 +22,7 @@ import {
 import {useMotivationStore} from '@/stores/motivationStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {isIOS26Plus, NativeTimelineAccordionNative} from '@/components/native';
 import {useTheme} from '@/theme';
@@ -60,6 +61,7 @@ function groupNotesByDate(notes: Note[]): TimelineSectionData[] {
 }
 
 export default function NotesScreen() {
+  useDailyCheckIn('motivation');
   const {user} = useAuthStore();
   const {
     notes,

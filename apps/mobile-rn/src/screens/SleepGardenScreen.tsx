@@ -12,6 +12,7 @@ import {requestAuthorization, isScreenTimeAvailable, getAuthorizationStatus, get
 import {ScreenContainer, AnimatedCard, AnimatedPressable} from '@/components/core';
 import {NativeSleepGardenNative} from '@/components/native';
 import {useSleepStore, type GardenDay} from '@/stores/sleepStore';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
 import {format} from 'date-fns';
@@ -29,6 +30,7 @@ const SLEEP_MENU_ITEMS = [
 export default function SleepGardenScreen() {
   const navigation = useNavigation<any>();
   const {primaryColor} = useTheme();
+  useDailyCheckIn('sleep');
 
   const {
     sleepGoalTime,

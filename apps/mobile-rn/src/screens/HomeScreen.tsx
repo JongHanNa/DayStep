@@ -38,6 +38,7 @@ import {useTodoStore} from '@/stores/todoStore';
 import {useMotivationStore} from '@/stores/motivationStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
+import {useDailyCheckInStore} from '@/stores/dailyCheckInStore';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {
@@ -100,6 +101,9 @@ export default function HomeScreen() {
   const user = useAuthStore(s => s.user);
   const {notes, fetchMotivationNotes, getRandomMotivationNote} = useMotivationStore();
   const {recommendations, loadRecommendations} = useCherishedPeopleStore();
+  const checkedCards = useDailyCheckInStore(s => s.checkedCards);
+  const lastCheckDate = useDailyCheckInStore(s => s.lastCheckDate);
+  const resetIfNewDay = useDailyCheckInStore(s => s.resetIfNewDay);
 
   // 코치마크: 첫 진입 시 자동 시작 (변형 A 또는 B)
   const hasSeenHomeOnboarding = useSettingsStore(s => s.hasSeenHomeOnboarding);
@@ -169,7 +173,9 @@ export default function HomeScreen() {
       fetchMotivationNotes(user.id);
       loadRecommendations(user.id);
     }
-  }, [selectedDate, fetchTodosForDate, user?.id, fetchMotivationNotes, loadRecommendations]));
+    // 자정 넘었으면 일일 체크인 카드 모두 미확인으로 리셋 + 앱 아이콘 뱃지 갱신
+    resetIfNewDay();
+  }, [selectedDate, fetchTodosForDate, user?.id, fetchMotivationNotes, loadRecommendations, resetIfNewDay]));
 
   const greeting = useMemo(() => getGreeting(), []);
   const today = format(new Date(), 'M월 d일 EEEE', {locale: ko});
@@ -208,6 +214,7 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Planner', {initialPage: 0}),
+        unchecked: !checkedCards['daily-planner'],
       },
       {
         id: 'projects',
@@ -217,6 +224,7 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Projects'),
+        unchecked: !checkedCards['projects'],
       },
       {
         id: 'ai-chat',
@@ -226,6 +234,7 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('AIChat'),
+        unchecked: !checkedCards['ai-chat'],
       },
       {
         id: 'guide',
@@ -235,6 +244,7 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Guide'),
+        unchecked: !checkedCards['guide'],
       },
       {
         id: 'data-cleanup',
@@ -244,9 +254,10 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Cleanup'),
+        unchecked: !checkedCards['data-cleanup'],
       },
     ],
-    [navigation, primaryColor],
+    [navigation, primaryColor, checkedCards, lastCheckDate],
   );
 
   const thoughtItems: FeatureItem[] = useMemo(
@@ -259,6 +270,7 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Notes'),
+        unchecked: !checkedCards['motivation'],
       },
       {
         id: 'record',
@@ -268,9 +280,10 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Record'),
+        unchecked: !checkedCards['record'],
       },
     ],
-    [navigation, primaryColor],
+    [navigation, primaryColor, checkedCards, lastCheckDate],
   );
 
   const careItems: FeatureItem[] = useMemo(
@@ -283,6 +296,7 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('SleepGarden'),
+        unchecked: !checkedCards['sleep'],
       },
       {
         id: 'adhd-understanding',
@@ -292,6 +306,7 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('ADHDUnderstanding'),
+        unchecked: !checkedCards['adhd-understanding'],
       },
       {
         id: 'cleaning',
@@ -301,9 +316,10 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('Cleaning'),
+        unchecked: !checkedCards['cleaning'],
       },
     ],
-    [navigation, primaryColor],
+    [navigation, primaryColor, checkedCards, lastCheckDate],
   );
 
   const supportItems: FeatureItem[] = useMemo(
@@ -316,9 +332,10 @@ export default function HomeScreen() {
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
         onPress: () => navigation.navigate('FeedbackBoard'),
+        unchecked: !checkedCards['feedback-board'],
       },
     ],
-    [navigation, primaryColor],
+    [navigation, primaryColor, checkedCards, lastCheckDate],
   );
 
   return (

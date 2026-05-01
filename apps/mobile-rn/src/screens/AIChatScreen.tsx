@@ -33,6 +33,7 @@ import {
 import {useAuthStore} from '@/stores/authStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
 import {useTheme} from '@/theme';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 
 function ChatBubble({message}: {message: ChatMessage}) {
   const isUser = message.role === 'user';
@@ -60,6 +61,7 @@ function ChatBubble({message}: {message: ChatMessage}) {
 }
 
 export default function AIChatScreen() {
+  useDailyCheckIn('ai-chat');
   const user = useAuthStore(s => s.user);
   const {primaryColor} = useTheme();
   const {hasActiveSubscription} = useSubscriptionStore();

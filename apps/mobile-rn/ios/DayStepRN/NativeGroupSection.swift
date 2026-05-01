@@ -17,6 +17,7 @@ struct GroupSectionItemData: Codable, Identifiable {
   let description: String
   let sfSymbol: String
   let isPro: Bool
+  let unchecked: Bool?
 }
 
 // MARK: - Observable State
@@ -127,6 +128,12 @@ struct GroupSectionContent: View {
                 .background(Color(hex: "#FEF3C7"))
                 .cornerRadius(8)
                 .padding(8)
+              } else if item.unchecked == true {
+                // 일일 체크인 미확인 빨간 점
+                Circle()
+                  .fill(Color(hex: "#EF4444"))
+                  .frame(width: 8, height: 8)
+                  .padding(10)
               }
             }
           }

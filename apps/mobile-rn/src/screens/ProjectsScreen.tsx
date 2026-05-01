@@ -9,6 +9,7 @@ import {FolderKanban} from 'lucide-react-native';
 import {useProjectStore} from '@/stores/projectStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import type {ProjectStatus} from '@/types/project';
 import {
@@ -20,6 +21,7 @@ import {
 import type {ProjectFormSheetRef} from '@/components/project';
 
 export default function ProjectsScreen() {
+  useDailyCheckIn('projects');
   const user = useAuthStore(s => s.user);
   const {
     projects,

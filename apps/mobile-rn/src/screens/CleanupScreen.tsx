@@ -50,6 +50,7 @@ import {useAuthStore} from '@/stores/authStore';
 import {supabase} from '@/lib/supabase';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {hexWithOpacity} from '@/lib/todoUtils';
 
 // ────────────────────────────────────────────────
@@ -534,6 +535,7 @@ const EMPTY_DATA: CategorizedData = {
 };
 
 export default function CleanupScreen() {
+  useDailyCheckIn('data-cleanup');
   const user = useAuthStore(s => s.user);
   const {primaryColor} = useTheme();
   const {deleteTodo} = useTodoStore();

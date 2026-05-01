@@ -12,7 +12,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {View, Text, StyleSheet, Keyboard} from 'react-native';
+import {View, Text, StyleSheet, Keyboard, Modal} from 'react-native';
 import Animated, {
   SlideInRight,
   SlideOutLeft,
@@ -26,12 +26,13 @@ import {
   BottomSheetTextInput,
 } from '@gorhom/bottom-sheet';
 import {LiquidGlassMenu} from '@/components/native/LiquidGlassMenu';
+import {NativeProjectFormNative} from '@/components/native/NativeProjectForm';
 import {AnimatedPressable} from '@/components/core';
 import {SummaryRow} from '@/components/todo/SummaryRow';
 import {InlineIconPicker} from '@/components/todo/InlineIconPicker';
 import {LinkedTodosSection} from './LinkedTodosSection';
 import {PreviewCard} from './PreviewCard';
-import {STATUS_LABELS, getStatusMenuItems} from './constants';
+import {STATUS_LABELS, getStatusMenuItems, formatTodoDate} from './constants';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {
   Palette,
@@ -164,6 +165,9 @@ export const ProjectFormSheet = forwardRef<
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ['70%', '90%'], []);
 
+  const hasNative = NativeProjectFormNative != null;
+  const [nativeVisible, setNativeVisible] = useState(false);
+
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
@@ -188,7 +192,11 @@ export const ProjectFormSheet = forwardRef<
       setSaving(false);
       setCurrentView('main');
       isFirstRender.current = true;
-      bottomSheetRef.current?.present();
+      if (hasNative) {
+        setNativeVisible(true);
+      } else {
+        bottomSheetRef.current?.present();
+      }
     },
     openEdit: (project: Project) => {
       setEditingProject(project);
@@ -199,11 +207,19 @@ export const ProjectFormSheet = forwardRef<
       setSaving(false);
       setCurrentView('main');
       isFirstRender.current = true;
-      bottomSheetRef.current?.present();
+      if (hasNative) {
+        setNativeVisible(true);
+      } else {
+        bottomSheetRef.current?.present();
+      }
     },
     close: () => {
       Keyboard.dismiss();
-      bottomSheetRef.current?.dismiss();
+      if (hasNative) {
+        setNativeVisible(false);
+      } else {
+        bottomSheetRef.current?.dismiss();
+      }
     },
   }));
 
@@ -288,6 +304,120 @@ export const ProjectFormSheet = forwardRef<
     ),
     [],
   );
+
+  // ─── Native (iOS) 경로 ───────────────────────
+  const nativeProjectDataJson = useMemo(
+    () =>
+      JSON.stringify({
+        id: editingProject?.id,
+        title: formTitle,
+        description: formDesc,
+        color: formColor,
+        icon: formIcon,
+        status: editingProject?.status ?? null,
+      }),
+    [editingProject?.id, formTitle, formDesc, formColor, formIcon, editingProject?.status],
+  );
+
+  const nativeLinkedTodosJson = useMemo(
+    () =>
+      JSON.stringify(
+        linkedTodos.map(t => ({
+          id: t.id,
+          title: t.title,
+          completed: t.completed,
+          dateLabel: formatTodoDate(t),
+        })),
+      ),
+    [linkedTodos],
+  );
+
+  const nativePaletteColorsJson = useMemo(
+    () => JSON.stringify(PROJECT_COLORS),
+    [],
+  );
+  const nativePaletteIconsJson = useMemo(
+    () => JSON.stringify(PROJECT_ICONS),
+    [],
+  );
+  const nativeStatusMenuItemsJson = useMemo(
+    () => JSON.stringify(statusMenuItems),
+    [statusMenuItems],
+  );
+
+  const nativeStatusLabel = editingProject
+    ? STATUS_LABELS[editingProject.status]?.label ?? ''
+    : '';
+  const nativeStatusBadgeColor = editingProject
+    ? STATUS_LABELS[editingProject.status]?.color ?? '#6B7280'
+    : '#6B7280';
+  const nativeStatusBadgeBg = editingProject
+    ? STATUS_LABELS[editingProject.status]?.bg ?? '#F3F4F6'
+    : '#F3F4F6';
+
+  const handleNativeSave = useCallback(
+    async (e: {
+      nativeEvent: {title: string; description: string; color: string; icon: string};
+    }) => {
+      const t = e.nativeEvent.title.trim();
+      if (!t || saving) return;
+      setSaving(true);
+      await onSave({
+        title: t,
+        description: e.nativeEvent.description.trim() || null,
+        color: e.nativeEvent.color,
+        icon: e.nativeEvent.icon,
+        editingId: editingProject?.id,
+      });
+      setSaving(false);
+      setNativeVisible(false);
+    },
+    [saving, onSave, editingProject?.id],
+  );
+
+  const handleNativeStatusChange = useCallback(
+    async (e: {nativeEvent: {status: string}}) => {
+      const status = e.nativeEvent.status as ProjectStatus;
+      await handleSheetStatusChange(status);
+    },
+    [handleSheetStatusChange],
+  );
+
+  const handleNativeUnlinkTodo = useCallback(
+    async (e: {nativeEvent: {todoId: string}}) => {
+      await handleUnlink(e.nativeEvent.todoId);
+    },
+    [handleUnlink],
+  );
+
+  if (hasNative && NativeProjectFormNative) {
+    return (
+      <Modal
+        visible={nativeVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setNativeVisible(false)}>
+        <NativeProjectFormNative
+          mode={editingProject ? 'edit' : 'create'}
+          primaryColor={primaryColor}
+          projectData={nativeProjectDataJson}
+          linkedTodosData={nativeLinkedTodosJson}
+          paletteColors={nativePaletteColorsJson}
+          paletteIcons={nativePaletteIconsJson}
+          statusMenuItemsData={nativeStatusMenuItemsJson}
+          statusLabel={nativeStatusLabel}
+          statusBadgeColor={nativeStatusBadgeColor}
+          statusBadgeBg={nativeStatusBadgeBg}
+          loadingTodos={loadingTodos}
+          onSave={handleNativeSave}
+          onStatusChange={handleNativeStatusChange}
+          onUnlinkTodo={handleNativeUnlinkTodo}
+          onClose={() => setNativeVisible(false)}
+          style={{flex: 1}}
+        />
+      </Modal>
+    );
+  }
 
   return (
     <BottomSheetModal

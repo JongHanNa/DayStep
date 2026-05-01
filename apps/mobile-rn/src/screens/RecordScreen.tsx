@@ -50,6 +50,7 @@ import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {LimitReachedModal} from '@/components/subscription/LimitReachedModal';
 import {
   INTERACTION_TYPE_LABELS,
@@ -275,7 +276,91 @@ function CollapsibleFields({
   );
 }
 
+// ─── 필터 드롭다운 (관계/역할/부서) ───────────────────────
+interface FilterDropdownItem {
+  id: string;
+  name: string;
+}
+
+function FilterDropdown({
+  label,
+  items,
+  selectedId,
+  onChange,
+  primaryColor,
+}: {
+  label: string;
+  items: FilterDropdownItem[];
+  selectedId: string | null;
+  onChange: (id: string | null) => void;
+  primaryColor: string;
+}) {
+  const isActive = selectedId !== null;
+  const selectedItem = items.find(i => i.id === selectedId);
+  const displayLabel = selectedItem ? selectedItem.name : `${label} 전체`;
+
+  const handlePress = useCallback(() => {
+    const options = [`${label} 전체`, ...items.map(i => i.name), '취소'];
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex: items.length + 1,
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 0) {
+          onChange(null);
+        } else if (buttonIndex > 0 && buttonIndex <= items.length) {
+          onChange(items[buttonIndex - 1].id);
+        }
+      },
+    );
+  }, [label, items, onChange]);
+
+  return (
+    <AnimatedPressable
+      onPress={handlePress}
+      hapticType="light"
+      scaleValue={0.95}
+      style={[
+        filterDropdownStyles.button,
+        isActive
+          ? {backgroundColor: primaryColor}
+          : {backgroundColor: 'white'},
+      ]}>
+      <Text
+        style={[
+          filterDropdownStyles.label,
+          {color: isActive ? 'white' : '#6B7280'},
+        ]}
+        numberOfLines={1}>
+        {displayLabel}
+      </Text>
+      <ChevronDown
+        size={14}
+        color={isActive ? 'white' : '#9CA3AF'}
+      />
+    </AnimatedPressable>
+  );
+}
+
+const filterDropdownStyles = StyleSheet.create({
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 18,
+    maxWidth: 180,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+});
+
 export default function RecordScreen() {
+  useDailyCheckIn('record');
   const route = useRoute<any>();
   const navigation = useNavigation();
   const personNameParam = route.params?.personName as string | undefined;
@@ -836,143 +921,41 @@ export default function RecordScreen() {
           </View>
         </View>
 
-        {/* 필터 칩 (비검색 모드에서만) */}
+        {/* 필터 드롭다운 (비검색 모드에서만) — 한 줄 가로 배치 */}
         {!searchQuery && (usedRelationships.length > 0 || usedRoles.length > 0 || departments.length > 0) && (
           <Animated.View entering={FadeIn.duration(300)} className="mb-3">
-            {/* 관계 필터 */}
-            {usedRelationships.length > 0 && (
-              <View className="mb-1.5">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, gap: 6}}>
-                  <AnimatedPressable
-                    onPress={() => setFilterRelationship(null)}
-                    hapticType="light"
-                    scaleValue={0.95}
-                    style={[
-                      filterChipStyles.chip,
-                      !filterRelationship
-                        ? {backgroundColor: primaryColor}
-                        : {backgroundColor: 'white'},
-                    ]}>
-                    <Text style={[
-                      filterChipStyles.chipText,
-                      {color: !filterRelationship ? 'white' : '#6B7280'},
-                    ]}>
-                      관계 전체
-                    </Text>
-                  </AnimatedPressable>
-                  {usedRelationships.map(rel => (
-                    <AnimatedPressable
-                      key={rel.id}
-                      onPress={() => setFilterRelationship(filterRelationship === rel.id ? null : rel.id)}
-                      hapticType="light"
-                      scaleValue={0.95}
-                      style={[
-                        filterChipStyles.chip,
-                        filterRelationship === rel.id
-                          ? {backgroundColor: primaryColor}
-                          : {backgroundColor: 'white'},
-                      ]}>
-                      <Text style={[
-                        filterChipStyles.chipText,
-                        {color: filterRelationship === rel.id ? 'white' : '#6B7280'},
-                      ]}>
-                        {rel.name}
-                      </Text>
-                    </AnimatedPressable>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* 역할 필터 */}
-            {usedRoles.length > 0 && (
-              <View className="mb-1.5">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, gap: 6}}>
-                  <AnimatedPressable
-                    onPress={() => setFilterRole(null)}
-                    hapticType="light"
-                    scaleValue={0.95}
-                    style={[
-                      filterChipStyles.chip,
-                      !filterRole
-                        ? {backgroundColor: primaryColor}
-                        : {backgroundColor: 'white'},
-                    ]}>
-                    <Text style={[
-                      filterChipStyles.chipText,
-                      {color: !filterRole ? 'white' : '#6B7280'},
-                    ]}>
-                      역할 전체
-                    </Text>
-                  </AnimatedPressable>
-                  {usedRoles.map(role => (
-                    <AnimatedPressable
-                      key={role.id}
-                      onPress={() => setFilterRole(filterRole === role.id ? null : role.id)}
-                      hapticType="light"
-                      scaleValue={0.95}
-                      style={[
-                        filterChipStyles.chip,
-                        filterRole === role.id
-                          ? {backgroundColor: primaryColor}
-                          : {backgroundColor: 'white'},
-                      ]}>
-                      <Text style={[
-                        filterChipStyles.chipText,
-                        {color: filterRole === role.id ? 'white' : '#6B7280'},
-                      ]}>
-                        {role.name}
-                      </Text>
-                    </AnimatedPressable>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* 부서 필터 */}
-            {departments.length > 0 && (
-              <View className="mb-1.5">
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal: 16, gap: 6}}>
-                  <AnimatedPressable
-                    onPress={() => setFilterDepartment(null)}
-                    hapticType="light"
-                    scaleValue={0.95}
-                    style={[
-                      filterChipStyles.chip,
-                      !filterDepartment
-                        ? {backgroundColor: primaryColor}
-                        : {backgroundColor: 'white'},
-                    ]}>
-                    <Text style={[
-                      filterChipStyles.chipText,
-                      {color: !filterDepartment ? 'white' : '#6B7280'},
-                    ]}>
-                      부서 전체
-                    </Text>
-                  </AnimatedPressable>
-                  {departments.map(dept => (
-                    <AnimatedPressable
-                      key={dept.id}
-                      onPress={() => setFilterDepartment(filterDepartment === dept.id ? null : dept.id)}
-                      hapticType="light"
-                      scaleValue={0.95}
-                      style={[
-                        filterChipStyles.chip,
-                        filterDepartment === dept.id
-                          ? {backgroundColor: primaryColor}
-                          : {backgroundColor: 'white'},
-                      ]}>
-                      <Text style={[
-                        filterChipStyles.chipText,
-                        {color: filterDepartment === dept.id ? 'white' : '#6B7280'},
-                      ]}>
-                        {dept.name}
-                      </Text>
-                    </AnimatedPressable>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{paddingHorizontal: 16, gap: 8}}>
+              {usedRelationships.length > 0 && (
+                <FilterDropdown
+                  label="관계"
+                  items={usedRelationships}
+                  selectedId={filterRelationship}
+                  onChange={setFilterRelationship}
+                  primaryColor={primaryColor}
+                />
+              )}
+              {usedRoles.length > 0 && (
+                <FilterDropdown
+                  label="역할"
+                  items={usedRoles}
+                  selectedId={filterRole}
+                  onChange={setFilterRole}
+                  primaryColor={primaryColor}
+                />
+              )}
+              {departments.length > 0 && (
+                <FilterDropdown
+                  label="부서"
+                  items={departments}
+                  selectedId={filterDepartment}
+                  onChange={setFilterDepartment}
+                  primaryColor={primaryColor}
+                />
+              )}
+            </ScrollView>
           </Animated.View>
         )}
 
@@ -1273,17 +1256,5 @@ const recordStyles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
-  },
-});
-
-const filterChipStyles = StyleSheet.create({
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: '500',
   },
 });

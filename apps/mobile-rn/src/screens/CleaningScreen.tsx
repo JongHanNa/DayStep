@@ -22,6 +22,7 @@ import {ScreenTimeToggle} from '@/components/cleaning/ScreenTimeToggle';
 import {useCleaningStore} from '@/stores/cleaningStore';
 import {useTheme} from '@/theme';
 import {useHaptic} from '@/hooks/useHaptic';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 import {ENERGY_CONFIG} from '@/constants/cleaning-data';
 import type {CleaningTab, EnergyLevel} from '@/constants/cleaning-data';
 
@@ -39,6 +40,7 @@ const CLEANING_MENU_ITEMS = [
 ];
 
 export default function CleaningScreen() {
+  useDailyCheckIn('cleaning');
   const navigation = useNavigation();
   const {primaryColor} = useTheme();
   const haptic = useHaptic();
