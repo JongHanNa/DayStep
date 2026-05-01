@@ -408,68 +408,140 @@
 		13B07FAE1A68108700A75B9A /* DayStepRN */ = {
 			isa = PBXGroup;
 			children = (
-				A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */,
-				A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */,
-				A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */,
-				A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */,
-				A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */,
-				A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */,
-				A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */,
-				A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */,
+				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
-				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */,
+				0991000010000000A1B20001 /* Intents */,
+				0991000010000000A1B20002 /* DesignSystem */,
+				0991000010000000A1B20003 /* NativeModules */,
+				0991000010000000A1B20009 /* Modules */,
+			);
+			name = DayStepRN;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20001 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */,
+				A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */,
+			);
+			name = Intents;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20002 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
 				735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */,
-				8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */,
-				2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */,
-				1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */,
-				42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */,
 				4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */,
 				079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */,
 				BB2C3D4E5F6A7B8C9D0E1F2A /* LiquidGlassButton.swift */,
 				DD4E5F6A7B8C9D0E1F2A3B4C /* LiquidGlassButtonBridge.m */,
 				FF6A7B8C9D0E1F2A3B4C5D6E /* LiquidGlassMenu.swift */,
 				228C9D0E1F2A3B4C5D6E7F80 /* LiquidGlassMenuBridge.m */,
+				1A6A9F20785788C781CC10EE /* LiquidGlassMotivationCard.swift */,
+				42023738D1793F209AFDF171 /* LiquidGlassMotivationCardBridge.m */,
+				8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */,
+				2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */,
+			);
+			name = DesignSystem;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20003 /* NativeModules */ = {
+			isa = PBXGroup;
+			children = (
+				0991000010000000A1B20004 /* Calendar */,
+				0991000010000000A1B20007 /* Cards */,
+				0991000010000000A1B20006 /* Form */,
+				0991000010000000A1B20005 /* Garden */,
+				0991000010000000A1B20008 /* Sections */,
+			);
+			name = NativeModules;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20004 /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */,
+				DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */,
+				B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */,
+				D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */,
+				DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */,
+				DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */,
+				F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */,
+				A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */,
+			);
+			name = Calendar;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20005 /* Garden */ = {
+			isa = PBXGroup;
+			children = (
+				EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */,
+				EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */,
+				A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */,
+				A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */,
+				FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */,
+				FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */,
+			);
+			name = Garden;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20006 /* Form */ = {
+			isa = PBXGroup;
+			children = (
+				05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */,
+				05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */,
+				03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */,
+				03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */,
+				02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */,
+				02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */,
+				04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */,
+				04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */,
+				01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */,
+				01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */,
+			);
+			name = Form;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20007 /* Cards */ = {
+			isa = PBXGroup;
+			children = (
+				59502988256F1D4368F740C1 /* NativeContactNudge.swift */,
+				9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */,
+				B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */,
+				8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */,
+				8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */,
+				C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */,
+			);
+			name = Cards;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20008 /* Sections */ = {
+			isa = PBXGroup;
+			children = (
 				A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */,
 				B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */,
 				F1B4C5D6E7F8A9B0C1D2E3F5 /* NativeFeedbackSection.swift */,
 				F1B5C6D7E8F9A0B1C2D3E4F6 /* NativeFeedbackSectionBridge.m */,
-				F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */,
-				A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */,
-				B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */,
-				D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */,
-				DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */,
-				DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */,
-				DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */,
-				DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */,
-				8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */,
-				C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */,
-				FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */,
-				FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */,
 				25B5E30421766026F915B4B0 /* NativeGroupSection.swift */,
 				960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */,
-				B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */,
-				8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */,
-				59502988256F1D4368F740C1 /* NativeContactNudge.swift */,
-				9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */,
-				EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */,
-				EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */,
-				01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */,
-				01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */,
-				02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */,
-				02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */,
-				03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */,
-				03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */,
-				04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */,
-				04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */,
-				05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */,
-				05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */,
 			);
-			name = DayStepRN;
+			name = Sections;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20009 /* Modules */ = {
+			isa = PBXGroup;
+			children = (
+				A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */,
+				A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */,
+				A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */,
+				A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */,
+			);
+			name = Modules;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
