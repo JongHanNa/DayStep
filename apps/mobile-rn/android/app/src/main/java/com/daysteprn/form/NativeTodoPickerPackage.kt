@@ -1,4 +1,4 @@
-package com.daysteprn
+package com.daysteprn.form
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

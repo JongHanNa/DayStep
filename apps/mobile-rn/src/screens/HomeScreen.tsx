@@ -486,12 +486,28 @@ export default function HomeScreen() {
         <ScrollView
           contentContainerStyle={{paddingBottom: 100, paddingTop: 16}}
           showsVerticalScrollIndicator={false}>
-          {/* 1. 원동력 카드 */}
-          <View className="px-4">
-            <MotivationCard note={motivationNote} enterDelay={100} />
+          {/* 1. 하루 한 줄 영감 */}
+          <Animated.View
+            layout={LinearTransition.springify()
+              .damping(25)
+              .stiffness(247)
+              .mass(1)}
+            entering={FadeInDown.delay(100).duration(400)}
+            className="mx-4 items-center">
+            <Text className="text-base text-gray-600 mt-3 text-center leading-6 italic">
+              "{inspirationQuote}"
+            </Text>
+            <Text className="text-xs text-gray-400 mt-2">
+              오늘의 한 줄
+            </Text>
+          </Animated.View>
+
+          {/* 2. 원동력 카드 */}
+          <View className="px-4 mt-6">
+            <MotivationCard note={motivationNote} enterDelay={200} />
           </View>
 
-          {/* 2. 연락할 사람 */}
+          {/* 3. 연락할 사람 */}
           <Animated.View
             layout={LinearTransition.springify()
               .damping(25)
@@ -500,25 +516,9 @@ export default function HomeScreen() {
             className="mt-6">
             <ContactNudge
               recommendations={recommendations}
-              enterDelay={200}
+              enterDelay={300}
               onContactPress={(personName) => navigation.navigate('Record', {personName})}
             />
-          </Animated.View>
-
-          {/* 3. 하루 한 줄 영감 */}
-          <Animated.View
-            layout={LinearTransition.springify()
-              .damping(25)
-              .stiffness(247)
-              .mass(1)}
-            entering={FadeInDown.delay(300).duration(400)}
-            className="mx-4 mt-8 items-center">
-            <Text className="text-base text-gray-600 mt-3 text-center leading-6 italic">
-              "{inspirationQuote}"
-            </Text>
-            <Text className="text-xs text-gray-400 mt-2">
-              오늘의 한 줄
-            </Text>
           </Animated.View>
         </ScrollView>
       </SwipeablePages>

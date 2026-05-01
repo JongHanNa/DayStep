@@ -8,7 +8,7 @@
  *   - 그룹별 명도 차이로 시각 구분
  *   - spring 애니메이션 확장/축소
  */
-package com.daysteprn
+package com.daysteprn.sections
 
 import android.view.View
 import android.widget.FrameLayout

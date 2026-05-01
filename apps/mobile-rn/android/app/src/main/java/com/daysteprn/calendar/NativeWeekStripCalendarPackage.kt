@@ -1,4 +1,4 @@
-package com.daysteprn
+package com.daysteprn.calendar
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

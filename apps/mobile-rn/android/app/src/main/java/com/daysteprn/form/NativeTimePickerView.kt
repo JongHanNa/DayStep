@@ -2,7 +2,7 @@
  * NativeTimePicker — Android Jetpack Compose 인라인 휠 타임 피커
  * iOS UIDatePicker spinner 스타일과 유사한 3-컬럼 (오전/오후, 시, 분) 휠 피커
  */
-package com.daysteprn
+package com.daysteprn.form
 
 import android.content.Context
 import android.view.MotionEvent

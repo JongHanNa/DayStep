@@ -4,7 +4,7 @@
  *
  * 구조: 고정 시간 컬럼(좌측) + 스크롤 가능한 날짜 헤더(상단) + 2D 스크롤 콘텐츠
  */
-package com.daysteprn
+package com.daysteprn.calendar
 
 import android.content.Context
 import android.view.ViewTreeObserver

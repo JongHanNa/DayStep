@@ -32,16 +32,6 @@ class ContactNudgeState: ObservableObject {
   @Published var primaryColor: String = "#6366F1"
 }
 
-// MARK: - Priority Color
-
-private func priorityColor(for priority: String) -> Color {
-  switch priority {
-  case "high": return Color(hex: "#EF4444")
-  case "medium": return Color(hex: "#F97316")
-  default: return Color(hex: "#22C55E")
-  }
-}
-
 // MARK: - SwiftUI View
 
 struct ContactNudgeContent: View {
@@ -89,16 +79,10 @@ struct ContactNudgeContent: View {
           HStack(spacing: 12) {
             // 좌측: 정보
             VStack(alignment: .leading, spacing: 4) {
-              // 이름 + 우선순위 dot
-              HStack(spacing: 8) {
-                Circle()
-                  .fill(priorityColor(for: contact.priority))
-                  .frame(width: 8, height: 8)
-
-                Text(contact.person.name + (contact.person.nickname.map { " (\($0))" } ?? ""))
-                  .font(.system(size: 14, weight: .semibold))
-                  .foregroundColor(Color(hex: "#1F2937"))
-              }
+              // 이름
+              Text(contact.person.name + (contact.person.nickname.map { " (\($0))" } ?? ""))
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Color(hex: "#1F2937"))
 
               // 일수
               Text(contact.daysSinceContact >= 999
@@ -106,7 +90,6 @@ struct ContactNudgeContent: View {
                 : "\(contact.daysSinceContact)일 전 마지막 연락")
                 .font(.system(size: 12))
                 .foregroundColor(Color(hex: "#9CA3AF"))
-                .padding(.leading, 16)
 
               // 관계 태그
               if !contact.person.relationships.isEmpty {
@@ -121,7 +104,6 @@ struct ContactNudgeContent: View {
                       .cornerRadius(8)
                   }
                 }
-                .padding(.leading, 16)
               }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -7,7 +7,7 @@
  *
  * 패턴: NativeSleepGardenView와 동일 (FrameLayout + ComposeView)
  */
-package com.daysteprn
+package com.daysteprn.garden
 
 import android.widget.FrameLayout
 import androidx.compose.animation.animateColorAsState

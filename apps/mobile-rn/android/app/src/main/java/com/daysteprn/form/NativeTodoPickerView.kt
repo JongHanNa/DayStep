@@ -2,7 +2,7 @@
  * NativeTodoPickerView — Android Native (Jetpack Compose)
  * 할일 연결 피커: 검색 + 그룹 리스트 (연결됨/반복/일반)
  */
-package com.daysteprn
+package com.daysteprn.form
 
 import android.widget.FrameLayout
 import androidx.compose.foundation.background

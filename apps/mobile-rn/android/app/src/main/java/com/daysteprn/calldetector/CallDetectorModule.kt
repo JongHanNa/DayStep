@@ -1,4 +1,4 @@
-package com.daysteprn
+package com.daysteprn.calldetector
 
 import android.Manifest
 import android.content.pm.PackageManager

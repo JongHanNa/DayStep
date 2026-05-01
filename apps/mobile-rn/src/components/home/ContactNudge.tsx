@@ -12,7 +12,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import {AnimatedPressable} from '@/components/core';
 import {HeartHandshake, Phone} from 'lucide-react-native';
-import {fixedColors} from '@/theme/colors';
 import {NativeContactNudgeNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
 import {useTheme} from '@/theme';
@@ -33,12 +32,6 @@ interface ContactNudgeProps {
   enterDelay?: number;
   onContactPress?: (personName: string) => void;
 }
-
-const PRIORITY_COLORS: Record<string, string> = {
-  high: fixedColors.contactUrgencyHigh,
-  medium: fixedColors.contactUrgencyMedium,
-  normal: '#22C55E',
-};
 
 export function ContactNudge({
   recommendations,
@@ -138,18 +131,8 @@ export function ContactNudge({
                 }}>
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1 mr-3">
-                    {/* 이름 + 우선순위 dot */}
+                    {/* 이름 */}
                     <View className="flex-row items-center mb-1">
-                      <View
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: 4,
-                          backgroundColor:
-                            PRIORITY_COLORS[rec.priority] || '#22C55E',
-                          marginRight: 8,
-                        }}
-                      />
                       <Text className="text-sm font-semibold text-gray-800">
                         {rec.person.name}
                         {rec.person.nickname
@@ -158,14 +141,14 @@ export function ContactNudge({
                       </Text>
                     </View>
                     {/* 연락 상태 */}
-                    <Text className="text-xs text-gray-400 ml-4">
+                    <Text className="text-xs text-gray-400">
                       {rec.daysSinceContact >= 999
                         ? '아직 연락한 기록이 없어요'
                         : `${rec.daysSinceContact}일 전 마지막 연락`}
                     </Text>
                     {/* 관계 태그 */}
                     {(rec.person.relationships?.length ?? 0) > 0 && (
-                      <View className="flex-row flex-wrap ml-4 mt-1" style={{gap: 4}}>
+                      <View className="flex-row flex-wrap mt-1" style={{gap: 4}}>
                         {rec.person.relationships.map((rel, i) => (
                           <View
                             key={i}

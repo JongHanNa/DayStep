@@ -1,4 +1,4 @@
-package com.daysteprn
+package com.daysteprn.util
 
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.events.Event

@@ -1,4 +1,4 @@
-package com.daysteprn
+package com.daysteprn.shareintent
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule

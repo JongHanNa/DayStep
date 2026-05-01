@@ -4,7 +4,7 @@
  * iOS의 FamilyControls/ManagedSettings 대응
  * Foreground Service + UsageStats + Overlay 방식
  */
-package com.daysteprn
+package com.daysteprn.appblocker
 
 import android.app.AppOpsManager
 import android.content.Context

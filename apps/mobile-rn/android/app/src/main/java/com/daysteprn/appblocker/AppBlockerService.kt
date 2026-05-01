@@ -4,7 +4,7 @@
  * UsageStatsManager로 포그라운드 앱 감시 (1초 폴링)
  * 비허용 앱 감지 시 전체화면 차단 오버레이 표시
  */
-package com.daysteprn
+package com.daysteprn.appblocker
 
 import android.app.*
 import android.app.usage.UsageEvents

@@ -1,4 +1,4 @@
-package com.daysteprn
+package com.daysteprn.animatedoffset
 
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext

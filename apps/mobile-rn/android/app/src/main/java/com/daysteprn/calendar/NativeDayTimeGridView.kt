@@ -4,7 +4,7 @@
  *
  * 구조: 종일 섹션(상단) + 시간 그리드(스크롤)
  */
-package com.daysteprn
+package com.daysteprn.calendar
 
 import android.content.Context
 import android.view.ViewTreeObserver

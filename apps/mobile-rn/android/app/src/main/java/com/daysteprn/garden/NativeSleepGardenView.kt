@@ -5,7 +5,7 @@
  * 4가지 뷰 모드: day, week, month, year
  * 수면 정원 시각화 (나무 아이콘 + 건강 상태 색상)
  */
-package com.daysteprn
+package com.daysteprn.garden
 
 import android.widget.FrameLayout
 import androidx.compose.animation.animateColorAsState

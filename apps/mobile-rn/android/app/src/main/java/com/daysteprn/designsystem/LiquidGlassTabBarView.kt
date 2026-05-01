@@ -8,7 +8,7 @@
  *   - SF Symbol → Material Icon 매핑 (material-icons-extended)
  *   - Timer 탭: Canvas로 원형 진행 링 직접 드로잉
  */
-package com.daysteprn
+package com.daysteprn.designsystem
 
 import android.content.Context
 import android.graphics.Color as AndroidColor

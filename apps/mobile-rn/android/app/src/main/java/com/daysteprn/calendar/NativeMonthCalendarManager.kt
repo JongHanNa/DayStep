@@ -2,7 +2,9 @@
  * NativeMonthCalendarManager — ViewManager bridge
  * RN props → NativeMonthCalendarView, events → RN callbacks
  */
-package com.daysteprn
+package com.daysteprn.calendar
+
+import com.daysteprn.util.SimpleEvent
 
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.uimanager.SimpleViewManager

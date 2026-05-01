@@ -8,7 +8,7 @@
  *   - 날짜 탭: Compose clickable
  *   - expandProgress → onExpandProgressChange 이벤트로 RN에 전달
  */
-package com.daysteprn
+package com.daysteprn.calendar
 
 import android.widget.FrameLayout
 import androidx.compose.animation.animateColorAsState

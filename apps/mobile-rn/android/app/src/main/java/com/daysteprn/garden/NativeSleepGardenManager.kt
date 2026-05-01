@@ -3,7 +3,9 @@
  * RN Bridge: JS props → NativeSleepGardenView setters
  *            NativeSleepGardenView events → RN JS callbacks
  */
-package com.daysteprn
+package com.daysteprn.garden
+
+import com.daysteprn.util.SimpleEvent
 
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.uimanager.SimpleViewManager

@@ -5,7 +5,7 @@
  * - 날짜별 할일/이벤트 칩 표시
  * - 날짜 선택 시 인라인 상세 패널
  */
-package com.daysteprn
+package com.daysteprn.calendar
 
 import android.content.Context
 import android.widget.FrameLayout

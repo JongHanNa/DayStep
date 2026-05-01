@@ -1,4 +1,4 @@
-package com.daysteprn
+package com.daysteprn.navigationbar
 
 import android.app.Activity
 import android.graphics.Color

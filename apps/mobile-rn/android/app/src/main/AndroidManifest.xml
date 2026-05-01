@@ -61,7 +61,7 @@
           android:resource="@xml/actions" />
 
       <service
-        android:name=".AppBlockerService"
+        android:name=".appblocker.AppBlockerService"
         android:exported="false"
         android:foregroundServiceType="specialUse">
         <property

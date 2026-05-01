@@ -2,6 +2,7 @@ package com.daysteprn
 import expo.modules.ReactActivityDelegateWrapper
 
 import android.content.Intent
+import com.daysteprn.shareintent.ShareIntentModule
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled

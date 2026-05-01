@@ -3,7 +3,9 @@
  * RN Bridge: JS props → LiquidGlassTabBarView setters
  *            LiquidGlassTabBarView events → RN JS callbacks
  */
-package com.daysteprn
+package com.daysteprn.designsystem
+
+import com.daysteprn.util.SimpleEvent
 
 import android.util.Log
 import com.facebook.react.bridge.Arguments
