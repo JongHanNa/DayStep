@@ -36,6 +36,7 @@ import {usePomodoroStore} from '@/stores/pomodoroStore';
 import {useCalendarStore} from '@/stores/calendarStore';
 import {DailyCalendarEventCard} from '@/components/todo/DailyCalendarEventCard';
 import {useSleepStore} from '@/stores/sleepStore';
+import {useSleepWakeCompletionStore} from '@/stores/sleepWakeCompletionStore';
 import {useTheme} from '@/theme';
 import {hexWithOpacity} from '@/lib/todoUtils';
 import {format} from 'date-fns';
@@ -43,6 +44,7 @@ import type {Todo} from '@daystep/shared-core';
 import {Inbox, Calendar, Moon, Sun, Plus} from 'lucide-react-native';
 import {NativeMenu} from '@/components/native';
 import {InlineTimePicker} from '@/components/native/InlineTimePicker';
+import {DateTimePickerAndroid} from '@react-native-community/datetimepicker';
 
 interface DailyPlannerViewProps {
   menuItems: Array<{title: string; key: string}>;
@@ -104,59 +106,137 @@ function categorizeTodos(todos: Todo[]): TodoSection[] {
   return sections;
 }
 
-/** 수면/기상 시간 카드 — 카드 터치 → 네이티브 타임피커 직접 표시 */
-function SleepWakeCard({type, time, onTimeChange}: {
+/**
+ * 수면/기상 시간 카드 — 카드 터치 → 타임피커, 우측 체크박스 → 완료 토글 (DB)
+ * 레이아웃: [시간↑ 제목] [기능 색 아이콘] [체크박스]
+ * iOS: 인라인 spinner picker 토글 / Android: DateTimePickerAndroid modal
+ */
+const SLEEP_COLOR = '#7C3AED'; // violet (취침)
+const WAKE_COLOR = '#F59E0B'; // amber (기상)
+
+function SleepWakeCard({
+  type,
+  time,
+  onTimeChange,
+  date,
+  isCompleted,
+  onToggleCompletion,
+}: {
   type: 'sleep' | 'wake';
   time: string;
   onTimeChange: (newTime: string) => void;
+  date: string;
+  isCompleted: boolean;
+  onToggleCompletion: () => void;
 }) {
   const {primaryColor} = useTheme();
   const isSleep = type === 'sleep';
+  const accent = isSleep ? SLEEP_COLOR : WAKE_COLOR;
   const [showPicker, setShowPicker] = useState(false);
 
   const timeDate = useMemo(() => {
     const [h, m] = time.split(':').map(Number);
-    const d = new Date();
+    const d = new Date(date + 'T00:00:00');
     d.setHours(h, m, 0, 0);
     return d;
-  }, [time]);
+  }, [time, date]);
+
+  const handlePress = useCallback(() => {
+    if (Platform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: timeDate,
+        mode: 'time',
+        is24Hour: true,
+        display: 'spinner',
+        onChange: (event, selectedDate) => {
+          if (event.type === 'set' && selectedDate) {
+            const hh = selectedDate.getHours().toString().padStart(2, '0');
+            const mm = selectedDate.getMinutes().toString().padStart(2, '0');
+            onTimeChange(`${hh}:${mm}`);
+          }
+        },
+      });
+    } else {
+      setShowPicker(prev => !prev);
+    }
+  }, [timeDate, onTimeChange]);
 
   return (
     <>
-      <AnimatedPressable
-        onPress={() => setShowPicker(prev => !prev)}
-        hapticType="light"
-        scaleValue={0.98}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: hexWithOpacity(primaryColor, 0.06),
-          borderRadius: 12,
-          padding: 12,
-          marginVertical: 3,
-        }}>
-        <View style={{
-          width: 28, height: 28, borderRadius: 14,
-          backgroundColor: hexWithOpacity(primaryColor, 0.12),
-          justifyContent: 'center', alignItems: 'center', marginRight: 10,
-        }}>
-          {isSleep
-            ? <Moon size={14} color={primaryColor} />
-            : <Sun size={14} color={primaryColor} />}
-        </View>
-        <Text style={{fontSize: 14, fontWeight: '600', color: '#374151', flex: 1}}>
-          {isSleep ? '취침' : '기상'}
-        </Text>
-        <Text style={{fontSize: 13, fontWeight: '500', color: primaryColor}}>
-          {time}
-        </Text>
-      </AnimatedPressable>
-      {showPicker && (
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        marginVertical: 3,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: '#E5E7EB',
+      }}>
+        {/* 카드 본문 영역(시간 + 제목 + 색상 아이콘) → 탭 시 타임피커 */}
+        <AnimatedPressable
+          onPress={handlePress}
+          hapticType="light"
+          scaleValue={0.98}
+          style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
+          <View style={{flex: 1}}>
+            <Text style={{
+              fontSize: 11,
+              fontWeight: '500',
+              color: isCompleted ? '#9CA3AF' : accent,
+              marginBottom: 2,
+            }}>
+              {time}
+            </Text>
+            <Text style={{
+              fontSize: 14,
+              fontWeight: '600',
+              color: isCompleted ? '#9CA3AF' : '#374151',
+              textDecorationLine: isCompleted ? 'line-through' : 'none',
+            }}>
+              {isSleep ? '취침' : '기상'}
+            </Text>
+          </View>
+          {/* 기능 색 아이콘 */}
+          <View style={{
+            width: 28, height: 28, borderRadius: 14,
+            backgroundColor: hexWithOpacity(accent, 0.12),
+            justifyContent: 'center', alignItems: 'center',
+            marginRight: 8,
+          }}>
+            {isSleep
+              ? <Moon size={14} color={accent} />
+              : <Sun size={14} color={accent} />}
+          </View>
+        </AnimatedPressable>
+        {/* 체크박스 (우측 끝) */}
+        <AnimatedPressable
+          onPress={onToggleCompletion}
+          hapticType="selection"
+          scaleValue={0.85}
+          style={{padding: 4}}>
+          <View style={{
+            width: 24, height: 24, borderRadius: 12,
+            borderWidth: 1.5,
+            borderColor: isCompleted ? primaryColor : '#D1D5DB',
+            backgroundColor: isCompleted ? primaryColor : 'transparent',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {isCompleted && (
+              <Text style={{color: '#FFFFFF', fontSize: 14, fontWeight: '700', lineHeight: 16}}>
+                ✓
+              </Text>
+            )}
+          </View>
+        </AnimatedPressable>
+      </View>
+      {showPicker && Platform.OS === 'ios' && (
         <InlineTimePicker
           value={timeDate}
-          onChange={(date) => {
-            const hh = date.getHours().toString().padStart(2, '0');
-            const mm = date.getMinutes().toString().padStart(2, '0');
+          onChange={(d) => {
+            const hh = d.getHours().toString().padStart(2, '0');
+            const mm = d.getMinutes().toString().padStart(2, '0');
             onTimeChange(`${hh}:${mm}`);
           }}
           height={150}
@@ -164,6 +244,33 @@ function SleepWakeCard({type, time, onTimeChange}: {
         />
       )}
     </>
+  );
+}
+
+/** Zustand selector로 isCompleted를 reactive하게 받는 wrapper */
+function SleepWakeCardConnected({
+  type,
+  time,
+  date,
+  onTimeChange,
+}: {
+  type: 'sleep' | 'wake';
+  time: string;
+  date: string;
+  initialCompleted?: boolean;
+  onTimeChange: (newTime: string) => void;
+}) {
+  const isCompleted = useSleepWakeCompletionStore(s => !!s.completions[`${date}:${type}`]);
+  const toggle = useSleepWakeCompletionStore(s => s.toggle);
+  return (
+    <SleepWakeCard
+      type={type}
+      time={time}
+      date={date}
+      isCompleted={isCompleted}
+      onTimeChange={onTimeChange}
+      onToggleCompletion={() => toggle(date, type)}
+    />
   );
 }
 
@@ -238,7 +345,13 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
 
   useFocusRefetch(useCallback(() => {
     fetchTodosForDate(selectedDate);
+    useSleepWakeCompletionStore.getState().fetchForDate(selectedDate);
   }, [selectedDate, fetchTodosForDate]));
+
+  // selectedDate 변경 시 sleep/wake 완료 상태 fetch
+  useEffect(() => {
+    useSleepWakeCompletionStore.getState().fetchForDate(selectedDate);
+  }, [selectedDate]);
 
   useEffect(() => {
     const todoIds = todos.map(t => t.id).filter(id => !id.startsWith('temp_'));
@@ -610,10 +723,14 @@ function DailyPlannerViewInner({menuItems, onMenuSelect}: DailyPlannerViewProps)
                 const time = type === 'sleep' ? sleepGoalTime : wakeGoalTime;
                 const setSleepGoalTime = useSleepStore.getState().setSleepGoalTime;
                 const setWakeGoalTime = useSleepStore.getState().setWakeGoalTime;
+                const swStore = useSleepWakeCompletionStore.getState();
+                const completed = swStore.isCompleted(selectedDate, type);
                 return (
-                  <SleepWakeCard
+                  <SleepWakeCardConnected
                     type={type}
                     time={time}
+                    date={selectedDate}
+                    initialCompleted={completed}
                     onTimeChange={(newTime) => {
                       if (type === 'sleep') setSleepGoalTime(newTime);
                       else setWakeGoalTime(newTime);
@@ -698,7 +815,7 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
     right: 20,
-    bottom: 100,
+    bottom: 75,
   },
   fab: {
     width: 56,

@@ -9,7 +9,7 @@ import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {NativeMenu} from '@/components/native';
-import {Link2, Link2Off, MoreHorizontal} from 'lucide-react-native';
+import {Link2, Link2Off, MoreHorizontal, Pin} from 'lucide-react-native';
 import {format} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import type {Note} from '@/stores/motivationStore';
@@ -28,6 +28,7 @@ interface TimelineMotivationCardProps {
 export function TimelineMotivationCard({
   note,
   isExpanded,
+  primaryColor,
   onToggle,
   onEdit,
   onPin,
@@ -50,9 +51,14 @@ export function TimelineMotivationCard({
         scaleValue={0.98}
         hapticType="light"
         style={styles.card}>
-        {/* 상단: 시간 + 메뉴 */}
+        {/* 상단: 시간 + 핀 표시 + 메뉴 */}
         <View style={styles.headerRow}>
           <Text style={styles.time}>{timeStr}</Text>
+          {note.is_banner_pinned && (
+            <View style={[styles.pinBadge, {backgroundColor: primaryColor}]}>
+              <Pin size={10} color="#FFFFFF" strokeWidth={2.5} />
+            </View>
+          )}
           {note.title && (
             <Text style={styles.title} numberOfLines={1}>{note.title}</Text>
           )}
@@ -136,6 +142,13 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  pinBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     fontSize: 14,

@@ -14,6 +14,11 @@ mac:
   target: [dmg, zip]
   icon: resources/icon.icns
   hardenedRuntime: true
+  extendInfo:
+    CFBundleURLTypes:
+      - CFBundleURLName: com.daystep.desktop.protocol
+        CFBundleURLSchemes:
+          - daystep
 win:
   target: [nsis]
   icon: resources/icon.ico

@@ -11,6 +11,7 @@ package com.daysteprn.form
 
 import android.content.Context
 import android.graphics.Color as AndroidColor
+import android.util.Log
 import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -102,14 +103,30 @@ class NativeMotivationJournalView(context: Context) : FrameLayout(context) {
     private val isOpenState = mutableStateOf(false)
 
     private var composeView: ComposeView? = null
-    private var composeAttached = false
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (!composeAttached) {
-            composeAttached = true
-            setupCompose()
+        Log.d("MotivJournal", "onAttachedToWindow isOpen=${isOpenState.value} hasView=${composeView != null}")
+        ensureComposeViewAttached()
+        bindComposeContent()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        Log.d("MotivJournal", "onDetachedFromWindow isOpen=${isOpenState.value}")
+        // 항상 dispose: 다시 attach될 때 fresh composition 보장
+        composeView?.disposeComposition()
+    }
+
+    private fun rebuildComposeView() {
+        Log.d("MotivJournal", "rebuildComposeView")
+        composeView?.let {
+            it.disposeComposition()
+            removeView(it)
         }
+        composeView = null
+        ensureComposeViewAttached()
+        bindComposeContent()
     }
 
     // ── Prop setters (Manager 가 호출) ──
@@ -160,32 +177,43 @@ class NativeMotivationJournalView(context: Context) : FrameLayout(context) {
     }
 
     fun setIsOpen(open: Boolean) {
-        isOpenState.value = open
+        Log.d("MotivJournal", "setIsOpen prev=${isOpenState.value} new=$open isAttached=$isAttachedToWindow")
+        // false → true 전환 시: stale composition / dialog 제거 위해 rebuild
+        if (open && !isOpenState.value && isAttachedToWindow) {
+            isOpenState.value = open
+            rebuildComposeView()
+        } else {
+            isOpenState.value = open
+        }
     }
 
-    private fun setupCompose() {
-        val cv = ComposeView(context).apply {
-            setContent {
-                MotivationJournalSheet(
-                    isOpen = isOpenState.value,
-                    mode = modeState.value,
-                    primaryColorHex = primaryColorState.value,
-                    prompt = promptState.value,
-                    note = noteState.value,
-                    linkedTodos = linkedTodosState.value,
-                    onSave = { title, content, isPinned ->
-                        onSaveCallback?.invoke(title, content, isPinned)
-                    },
-                    onPinToggle = { onPinToggleCallback?.invoke(it) },
-                    onDelete = { onDeleteCallback?.invoke() },
-                    onUnlinkTodo = { onUnlinkTodoCallback?.invoke(it) },
-                    onLinkTodoRequest = { onLinkTodoRequestCallback?.invoke() },
-                    onClose = { onCloseCallback?.invoke() },
-                )
-            }
+    private fun ensureComposeViewAttached() {
+        if (composeView == null) {
+            val cv = ComposeView(context)
+            composeView = cv
+            addView(cv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         }
-        composeView = cv
-        addView(cv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+
+    private fun bindComposeContent() {
+        composeView?.setContent {
+            MotivationJournalSheet(
+                isOpen = isOpenState.value,
+                mode = modeState.value,
+                primaryColorHex = primaryColorState.value,
+                prompt = promptState.value,
+                note = noteState.value,
+                linkedTodos = linkedTodosState.value,
+                onSave = { title, content, isPinned ->
+                    onSaveCallback?.invoke(title, content, isPinned)
+                },
+                onPinToggle = { onPinToggleCallback?.invoke(it) },
+                onDelete = { onDeleteCallback?.invoke() },
+                onUnlinkTodo = { onUnlinkTodoCallback?.invoke(it) },
+                onLinkTodoRequest = { onLinkTodoRequestCallback?.invoke() },
+                onClose = { onCloseCallback?.invoke() },
+            )
+        }
     }
 }
 
@@ -251,8 +279,10 @@ private fun MotivationJournalSheet(
     val canSave = content.trim().isNotEmpty()
 
     fun closeSheet() {
-        scope.launch { sheetState.hide() }
-        onClose()
+        scope.launch {
+            sheetState.hide()
+            onClose()
+        }
     }
 
     ModalBottomSheet(
@@ -330,7 +360,15 @@ private fun MotivationJournalSheet(
                         }
                     }
                     TextButton(
-                        onClick = { onSave(title.trim(), content.trim(), isPinned) },
+                        onClick = {
+                            val t = title.trim()
+                            val c = content.trim()
+                            val p = isPinned
+                            scope.launch {
+                                sheetState.hide()
+                                onSave(t, c, p)
+                            }
+                        },
                         enabled = canSave,
                     ) {
                         Text(

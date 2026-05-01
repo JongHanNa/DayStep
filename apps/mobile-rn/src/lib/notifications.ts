@@ -143,6 +143,10 @@ export async function scheduleTodoAlarm(
   const trigger: TimestampTrigger = {
     type: TriggerType.TIMESTAMP,
     timestamp: triggerTime.getTime(),
+    // Android: Doze 모드에서도 정확 발화 (setExactAndAllowWhileIdle)
+    alarmManager: {
+      allowWhileIdle: true,
+    },
   };
 
   await notifee.createTriggerNotification(

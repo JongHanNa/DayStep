@@ -87,4 +87,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     close: () => ipcRenderer.invoke('window:close'),
     isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
   },
+
+  // macOS Services 메뉴 → "Add to DayStep"
+  quickAdd: {
+    onPendingTodo: (callback: (data: { text: string; receivedAt: number }) => void) => {
+      ipcRenderer.on('quickAdd:pending', (_event, data) => callback(data));
+      return () => ipcRenderer.removeAllListeners('quickAdd:pending');
+    },
+  },
 });

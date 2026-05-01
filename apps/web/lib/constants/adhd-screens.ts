@@ -112,7 +112,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'motivation',
     label: '원동력 새기기',
     icon: Lightbulb,
-    shortDescription: '왜 해야 하는지 기록',
+    shortDescription: '내 삶의 원동력 기록',
     componentPath: 'screens/motivation/MotivationScreen',
     help: {
       title: '원동력 새기기',
@@ -125,7 +125,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'record',
     label: '관계 기록하기',
     icon: PenLine,
-    shortDescription: '소중한 만남과 대화 기록',
+    shortDescription: '사람들과 에너지 주고 받으며 성장하기',
     componentPath: 'screens/record/RecordScreen',
     help: {
       title: '관계 기록하기',

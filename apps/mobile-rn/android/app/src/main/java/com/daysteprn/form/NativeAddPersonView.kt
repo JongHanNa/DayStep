@@ -128,14 +128,30 @@ class NativeAddPersonView(context: Context) : FrameLayout(context) {
     private val defaultColorByKindState = mutableStateOf<Map<String, String>>(emptyMap())
     private val paletteState = mutableStateOf<List<String>>(emptyList())
     private val isOpenState = mutableStateOf(false)
-    private var composeAttached = false
+    private var composeView: ComposeView? = null
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (!composeAttached) {
-            composeAttached = true
-            setupCompose()
+        android.util.Log.d("AddPerson", "onAttachedToWindow isOpen=${isOpenState.value} hasView=${composeView != null}")
+        ensureComposeViewAttached()
+        bindComposeContent()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        android.util.Log.d("AddPerson", "onDetachedFromWindow isOpen=${isOpenState.value}")
+        composeView?.disposeComposition()
+    }
+
+    private fun rebuildComposeView() {
+        android.util.Log.d("AddPerson", "rebuildComposeView")
+        composeView?.let {
+            it.disposeComposition()
+            removeView(it)
         }
+        composeView = null
+        ensureComposeViewAttached()
+        bindComposeContent()
     }
 
     fun setMode(value: String) { modeState.value = value }
@@ -195,35 +211,48 @@ class NativeAddPersonView(context: Context) : FrameLayout(context) {
         } catch (e: Exception) { e.printStackTrace() }
     }
 
-    fun setIsOpen(value: Boolean) { isOpenState.value = value }
-
-    private fun setupCompose() {
-        val cv = ComposeView(context).apply {
-            setContent {
-                AddPersonSheet(
-                    isOpen = isOpenState.value,
-                    mode = modeState.value,
-                    primaryColorHex = primaryColorState.value,
-                    person = personState.value,
-                    relationships = relationshipsState.value,
-                    roles = rolesState.value,
-                    departments = departmentsState.value,
-                    selectedRel = selectedRelState,
-                    selectedRole = selectedRoleState,
-                    selectedDept = selectedDeptState,
-                    defaultColors = defaultColorByKindState.value,
-                    palette = paletteState.value,
-                    onSave = { n, nn, r, ro, d -> onSaveCallback?.invoke(n, nn, r, ro, d) },
-                    onDelete = { onDeleteCallback?.invoke() },
-                    onClose = { onCloseCallback?.invoke() },
-                    onCategoryAdd = { k, n, c -> onCategoryAddCallback?.invoke(k.key(), n, c) },
-                    onCategoryRename = { k, id, n -> onCategoryRenameCallback?.invoke(k.key(), id, n) },
-                    onCategoryRecolor = { k, id, c -> onCategoryRecolorCallback?.invoke(k.key(), id, c) },
-                    onCategoryDelete = { k, id -> onCategoryDeleteCallback?.invoke(k.key(), id) },
-                )
-            }
+    fun setIsOpen(value: Boolean) {
+        android.util.Log.d("AddPerson", "setIsOpen prev=${isOpenState.value} new=$value isAttached=$isAttachedToWindow")
+        if (value && !isOpenState.value && isAttachedToWindow) {
+            isOpenState.value = value
+            rebuildComposeView()
+        } else {
+            isOpenState.value = value
         }
-        addView(cv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+
+    private fun ensureComposeViewAttached() {
+        if (composeView == null) {
+            val cv = ComposeView(context)
+            composeView = cv
+            addView(cv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        }
+    }
+
+    private fun bindComposeContent() {
+        composeView?.setContent {
+            AddPersonSheet(
+                isOpen = isOpenState.value,
+                mode = modeState.value,
+                primaryColorHex = primaryColorState.value,
+                person = personState.value,
+                relationships = relationshipsState.value,
+                roles = rolesState.value,
+                departments = departmentsState.value,
+                selectedRel = selectedRelState,
+                selectedRole = selectedRoleState,
+                selectedDept = selectedDeptState,
+                defaultColors = defaultColorByKindState.value,
+                palette = paletteState.value,
+                onSave = { n, nn, r, ro, d -> onSaveCallback?.invoke(n, nn, r, ro, d) },
+                onDelete = { onDeleteCallback?.invoke() },
+                onClose = { onCloseCallback?.invoke() },
+                onCategoryAdd = { k, n, c -> onCategoryAddCallback?.invoke(k.key(), n, c) },
+                onCategoryRename = { k, id, n -> onCategoryRenameCallback?.invoke(k.key(), id, n) },
+                onCategoryRecolor = { k, id, c -> onCategoryRecolorCallback?.invoke(k.key(), id, c) },
+                onCategoryDelete = { k, id -> onCategoryDeleteCallback?.invoke(k.key(), id) },
+            )
+        }
     }
 }
 
@@ -266,8 +295,10 @@ private fun AddPersonSheet(
     val canSave = name.trim().isNotEmpty()
 
     fun closeSheet() {
-        scope.launch { sheetState.hide() }
-        onClose()
+        scope.launch {
+            sheetState.hide()
+            onClose()
+        }
     }
 
     fun toggleSelection(kind: CategoryKind, id: String) {
@@ -343,7 +374,13 @@ private fun AddPersonSheet(
                         text = "추가",
                         primary = primary,
                         enabled = canSave,
-                        onClick = { onSave(name.trim(), "", emptyList(), emptyList(), emptyList()) },
+                        onClick = {
+                            val n = name.trim()
+                            scope.launch {
+                                sheetState.hide()
+                                onSave(n, "", emptyList(), emptyList(), emptyList())
+                            }
+                        },
                     )
                 }
                 Spacer(Modifier.size(20.dp))
@@ -421,13 +458,15 @@ private fun AddPersonSheet(
                         primary = primary,
                         enabled = canSave,
                         onClick = {
-                            onSave(
-                                name.trim(),
-                                nickname.trim(),
-                                selectedRel.toList(),
-                                selectedRole.toList(),
-                                selectedDept.toList(),
-                            )
+                            val n = name.trim()
+                            val nn = nickname.trim()
+                            val r = selectedRel.toList()
+                            val ro = selectedRole.toList()
+                            val d = selectedDept.toList()
+                            scope.launch {
+                                sheetState.hide()
+                                onSave(n, nn, r, ro, d)
+                            }
                         },
                     )
                 }

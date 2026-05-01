@@ -7,6 +7,7 @@
 package com.daysteprn.form
 
 import android.content.Context
+import android.util.Log
 import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -127,14 +128,30 @@ class NativeProjectFormView(context: Context) : FrameLayout(context) {
     private val statusBadgeBgState = mutableStateOf("#F3F4F6")
     private val loadingTodosState = mutableStateOf(false)
     private val isOpenState = mutableStateOf(false)
-    private var composeAttached = false
+    private var composeView: ComposeView? = null
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (!composeAttached) {
-            composeAttached = true
-            setupCompose()
+        Log.d("ProjectForm", "onAttachedToWindow isOpen=${isOpenState.value} hasView=${composeView != null}")
+        ensureComposeViewAttached()
+        bindComposeContent()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        Log.d("ProjectForm", "onDetachedFromWindow isOpen=${isOpenState.value}")
+        composeView?.disposeComposition()
+    }
+
+    private fun rebuildComposeView() {
+        Log.d("ProjectForm", "rebuildComposeView")
+        composeView?.let {
+            it.disposeComposition()
+            removeView(it)
         }
+        composeView = null
+        ensureComposeViewAttached()
+        bindComposeContent()
     }
 
     fun setMode(value: String) { modeState.value = value }
@@ -203,32 +220,45 @@ class NativeProjectFormView(context: Context) : FrameLayout(context) {
     fun setStatusBadgeColor(value: String) { statusBadgeColorState.value = value }
     fun setStatusBadgeBg(value: String) { statusBadgeBgState.value = value }
     fun setLoadingTodos(value: Boolean) { loadingTodosState.value = value }
-    fun setIsOpen(value: Boolean) { isOpenState.value = value }
-
-    private fun setupCompose() {
-        val cv = ComposeView(context).apply {
-            setContent {
-                ProjectFormSheet(
-                    isOpen = isOpenState.value,
-                    mode = modeState.value,
-                    primaryColorHex = primaryColorState.value,
-                    project = projectState.value,
-                    linkedTodos = linkedTodosState.value,
-                    paletteColors = paletteColorsState.value,
-                    paletteIcons = paletteIconsState.value,
-                    statusMenuItems = statusMenuItemsState.value,
-                    statusLabel = statusLabelState.value,
-                    statusBadgeColor = statusBadgeColorState.value,
-                    statusBadgeBg = statusBadgeBgState.value,
-                    loadingTodos = loadingTodosState.value,
-                    onSave = { t, d, c, i -> onSaveCallback?.invoke(t, d, c, i) },
-                    onStatusChange = { onStatusChangeCallback?.invoke(it) },
-                    onUnlinkTodo = { onUnlinkTodoCallback?.invoke(it) },
-                    onClose = { onCloseCallback?.invoke() },
-                )
-            }
+    fun setIsOpen(value: Boolean) {
+        Log.d("ProjectForm", "setIsOpen prev=${isOpenState.value} new=$value isAttached=$isAttachedToWindow")
+        if (value && !isOpenState.value && isAttachedToWindow) {
+            isOpenState.value = value
+            rebuildComposeView()
+        } else {
+            isOpenState.value = value
         }
-        addView(cv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+
+    private fun ensureComposeViewAttached() {
+        if (composeView == null) {
+            val cv = ComposeView(context)
+            composeView = cv
+            addView(cv, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        }
+    }
+
+    private fun bindComposeContent() {
+        composeView?.setContent {
+            ProjectFormSheet(
+                isOpen = isOpenState.value,
+                mode = modeState.value,
+                primaryColorHex = primaryColorState.value,
+                project = projectState.value,
+                linkedTodos = linkedTodosState.value,
+                paletteColors = paletteColorsState.value,
+                paletteIcons = paletteIconsState.value,
+                statusMenuItems = statusMenuItemsState.value,
+                statusLabel = statusLabelState.value,
+                statusBadgeColor = statusBadgeColorState.value,
+                statusBadgeBg = statusBadgeBgState.value,
+                loadingTodos = loadingTodosState.value,
+                onSave = { t, d, c, i -> onSaveCallback?.invoke(t, d, c, i) },
+                onStatusChange = { onStatusChangeCallback?.invoke(it) },
+                onUnlinkTodo = { onUnlinkTodoCallback?.invoke(it) },
+                onClose = { onCloseCallback?.invoke() },
+            )
+        }
     }
 }
 
@@ -293,8 +323,10 @@ private fun ProjectFormSheet(
     val canSave = title.trim().isNotEmpty()
 
     fun closeSheet() {
-        scope.launch { sheetState.hide() }
-        onClose()
+        scope.launch {
+            sheetState.hide()
+            onClose()
+        }
     }
 
     ModalBottomSheet(
@@ -327,7 +359,16 @@ private fun ProjectFormSheet(
                     color = Color(0xFF1F2937),
                 )
                 TextButton(
-                    onClick = { onSave(title.trim(), description.trim(), color, icon) },
+                    onClick = {
+                        val t = title.trim()
+                        val d = description.trim()
+                        val c = color
+                        val i = icon
+                        scope.launch {
+                            sheetState.hide()
+                            onSave(t, d, c, i)
+                        }
+                    },
                     enabled = canSave,
                 ) {
                     Text(
