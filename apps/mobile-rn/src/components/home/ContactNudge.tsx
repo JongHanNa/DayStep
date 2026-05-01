@@ -93,7 +93,7 @@ export function ContactNudge({
       {/* 헤더 */}
       <View className="flex-row items-center mb-3">
         <Text className="text-lg font-semibold text-gray-800">
-          연락할 사람
+          관심 키우기
         </Text>
         {recommendations.length > 0 && (
           <View

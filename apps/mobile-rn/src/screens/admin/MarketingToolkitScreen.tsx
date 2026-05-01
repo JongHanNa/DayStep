@@ -236,7 +236,7 @@ const COMPETITORS: Competitor[] = [
   {item: '아이젠하워 매트릭스', generic: '일부', dayStep: '플래너에 내장'},
   {item: 'AI 계획 + Claude 연동', generic: '없음', dayStep: 'AI 대화형 할일 계획'},
   {item: '일일 리플렉션', generic: '없음', dayStep: '다짐/결단/회고/교훈'},
-  {item: '관계 기록', generic: '없음', dayStep: '소중한 사람 연락 리마인더'},
+  {item: '관심 키우기', generic: '없음', dayStep: '소중한 사람 연락 리마인더'},
   {item: 'ADHD 교육 콘텐츠', generic: '없음', dayStep: '3가지 학습 모드 (비주얼맵/아코디언/카드)'},
 ];
 

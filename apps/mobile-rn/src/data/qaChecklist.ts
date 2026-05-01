@@ -57,7 +57,7 @@ export const QA_SECTIONS: QASection[] = [
       {id: 'home-9', label: '프로젝트 → ProjectsScreen 진입 + 뒤로가기', isSmoke: true},
       {id: 'home-10', label: 'AI 채팅 → AIChatScreen 진입 + 뒤로가기', isSmoke: false},
       {id: 'home-11', label: '가이드 → GuideScreen 진입 + 뒤로가기', isSmoke: false},
-      {id: 'home-12', label: '관계 기록 → RecordScreen 진입 + 뒤로가기', isSmoke: false},
+      {id: 'home-12', label: '관심 키우기 → CareScreen 진입 + 뒤로가기', isSmoke: false},
       {id: 'home-13', label: '정리 도구 → CleanupScreen 진입 + 뒤로가기', isSmoke: false},
       {id: 'home-14', label: '수면 정원 → SleepGardenScreen 진입 + 뒤로가기', isSmoke: false},
       {id: 'home-15', label: 'ADHD 이해 → ADHDUnderstandingScreen 진입 + 뒤로가기', isSmoke: false},
@@ -198,7 +198,7 @@ export const QA_SECTIONS: QASection[] = [
   },
   {
     id: 'record',
-    title: '11. 관계 기록',
+    title: '11. 관심 키우기',
     items: [
       {id: 'rec-1', label: '인물 목록 표시', isSmoke: false},
       {id: 'rec-2', label: '새 인물 추가', isSmoke: false},

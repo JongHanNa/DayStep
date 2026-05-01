@@ -85,7 +85,7 @@ interface CherishedPeopleState {
   getGratitudeNotes: (userId: string, personId?: string) => Promise<NoteWithPerson[]>;
   getRecentNewsNotes: (userId: string, personId?: string) => Promise<NoteWithPerson[]>;
 
-  // 사람별 최근 기록 조회 (관계기록 통합 UI용)
+  // 사람별 최근 기록 조회 (관심 키우기 통합 UI용)
   getRecentNotesPerPerson: (userId: string) => Promise<Map<string, NoteWithPerson[]>>;
 
   // 통계 (신규)

@@ -5,14 +5,18 @@
  * iOS 26+: 네이티브 Liquid Glass morph (컴팩트 ↔ 확장 패널 인라인 전환)
  * iOS 25-: 기존 LinearGradient amber 카드 (passive, 탭 없음)
  */
-import React, {useState} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, StyleSheet, Pressable} from 'react-native';
 import Animated, {
+  FadeIn,
   FadeInDown,
+  FadeOut,
+  LinearTransition,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import {ChevronDown, ChevronUp} from 'lucide-react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import type {Note} from '@/stores/motivationStore';
 import {NativeMotivationCardNative, isIOS26Plus} from '@/components/native';
@@ -62,10 +66,37 @@ export function MotivationCard({note, enterDelay = 0}: MotivationCardProps) {
     );
   }
 
-  // iOS 25 이하: primaryColor 기반 카드 (passive)
+  // iOS 25 이하 + Android: primaryColor 기반 카드 + 탭으로 펼침/접힘
+  return (
+    <MotivationCardFallback
+      note={note}
+      primaryColor={primaryColor}
+      enterDelay={enterDelay}
+    />
+  );
+}
+
+interface FallbackProps {
+  note: Note | null;
+  primaryColor: string;
+  enterDelay: number;
+}
+
+function MotivationCardFallback({note, primaryColor, enterDelay}: FallbackProps) {
+  const [expanded, setExpanded] = useState(false);
+
+  // 회전(노트 prop 변경) 시 접힘으로 자동 리셋
+  useEffect(() => {
+    setExpanded(false);
+  }, [note?.id]);
+
+  const togglable = !!note?.content;
+
   return (
     <Animated.View entering={FadeInDown.delay(enterDelay).duration(400)}>
-      <View style={styles.card}>
+      <Animated.View
+        style={styles.card}
+        layout={LinearTransition.springify().damping(25).stiffness(247).mass(1)}>
         <LinearGradient
           colors={[
             hexWithOpacity(primaryColor, 0.08),
@@ -76,7 +107,11 @@ export function MotivationCard({note, enterDelay = 0}: MotivationCardProps) {
           end={{x: 1, y: 1}}
           style={StyleSheet.absoluteFillObject}
         />
-        <View style={styles.cardContent}>
+        <Pressable
+          onPress={() => {
+            if (togglable) setExpanded(prev => !prev);
+          }}
+          style={styles.cardContent}>
           <View className="flex-row items-center mb-3">
             <Text
               className="text-lg font-semibold"
@@ -85,7 +120,10 @@ export function MotivationCard({note, enterDelay = 0}: MotivationCardProps) {
             </Text>
           </View>
           {note ? (
-            <>
+            <Animated.View
+              key={note.id}
+              entering={FadeIn.duration(220)}
+              exiting={FadeOut.duration(140)}>
               {note.title && (
                 <Text
                   className="text-base font-medium mb-1"
@@ -95,10 +133,28 @@ export function MotivationCard({note, enterDelay = 0}: MotivationCardProps) {
               )}
               <Text
                 className="text-sm leading-5"
-                style={{color: hexWithOpacity(primaryColor, 0.8)}}>
+                style={{color: hexWithOpacity(primaryColor, 0.8)}}
+                numberOfLines={expanded ? undefined : 3}>
                 {note.content}
               </Text>
-            </>
+              {togglable && (
+                <View style={styles.toggleRow}>
+                  {expanded ? (
+                    <ChevronUp
+                      size={14}
+                      color={hexWithOpacity(primaryColor, 0.6)}
+                      strokeWidth={2}
+                    />
+                  ) : (
+                    <ChevronDown
+                      size={14}
+                      color={hexWithOpacity(primaryColor, 0.6)}
+                      strokeWidth={2}
+                    />
+                  )}
+                </View>
+              )}
+            </Animated.View>
           ) : (
             <Text
               className="text-sm"
@@ -107,8 +163,8 @@ export function MotivationCard({note, enterDelay = 0}: MotivationCardProps) {
               Notes에서 원동력을 기록해보세요.
             </Text>
           )}
-        </View>
-      </View>
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -120,5 +176,10 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     padding: 16,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 8,
   },
 });

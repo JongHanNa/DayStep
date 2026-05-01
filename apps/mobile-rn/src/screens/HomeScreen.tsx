@@ -1,7 +1,7 @@
 /**
  * Home Dashboard — SwipeablePages 리디자인
  * Page 0: 메인 허브 (인사 → 진행률 → 미션 → 3그룹 그리드)
- * Page 1: 영감 페이지 (원동력 → 연락할 사람 → 하루 한 줄)
+ * Page 1: 영감 페이지 (원동력 → 관심 키우기 → 하루 한 줄)
  */
 import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {Text, View, ScrollView, Dimensions} from 'react-native';
@@ -36,6 +36,7 @@ import {NativeProgressCardNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
 import {useTodoStore} from '@/stores/todoStore';
 import {useMotivationStore} from '@/stores/motivationStore';
+import {useRotatingNote} from '@/hooks/useRotatingNote';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useDailyCheckInStore} from '@/stores/dailyCheckInStore';
@@ -99,7 +100,7 @@ export default function HomeScreen() {
   const {primaryColor} = useTheme();
   const {todos, selectedDate, fetchTodosForDate} = useTodoStore();
   const user = useAuthStore(s => s.user);
-  const {notes, fetchMotivationNotes, getRandomMotivationNote} = useMotivationStore();
+  const {notes, fetchMotivationNotes} = useMotivationStore();
   const {recommendations, loadRecommendations} = useCherishedPeopleStore();
   const checkedCards = useDailyCheckInStore(s => s.checkedCards);
   const lastCheckDate = useDailyCheckInStore(s => s.lastCheckDate);
@@ -179,7 +180,12 @@ export default function HomeScreen() {
 
   const greeting = useMemo(() => getGreeting(), []);
   const today = format(new Date(), 'M월 d일 EEEE', {locale: ko});
-  const motivationNote = useMemo(() => getRandomMotivationNote(), [notes]);
+  // pinned 원동력이 있으면 그것만, 없으면 전체 노트 풀로 8초 간격 자동 회전
+  const motivationPool = useMemo(() => {
+    const pinned = notes.filter(n => n.is_banner_pinned === true);
+    return pinned.length > 0 ? pinned : notes;
+  }, [notes]);
+  const motivationNote = useRotatingNote(motivationPool, 8000);
 
   const completedCount = todos.filter(t => t.completed).length;
   const totalCount = todos.length;
@@ -275,11 +281,11 @@ export default function HomeScreen() {
       {
         id: 'record',
         icon: <PenLine size={20} color={primaryColor} />,
-        label: '관계 기록하기',
+        label: '관심 키우기',
         description: '소중한 만남과 대화 기록',
         iconBgColor: PRIMARY_BG,
         iconColor: primaryColor,
-        onPress: () => navigation.navigate('Record'),
+        onPress: () => navigation.navigate('Care'),
         unchecked: !checkedCards['record'],
       },
     ],
@@ -507,7 +513,7 @@ export default function HomeScreen() {
             <MotivationCard note={motivationNote} enterDelay={200} />
           </View>
 
-          {/* 3. 연락할 사람 */}
+          {/* 3. 관심 키우기 */}
           <Animated.View
             layout={LinearTransition.springify()
               .damping(25)
@@ -517,7 +523,7 @@ export default function HomeScreen() {
             <ContactNudge
               recommendations={recommendations}
               enterDelay={300}
-              onContactPress={(personName) => navigation.navigate('Record', {personName})}
+              onContactPress={(personName) => navigation.navigate('Care', {personName})}
             />
           </Animated.View>
         </ScrollView>

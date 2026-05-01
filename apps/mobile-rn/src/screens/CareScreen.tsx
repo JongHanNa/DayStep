@@ -1,5 +1,5 @@
 /**
- * Record Screen — 관계 기록하기 (통합 리디자인)
+ * Care Screen — 관심 키우기 (통합 리디자인)
  * 3단계 플로우: select-person → write-news → completed
  * Step 1: 사람 중심 카드 + 인라인 소식/감사 프리뷰
  */
@@ -43,12 +43,12 @@ import {
   MessageCircle,
 } from 'lucide-react-native';
 import {BottomSheetModal} from '@gorhom/bottom-sheet';
-import {RelationshipStatsModal} from '@/components/record/RelationshipStatsModal';
-import type {RelationshipStatsModalRef} from '@/components/record/RelationshipStatsModal';
-import {NotesTimelineModal} from '@/components/record/NotesTimelineModal';
-import type {NotesTimelineModalRef} from '@/components/record/NotesTimelineModal';
-import {AddPersonBottomSheet} from '@/components/record/AddPersonBottomSheet';
-import type {AddPersonBottomSheetRef} from '@/components/record/AddPersonBottomSheet';
+import {RelationshipStatsModal} from '@/components/care/RelationshipStatsModal';
+import type {RelationshipStatsModalRef} from '@/components/care/RelationshipStatsModal';
+import {NotesTimelineModal} from '@/components/care/NotesTimelineModal';
+import type {NotesTimelineModalRef} from '@/components/care/NotesTimelineModal';
+import {AddPersonBottomSheet} from '@/components/care/AddPersonBottomSheet';
+import type {AddPersonBottomSheetRef} from '@/components/care/AddPersonBottomSheet';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import type {CherishedPerson} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
@@ -458,7 +458,7 @@ const filterDropdownStyles = StyleSheet.create({
   },
 });
 
-export default function RecordScreen() {
+export default function CareScreen() {
   useDailyCheckIn('record');
   const route = useRoute<any>();
   const navigation = useNavigation();
@@ -591,7 +591,7 @@ export default function RecordScreen() {
         setPersonDepartmentMap(new Map());
       }
     } catch (err) {
-      console.error('[RecordScreen] Failed to load filter data:', err);
+      console.error('[CareScreen] Failed to load filter data:', err);
     }
   }, [user?.id]);
 
@@ -980,7 +980,7 @@ export default function RecordScreen() {
 
         <View className="flex-1 items-center">
           <Text className="text-lg font-bold text-gray-800">
-            관계 기록
+            관심 키우기
           </Text>
           <Text className="text-xs text-gray-400">
             {stats.totalPeople}명의 소중한 분
