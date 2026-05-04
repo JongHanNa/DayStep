@@ -15,6 +15,8 @@ RCT_EXTERN_METHOD(
 RCT_EXTERN_METHOD(
   setAuthForExtension:(NSString *)userId
   accessToken:(NSString *)accessToken
+  refreshToken:(NSString *)refreshToken
+  expiresAt:(nonnull NSNumber *)expiresAt
   supabaseUrl:(NSString *)supabaseUrl
   supabaseKey:(NSString *)supabaseKey
   withResolver:(RCTPromiseResolveBlock)resolve

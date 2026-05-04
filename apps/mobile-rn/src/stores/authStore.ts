@@ -66,6 +66,8 @@ function syncAuthToExtension(session: Session | null) {
   mod.setAuthForExtension(
     session.user.id,
     session.access_token,
+    session.refresh_token ?? '',
+    session.expires_at ?? 0,
     Config.SUPABASE_URL ?? '',
     Config.SUPABASE_ANON_KEY ?? '',
   ).catch(() => {});
