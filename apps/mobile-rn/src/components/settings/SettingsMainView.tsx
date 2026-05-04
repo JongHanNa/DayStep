@@ -51,6 +51,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const graceChecked = useSubscriptionStore(s => s.graceChecked);
   const freeProUntil = useSubscriptionStore(s => s.freeProUntil);
   const isFreeProActive = useSubscriptionStore(s => s.isFreeProActive);
+  const adminOverride = useSubscriptionStore(s => s.adminOverride);
   // 설정 화면 진입 시 grace period 재계산 + app_config 최신화
   useEffect(() => {
     useSubscriptionStore.getState().updateComputedStates();
@@ -361,13 +362,19 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
             <View style={styles.divider} />
             <View style={styles.adminSubRow}>
               <View style={{flex: 1}}>
-                <Text style={styles.adminSubTitle}>구독 상태 전환</Text>
+                <Text style={styles.adminSubTitle}>구독 상태 전환 (관리자 강제)</Text>
                 <Text style={styles.adminSubDesc}>
-                  {hasActiveSubscription ? 'Pro 구독 중' : 'Free'}
+                  {adminOverride
+                    ? 'ON — 관리자 강제 Pro'
+                    : isFreeProActive
+                      ? `OFF — 단, 무료 Pro 기간 활성으로 자동 Pro`
+                      : hasActiveSubscription
+                        ? 'OFF — 실제 구독으로 Pro'
+                        : 'OFF — Free'}
                 </Text>
               </View>
               <Switch
-                value={hasActiveSubscription}
+                value={adminOverride}
                 onValueChange={async (value) => {
                   if (!user?.id) return;
                   try {
@@ -432,10 +439,11 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                     // 3. MMKV에 직접 저장 — zustand persist hydration timing과 무관하게
                     //    다음 reload의 첫 렌더에서도 sync 읽기로 즉시 반영됨
                     mmkvStorage.set('admin_subscription_override', value);
-                    // Store 즉시 갱신 — adminOverride를 persist해서 reload 후에도 유지됨
+                    // Store 즉시 갱신 — adminOverride/subscriptionInfo만 직접 set,
+                    // hasActiveSubscription은 updateComputedStates()가 freeProUntil(전체 무료 Pro)
+                    // + grace period까지 고려해서 정확히 계산하도록 위임
                     useSubscriptionStore.setState({
                       adminOverride: value,
-                      hasActiveSubscription: value,
                       subscriptionInfo: value
                         ? {
                             id: 'admin-override',
@@ -457,6 +465,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                           }
                         : null,
                     });
+                    useSubscriptionStore.getState().updateComputedStates();
                   } catch (err) {
                     console.error('[Admin] subscription toggle error:', err);
                     Alert.alert('오류', '구독 상태 변경에 실패했습니다.');
@@ -604,7 +613,6 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                       .eq('user_id', user.id);
                     if (error) throw error;
                     useSubscriptionStore.setState({
-                      hasActiveSubscription: value,
                       subscriptionInfo: value
                         ? {
                             id: 'demo-override',
@@ -626,6 +634,8 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                           }
                         : null,
                     });
+                    // hasActiveSubscription은 freeProUntil/grace까지 고려해서 계산
+                    useSubscriptionStore.getState().updateComputedStates();
                   } catch (err) {
                     console.error('[Demo] subscription toggle error:', err);
                     Alert.alert('오류', '구독 상태 변경에 실패했습니다.');

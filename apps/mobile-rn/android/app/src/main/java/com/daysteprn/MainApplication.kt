@@ -4,6 +4,7 @@ import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
 
 import android.app.Application
+import com.daysteprn.actionsheet.ActionSheetPackage
 import com.daysteprn.animatedoffset.AnimatedOffsetPackage
 import com.daysteprn.appblocker.AppBlockerPackage
 import com.daysteprn.calendar.NativeDayTimeGridPackage
@@ -55,6 +56,7 @@ class MainApplication : Application(), ReactApplication {
           add(ShareIntentPackage())
           add(CallDetectorPackage())
           add(DayStepWidgetPackage())
+          add(ActionSheetPackage())
         },
     )
   }

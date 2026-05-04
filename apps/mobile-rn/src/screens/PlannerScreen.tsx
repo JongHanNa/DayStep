@@ -4,7 +4,8 @@
  * 뷰 전환 시 FadeIn/FadeOut 네이티브 모션 적용
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Modal, Platform, ActionSheetIOS, Alert} from 'react-native';
+import {View, Text, StyleSheet, Modal, Platform, ActionSheetIOS} from 'react-native';
+import {nativeActionSheet} from '@/lib/nativeActionSheet';
 import Animated, {FadeIn, FadeOut, useSharedValue, useAnimatedStyle, type SharedValue} from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {ScreenContainer, gradientPresets} from '@/components/core';
@@ -353,16 +354,16 @@ export default function PlannerScreen() {
             onSelect,
           );
         } else {
-          Alert.alert(
-            '반복 작업의 시간을 수정하고 있습니다',
-            '수정 범위를 확인해주세요',
-            options.map((label, i) => ({
-              text: label,
-              style: i === cancelButtonIndex ? ('cancel' as const) : undefined,
-              onPress: () => onSelect(i),
-            })),
-            {cancelable: false},
-          );
+          // Android: 네이티브 Material BottomSheetDialog (iOS ActionSheet과 동등 품질)
+          nativeActionSheet
+            .show({
+              title: '반복 작업의 시간을 수정하고 있습니다',
+              message: '수정 범위를 확인해주세요',
+              options,
+              cancelButtonIndex,
+            })
+            .then(onSelect)
+            .catch(() => onSelect(cancelButtonIndex));
         }
       };
       setTimeout(showSheet, 0);
