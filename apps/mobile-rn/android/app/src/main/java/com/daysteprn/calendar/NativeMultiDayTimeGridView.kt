@@ -128,9 +128,8 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
         private const val CENTER_INDEX = TOTAL_DAYS / 2
         private val WEEKDAYS_KR = arrayOf("일", "월", "화", "수", "목", "금", "토")
         private val DATE_FMT = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        private val ISO_OUT_FMT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("Asia/Seoul")
-        }
+        // ISO_OUT_FMT은 시스템 기본 시간대 사용 — 사용자 기기 TZ 오프셋(+09:00, -08:00 등)이 자동으로 출력됨
+        private val ISO_OUT_FMT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
 
         private fun todayStr(): String = DATE_FMT.format(Date())
 
@@ -549,26 +548,26 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
         return out
     }
 
-    /** ISO8601 또는 "HH:mm" 입력 → KST 기준 0..1439 분(없으면 -1) */
+    /** ISO8601 또는 "HH:mm" 입력 → 사용자 기기 시간대 기준 0..1439 분(없으면 -1) */
     private fun parseTimeToMinutes(time: String): Int {
         if (time.isEmpty()) return -1
-        // "HH:mm" 단순 형태 (시간대 없음 — 이미 KST 가정)
+        // "HH:mm" 단순 형태 (시간대 없음 — 이미 로컬 시간 가정)
         if (time.length <= 5 && !time.contains('T')) {
             return try {
                 val parts = time.split(":")
                 parts[0].toInt() * 60 + parts.getOrElse(1) { "0" }.toInt()
             } catch (_: Exception) { -1 }
         }
-        return parseIsoToKstMinutes(time, defaultIfFail = -1)
+        return parseIsoToLocalMinutes(time, defaultIfFail = -1)
     }
 
-    /** ISO8601 → KST 기준 0..1439 분. 실패 시 0 (이벤트 종일 폴백 등). */
+    /** ISO8601 → 사용자 기기 시간대 기준 0..1439 분. 실패 시 0. */
     private fun parseIsoToMinutes(iso: String): Int {
         if (iso.isEmpty()) return 0
-        return parseIsoToKstMinutes(iso, defaultIfFail = 0)
+        return parseIsoToLocalMinutes(iso, defaultIfFail = 0)
     }
 
-    private fun parseIsoToKstMinutes(iso: String, defaultIfFail: Int): Int {
+    private fun parseIsoToLocalMinutes(iso: String, defaultIfFail: Int): Int {
         val patterns = listOf(
             "yyyy-MM-dd'T'HH:mm:ssXXX",
             "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
@@ -578,20 +577,23 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
         for (pat in patterns) {
             try {
                 val fmt = SimpleDateFormat(pat, Locale.US)
+                // 'Z' 리터럴 패턴은 UTC로 파싱(SimpleDateFormat은 'Z' 자체를 시간대로 해석 못함)
                 if (pat.endsWith("'Z'")) fmt.timeZone = TimeZone.getTimeZone("UTC")
                 val parsed = fmt.parse(iso) ?: continue
-                val kstCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"))
-                kstCal.time = parsed
-                return kstCal.get(Calendar.HOUR_OF_DAY) * 60 + kstCal.get(Calendar.MINUTE)
+                // 시스템 기본 시간대로 변환 — 글로벌 출시 대응
+                val cal = Calendar.getInstance()
+                cal.time = parsed
+                return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
             } catch (_: Exception) {}
         }
         return defaultIfFail
     }
 
-    /** "yyyy-MM-dd" + minutes → ISO8601 with KST offset (+09:00) */
+    /** "yyyy-MM-dd" + minutes → ISO8601 with 사용자 기기 시간대 오프셋 */
     private fun minutesToIso(dateStr: String, minutes: Int): String {
         val safe = minutes.coerceIn(0, 24 * 60)
-        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"))
+        // 시스템 기본 시간대로 — 사용자가 보고 있는 그리드 시각이 그대로 저장됨
+        val cal = Calendar.getInstance()
         try { cal.time = DATE_FMT.parse(dateStr)!! } catch (_: Exception) {}
         cal.set(Calendar.HOUR_OF_DAY, safe / 60)
         cal.set(Calendar.MINUTE, safe % 60)

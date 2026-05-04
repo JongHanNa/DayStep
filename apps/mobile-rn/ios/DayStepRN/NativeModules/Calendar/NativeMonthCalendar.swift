@@ -54,11 +54,9 @@ enum DetailItem: Identifiable {
     f.formatOptions = [.withInternetDateTime]
     return f
   }()
-  private static let kstCalendar: Calendar = {
-    var cal = Calendar(identifier: .gregorian)
-    cal.timeZone = TimeZone(identifier: "Asia/Seoul")!
-    return cal
-  }()
+  // 사용자 기기의 시스템 시간대를 따름 (글로벌 출시 대응).
+  // 변수명은 호환을 위해 유지하지만 더 이상 KST 고정이 아님.
+  private static let kstCalendar: Calendar = Calendar.current
 
   static func parseISO(_ str: String) -> Date? {
     isoFrac.date(from: str) ?? isoBasic.date(from: str)
@@ -544,7 +542,7 @@ struct MonthCalendarContent: View {
     if let date = isoFormatter.date(from: timeStr) ?? isoFormatterBasic.date(from: timeStr) {
       let df = DateFormatter()
       df.locale = Locale(identifier: "ko_KR")
-      df.timeZone = TimeZone(identifier: "Asia/Seoul")
+      // df.timeZone 미지정 → 시스템 기본 시간대 사용 (글로벌 출시 대응)
       df.dateFormat = "a h:mm"
       return df.string(from: date)
     }
@@ -573,7 +571,7 @@ struct MonthCalendarContent: View {
     guard let date = isoFormatter.date(from: isoStr) ?? isoFormatterBasic.date(from: isoStr) else { return nil }
     let df = DateFormatter()
     df.locale = Locale(identifier: "ko_KR")
-    df.timeZone = TimeZone(identifier: "Asia/Seoul")
+    // df.timeZone 미지정 → 시스템 기본 시간대 사용 (글로벌 출시 대응)
     df.dateFormat = "M/d"
     return df.string(from: date)
   }

@@ -605,21 +605,22 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
         if (iso.isNullOrEmpty()) return null
         return try {
             val parsed = parseIsoDate(iso) ?: return null
-            val kstCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"))
-            kstCal.time = parsed
+            // 시스템 기본 시간대 — 사용자 기기 TZ 기준으로 날짜·시각 계산
+            val cal = Calendar.getInstance()
+            cal.time = parsed
             val isoDateStr = String.format(
                 Locale.US, "%04d-%02d-%02d",
-                kstCal.get(Calendar.YEAR), kstCal.get(Calendar.MONTH) + 1, kstCal.get(Calendar.DAY_OF_MONTH)
+                cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)
             )
             val timePart = String.format(
                 Locale.US, "%02d:%02d",
-                kstCal.get(Calendar.HOUR_OF_DAY), kstCal.get(Calendar.MINUTE)
+                cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)
             )
             if (isoDateStr == dateStr) {
                 timePart
             } else {
-                val mm = kstCal.get(Calendar.MONTH) + 1
-                val dd = kstCal.get(Calendar.DAY_OF_MONTH)
+                val mm = cal.get(Calendar.MONTH) + 1
+                val dd = cal.get(Calendar.DAY_OF_MONTH)
                 "${mm}/${dd} $timePart"
             }
         } catch (_: Exception) { null }
