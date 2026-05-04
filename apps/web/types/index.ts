@@ -525,6 +525,8 @@ export interface DailyReflection {
   thought_archive: string;
   today_lesson: string;
   today_resolution: string;
+  current_period: string;
+  today_prayer: string;
   created_at: string;
   updated_at: string;
 }

@@ -49,6 +49,20 @@ class NativeDayTimeGridManager : SimpleViewManager<NativeDayTimeGridView>() {
             )
         }
 
+        view.onTodoEditCb = { id, startIso, endIso ->
+            val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
+            dispatcher?.dispatchEvent(
+                SimpleEvent(
+                    UIManagerHelper.getSurfaceId(context), view.id, "topTodoEdit",
+                    Arguments.createMap().apply {
+                        putString("id", id)
+                        putString("start_time", startIso)
+                        putString("end_time", endIso)
+                    }
+                )
+            )
+        }
+
         return view
     }
 
@@ -77,5 +91,6 @@ class NativeDayTimeGridManager : SimpleViewManager<NativeDayTimeGridView>() {
             "topDateSelect" to mapOf("registrationName" to "onDateSelect"),
             "topTodoPress" to mapOf("registrationName" to "onTodoPress"),
             "topHeightChange" to mapOf("registrationName" to "onHeightChange"),
+            "topTodoEdit" to mapOf("registrationName" to "onTodoEdit"),
         )
 }

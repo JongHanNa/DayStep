@@ -132,19 +132,16 @@ class NativeAddPersonView(context: Context) : FrameLayout(context) {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        android.util.Log.d("AddPerson", "onAttachedToWindow isOpen=${isOpenState.value} hasView=${composeView != null}")
         ensureComposeViewAttached()
         bindComposeContent()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        android.util.Log.d("AddPerson", "onDetachedFromWindow isOpen=${isOpenState.value}")
         composeView?.disposeComposition()
     }
 
     private fun rebuildComposeView() {
-        android.util.Log.d("AddPerson", "rebuildComposeView")
         composeView?.let {
             it.disposeComposition()
             removeView(it)
@@ -212,7 +209,6 @@ class NativeAddPersonView(context: Context) : FrameLayout(context) {
     }
 
     fun setIsOpen(value: Boolean) {
-        android.util.Log.d("AddPerson", "setIsOpen prev=${isOpenState.value} new=$value isAttached=$isAttachedToWindow")
         if (value && !isOpenState.value && isAttachedToWindow) {
             isOpenState.value = value
             rebuildComposeView()

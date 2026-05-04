@@ -62,6 +62,21 @@ class NativeMultiDayTimeGridManager : SimpleViewManager<NativeMultiDayTimeGridVi
             )
         }
 
+        view.onTodoEditCb = { id, startIso, endIso, originalDate ->
+            val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, view.id)
+            dispatcher?.dispatchEvent(
+                SimpleEvent(
+                    UIManagerHelper.getSurfaceId(context), view.id, "topTodoEdit",
+                    Arguments.createMap().apply {
+                        putString("id", id)
+                        putString("start_time", startIso)
+                        putString("end_time", endIso)
+                        if (originalDate != null) putString("original_date", originalDate)
+                    }
+                )
+            )
+        }
+
         return view
     }
 
@@ -96,5 +111,6 @@ class NativeMultiDayTimeGridManager : SimpleViewManager<NativeMultiDayTimeGridVi
             "topTodoPress" to mapOf("registrationName" to "onTodoPress"),
             "topDateRangeChange" to mapOf("registrationName" to "onDateRangeChange"),
             "topHeightChange" to mapOf("registrationName" to "onHeightChange"),
+            "topTodoEdit" to mapOf("registrationName" to "onTodoEdit"),
         )
 }

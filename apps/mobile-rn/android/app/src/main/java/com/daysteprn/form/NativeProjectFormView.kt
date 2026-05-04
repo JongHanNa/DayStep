@@ -7,7 +7,6 @@
 package com.daysteprn.form
 
 import android.content.Context
-import android.util.Log
 import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -132,19 +131,16 @@ class NativeProjectFormView(context: Context) : FrameLayout(context) {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        Log.d("ProjectForm", "onAttachedToWindow isOpen=${isOpenState.value} hasView=${composeView != null}")
         ensureComposeViewAttached()
         bindComposeContent()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        Log.d("ProjectForm", "onDetachedFromWindow isOpen=${isOpenState.value}")
         composeView?.disposeComposition()
     }
 
     private fun rebuildComposeView() {
-        Log.d("ProjectForm", "rebuildComposeView")
         composeView?.let {
             it.disposeComposition()
             removeView(it)
@@ -221,7 +217,6 @@ class NativeProjectFormView(context: Context) : FrameLayout(context) {
     fun setStatusBadgeBg(value: String) { statusBadgeBgState.value = value }
     fun setLoadingTodos(value: Boolean) { loadingTodosState.value = value }
     fun setIsOpen(value: Boolean) {
-        Log.d("ProjectForm", "setIsOpen prev=${isOpenState.value} new=$value isAttached=$isAttachedToWindow")
         if (value && !isOpenState.value && isAttachedToWindow) {
             isOpenState.value = value
             rebuildComposeView()

@@ -2,7 +2,11 @@
  * NativeMultiDayTimeGrid — Android Jetpack Compose 멀티데이 시간 그리드
  * 주간(7일)/3일 뷰를 네이티브 Compose로 구현
  *
- * 구조: 고정 시간 컬럼(좌측) + 스크롤 가능한 날짜 헤더(상단) + 2D 스크롤 콘텐츠
+ * 구조: 고정 시간 컬럼(좌측) + 가로 LazyRow(연속 스크롤)
+ *  - LazyRow의 각 아이템은 1일 컬럼이며 [헤더(44dp) + 24h 그리드]를 모두 포함
+ *  - 모든 컬럼이 동일한 verticalScrollState를 공유 → 세로 스크롤 동기화
+ *  - 가로 스크롤 정착 시 onDateRangeChange 발화
+ *  - TimeBlock long-press + drag → 시각 변경 → onTodoEdit 발화
  */
 package com.daysteprn.calendar
 
@@ -12,6 +16,9 @@ import android.widget.FrameLayout
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -22,13 +29,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,6 +50,7 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     var onTodoPressCb: ((String) -> Unit)? = null
     var onDateRangeChangeCb: ((String, String) -> Unit)? = null
     var onHeightChangeCb: ((Double) -> Unit)? = null
+    var onTodoEditCb: ((String, String, String, String?) -> Unit)? = null
 
     private var composeView = ComposeView(context)
     private var contentSet = false
@@ -47,10 +59,6 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     private var primaryColorHex = mutableStateOf("#6366F1")
     private var todoDataJson = mutableStateOf("{}")
     private var eventDataJson = mutableStateOf("{}")
-
-    init {
-        // ComposeView는 onAttachedToWindow에서 추가 (window recomposer 필요)
-    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -114,12 +122,31 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     companion object {
         private val HOUR_HEIGHT = 50.dp
         private val TIME_COLUMN_WIDTH = 40.dp
-        private val HEADER_HEIGHT = 52.dp
+        private val HEADER_HEIGHT = 44.dp                  // V1: iOS와 동일 44dp
+        private val GRID_LINE_COLOR = Color(0xFFE5E7EB)    // V4: iOS와 동일
+        private const val TOTAL_DAYS = 731                 // ±1년
+        private const val CENTER_INDEX = TOTAL_DAYS / 2
         private val WEEKDAYS_KR = arrayOf("일", "월", "화", "수", "목", "금", "토")
+        private val DATE_FMT = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        private val ISO_OUT_FMT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Seoul")
+        }
 
-        private fun todayStr(): String {
-            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            return sdf.format(Date())
+        private fun todayStr(): String = DATE_FMT.format(Date())
+
+        private fun parseDateOrToday(s: String): Date = try {
+            DATE_FMT.parse(s) ?: Date()
+        } catch (_: Exception) { Date() }
+
+        private fun daysBetween(from: Date, to: Date): Int {
+            val msPerDay = 24L * 60 * 60 * 1000
+            val diff = to.time - from.time
+            return Math.round(diff.toFloat() / msPerDay.toFloat())
+        }
+
+        private fun addDays(from: Date, n: Int): Date {
+            val cal = Calendar.getInstance(); cal.time = from; cal.add(Calendar.DAY_OF_MONTH, n)
+            return cal.time
         }
     }
 
@@ -144,165 +171,106 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
         val eventJson = eventDataJson.value
         val today = todayStr()
 
-        // 날짜 범위 계산
-        val dates = remember(center, days) { buildDateRange(center, days) }
-
-        // 데이터 파싱
-        val blocksByDate = remember(todoJson, eventJson, dates) {
-            parseDateBlocks(todoJson, eventJson, dates, primary)
-        }
-
+        // 모든 LazyRow 아이템에서 공유할 세로 스크롤 상태
         val verticalScrollState = rememberScrollState()
 
-        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
-            // ─── Day headers ───
-            Row(modifier = Modifier.fillMaxWidth().height(HEADER_HEIGHT)) {
-                // 시간 컬럼 코너
-                Box(modifier = Modifier.width(TIME_COLUMN_WIDTH).fillMaxHeight())
-                // 날짜 헤더들
-                dates.forEach { dateStr ->
-                    val cal = parseDateCal(dateStr)
-                    val dayOfWeek = WEEKDAYS_KR[cal.get(Calendar.DAY_OF_WEEK) - 1]
-                    val dayNum = cal.get(Calendar.DAY_OF_MONTH)
-                    val isToday = dateStr == today
-                    val isSunday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
-                    val isSaturday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY
+        // 기준일: 컴포지션 진입 시점의 centerDate를 기준으로 ±TOTAL_DAYS/2 범위
+        val baseDate = remember { addDays(parseDateOrToday(center), -CENTER_INDEX) }
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clickable { onDateSelectCallback?.invoke(dateStr) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = dayOfWeek,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = when {
-                                    isToday -> primary
-                                    isSunday -> Color(0xFFEF4444)
-                                    isSaturday -> Color(0xFF3B82F6)
-                                    else -> Color(0xFF9CA3AF)
-                                }
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .then(
-                                        if (isToday) Modifier.background(primary, CircleShape)
-                                        else Modifier
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = dayNum.toString(),
-                                    fontSize = if (days <= 3) 15.sp else 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = if (isToday) Color.White else Color(0xFF1F2937)
-                                )
-                            }
-                        }
-                    }
-                }
+        // centerDate prop → 인덱스 변환 (창의 첫 컬럼이 보이게 하려면 dayCount/2만큼 빼야 함)
+        fun firstIndexFor(centerStr: String): Int {
+            val centerD = parseDateOrToday(centerStr)
+            val centerIdx = daysBetween(baseDate, centerD)
+            return (centerIdx - days / 2).coerceIn(0, TOTAL_DAYS - days)
+        }
+
+        val initialFirst = remember(days) { firstIndexFor(center) }
+        val horizontalState = rememberLazyListState(initialFirstVisibleItemIndex = initialFirst)
+
+        // 외부 centerDate 변경 → 내부 스크롤 동기화 (사용자가 만들어낸 내부 상태와 일치하면 무시)
+        var lastEmittedFirstIdx by remember { mutableIntStateOf(-1) }
+        LaunchedEffect(center, days) {
+            val target = firstIndexFor(center)
+            if (target != horizontalState.firstVisibleItemIndex) {
+                horizontalState.scrollToItem(target)
             }
+        }
 
-            // ─── 구분선 ───
-            Box(modifier = Modifier.fillMaxWidth().height(0.5.dp).background(Color(0xFFE5E7EB)))
-
-            // ─── Time grid ───
-            Row(modifier = Modifier.fillMaxSize()) {
-                // 시간 라벨 컬럼 (고정, 세로 스크롤 동기화)
-                Column(
-                    modifier = Modifier
-                        .width(TIME_COLUMN_WIDTH)
-                        .verticalScroll(verticalScrollState)
-                ) {
-                    for (h in 0..23) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(HOUR_HEIGHT),
-                            contentAlignment = Alignment.TopEnd
-                        ) {
-                            Text(
-                                text = String.format("%02d", h),
-                                fontSize = 11.sp,
-                                color = Color(0xFF9CA3AF),
-                                modifier = Modifier.padding(end = 6.dp)
-                            )
-                        }
+        // 가로 스크롤 정착 시 onDateRangeChange 발화
+        LaunchedEffect(horizontalState, days) {
+            snapshotFlow { horizontalState.isScrollInProgress to horizontalState.firstVisibleItemIndex }
+                .distinctUntilChanged()
+                .drop(1)
+                .collect { (scrolling, firstIdx) ->
+                    if (!scrolling && firstIdx != lastEmittedFirstIdx) {
+                        lastEmittedFirstIdx = firstIdx
+                        val startD = addDays(baseDate, firstIdx)
+                        val endD = addDays(baseDate, firstIdx + days - 1)
+                        onDateRangeChangeCb?.invoke(DATE_FMT.format(startD), DATE_FMT.format(endD))
                     }
                 }
+        }
 
-                // 콘텐츠 그리드 (세로 스크롤)
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(verticalScrollState)
-                ) {
-                    dates.forEach { dateStr ->
-                        val blocks = blocksByDate[dateStr] ?: emptyList()
-                        val isToday = dateStr == today
+        // 데이터 파싱은 가시 범위만 처리하면 좋지만, JSON이 이미 dateStr 키로 분리되어 있어 lazy 파싱
+        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val totalWidth = maxWidth
+                val gridWidth = totalWidth - TIME_COLUMN_WIDTH
+                val columnWidth = gridWidth / days
 
-                        Box(
+                // ─── 본체: 시간 컬럼 + 가로 LazyRow ───
+                Row(modifier = Modifier.fillMaxSize()) {
+
+                    // 좌측 시간 컬럼 (헤더 영역만큼 빈 공간 + 시간 라벨, 세로 스크롤 동기화)
+                    Column(
+                        modifier = Modifier
+                            .width(TIME_COLUMN_WIDTH)
+                            .fillMaxHeight()
+                    ) {
+                        Spacer(modifier = Modifier.height(HEADER_HEIGHT))
+                        Box(modifier = Modifier.fillMaxWidth().height(0.5.dp).background(GRID_LINE_COLOR))
+                        Column(
                             modifier = Modifier
-                                .weight(1f)
-                                .height(HOUR_HEIGHT * 24)
-                                .drawBehind {
-                                    // 시간 그리드 라인
-                                    for (h in 0..24) {
-                                        val y = (HOUR_HEIGHT * h).toPx()
-                                        drawLine(
-                                            color = Color(0xFFF3F4F6),
-                                            start = Offset(0f, y),
-                                            end = Offset(size.width, y),
-                                            strokeWidth = 0.5f
-                                        )
-                                    }
-                                    // 왼쪽 구분선
-                                    drawLine(
-                                        color = Color(0xFFF3F4F6),
-                                        start = Offset(0f, 0f),
-                                        end = Offset(0f, size.height),
-                                        strokeWidth = 0.5f
-                                    )
-                                    // 현재 시간 인디케이터
-                                    if (isToday) {
-                                        val now = Calendar.getInstance()
-                                        val min = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
-                                        val y = (min.toFloat() / 60f) * HOUR_HEIGHT.toPx()
-                                        drawCircle(
-                                            color = Color(0xFFEF4444),
-                                            radius = 4f,
-                                            center = Offset(0f, y)
-                                        )
-                                        drawLine(
-                                            color = Color(0xFFEF4444),
-                                            start = Offset(0f, y),
-                                            end = Offset(size.width, y),
-                                            strokeWidth = 1.5f
-                                        )
-                                    }
-                                }
+                                .fillMaxSize()
+                                .verticalScroll(verticalScrollState)
                         ) {
-                            // 이벤트/할일 블록 렌더링
-                            blocks.forEach { block ->
-                                if (block.startMinutes >= 0) {
-                                    val topOffset = (block.startMinutes.toFloat() / 60f) * HOUR_HEIGHT.value
-                                    val duration = (block.endMinutes - block.startMinutes).coerceAtLeast(20)
-                                    val blockHeight = (duration.toFloat() / 60f) * HOUR_HEIGHT.value
-
-                                    TimeBlock(
-                                        block = block,
-                                        topOffset = topOffset.dp,
-                                        blockHeight = blockHeight.dp,
-                                        compact = days > 3
+                            for (h in 0..23) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(HOUR_HEIGHT),
+                                    contentAlignment = Alignment.TopEnd
+                                ) {
+                                    Text(
+                                        text = String.format("%02d:00", h),  // V2: HH:mm
+                                        fontSize = 10.sp,
+                                        color = Color(0xFF9CA3AF),
+                                        modifier = Modifier.padding(end = 4.dp)
                                     )
                                 }
                             }
+                        }
+                    }
+
+                    // 우측 LazyRow — 각 아이템이 [날짜 헤더 + 24h 그리드]를 모두 포함
+                    LazyRow(
+                        state = horizontalState,
+                        modifier = Modifier.fillMaxHeight()
+                    ) {
+                        items(
+                            count = TOTAL_DAYS,
+                            key = { idx -> idx }
+                        ) { idx ->
+                            DayColumn(
+                                dateStr = DATE_FMT.format(addDays(baseDate, idx)),
+                                today = today,
+                                primary = primary,
+                                days = days,
+                                columnWidth = columnWidth,
+                                todoJson = todoJson,
+                                eventJson = eventJson,
+                                verticalScrollState = verticalScrollState
+                            )
                         }
                     }
                 }
@@ -311,20 +279,184 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     }
 
     @Composable
-    private fun TimeBlock(block: TimeBlockItem, topOffset: Dp, blockHeight: Dp, compact: Boolean) {
+    private fun DayColumn(
+        dateStr: String,
+        today: String,
+        primary: Color,
+        days: Int,
+        columnWidth: Dp,
+        todoJson: String,
+        eventJson: String,
+        verticalScrollState: ScrollState
+    ) {
+        val cal = parseDateCal(dateStr)
+        val dayOfWeek = WEEKDAYS_KR[cal.get(Calendar.DAY_OF_WEEK) - 1]
+        val dayNum = cal.get(Calendar.DAY_OF_MONTH)
+        val isToday = dateStr == today
+        val isSunday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
+        val isSaturday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY
+
+        val blocks = remember(todoJson, eventJson, dateStr, primary) {
+            parseDateBlocks(todoJson, eventJson, dateStr, primary)
+        }
+
+        Column(modifier = Modifier.width(columnWidth)) {
+            // ─── 날짜 헤더 ───
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(HEADER_HEIGHT)
+                    .clickable { onDateSelectCallback?.invoke(dateStr) },
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = dayOfWeek,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = when {
+                            isToday -> primary
+                            isSunday -> Color(0xFFEF4444)
+                            isSaturday -> Color(0xFF3B82F6)
+                            else -> Color(0xFF9CA3AF)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(1.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .then(
+                                if (isToday) Modifier.background(primary, CircleShape)
+                                else Modifier
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = dayNum.toString(),
+                            fontSize = if (days <= 3) 14.sp else 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (isToday) Color.White else Color(0xFF1F2937)
+                        )
+                    }
+                }
+            }
+            Box(modifier = Modifier.fillMaxWidth().height(0.5.dp).background(GRID_LINE_COLOR))
+
+            // ─── 그리드 본문 (세로 스크롤은 시간 컬럼과 공유) ───
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(verticalScrollState)
+                    .height(HOUR_HEIGHT * 24)
+                    .drawBehind {
+                        for (h in 0..24) {
+                            val y = (HOUR_HEIGHT * h).toPx()
+                            drawLine(
+                                color = GRID_LINE_COLOR,
+                                start = Offset(0f, y),
+                                end = Offset(size.width, y),
+                                strokeWidth = 0.5f
+                            )
+                        }
+                        drawLine(
+                            color = GRID_LINE_COLOR,
+                            start = Offset(0f, 0f),
+                            end = Offset(0f, size.height),
+                            strokeWidth = 0.5f
+                        )
+                        if (isToday) {
+                            val now = Calendar.getInstance()
+                            val min = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+                            val y = (min.toFloat() / 60f) * HOUR_HEIGHT.toPx()
+                            drawCircle(
+                                color = Color(0xFFEF4444),
+                                radius = 6f,
+                                center = Offset(0f, y)
+                            )
+                            drawLine(
+                                color = Color(0xFFEF4444),
+                                start = Offset(0f, y),
+                                end = Offset(size.width, y),
+                                strokeWidth = 1.5f
+                            )
+                        }
+                    }
+            ) {
+                blocks.forEach { block ->
+                    if (block.startMinutes >= 0) {
+                        TimeBlock(
+                            block = block,
+                            dateStr = dateStr,
+                            compact = days > 3
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun TimeBlock(
+        block: TimeBlockItem,
+        dateStr: String,
+        compact: Boolean
+    ) {
+        // F2: long-press + drag → 시간 변경 → onTodoEdit 발화 (todo 전용)
+        var dragDeltaMinutes by remember(block.id, dateStr) { mutableIntStateOf(0) }
+        var rawDragPx by remember(block.id, dateStr) { mutableFloatStateOf(0f) }
+        val pxPerMin = with(LocalDensity.current) { HOUR_HEIGHT.toPx() / 60f }
+
+        val baseTopMin = block.startMinutes
+        val durationMin = (block.endMinutes - block.startMinutes).coerceAtLeast(20)
+
+        val displayedStart = (baseTopMin + dragDeltaMinutes).coerceIn(0, 24 * 60 - durationMin)
+        val topOffset = (displayedStart.toFloat() / 60f) * HOUR_HEIGHT.value
+        val blockHeight = (durationMin.toFloat() / 60f) * HOUR_HEIGHT.value
+
+        val dragModifier = if (block.type == "todo") {
+            Modifier.pointerInput(block.id, dateStr, baseTopMin, durationMin) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { rawDragPx = 0f; dragDeltaMinutes = 0 },
+                    onDragEnd = {
+                        val finalDelta = dragDeltaMinutes
+                        if (finalDelta != 0) {
+                            val newStart = (baseTopMin + finalDelta).coerceIn(0, 24 * 60 - durationMin)
+                            val newEnd = (newStart + durationMin).coerceAtMost(24 * 60)
+                            val startIso = minutesToIso(dateStr, newStart)
+                            val endIso = minutesToIso(dateStr, newEnd)
+                            onTodoEditCb?.invoke(block.id, startIso, endIso, dateStr)
+                        }
+                        rawDragPx = 0f
+                        dragDeltaMinutes = 0
+                    },
+                    onDragCancel = {
+                        rawDragPx = 0f
+                        dragDeltaMinutes = 0
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        rawDragPx += dragAmount.y
+                        val rawMin = (rawDragPx / pxPerMin).toInt()
+                        // 15분 단위 스냅
+                        dragDeltaMinutes = (rawMin / 15) * 15
+                    }
+                )
+            }
+        } else Modifier
+
         Box(
             modifier = Modifier
-                .offset(y = topOffset)
+                .offset(y = topOffset.dp)
                 .fillMaxWidth()
                 .padding(horizontal = 1.dp)
-                .height(blockHeight.coerceAtLeast(18.dp))
+                .height(blockHeight.dp.coerceAtLeast(24.dp))   // V5: 최소 24dp
                 .clip(RoundedCornerShape(3.dp))
-                .background(block.color.copy(alpha = 0.15f))
-                .clickable {
-                    if (block.type == "todo") onTodoPressCb?.invoke(block.id)
+                .background(block.color.copy(alpha = if (dragDeltaMinutes != 0) 0.30f else 0.15f))
+                .then(dragModifier)
+                .clickable(enabled = block.type == "todo") {
+                    onTodoPressCb?.invoke(block.id)
                 }
         ) {
-            // 좌측 색상 바
             Box(
                 modifier = Modifier
                     .width(3.dp)
@@ -336,7 +468,7 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
                 fontSize = if (compact) 9.sp else 11.sp,
                 fontWeight = FontWeight.Medium,
                 color = block.color,
-                maxLines = if (blockHeight < 30.dp) 1 else 2,
+                maxLines = if (blockHeight < 30) 1 else 2,
                 overflow = TextOverflow.Ellipsis,
                 textDecoration = if (block.completed) TextDecoration.LineThrough else TextDecoration.None,
                 modifier = Modifier.padding(start = 5.dp, top = 1.dp, end = 2.dp)
@@ -345,39 +477,24 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     }
 
     // ─── Helpers ───
-    private fun buildDateRange(center: String, count: Int): List<String> {
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val cal = Calendar.getInstance()
-        try { cal.time = sdf.parse(center)!! } catch (_: Exception) {}
-        cal.add(Calendar.DAY_OF_MONTH, -(count / 2))
-        return (0 until count).map {
-            val d = sdf.format(cal.time)
-            cal.add(Calendar.DAY_OF_MONTH, 1)
-            d
-        }
-    }
-
     private fun parseDateCal(dateStr: String): Calendar {
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
         val cal = Calendar.getInstance()
-        try { cal.time = sdf.parse(dateStr)!! } catch (_: Exception) {}
+        try { cal.time = DATE_FMT.parse(dateStr)!! } catch (_: Exception) {}
         return cal
     }
 
+    /** 단일 날짜의 todo + event 블록 파싱 (lazy: 보이는 컬럼에서만 호출) */
     private fun parseDateBlocks(
         todoJson: String,
         eventJson: String,
-        dates: List<String>,
+        dateStr: String,
         primary: Color
-    ): Map<String, List<TimeBlockItem>> {
-        val result = mutableMapOf<String, MutableList<TimeBlockItem>>()
-        dates.forEach { result[it] = mutableListOf() }
+    ): List<TimeBlockItem> {
+        val out = mutableListOf<TimeBlockItem>()
 
-        // Parse todos (Record<string, array>)
         try {
             val obj = JSONObject(todoJson)
-            for (dateStr in dates) {
-                if (!obj.has(dateStr)) continue
+            if (obj.has(dateStr)) {
                 val arr = obj.getJSONArray(dateStr)
                 for (i in 0 until arr.length()) {
                     val t = arr.getJSONObject(i)
@@ -385,8 +502,7 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
                     val endTime = t.optString("end_time", "")
                     val startMin = parseTimeToMinutes(startTime)
                     val endMin = if (endTime.isNotEmpty()) parseTimeToMinutes(endTime) else (startMin + 30).coerceAtMost(1440)
-
-                    result[dateStr]?.add(
+                    out.add(
                         TimeBlockItem(
                             id = t.optString("id"),
                             title = t.optString("title"),
@@ -401,25 +517,21 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
             }
         } catch (_: Exception) {}
 
-        // Parse events (Record<string, array>)
         try {
             val obj = JSONObject(eventJson)
-            for (dateStr in dates) {
-                if (!obj.has(dateStr)) continue
+            if (obj.has(dateStr)) {
                 val arr = obj.getJSONArray(dateStr)
                 for (i in 0 until arr.length()) {
                     val e = arr.getJSONObject(i)
                     val isAllDay = e.optBoolean("isAllDay", false)
                     val startStr = e.optString("start", "")
                     val endStr = e.optString("end", "")
-
                     val startMin = if (isAllDay) -1 else parseIsoToMinutes(startStr)
                     val endMin = if (isAllDay) -1 else {
                         val em = parseIsoToMinutes(endStr)
                         if (em > startMin) em else (startMin + 60).coerceAtMost(1440)
                     }
-
-                    result[dateStr]?.add(
+                    out.add(
                         TimeBlockItem(
                             id = e.optString("id"),
                             title = e.optString("title"),
@@ -434,20 +546,18 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
             }
         } catch (_: Exception) {}
 
-        return result
+        return out
     }
 
     private fun parseTimeToMinutes(time: String): Int {
         if (time.isEmpty()) return -1
         return try {
-            // ISO 8601: "2026-04-03T14:30:00+09:00" → extract "HH:mm" after 'T'
             val tIdx = time.indexOf('T')
             if (tIdx >= 0) {
-                val timePart = time.substring(tIdx + 1).take(5) // "HH:mm"
+                val timePart = time.substring(tIdx + 1).take(5)
                 val parts = timePart.split(":")
                 parts[0].toInt() * 60 + parts[1].toInt()
             } else {
-                // Plain "HH:mm" format
                 val parts = time.split(":")
                 parts[0].toInt() * 60 + parts.getOrElse(1) { "0" }.toInt()
             }
@@ -457,16 +567,25 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
     private fun parseIsoToMinutes(iso: String): Int {
         if (iso.isEmpty()) return 0
         return try {
-            // Try ISO 8601: "2026-04-02T14:30:00+09:00" or "2026-04-02T14:30:00Z"
             val tIdx = iso.indexOf('T')
             if (tIdx >= 0) {
-                val timePart = iso.substring(tIdx + 1).take(5) // "HH:mm"
+                val timePart = iso.substring(tIdx + 1).take(5)
                 val parts = timePart.split(":")
                 parts[0].toInt() * 60 + parts[1].toInt()
-            } else {
-                0
-            }
+            } else 0
         } catch (_: Exception) { 0 }
+    }
+
+    /** "yyyy-MM-dd" + minutes → ISO8601 with KST offset (+09:00) */
+    private fun minutesToIso(dateStr: String, minutes: Int): String {
+        val safe = minutes.coerceIn(0, 24 * 60)
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"))
+        try { cal.time = DATE_FMT.parse(dateStr)!! } catch (_: Exception) {}
+        cal.set(Calendar.HOUR_OF_DAY, safe / 60)
+        cal.set(Calendar.MINUTE, safe % 60)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return ISO_OUT_FMT.format(cal.time)
     }
 
     private fun parseColor(hex: String): Color {

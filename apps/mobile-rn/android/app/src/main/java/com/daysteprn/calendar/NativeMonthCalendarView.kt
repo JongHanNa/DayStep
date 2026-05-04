@@ -12,6 +12,9 @@ import android.widget.FrameLayout
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -38,7 +41,8 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
 
     private var composeView = ComposeView(context)
     private var contentSet = false
-    private var selectedDateState = mutableStateOf(todayStr())
+    // V6: iOS와 동일하게 초기 미선택 — 외부에서 setSelectedDate로 명시 지정 시에만 선택
+    private var selectedDateState = mutableStateOf("")
     private var primaryColorHex = mutableStateOf("#6366F1")
     private var monthDataJson = mutableStateOf("{}")
     private var eventDataJson = mutableStateOf("{}")
@@ -132,7 +136,8 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
             "${displayedMonth.first}년 ${displayedMonth.second}월"
         }
 
-        val scrollState = rememberScrollState()
+        // F5: 선택된 주가 보이도록 자동 스크롤하기 위해 LazyListState 사용
+        val lazyState = rememberLazyListState()
 
         Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
             // ─── Header: 월 네비게이션 ───
@@ -144,6 +149,8 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
                 Box(
                     modifier = Modifier.size(32.dp).clickable {
                         displayedMonth = navigateMonth(displayedMonth, -1)
+                        // V6: 월 변경 시 선택 해제 (iOS와 동일)
+                        selectedDateState.value = ""
                         onMonthChangeCb?.invoke(displayedMonth.first, displayedMonth.second)
                     },
                     contentAlignment = Alignment.Center
@@ -163,6 +170,8 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
                 Box(
                     modifier = Modifier.size(32.dp).clickable {
                         displayedMonth = navigateMonth(displayedMonth, 1)
+                        // V6: 월 변경 시 선택 해제
+                        selectedDateState.value = ""
                         onMonthChangeCb?.invoke(displayedMonth.first, displayedMonth.second)
                     },
                     contentAlignment = Alignment.Center
@@ -208,115 +217,133 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
             Spacer(modifier = Modifier.height(4.dp))
 
             // ─── Calendar Grid ───
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-            ) {
-                val hasSelection = selectedDate.isNotEmpty() &&
-                    weekRows.any { row -> row.any { it.dateStr == selectedDate } }
-                val rowHeight = if (hasSelection) 68 else 80 // dp
+            val hasSelection = selectedDate.isNotEmpty() &&
+                weekRows.any { row -> row.any { it.dateStr == selectedDate } }
+            val selectedWeekIdx = weekRows.indexOfFirst { row -> row.any { it.dateStr == selectedDate } }
 
-                weekRows.forEach { weekCells ->
-                    // 주 행
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(rowHeight.dp).padding(horizontal = 4.dp)
-                    ) {
-                        weekCells.forEach { cell ->
-                            val isToday = cell.dateStr == today
-                            val isSelected = cell.dateStr == selectedDate
-                            val todos = todoMap[cell.dateStr] ?: emptyList()
-                            val events = eventMap[cell.dateStr] ?: emptyList()
-                            val allCount = todos.size + events.size
+            // F5: 선택 변경 시 자동 스크롤
+            LaunchedEffect(selectedDate, selectedWeekIdx, displayedMonth) {
+                if (selectedWeekIdx >= 0) {
+                    lazyState.animateScrollToItem(selectedWeekIdx)
+                }
+            }
 
-                            // 동적 칩 슬롯 계산
-                            val chipHeight = 14
-                            val availableForChips = rowHeight - 36
-                            val maxChips = (availableForChips / chipHeight).coerceAtLeast(2)
-                            val eventSlots = events.size.coerceAtMost(maxChips)
-                            val todoSlots = todos.size.coerceAtMost(maxChips - eventSlots)
-                            val shown = eventSlots + todoSlots
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                // V7: 선택 없을 시 부모 높이 / 주 개수로 동적 분배 (iOS와 동일), 선택 시 68dp
+                val rowHeight: androidx.compose.ui.unit.Dp = if (hasSelection) {
+                    68.dp
+                } else {
+                    (maxHeight / weekRows.size.coerceAtLeast(1))
+                }
 
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .clickable {
-                                        if (selectedDateState.value == cell.dateStr) {
-                                            selectedDateState.value = ""
-                                        } else {
-                                            selectedDateState.value = cell.dateStr
-                                        }
-                                        onDateSelectCb?.invoke(cell.dateStr)
-                                    },
-                                contentAlignment = Alignment.TopCenter
+                LazyColumn(
+                    state = lazyState,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(weekRows.size, key = { it }) { weekIdx ->
+                        val weekCells = weekRows[weekIdx]
+                        Column {
+                            // 주 행
+                            Row(
+                                modifier = Modifier.fillMaxWidth().height(rowHeight).padding(horizontal = 4.dp)
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(vertical = 2.dp)
-                                ) {
-                                    // 날짜 숫자
+                                weekCells.forEach { cell ->
+                                    val isToday = cell.dateStr == today
+                                    val isSelected = cell.dateStr == selectedDate
+                                    val todos = todoMap[cell.dateStr] ?: emptyList()
+                                    val events = eventMap[cell.dateStr] ?: emptyList()
+                                    val allCount = todos.size + events.size
+
+                                    // 동적 칩 슬롯 계산
+                                    val chipHeight = 14
+                                    val availableForChips = rowHeight.value.toInt() - 36
+                                    val maxChips = (availableForChips / chipHeight).coerceAtLeast(2)
+                                    val eventSlots = events.size.coerceAtMost(maxChips)
+                                    val todoSlots = todos.size.coerceAtMost(maxChips - eventSlots)
+                                    val shown = eventSlots + todoSlots
+
                                     Box(
                                         modifier = Modifier
-                                            .size(28.dp)
-                                            .then(
-                                                when {
-                                                    isToday -> Modifier.background(primary, CircleShape)
-                                                    isSelected -> Modifier.background(primary.copy(alpha = 0.15f), CircleShape)
-                                                    else -> Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                            .clickable {
+                                                if (selectedDateState.value == cell.dateStr) {
+                                                    selectedDateState.value = ""
+                                                } else {
+                                                    selectedDateState.value = cell.dateStr
                                                 }
-                                            ),
-                                        contentAlignment = Alignment.Center
+                                                onDateSelectCb?.invoke(cell.dateStr)
+                                            },
+                                        contentAlignment = Alignment.TopCenter
                                     ) {
-                                        Text(
-                                            text = cell.day.toString(),
-                                            fontSize = 14.sp,
-                                            fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-                                            color = when {
-                                                isToday -> Color.White
-                                                !cell.isCurrentMonth -> Color(0xFFD1D5DB)
-                                                isSelected -> primary
-                                                cell.weekdayIndex == 0 -> Color(0xFFEF4444)
-                                                cell.weekdayIndex == 6 -> Color(0xFF3B82F6)
-                                                else -> Color(0xFF1F2937)
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.padding(vertical = 2.dp)
+                                        ) {
+                                            // 날짜 숫자
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .then(
+                                                        when {
+                                                            isToday -> Modifier.background(primary, CircleShape)
+                                                            isSelected -> Modifier.background(primary.copy(alpha = 0.15f), CircleShape)
+                                                            else -> Modifier
+                                                        }
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = cell.day.toString(),
+                                                    fontSize = 14.sp,
+                                                    fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                    color = when {
+                                                        isToday -> Color.White
+                                                        !cell.isCurrentMonth -> Color(0xFFD1D5DB)
+                                                        isSelected -> primary
+                                                        cell.weekdayIndex == 0 -> Color(0xFFEF4444)
+                                                        cell.weekdayIndex == 6 -> Color(0xFF3B82F6)
+                                                        else -> Color(0xFF1F2937)
+                                                    }
+                                                )
                                             }
-                                        )
-                                    }
 
-                                    Spacer(modifier = Modifier.height(2.dp))
+                                            Spacer(modifier = Modifier.height(2.dp))
 
-                                    // 이벤트 칩
-                                    events.take(eventSlots).forEach { event ->
-                                        ChipView(title = event.title, color = parseColor(event.color))
-                                    }
+                                            // 이벤트 칩
+                                            events.take(eventSlots).forEach { event ->
+                                                ChipView(title = event.title, color = parseColor(event.color))
+                                            }
 
-                                    // 할일 칩
-                                    todos.take(todoSlots).forEach { todo ->
-                                        ChipView(title = todo.title, color = parseColor(todo.color.ifEmpty { "#6366F1" }))
-                                    }
+                                            // 할일 칩
+                                            todos.take(todoSlots).forEach { todo ->
+                                                ChipView(title = todo.title, color = parseColor(todo.color.ifEmpty { "#6366F1" }))
+                                            }
 
-                                    // overflow
-                                    if (allCount > shown && shown > 0) {
-                                        Text(
-                                            text = "+${allCount - shown}",
-                                            fontSize = 8.sp,
-                                            color = Color(0xFF9CA3AF)
-                                        )
+                                            // overflow
+                                            if (allCount > shown && shown > 0) {
+                                                Text(
+                                                    text = "+${allCount - shown}",
+                                                    fontSize = 8.sp,
+                                                    color = Color(0xFF9CA3AF)
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    // 인라인 상세 패널
-                    val selectedInThisWeek = weekCells.find { it.dateStr == selectedDate }
-                    if (selectedInThisWeek != null) {
-                        DetailPanel(
-                            dateStr = selectedDate,
-                            todos = todoMap[selectedDate] ?: emptyList(),
-                            events = eventMap[selectedDate] ?: emptyList(),
-                            primary = primary
-                        )
+                            // 인라인 상세 패널
+                            val selectedInThisWeek = weekCells.find { it.dateStr == selectedDate }
+                            if (selectedInThisWeek != null) {
+                                DetailPanel(
+                                    dateStr = selectedDate,
+                                    todos = todoMap[selectedDate] ?: emptyList(),
+                                    events = eventMap[selectedDate] ?: emptyList(),
+                                    primary = primary
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -395,7 +422,7 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
                             modifier = Modifier.weight(1f)
                         )
                         Text(
-                            text = if (event.isAllDay) "종일" else formatEventTimeRange(event.start, event.end),
+                            text = if (event.isAllDay) "종일" else formatEventTimeRange(dateStr, event.start, event.end),
                             fontSize = 12.sp,
                             color = Color(0xFF9CA3AF)
                         )
@@ -426,7 +453,7 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
                             modifier = Modifier.weight(1f)
                         )
                         Text(
-                            text = formatTodoTime(todo),
+                            text = formatTodoTime(dateStr, todo),
                             fontSize = 12.sp,
                             color = Color(0xFF9CA3AF)
                         )
@@ -555,17 +582,18 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
         return result
     }
 
-    private fun formatEventTimeRange(start: String?, end: String?): String {
-        val s = formatIsoTime(start)
-        val e = formatIsoTime(end)
+    /** F3: ISO8601 시각을 KST 기준으로 파싱 → dateStr과 다른 날이면 "MM/dd HH:mm" 형식으로 prefix */
+    private fun formatEventTimeRange(dateStr: String, start: String?, end: String?): String {
+        val s = formatIsoForDate(dateStr, start)
+        val e = formatIsoForDate(dateStr, end)
         return if (s != null && e != null) "$s - $e"
         else s ?: e ?: ""
     }
 
-    private fun formatTodoTime(todo: TodoChip): String {
+    private fun formatTodoTime(dateStr: String, todo: TodoChip): String {
         if (todo.scheduleType == "anytime") return "언제든지"
-        val s = formatIsoTime(todo.startTime)
-        val e = formatIsoTime(todo.endTime)
+        val s = formatIsoForDate(dateStr, todo.startTime)
+        val e = formatIsoForDate(dateStr, todo.endTime)
         return when {
             s != null && e != null -> "$s - $e"
             s != null -> s
@@ -573,13 +601,46 @@ class NativeMonthCalendarView(context: Context) : FrameLayout(context) {
         }
     }
 
-    private fun formatIsoTime(iso: String?): String? {
+    private fun formatIsoForDate(dateStr: String, iso: String?): String? {
         if (iso.isNullOrEmpty()) return null
         return try {
-            val tIdx = iso.indexOf('T')
-            if (tIdx >= 0) iso.substring(tIdx + 1).take(5) // "HH:mm"
-            else null
+            val parsed = parseIsoDate(iso) ?: return null
+            val kstCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"))
+            kstCal.time = parsed
+            val isoDateStr = String.format(
+                Locale.US, "%04d-%02d-%02d",
+                kstCal.get(Calendar.YEAR), kstCal.get(Calendar.MONTH) + 1, kstCal.get(Calendar.DAY_OF_MONTH)
+            )
+            val timePart = String.format(
+                Locale.US, "%02d:%02d",
+                kstCal.get(Calendar.HOUR_OF_DAY), kstCal.get(Calendar.MINUTE)
+            )
+            if (isoDateStr == dateStr) {
+                timePart
+            } else {
+                val mm = kstCal.get(Calendar.MONTH) + 1
+                val dd = kstCal.get(Calendar.DAY_OF_MONTH)
+                "${mm}/${dd} $timePart"
+            }
         } catch (_: Exception) { null }
+    }
+
+    private fun parseIsoDate(iso: String): Date? {
+        val patterns = listOf(
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        )
+        for (pat in patterns) {
+            try {
+                val fmt = SimpleDateFormat(pat, Locale.US)
+                if (pat.endsWith("'Z'")) fmt.timeZone = TimeZone.getTimeZone("UTC")
+                val parsed = fmt.parse(iso)
+                if (parsed != null) return parsed
+            } catch (_: Exception) {}
+        }
+        return null
     }
 
     private fun parseColor(hex: String): Color {

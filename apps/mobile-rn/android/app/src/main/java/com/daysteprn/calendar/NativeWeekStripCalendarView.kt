@@ -399,22 +399,39 @@ class NativeWeekStripCalendarView(context: ThemedReactContext) : FrameLayout(con
         day: LocalDate, isSelected: Boolean, isToday: Boolean, isCurrentMonth: Boolean,
         primaryColor: Color, onTap: () -> Unit, modifier: Modifier,
     ) {
-        val bgColor by animateColorAsState(if (isSelected) primaryColor else Color.Transparent, tween(200), "dayBg")
+        // V8: iOS와 동일한 시각 — today는 원형 primary 배경, selected는 15% 알파 배경, today가 selected보다 우선
+        val targetBg = when {
+            isToday -> primaryColor
+            isSelected -> primaryColor.copy(alpha = 0.15f)
+            else -> Color.Transparent
+        }
+        val bgColor by animateColorAsState(targetBg, tween(200), "dayBg")
         val isSunday = day.dayOfWeek.value == 7
         val isSaturday = day.dayOfWeek.value == 6
         val textColor = when {
-            isSelected -> Color.White; !isCurrentMonth -> Color(0xFFD1D5DB); isToday -> primaryColor
-            isSunday -> Color(0xFFEF4444); isSaturday -> Color(0xFF3B82F6); else -> Color(0xFF374151)
+            isToday -> Color.White
+            isSelected -> primaryColor
+            !isCurrentMonth -> Color(0xFFD1D5DB)
+            isSunday -> Color(0xFFEF4444)
+            isSaturday -> Color(0xFF3B82F6)
+            else -> Color(0xFF374151)
         }
         Box(
             modifier.clip(RoundedCornerShape(12.dp)).clickable(remember { MutableInteractionSource() }, null) { onTap() }.padding(horizontal = 2.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.size(40.dp, CELL_HEIGHT).clip(RoundedCornerShape(12.dp)).background(bgColor), verticalArrangement = Arrangement.Center) {
-                Text(day.dayOfMonth.toString(), fontSize = 15.sp, fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Medium, color = textColor, textAlign = TextAlign.Center)
-            }
-            if (isToday && !isSelected) {
-                Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp).size(4.dp).background(primaryColor, CircleShape))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.size(34.dp, 34.dp).clip(CircleShape).background(bgColor),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    day.dayOfMonth.toString(),
+                    fontSize = 15.sp,
+                    fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Medium,
+                    color = textColor,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

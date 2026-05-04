@@ -11,7 +11,6 @@ package com.daysteprn.form
 
 import android.content.Context
 import android.graphics.Color as AndroidColor
-import android.util.Log
 import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -106,20 +105,17 @@ class NativeMotivationJournalView(context: Context) : FrameLayout(context) {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        Log.d("MotivJournal", "onAttachedToWindow isOpen=${isOpenState.value} hasView=${composeView != null}")
         ensureComposeViewAttached()
         bindComposeContent()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        Log.d("MotivJournal", "onDetachedFromWindow isOpen=${isOpenState.value}")
-        // 항상 dispose: 다시 attach될 때 fresh composition 보장
+        // 다시 attach될 때 fresh composition 보장
         composeView?.disposeComposition()
     }
 
     private fun rebuildComposeView() {
-        Log.d("MotivJournal", "rebuildComposeView")
         composeView?.let {
             it.disposeComposition()
             removeView(it)
@@ -177,7 +173,6 @@ class NativeMotivationJournalView(context: Context) : FrameLayout(context) {
     }
 
     fun setIsOpen(open: Boolean) {
-        Log.d("MotivJournal", "setIsOpen prev=${isOpenState.value} new=$open isAttached=$isAttachedToWindow")
         // false → true 전환 시: stale composition / dialog 제거 위해 rebuild
         if (open && !isOpenState.value && isAttachedToWindow) {
             isOpenState.value = open

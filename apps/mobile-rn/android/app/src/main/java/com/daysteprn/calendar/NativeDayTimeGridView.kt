@@ -10,6 +10,7 @@ import android.content.Context
 import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +22,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,6 +40,7 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     var onDateSelectCb: ((String) -> Unit)? = null
     var onTodoPressCb: ((String) -> Unit)? = null
     var onHeightChangeCb: ((Double) -> Unit)? = null
+    var onTodoEditCb: ((String, String, String) -> Unit)? = null
 
     private var composeView = ComposeView(context)
     private var contentSet = false
@@ -110,11 +114,12 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     companion object {
         private val HOUR_HEIGHT = 60.dp
         private val TIME_COLUMN_WIDTH = 50.dp
-
-        private fun todayStr(): String {
-            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            return sdf.format(Date())
+        private val DATE_FMT = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        private val ISO_OUT_FMT = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("Asia/Seoul")
         }
+
+        private fun todayStr(): String = DATE_FMT.format(Date())
     }
 
     data class TimeBlock(
@@ -207,14 +212,14 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
                                     strokeWidth = 0.5f
                                 )
                             }
-                            // 현재 시간 인디케이터
+                            // 현재 시간 인디케이터 — V3: iOS와 동일하게 8pt 원
                             if (isToday) {
                                 val now = Calendar.getInstance()
                                 val min = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
                                 val y = (min.toFloat() / 60f) * HOUR_HEIGHT.toPx()
                                 drawCircle(
                                     color = Color(0xFFEF4444),
-                                    radius = 5f,
+                                    radius = 8f,
                                     center = Offset(0f, y)
                                 )
                                 drawLine(
@@ -226,29 +231,19 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
                             }
                         }
                 ) {
-                    // 할일 블록 (좌측)
+                    // 할일 블록 (좌측, long-press drag로 시간 변경 가능)
                     timedBlocks.filter { it.type == "todo" }.forEach { block ->
-                        val topOffset = (block.startMinutes.toFloat() / 60f) * HOUR_HEIGHT.value
-                        val duration = (block.endMinutes - block.startMinutes).coerceAtLeast(20)
-                        val blockHeight = (duration.toFloat() / 60f) * HOUR_HEIGHT.value
-
                         TimedBlockItem(
                             block = block,
-                            topOffset = topOffset.dp,
-                            blockHeight = blockHeight.dp,
+                            dateStr = date,
                             isLeftAligned = true
                         )
                     }
-                    // 이벤트 블록 (우측 오프셋)
+                    // 이벤트 블록 (우측 오프셋, drag 불가)
                     timedBlocks.filter { it.type == "event" }.forEach { block ->
-                        val topOffset = (block.startMinutes.toFloat() / 60f) * HOUR_HEIGHT.value
-                        val duration = (block.endMinutes - block.startMinutes).coerceAtLeast(20)
-                        val blockHeight = (duration.toFloat() / 60f) * HOUR_HEIGHT.value
-
                         TimedBlockItem(
                             block = block,
-                            topOffset = topOffset.dp,
-                            blockHeight = blockHeight.dp,
+                            dateStr = date,
                             isLeftAligned = false
                         )
                     }
@@ -306,15 +301,56 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
     @Composable
     private fun TimedBlockItem(
         block: TimeBlock,
-        topOffset: Dp,
-        blockHeight: Dp,
+        dateStr: String,
         isLeftAligned: Boolean
     ) {
+        // F2: long-press + drag → 시간 변경 → onTodoEdit 발화 (todo 전용)
+        var dragDeltaMinutes by remember(block.id, dateStr) { mutableIntStateOf(0) }
+        var rawDragPx by remember(block.id, dateStr) { mutableFloatStateOf(0f) }
+        val pxPerMin = with(LocalDensity.current) { HOUR_HEIGHT.toPx() / 60f }
+
+        val baseTopMin = block.startMinutes
+        val durationMin = (block.endMinutes - block.startMinutes).coerceAtLeast(20)
+
+        val displayedStart = (baseTopMin + dragDeltaMinutes).coerceIn(0, 24 * 60 - durationMin)
+        val topOffset = ((displayedStart.toFloat() / 60f) * HOUR_HEIGHT.value).dp
+        val blockHeight = ((durationMin.toFloat() / 60f) * HOUR_HEIGHT.value).dp
+
         val horizontalPadding = if (isLeftAligned) {
             PaddingValues(start = 2.dp, end = 48.dp)
         } else {
             PaddingValues(start = 48.dp, end = 2.dp)
         }
+
+        val dragModifier = if (block.type == "todo") {
+            Modifier.pointerInput(block.id, dateStr, baseTopMin, durationMin) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = { rawDragPx = 0f; dragDeltaMinutes = 0 },
+                    onDragEnd = {
+                        val finalDelta = dragDeltaMinutes
+                        if (finalDelta != 0) {
+                            val newStart = (baseTopMin + finalDelta).coerceIn(0, 24 * 60 - durationMin)
+                            val newEnd = (newStart + durationMin).coerceAtMost(24 * 60)
+                            val startIso = minutesToIso(dateStr, newStart)
+                            val endIso = minutesToIso(dateStr, newEnd)
+                            onTodoEditCb?.invoke(block.id, startIso, endIso)
+                        }
+                        rawDragPx = 0f
+                        dragDeltaMinutes = 0
+                    },
+                    onDragCancel = {
+                        rawDragPx = 0f
+                        dragDeltaMinutes = 0
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        rawDragPx += dragAmount.y
+                        val rawMin = (rawDragPx / pxPerMin).toInt()
+                        dragDeltaMinutes = (rawMin / 15) * 15
+                    }
+                )
+            }
+        } else Modifier
 
         Box(
             modifier = Modifier
@@ -323,14 +359,14 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
                 .padding(horizontalPadding)
                 .height(blockHeight.coerceAtLeast(24.dp))
                 .clip(RoundedCornerShape(4.dp))
-                .background(block.color.copy(alpha = 0.12f))
+                .background(block.color.copy(alpha = if (dragDeltaMinutes != 0) 0.30f else 0.12f))
                 .border(0.5.dp, block.color.copy(alpha = 0.25f), RoundedCornerShape(4.dp))
+                .then(dragModifier)
                 .clickable {
                     if (block.type == "todo") onTodoPressCb?.invoke(block.id)
                 }
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
-                // 좌측 색상 바
                 Box(
                     modifier = Modifier
                         .width(3.dp)
@@ -354,6 +390,18 @@ class NativeDayTimeGridView(context: Context) : FrameLayout(context) {
                 }
             }
         }
+    }
+
+    /** "yyyy-MM-dd" + minutes → ISO8601 with KST offset (+09:00) */
+    private fun minutesToIso(dateStr: String, minutes: Int): String {
+        val safe = minutes.coerceIn(0, 24 * 60)
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"))
+        try { cal.time = DATE_FMT.parse(dateStr)!! } catch (_: Exception) {}
+        cal.set(Calendar.HOUR_OF_DAY, safe / 60)
+        cal.set(Calendar.MINUTE, safe % 60)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return ISO_OUT_FMT.format(cal.time)
     }
 
     // ─── Helpers ───
