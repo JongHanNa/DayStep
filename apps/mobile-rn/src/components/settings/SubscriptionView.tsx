@@ -138,6 +138,8 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
     fetchSubscription,
     applyRevenueCatPurchase,
     clearError,
+    isFreeProActive,
+    freeProUntil,
   } = useSubscriptionStore();
 
   const insets = useSafeAreaInsets();
@@ -396,6 +398,68 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             </Text>
           </AnimatedPressable>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ══════════════════════════════════════════════════
+  // 무료 Pro 프로모션 기간 → 별도 안내 화면
+  // (실제 구독 없이 isFreeProActive=true 인 경우에만)
+  // ══════════════════════════════════════════════════
+  if (isFreeProActive && !subscriptionInfo) {
+    const endDateLabel = freeProUntil
+      ? new Date(freeProUntil).toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })
+      : '미정';
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']} style={[styles.container, {backgroundColor: '#FFFFFF'}]}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <AnimatedPressable onPress={onBack} hapticType="light" scaleValue={0.9}>
+            <ArrowLeft size={24} color="#1F2937" strokeWidth={2} />
+          </AnimatedPressable>
+          <Text style={styles.title}>구독 관리</Text>
+          <View style={{width: 24}} />
+        </View>
+        <ScrollView
+          contentContainerStyle={{paddingBottom: insets.bottom + 24, paddingHorizontal: 20, paddingTop: 24}}
+          showsVerticalScrollIndicator={false}
+        >
+          <View
+            style={{
+              alignItems: 'center',
+              paddingVertical: 40,
+              paddingHorizontal: 24,
+              backgroundColor: '#FEF3C7',
+              borderRadius: 20,
+              marginBottom: 16,
+            }}
+          >
+            <Crown size={48} color={fixedColors.premiumGold} strokeWidth={2} />
+            <Text style={{fontSize: 22, fontWeight: '700', color: '#1F2937', marginTop: 16, textAlign: 'center'}}>
+              출시 기념 무료 Pro
+            </Text>
+            <Text style={{fontSize: 14, color: '#6B7280', marginTop: 8, textAlign: 'center', lineHeight: 20}}>
+              {endDateLabel}까지{'\n'}모든 Pro 기능을 무료로 사용하실 수 있어요.
+            </Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: '#F9FAFB',
+              borderRadius: 14,
+              padding: 16,
+            }}
+          >
+            <Text style={{fontSize: 13, color: '#6B7280', lineHeight: 20}}>
+              • 데이터 한도, 화면 제한 없이 모든 기능 사용{'\n'}
+              • 결제 정보 등록 불필요{'\n'}
+              • 프로모션 종료 후 일반 구독 안내가 표시됩니다
+            </Text>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }

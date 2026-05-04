@@ -34,6 +34,11 @@ interface SubscriptionState {
   /** 개발/관리자용 강제 Pro 토글. true면 fetchSubscription 결과 무시하고 hasActiveSubscription=true 유지 (persist됨) */
   adminOverride: boolean;
 
+  // 전체 사용자 무료 Pro 기간 (출시 초기 프로모션)
+  // app_config.free_pro_until — now < freeProUntil이면 모든 사용자가 Pro
+  freeProUntil: string | null;
+  isFreeProActive: boolean;
+
   // Grace period (신규 가입 7일 Pro 화면 접근)
   userCreatedAt: string | null;
   isInGracePeriod: boolean;
@@ -42,6 +47,8 @@ interface SubscriptionState {
 
   // 액션
   fetchSubscription: (userId: string) => Promise<void>;
+  fetchAppConfig: () => Promise<void>;
+  updateFreeProUntil: (date: string | null) => Promise<void>;
   applyRevenueCatPurchase: (entitlements: Record<string, any>) => void;
   setUserCreatedAt: (createdAt: string) => void;
   updateComputedStates: () => void;
@@ -64,6 +71,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       gracePeriodDaysRemaining: 0,
       graceChecked: false,
       adminOverride: false,
+      freeProUntil: null,
+      isFreeProActive: false,
 
       fetchSubscription: async (userId: string) => {
         try {
@@ -119,6 +128,41 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         }
       },
 
+      fetchAppConfig: async () => {
+        try {
+          const {data, error} = await supabase
+            .from('app_config')
+            .select('free_pro_until')
+            .eq('id', 1)
+            .maybeSingle();
+
+          if (error) throw error;
+
+          set({freeProUntil: data?.free_pro_until ?? null});
+          get().updateComputedStates();
+        } catch (err: any) {
+          console.error('[SubscriptionStore] fetchAppConfig error:', err);
+        }
+      },
+
+      updateFreeProUntil: async (date: string | null) => {
+        const {data: userData} = await supabase.auth.getUser();
+        const userId = userData?.user?.id ?? null;
+        const {error} = await supabase
+          .from('app_config')
+          .update({
+            free_pro_until: date,
+            updated_at: new Date().toISOString(),
+            updated_by: userId,
+          })
+          .eq('id', 1);
+
+        if (error) throw error;
+
+        set({freeProUntil: date});
+        get().updateComputedStates();
+      },
+
       applyRevenueCatPurchase: (entitlements: Record<string, any>) => {
         const entitlementKeys = Object.keys(entitlements);
         if (entitlementKeys.length === 0) return;
@@ -160,7 +204,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       },
 
       updateComputedStates: () => {
-        const {subscriptionInfo, userCreatedAt, adminOverride} = get();
+        const {subscriptionInfo, userCreatedAt, adminOverride, freeProUntil} = get();
 
         // Grace period 갱신
         const graceUpdate = {
@@ -168,12 +212,34 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           gracePeriodDaysRemaining: calcGraceDays(userCreatedAt),
         };
 
+        // 전체 사용자 무료 Pro 기간 체크 — 출시 초기 프로모션
+        const isFreeProActive = !!(
+          freeProUntil && new Date(freeProUntil).getTime() > Date.now()
+        );
+
         // 관리자 강제 Pro 토글 — 다른 모든 로직보다 우선
         if (adminOverride) {
           set({
             hasActiveSubscription: true,
             isInTrial: false,
             daysRemainingInTrial: null,
+            isFreeProActive,
+            ...graceUpdate,
+          });
+          return;
+        }
+
+        // 무료 Pro 기간 — 실제 구독 없어도 Pro 활성
+        if (isFreeProActive) {
+          set({
+            hasActiveSubscription: true,
+            isInTrial: subscriptionInfo
+              ? checkInTrial(subscriptionInfo.status, subscriptionInfo.trialEndDate)
+              : false,
+            daysRemainingInTrial: subscriptionInfo
+              ? calculateDaysRemainingInTrial(subscriptionInfo.trialEndDate)
+              : null,
+            isFreeProActive: true,
             ...graceUpdate,
           });
           return;
@@ -184,6 +250,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             hasActiveSubscription: false,
             isInTrial: false,
             daysRemainingInTrial: null,
+            isFreeProActive: false,
             ...graceUpdate,
           });
           return;
@@ -196,16 +263,22 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           ),
           isInTrial: checkInTrial(subscriptionInfo.status, subscriptionInfo.trialEndDate),
           daysRemainingInTrial: calculateDaysRemainingInTrial(subscriptionInfo.trialEndDate),
+          isFreeProActive: false,
           ...graceUpdate,
         });
       },
 
       reset: () => {
+        // freeProUntil은 앱 전역 설정이므로 logout시 보존
+        const {freeProUntil} = get();
+        const isFreeProActive = !!(
+          freeProUntil && new Date(freeProUntil).getTime() > Date.now()
+        );
         set({
           subscriptionInfo: null,
           loading: false,
           error: null,
-          hasActiveSubscription: false,
+          hasActiveSubscription: isFreeProActive,
           isInTrial: false,
           daysRemainingInTrial: null,
           _recentPurchase: false,
@@ -213,6 +286,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           isInGracePeriod: false,
           gracePeriodDaysRemaining: 0,
           graceChecked: false,
+          isFreeProActive,
         });
       },
 
@@ -224,6 +298,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       partialize: (state) => ({
         subscriptionInfo: state.subscriptionInfo,
         adminOverride: state.adminOverride,
+        freeProUntil: state.freeProUntil,
         // userCreatedAt은 persist하지 않음 — 매번 auth에서 최신 값을 가져옴
       }),
       onRehydrateStorage: () => (state) => {
@@ -237,11 +312,15 @@ export const useSubscriptionStore = create<SubscriptionState>()(
             graceChecked: false,
           });
           state.updateComputedStates();
-          // auth에서 최신 created_at 가져오기
+          // auth에서 최신 created_at + 최신 app_config 가져오기
           import('@/lib/supabase').then(({supabase}) => {
             supabase.auth.getUser().then(({data}) => {
               if (data?.user?.created_at) {
                 useSubscriptionStore.getState().setUserCreatedAt(data.user.created_at);
+              }
+              // 인증된 사용자만 app_config 조회 가능 (RLS)
+              if (data?.user) {
+                useSubscriptionStore.getState().fetchAppConfig();
               }
             });
           });

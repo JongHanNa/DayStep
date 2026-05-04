@@ -2,7 +2,8 @@
  * SettingsMainView — 메인 설정 목록 (섹션별 그룹핑)
  */
 import React, {useCallback, useEffect, useState} from 'react';
-import {View, Text, ScrollView, Alert, StyleSheet, Image, Switch} from 'react-native';
+import {View, Text, ScrollView, Alert, StyleSheet, Image, Switch, Platform as RNPlatform, Modal, Pressable} from 'react-native';
+import DateTimePicker, {DateTimePickerAndroid} from '@react-native-community/datetimepicker';
 import {useNavigation} from '@react-navigation/native';
 import {AnimatedCard} from '@/components/core';
 import {SettingsRow} from './SettingsRow';
@@ -48,10 +49,58 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   const gracePeriodDaysRemaining = useSubscriptionStore(s => s.gracePeriodDaysRemaining);
   const userCreatedAt = useSubscriptionStore(s => s.userCreatedAt);
   const graceChecked = useSubscriptionStore(s => s.graceChecked);
-  // 설정 화면 진입 시 grace period 재계산
+  const freeProUntil = useSubscriptionStore(s => s.freeProUntil);
+  const isFreeProActive = useSubscriptionStore(s => s.isFreeProActive);
+  // 설정 화면 진입 시 grace period 재계산 + app_config 최신화
   useEffect(() => {
     useSubscriptionStore.getState().updateComputedStates();
+    useSubscriptionStore.getState().fetchAppConfig();
   }, []);
+
+  const [showFreeProDatePicker, setShowFreeProDatePicker] = useState(false);
+
+  const formatFreeProDate = useCallback((iso: string | null) => {
+    if (!iso) return '비활성';
+    const d = new Date(iso);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} 23:59까지`;
+  }, []);
+
+  const handleFreeProDateChange = useCallback(async (newDate: Date | null) => {
+    try {
+      let iso: string | null = null;
+      if (newDate) {
+        // 선택한 날의 23:59:59 (로컬)을 ISO로 저장
+        const end = new Date(newDate);
+        end.setHours(23, 59, 59, 0);
+        iso = end.toISOString();
+      }
+      await useSubscriptionStore.getState().updateFreeProUntil(iso);
+    } catch (err: any) {
+      console.error('[Admin] freeProUntil update error:', err);
+      Alert.alert('오류', '무료 Pro 종료일 변경에 실패했습니다.');
+    }
+  }, []);
+
+  const openFreeProDatePicker = useCallback(() => {
+    const initial = freeProUntil ? new Date(freeProUntil) : new Date();
+    if (RNPlatform.OS === 'android') {
+      DateTimePickerAndroid.open({
+        value: initial,
+        mode: 'date',
+        minimumDate: new Date(),
+        onChange: (event, selectedDate) => {
+          if (event.type === 'set' && selectedDate) {
+            handleFreeProDateChange(selectedDate);
+          }
+        },
+      });
+    } else {
+      setShowFreeProDatePicker(true);
+    }
+  }, [freeProUntil, handleFreeProDateChange]);
 
   const [isAdmin, setIsAdmin] = useState(false);
   const isDemoAccount = user?.email === 'demo@daystep.app';
@@ -417,8 +466,115 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                 thumbColor="#FFFFFF"
               />
             </View>
+            <View style={styles.divider} />
+            {/* 전체 사용자 무료 Pro 기간 종료일 (출시 초기 프로모션) */}
+            <Pressable onPress={openFreeProDatePicker} style={styles.adminSubRow}>
+              <View style={{flex: 1}}>
+                <Text style={styles.adminSubTitle}>무료 Pro 기간 종료일</Text>
+                <Text style={styles.adminSubDesc}>
+                  {isFreeProActive
+                    ? `전체 사용자 Pro 활성 — ${formatFreeProDate(freeProUntil)}`
+                    : freeProUntil
+                      ? `만료됨 (${formatFreeProDate(freeProUntil)})`
+                      : '비활성 — 정상 구독 게이트 적용 중'}
+                </Text>
+              </View>
+              <ChevronRight size={18} color="#9CA3AF" />
+            </Pressable>
+            {freeProUntil && (
+              <>
+                <View style={styles.divider} />
+                <Pressable
+                  onPress={() => {
+                    Alert.alert(
+                      '무료 Pro 기간 비활성화',
+                      '비활성화하면 즉시 일반 구독 게이트가 적용됩니다.',
+                      [
+                        {text: '취소', style: 'cancel'},
+                        {
+                          text: '비활성화',
+                          style: 'destructive',
+                          onPress: () => handleFreeProDateChange(null),
+                        },
+                      ],
+                    );
+                  }}
+                  style={styles.adminSubRow}
+                >
+                  <View style={{flex: 1}}>
+                    <Text style={[styles.adminSubTitle, {color: '#EF4444'}]}>
+                      무료 Pro 기간 비활성화
+                    </Text>
+                    <Text style={styles.adminSubDesc}>
+                      free_pro_until을 NULL로 설정 (즉시 일반 게이트)
+                    </Text>
+                  </View>
+                </Pressable>
+              </>
+            )}
           </View>
         </>
+      )}
+
+      {/* iOS: 무료 Pro 종료일 DateTimePicker 모달 */}
+      {RNPlatform.OS === 'ios' && (
+        <Modal
+          visible={showFreeProDatePicker}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowFreeProDatePicker(false)}
+        >
+          <Pressable
+            style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end'}}
+            onPress={() => setShowFreeProDatePicker(false)}
+          >
+            <Pressable
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                paddingTop: 12,
+                paddingBottom: 32,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                  borderBottomColor: '#E5E7EB',
+                }}
+              >
+                <Pressable onPress={() => setShowFreeProDatePicker(false)}>
+                  <Text style={{fontSize: 16, color: '#6B7280'}}>취소</Text>
+                </Pressable>
+                <Text style={{fontSize: 16, fontWeight: '600', color: '#1F2937'}}>
+                  무료 Pro 종료일
+                </Text>
+                <Pressable onPress={() => setShowFreeProDatePicker(false)}>
+                  <Text style={{fontSize: 16, color: primaryColor, fontWeight: '600'}}>
+                    완료
+                  </Text>
+                </Pressable>
+              </View>
+              <DateTimePicker
+                value={freeProUntil ? new Date(freeProUntil) : new Date()}
+                mode="date"
+                display="spinner"
+                minimumDate={new Date()}
+                onChange={(event, selectedDate) => {
+                  if (event.type === 'set' && selectedDate) {
+                    handleFreeProDateChange(selectedDate);
+                  }
+                }}
+              />
+            </Pressable>
+          </Pressable>
+        </Modal>
       )}
 
       {/* 데모 계정용 구독 상태 전환 (관리자 메뉴 없이 토글만) */}

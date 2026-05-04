@@ -80,6 +80,10 @@ function AuthenticatedApp() {
         if (data?.user?.created_at) {
           useSubscriptionStore.getState().setUserCreatedAt(data.user.created_at);
         }
+        // 무료 Pro 기간 갱신 (관리자가 날짜를 바꿨을 수 있음)
+        if (data?.user) {
+          useSubscriptionStore.getState().fetchAppConfig();
+        }
         useSubscriptionStore.getState().updateComputedStates();
       }
     });
@@ -181,6 +185,8 @@ export default function RootNavigator() {
       if (user.created_at) {
         useSubscriptionStore.getState().setUserCreatedAt(user.created_at);
       }
+      // 무료 Pro 기간(app_config) 최신 값 동기화
+      useSubscriptionStore.getState().fetchAppConfig();
       wasAuthenticated.current = true;
     } else if (!isAuthenticated && wasAuthenticated.current) {
       logoutRevenueCat();
