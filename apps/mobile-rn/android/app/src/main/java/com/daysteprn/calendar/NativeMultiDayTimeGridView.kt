@@ -549,31 +549,43 @@ class NativeMultiDayTimeGridView(context: Context) : FrameLayout(context) {
         return out
     }
 
+    /** ISO8601 또는 "HH:mm" 입력 → KST 기준 0..1439 분(없으면 -1) */
     private fun parseTimeToMinutes(time: String): Int {
         if (time.isEmpty()) return -1
-        return try {
-            val tIdx = time.indexOf('T')
-            if (tIdx >= 0) {
-                val timePart = time.substring(tIdx + 1).take(5)
-                val parts = timePart.split(":")
-                parts[0].toInt() * 60 + parts[1].toInt()
-            } else {
+        // "HH:mm" 단순 형태 (시간대 없음 — 이미 KST 가정)
+        if (time.length <= 5 && !time.contains('T')) {
+            return try {
                 val parts = time.split(":")
                 parts[0].toInt() * 60 + parts.getOrElse(1) { "0" }.toInt()
-            }
-        } catch (_: Exception) { -1 }
+            } catch (_: Exception) { -1 }
+        }
+        return parseIsoToKstMinutes(time, defaultIfFail = -1)
     }
 
+    /** ISO8601 → KST 기준 0..1439 분. 실패 시 0 (이벤트 종일 폴백 등). */
     private fun parseIsoToMinutes(iso: String): Int {
         if (iso.isEmpty()) return 0
-        return try {
-            val tIdx = iso.indexOf('T')
-            if (tIdx >= 0) {
-                val timePart = iso.substring(tIdx + 1).take(5)
-                val parts = timePart.split(":")
-                parts[0].toInt() * 60 + parts[1].toInt()
-            } else 0
-        } catch (_: Exception) { 0 }
+        return parseIsoToKstMinutes(iso, defaultIfFail = 0)
+    }
+
+    private fun parseIsoToKstMinutes(iso: String, defaultIfFail: Int): Int {
+        val patterns = listOf(
+            "yyyy-MM-dd'T'HH:mm:ssXXX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        )
+        for (pat in patterns) {
+            try {
+                val fmt = SimpleDateFormat(pat, Locale.US)
+                if (pat.endsWith("'Z'")) fmt.timeZone = TimeZone.getTimeZone("UTC")
+                val parsed = fmt.parse(iso) ?: continue
+                val kstCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Seoul"))
+                kstCal.time = parsed
+                return kstCal.get(Calendar.HOUR_OF_DAY) * 60 + kstCal.get(Calendar.MINUTE)
+            } catch (_: Exception) {}
+        }
+        return defaultIfFail
     }
 
     /** "yyyy-MM-dd" + minutes → ISO8601 with KST offset (+09:00) */

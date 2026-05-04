@@ -91,7 +91,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
       DateTimePickerAndroid.open({
         value: initial,
         mode: 'date',
-        minimumDate: new Date(),
+        // 과거 날짜도 허용 — 관리자가 무료 Pro 기간을 즉시 종료하고 싶을 때 사용
         onChange: (event, selectedDate) => {
           if (event.type === 'set' && selectedDate) {
             handleFreeProDateChange(selectedDate);
@@ -574,7 +574,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                 value={freeProUntil ? new Date(freeProUntil) : new Date()}
                 mode="date"
                 display="spinner"
-                minimumDate={new Date()}
+                // 과거 날짜도 허용 — 관리자가 무료 Pro 기간을 즉시 종료하고 싶을 때 사용
                 onChange={(event, selectedDate) => {
                   if (event.type === 'set' && selectedDate) {
                     handleFreeProDateChange(selectedDate);
