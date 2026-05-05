@@ -12,7 +12,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {Dimensions, View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet, useWindowDimensions} from 'react-native';
 import {GestureDetector, Gesture} from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -22,11 +22,12 @@ import Animated, {
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import type {Todo} from '@daystep/shared-core';
 import type {SwipeablePagesRef} from '@/components/core/SwipeablePages';
-import {PAGE_WIDTH, PEEK_WIDTH} from '@/components/core/SwipeablePages';
+import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
 import {resolveTodoIcon} from '@/lib/iconMap';
 import {getPriorityColor} from '@/lib/todoUtils';
+import {useTheme} from '@/theme';
+import {Shield} from 'lucide-react-native';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const EDGE_ZONE = 80;           // 엣지 감지 거리 (px)
 const EDGE_DWELL_MS = 150;      // 스크롤 시작 전 대기 (실수 방지)
 const SCROLL_TICK_MS = 16;      // ~60fps
@@ -108,6 +109,13 @@ export function useDnd() {
 }
 
 export function DndProvider({children}: {children: React.ReactNode}) {
+  const {width: screenWidth} = useWindowDimensions();
+  const {peekWidth} = useResponsiveLayout();
+  const screenWidthRef = useRef(screenWidth);
+  screenWidthRef.current = screenWidth;
+  const peekWidthRef = useRef(peekWidth);
+  peekWidthRef.current = peekWidth;
+
   const zonesRef = useRef<Map<string, DropZoneLayout>>(new Map());
   const [dragState, setDragState] = useState<DragState>({
     todo: null,
@@ -215,7 +223,9 @@ export function DndProvider({children}: {children: React.ReactNode}) {
       ? currentPageRef.current + 1
       : currentPageRef.current - 1;
     const startPage = currentPageRef.current;
-    const snapOffset = (page: number) => page === 0 ? 0 : page * PAGE_WIDTH - PEEK_WIDTH;
+    const pw = peekWidthRef.current;
+    const pageW = screenWidthRef.current - pw;
+    const snapOffset = (page: number) => page === 0 ? 0 : page * pageW - pw;
     const targetPosition = snapOffset(targetPage);
     const midpoint = (snapOffset(startPage) + snapOffset(targetPage)) / 2;
     let pageChangeCommitted = false;
@@ -226,7 +236,7 @@ export function DndProvider({children}: {children: React.ReactNode}) {
 
       const {x} = dragPositionRef.current;
       const proximity = direction === 'next'
-        ? SCREEN_WIDTH - x
+        ? screenWidthRef.current - x
         : x;
 
       // 엣지 존 벗어남 → 중지 (snap 안 함 — updateDrag에서 이미 처리)
@@ -325,7 +335,7 @@ export function DndProvider({children}: {children: React.ReactNode}) {
       // 이미 스크롤 중이면 interval이 자체 관리 (proximity 기반 속도/정지) → 간섭 안 함
       if (isScrollingRef.current) return;
 
-      const rightProximity = SCREEN_WIDTH - x;
+      const rightProximity = screenWidthRef.current - x;
       const leftProximity = x;
       const now = Date.now();
       const inCooldown = now - lastPageChangeTimeRef.current < PAGE_CHANGE_COOLDOWN_MS;
@@ -463,8 +473,9 @@ function DragOverlay({
   width: number;
   height: number;
 }) {
+  const {primaryColor} = useTheme();
   const IconComp = resolveTodoIcon(todo.icon);
-  const priorityColor = getPriorityColor(todo.importance, todo.urgency);
+  const priorityColor = getPriorityColor(todo.importance, todo.urgency, primaryColor);
 
   const animatedStyle = useAnimatedStyle(() => ({
     left: overlayX.value - width / 2,
@@ -496,7 +507,8 @@ function DragOverlay({
       {todo.is_reluctant_must_do && (
         <View style={overlayStyles.tagRow}>
           <View style={overlayStyles.tag}>
-            <Text style={overlayStyles.tagText}>😤 해야 할 일</Text>
+            <Shield size={12} color="#6B7280" />
+            <Text style={overlayStyles.tagText}>해야 할 일</Text>
           </View>
         </View>
       )}
@@ -546,6 +558,9 @@ const overlayStyles = StyleSheet.create({
     gap: 6,
   },
   tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 2,

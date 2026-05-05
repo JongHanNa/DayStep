@@ -25,15 +25,15 @@ const ADHDEntryScreen = dynamic(() => import('./ADHDEntryScreen'), {
   loading: () => <ViewLoadingSpinner />,
 });
 
-// GenericTabContainer - 범용 탭 컨테이너 (fuel, project, relationship-insights용)
+// GenericTabContainer - 범용 탭 컨테이너 (motivation, project, relationship-insights용)
 const GenericTabContainer = dynamic(() => import('./containers/GenericTabContainer'), {
   loading: () => <ViewLoadingSpinner />,
 });
 
 // 라우트 그룹별 screenIds (ROUTE_GROUPS에서 파생)
-const FUEL_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'daily-planner', 'execute'];
+const MOTIVATION_SCREEN_IDS: ADHDSubViewId[] = ['motivation', 'timeline', 'daily-planner', 'execute'];
 const RELATIONSHIP_SCREEN_IDS: ADHDSubViewId[] = ['record', 'news', 'gratitude'];
-const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['ai-plan', 'ai-chat', 'guide'];
+const PROJECT_SCREEN_IDS: ADHDSubViewId[] = ['projects', 'ai-chat', 'guide'];
 
 /**
  * 로딩 스피너 컴포넌트
@@ -59,8 +59,8 @@ function getModeFromPath(pathname: string): ADHDScreen {
   switch (modeSegment) {
     case 'execute':
       return 'execute';
-    case 'fuel':
-      return 'fuel';
+    case 'motivation':
+      return 'motivation';
     case 'care':
       return 'care';
     case 'project':
@@ -101,7 +101,7 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
   const storeMode = useADHDStore((s) => s.currentMode);
   const { user } = useAuth();
   const userId = user?.id;
-  const { goRelationshipInsights, goFuel } = useADHDNavigation();
+  const { goRelationshipInsights, goMotivation } = useADHDNavigation();
 
   // 우선순위: 명시적 mode prop > URL 경로
   const currentMode = explicitMode ?? getModeFromPath(pathname);
@@ -115,12 +115,12 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
   switch (currentMode) {
     case 'execute':
       return <FocusExecutionContainer onExit={handleExit} />;
-    case 'fuel':
-      // GenericTabContainer로 fuel 라우트 그룹 렌더링
+    case 'motivation':
+      // GenericTabContainer로 motivation 라우트 그룹 렌더링
       return (
         <GenericTabContainer
-          screenIds={FUEL_SCREEN_IDS}
-          routeGroupId="fuel"
+          screenIds={MOTIVATION_SCREEN_IDS}
+          routeGroupId="motivation"
           onExit={handleExit}
         />
       );
@@ -144,7 +144,7 @@ export function ADHDContainer({ onExit, mode: explicitMode }: ADHDContainerProps
         <ADHDEntryScreen
           userId={userId}
           onRelationshipInsights={goRelationshipInsights}
-          onFuel={goFuel}
+          onMotivation={goMotivation}
         />
       );
     case 'relationship-insights':

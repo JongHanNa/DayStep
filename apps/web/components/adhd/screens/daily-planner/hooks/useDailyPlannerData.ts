@@ -116,11 +116,6 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
     return todayTodos.filter((t: Todo) => (t as any).importance !== null && (t as any).importance !== undefined);
   }, [todayTodos]);
 
-  // 하기싫어도해야할일
-  const reluctantTodos = useMemo(() => {
-    return todayTodos.filter((t: Todo) => (t as any).isReluctantMustDo === true);
-  }, [todayTodos]);
-
   // 미분류 할일 (시간 미지정 anytime 할일)
   const unscheduledTodos = useMemo(() => {
     return todos.filter((todo: Todo) => {
@@ -168,7 +163,6 @@ export function useDailyPlannerData({ userId, date, timelineItems }: UseDailyPla
     afternoonTodos,
     eveningTodos,
     matrixTodos,
-    reluctantTodos,
     unscheduledTodos,
     reflection,
     upsertReflection,

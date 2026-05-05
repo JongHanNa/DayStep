@@ -1,7 +1,30 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-   <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 정확 알람: Android 12+ Doze 우회 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <!-- 부팅 후 알림 재등록 + 디바이스 wake -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- 광고 ID 미사용 — SDK가 자동 병합하는 AD_ID 권한 제거 -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+
+    <!-- Android 11+ 패키지 가시성: 런처에 노출되는 앱만 조회 (허용 앱 피커용) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <application
       android:name=".MainApplication"
@@ -23,6 +46,52 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+        <!-- 다른 앱에서 텍스트 공유 시 DayStep으로 전달 -->
+        <intent-filter>
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+        <!-- Deep link: daystep:// scheme -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="daystep" />
+        </intent-filter>
       </activity>
+
+      <!-- Google Assistant App Actions -->
+      <meta-data
+          android:name="com.google.android.actions"
+          android:resource="@xml/actions" />
+
+      <service
+        android:name=".appblocker.AppBlockerService"
+        android:exported="false"
+        android:foregroundServiceType="specialUse">
+        <property
+          android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+          android:value="App blocking during sleep session for ADHD management" />
+      </service>
+
+      <!-- 월간 캘린더 위젯 -->
+      <receiver
+        android:name=".widget.DayStepCalendarWidgetProvider"
+        android:exported="false"
+        android:label="@string/widget_calendar_label">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+          <action android:name="com.daysteprn.widget.CHANGE_MONTH" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_calendar_info" />
+      </receiver>
+
+      <service
+        android:name=".widget.CalendarRemoteViewsService"
+        android:exported="false"
+        android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>
 </manifest>

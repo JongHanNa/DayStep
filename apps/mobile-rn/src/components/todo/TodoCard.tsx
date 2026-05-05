@@ -2,7 +2,7 @@
  * TodoCard
  * 할일 카드 — 애니메이션 체크박스 + 우선순위 표시 + 종료시간 초과 프롬프트
  */
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {View, Text, StyleSheet, Pressable} from 'react-native';
 import Animated, {
   useSharedValue,
@@ -17,15 +17,15 @@ import {useHaptic} from '@/hooks/useHaptic';
 import {useTheme} from '@/theme';
 import {springs} from '@/theme/animations';
 import type {Todo} from '@daystep/shared-core';
-import {format} from 'date-fns';
+import {format, isSameDay} from 'date-fns';
 import {resolveTodoIcon} from '@/lib/iconMap';
-import {getPriorityColor} from '@/lib/todoUtils';
+import {getPriorityColor, hexWithOpacity} from '@/lib/todoUtils';
 import {getTimeStatus, getTimeStatusText} from '@/lib/timeStatus';
 import {MissedTodoActionPanel} from './MissedTodoActionPanel';
 import {DeferredTodoActionPanel} from './DeferredTodoActionPanel';
-import {Play, XCircle, MinusCircle} from 'lucide-react-native';
+import {XCircle, MinusCircle, Shield, Clock} from 'lucide-react-native';
 
-interface LinkedFuel {
+interface LinkedMotivation {
   id: string;
   title: string;
   content: string;
@@ -34,6 +34,7 @@ interface LinkedFuel {
 interface TodoCardProps {
   todo: Todo;
   index?: number;
+  projectMap?: Map<string, {title: string; color: string; icon?: string}>;
   onToggle: (id: string) => void;
   onPress?: (todo: Todo) => void;
   onFocus?: (todo: Todo) => void;
@@ -42,21 +43,23 @@ interface TodoCardProps {
   onPostpone?: (todo: Todo) => void;
   onDeferComplete?: (todo: Todo) => void;
   onRestoreOriginal?: (todo: Todo) => void;
-  linkedFuels?: LinkedFuel[];
+  linkedMotivations?: LinkedMotivation[];
+  isNextUpcoming?: boolean;
 }
 
 export function TodoCard({
   todo,
   index = 0,
+  projectMap,
   onToggle,
   onPress,
-  onFocus,
   onSkipTodo,
   onUnskipTodo,
   onPostpone,
   onDeferComplete,
   onRestoreOriginal,
-  linkedFuels,
+  linkedMotivations,
+  isNextUpcoming,
 }: TodoCardProps) {
   const haptic = useHaptic();
   const {primaryColor} = useTheme();
@@ -78,23 +81,50 @@ export function TodoCard({
   }));
 
   const isAnytime = todo.schedule_type === 'anytime' || !todo.start_time;
-  const timeStr = (!isAnytime && todo.start_time)
-    ? format(new Date(todo.start_time), 'HH:mm') +
-      (todo.end_time ? ` ~ ${format(new Date(todo.end_time), 'HH:mm')}` : '')
-    : null;
+  const timeStr = (() => {
+    if (isAnytime || !todo.start_time) return null;
+    const startDate = new Date(todo.start_time);
+    const endDate = todo.end_time ? new Date(todo.end_time) : null;
 
-  const priorityColor = getPriorityColor(todo.importance, todo.urgency);
+    // 종일: 단일이면 '종일', 다일이면 '4/29 → 5/1 종일'
+    if (todo.schedule_type === 'all_day') {
+      if (!endDate || isSameDay(startDate, endDate)) return '종일';
+      return `${format(startDate, 'M/d')} → ${format(endDate, 'M/d')} 종일`;
+    }
+
+    // 시간 지정: 같은 날이면 'HH:mm ~ HH:mm', 다일이면 'M/d HH:mm → M/d HH:mm'
+    const startStr = format(startDate, 'HH:mm');
+    if (!endDate) return startStr;
+    if (isSameDay(startDate, endDate)) {
+      return `${startStr} ~ ${format(endDate, 'HH:mm')}`;
+    }
+    return `${format(startDate, 'M/d HH:mm')} → ${format(endDate, 'M/d HH:mm')}`;
+  })();
+
+  const priorityColor = getPriorityColor(todo.importance, todo.urgency, primaryColor);
+
+  // 실시간 업데이트를 위한 now state
+  const [now, setNow] = useState(() => Date.now());
 
   // 시간 상태 계산
   const timeStatus = useMemo(
-    () => getTimeStatus(todo.start_time, todo.end_time, !!todo.completed),
-    [todo.start_time, todo.end_time, todo.completed],
+    () => getTimeStatus(todo.start_time, todo.end_time, !!todo.completed, new Date(now)),
+    [todo.start_time, todo.end_time, todo.completed, now],
   );
 
   const timeStatusText = useMemo(
     () => getTimeStatusText(timeStatus),
     [timeStatus],
   );
+
+  // missed, in_progress, 또는 다음 일정(upcoming) 상태일 때 now 갱신
+  const needsTimer = timeStatus.status === 'missed' || timeStatus.status === 'upcoming' || timeStatus.status === 'in_progress';
+  useEffect(() => {
+    if (!needsTimer) return;
+    const interval = timeStatus.status === 'in_progress' ? 1_000 : 60_000;
+    const id = setInterval(() => setNow(Date.now()), interval);
+    return () => clearInterval(id);
+  }, [needsTimer, timeStatus.status]);
 
   const isSkipped = !!(todo as any).skip_status;
   const skipReason = (todo as any).skip_status as string | undefined;
@@ -106,7 +136,7 @@ export function TodoCard({
     && !!(todo as any).original_start_time
     && !todo.completed;
 
-  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
+  const [expandedMotivationId, setExpandedMotivationId] = useState<string | null>(null);
 
   return (
     <Animated.View
@@ -121,40 +151,8 @@ export function TodoCard({
           todo.completed && styles.containerCompleted,
           isSkipped && styles.containerSkipped,
           isMissed && styles.containerMissed,
+          !todo.completed && priorityColor && {backgroundColor: hexWithOpacity(priorityColor, 0.04)},
         ]}>
-        {/* 우선순위 인디케이터 */}
-        {priorityColor && (
-          <View
-            style={[styles.priorityBar, {backgroundColor: priorityColor}]}
-          />
-        )}
-
-        {/* 체크박스 */}
-        <AnimatedPressable
-          onPress={isSkipped ? () => { haptic.light(); onUnskipTodo?.(todo); } : handleToggle}
-          haptic={false}
-          scaleValue={0.85}
-          style={styles.checkboxArea}>
-          <Animated.View
-            style={[
-              styles.checkbox,
-              todo.completed && styles.checkboxChecked,
-              isSkipped && skipReason === 'missed' && styles.checkboxMissed,
-              isSkipped && skipReason === 'not_needed' && styles.checkboxNotNeeded,
-              checkAnimatedStyle,
-            ]}>
-            {isSkipped ? (
-              skipReason === 'missed' ? (
-                <XCircle size={18} color="#DC2626" strokeWidth={2} />
-              ) : (
-                <MinusCircle size={18} color="#6B7280" strokeWidth={2} />
-              )
-            ) : todo.completed ? (
-              <Text style={styles.checkmark}>✓</Text>
-            ) : null}
-          </Animated.View>
-        </AnimatedPressable>
-
         {/* 콘텐츠 */}
         <View style={styles.content}>
           {/* 시간 + 반복 */}
@@ -170,16 +168,6 @@ export function TodoCard({
 
           {/* 제목 */}
           <View style={styles.titleRow}>
-            {(() => {
-              const TodoIcon = resolveTodoIcon(todo.icon);
-              return TodoIcon ? (
-                <TodoIcon
-                  size={16}
-                  color={todo.completed ? '#9CA3AF' : '#6B7280'}
-                  style={{marginRight: 4}}
-                />
-              ) : null;
-            })()}
             <Text
               style={[
                 styles.title,
@@ -195,12 +183,14 @@ export function TodoCard({
           <View style={styles.tagRow}>
             {todo.is_reluctant_must_do && (
               <View style={styles.tag}>
-                <Text style={styles.tagText}>😤 해야 할 일</Text>
+                <Shield size={12} color="#6B7280" />
+                <Text style={styles.tagText}>해야 할 일</Text>
               </View>
             )}
             {todo.anytime_duration && (
               <View style={styles.tag}>
-                <Text style={styles.tagText}>⏱ {todo.anytime_duration}분</Text>
+                <Clock size={12} color="#6B7280" />
+                <Text style={styles.tagText}>{todo.anytime_duration}분</Text>
               </View>
             )}
             {/* skip 상태 배지 */}
@@ -219,6 +209,24 @@ export function TodoCard({
             )}
           </View>
 
+          {/* 연결된 프로젝트 배지 */}
+          {projectMap && todo.project_id && projectMap.get(todo.project_id) && (() => {
+            const proj = projectMap.get(todo.project_id)!;
+            return (
+              <View style={[styles.projectBadge, {
+                backgroundColor: proj.color ? `${proj.color}20` : '#F3F4F6',
+                borderColor: proj.color || '#D1D5DB',
+              }]}>
+                {proj.icon && <Text style={styles.projectIcon}>{proj.icon}</Text>}
+                <Text
+                  style={[styles.projectText, {color: proj.color || '#6B7280'}]}
+                  numberOfLines={1}>
+                  {proj.title}
+                </Text>
+              </View>
+            );
+          })()}
+
           {/* 진행률 바 + 남은 시간 */}
           {timeStatus.status === 'in_progress' && (
             <View style={styles.progressSection}>
@@ -226,7 +234,7 @@ export function TodoCard({
                 <View
                   style={[
                     styles.progressBarFill,
-                    {width: `${timeStatus.progressPercent ?? 0}%`},
+                    {width: `${timeStatus.progressPercent ?? 0}%`, backgroundColor: primaryColor},
                   ]}
                 />
               </View>
@@ -236,26 +244,35 @@ export function TodoCard({
             </View>
           )}
 
-          {/* 연결된 원동력(fuel) 배지 */}
-          {linkedFuels && linkedFuels.length > 0 && (
-            <View style={styles.fuelRow}>
-              {linkedFuels.map(fuel => {
-                const text = fuel.title && fuel.content
-                  ? `${fuel.title} - ${fuel.content}`
-                  : fuel.title || fuel.content;
-                const isExpanded = expandedFuelId === fuel.id;
+          {/* 다음 일정 시작까지 남은 시간 */}
+          {timeStatus.status === 'upcoming' && isNextUpcoming && timeStatusText.secondary && (
+            <View style={styles.upcomingSection}>
+              <Clock size={12} color={primaryColor} />
+              <Text style={[styles.upcomingText, {color: primaryColor}]}>{timeStatusText.secondary}  시작할 준비 하세요!</Text>
+            </View>
+          )}
+
+          {/* 연결된 원동력(motivation) 배지 */}
+          {linkedMotivations && linkedMotivations.length > 0 && (
+            <View style={styles.motivationRow}>
+              {linkedMotivations.map(motivation => {
+                const text = motivation.title && motivation.content
+                  ? `${motivation.title} - ${motivation.content}`
+                  : motivation.title || motivation.content;
+                const isExpanded = expandedMotivationId === motivation.id;
                 return (
-                  <Pressable
-                    key={fuel.id}
-                    onPress={() => setExpandedFuelId(isExpanded ? null : fuel.id)}
-                    style={styles.fuelBadge}>
-                    <Text style={styles.fuelIcon}>⚡</Text>
-                    <Text
-                      style={styles.fuelText}
-                      numberOfLines={isExpanded ? undefined : 1}>
-                      {text}
-                    </Text>
-                  </Pressable>
+                  <Animated.View key={motivation.id} layout={Layout.springify()}>
+                    <Pressable
+                      onPress={() => setExpandedMotivationId(isExpanded ? null : motivation.id)}
+                      style={[styles.motivationBadge, {backgroundColor: hexWithOpacity(primaryColor, 0.15)}]}>
+                      <Text style={styles.motivationIcon}>⚡</Text>
+                      <Text
+                        style={[styles.motivationText, {color: primaryColor}]}
+                        numberOfLines={isExpanded ? undefined : 1}>
+                        {text}
+                      </Text>
+                    </Pressable>
+                  </Animated.View>
                 );
               })}
             </View>
@@ -291,19 +308,57 @@ export function TodoCard({
           )}
         </View>
 
-        {/* 포커스 타이머 버튼 (미완료 + 미놓침 할일만) */}
-        {onFocus && !todo.completed && !isMissed && !isSkipped && (
-          <AnimatedPressable
-            onPress={() => {
-              haptic.medium();
-              onFocus(todo);
-            }}
-            haptic={false}
-            scaleValue={0.85}
-            style={[styles.focusBtn, {backgroundColor: primaryColor}]}>
-            <Play size={12} color="#FFFFFF" strokeWidth={3} fill="#FFFFFF" />
-          </AnimatedPressable>
-        )}
+        {/* 프로젝트/할일 아이콘 */}
+        {(() => {
+          const proj = projectMap && todo.project_id ? projectMap.get(todo.project_id) : undefined;
+          if (proj?.icon) {
+            return (
+              <View style={[styles.iconCircle, {
+                backgroundColor: proj.color ? `${proj.color}20` : '#F3F4F6',
+              }]}>
+                <Text style={styles.iconEmoji}>{proj.icon}</Text>
+              </View>
+            );
+          }
+          const TodoIcon = resolveTodoIcon(todo.icon);
+          if (TodoIcon) {
+            return (
+              <View style={[styles.iconCircle, {
+                backgroundColor: todo.color ? `${todo.color}20` : '#F3F4F6',
+              }]}>
+                <TodoIcon size={16} color={todo.color || (todo.completed ? '#9CA3AF' : '#6B7280')} />
+              </View>
+            );
+          }
+          return null;
+        })()}
+
+        {/* 체크박스 (우측 끝) */}
+        <AnimatedPressable
+          onPress={isSkipped ? () => { haptic.light(); onUnskipTodo?.(todo); } : handleToggle}
+          haptic={false}
+          scaleValue={0.85}
+          style={styles.checkboxArea}>
+          <Animated.View
+            style={[
+              styles.checkbox,
+              todo.completed && {backgroundColor: primaryColor, borderColor: primaryColor},
+              !todo.completed && priorityColor && {borderColor: priorityColor, borderWidth: 2.5},
+              isSkipped && skipReason === 'missed' && styles.checkboxMissed,
+              isSkipped && skipReason === 'not_needed' && styles.checkboxNotNeeded,
+              checkAnimatedStyle,
+            ]}>
+            {isSkipped ? (
+              skipReason === 'missed' ? (
+                <XCircle size={18} color="#DC2626" strokeWidth={2} />
+              ) : (
+                <MinusCircle size={18} color="#6B7280" strokeWidth={2} />
+              )
+            ) : todo.completed ? (
+              <Text style={styles.checkmark}>✓</Text>
+            ) : null}
+          </Animated.View>
+        </AnimatedPressable>
       </AnimatedPressable>
     </Animated.View>
   );
@@ -322,8 +377,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.04,
     shadowRadius: 4,
-    elevation: 1,
-    overflow: 'hidden',
+    elevation: 0,
   },
   overdueTextOnly: {
     marginTop: 4,
@@ -340,18 +394,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FEE2E2',
   },
-  priorityBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
-  },
   checkboxArea: {
     padding: 4,
-    marginRight: 8,
+    marginLeft: 8,
     marginTop: 2,
   },
   checkbox: {
@@ -363,10 +408,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-  },
+  // checkboxChecked: now uses inline primaryColor styles
   checkboxMissed: {
     backgroundColor: '#FEE2E2',
     borderColor: '#FCA5A5',
@@ -419,6 +461,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     backgroundColor: '#F3F4F6',
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -458,42 +503,69 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3B82F6',
     borderRadius: 2,
   },
   remainingText: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#6B7280',
     marginTop: 2,
   },
-  fuelRow: {
+  upcomingSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+  },
+  upcomingText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  motivationRow: {
     marginTop: 6,
     gap: 4,
   },
-  fuelBadge: {
+  motivationBadge: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(249, 115, 22, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
     gap: 2,
   },
-  fuelIcon: {
+  motivationIcon: {
     fontSize: 11,
   },
-  fuelText: {
+  motivationText: {
     fontSize: 11,
-    color: '#EA580C',
     flex: 1,
   },
-  focusBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  projectBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+    gap: 2,
+  },
+  projectIcon: {
+    fontSize: 11,
+  },
+  projectText: {
+    fontSize: 11,
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
     marginTop: 2,
+  },
+  iconEmoji: {
+    fontSize: 16,
   },
 });

@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=390,initial-scale=1" />
+<title>Variant A — Monastic Brutalism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0a0a0a;
+  --paper: #fafaf7;
+  --paper-2: #f2f0e9;
+  --hair: #0a0a0a;
+  --mute: #6b6762;
+  --mute-2: #a8a49e;
+  --redact: #0a0a0a;
+  --accent: #ff3d00;
+  --serif: 'Manrope', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--serif); }
+body { min-height: 100vh; }
+
+.app {
+  width: 100%;
+  max-width: 390px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 54px 0 120px;
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 28px,
+      rgba(10, 10, 10, 0.015) 28px,
+      rgba(10, 10, 10, 0.015) 29px
+    ),
+    var(--paper);
+}
+
+/* ─────────── Masthead ─────────── */
+.mast {
+  padding: 18px 22px 22px;
+  border-bottom: 1px solid var(--hair);
+}
+.mast-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.mast-row .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: blink 1.6s steps(2) infinite;
+}
+@keyframes blink { 50% { opacity: 0.25; } }
+.mast h1 {
+  font-family: var(--serif);
+  font-weight: 800;
+  font-size: 42px;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  margin: 18px 0 6px;
+}
+.mast h1 em {
+  font-style: normal;
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-bottom: 8px;
+}
+.mast-sub {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+  max-width: 260px;
+  line-height: 1.55;
+  margin-top: 14px;
+}
+
+/* ─────────── Tabs ─────────── */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--hair);
+  padding: 0 22px;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 4;
+}
+.tab {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 14px 0;
+  color: var(--mute);
+  position: relative;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+.tab[data-active="true"] {
+  color: var(--ink);
+}
+.tab[data-active="true"]::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0; right: 0;
+  height: 2px;
+  background: var(--ink);
+}
+.tab .count {
+  color: var(--mute-2);
+  margin-left: 6px;
+  font-size: 9px;
+}
+
+/* ─────────── Row ─────────── */
+.feed { padding: 4px 0 0; }
+
+.row {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  column-gap: 14px;
+  padding: 20px 22px 20px 22px;
+  border-bottom: 1px solid rgba(10, 10, 10, 0.12);
+  position: relative;
+  cursor: pointer;
+  transition: padding 0.15s ease;
+}
+.row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--ink);
+  transition: width 0.12s ease;
+}
+.row:hover::before { width: 3px; }
+.row:hover { padding-left: 26px; }
+
+.row-idx {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--mute-2);
+  letter-spacing: 0.1em;
+  padding-top: 2px;
+  font-feature-settings: 'tnum';
+}
+
+.row-body { min-width: 0; }
+
+.row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.row-meta {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.row-meta .pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px 2px;
+  border: 1px solid var(--hair);
+  border-radius: 0;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  line-height: 1;
+}
+.row-meta .pill.bug { background: var(--ink); color: var(--paper); }
+.row-meta .pill.feature { background: transparent; }
+.row-meta .pill.status-shipped { background: var(--paper-2); }
+.row-meta .pill.status-triaged { }
+.row-meta .pill.status-open { }
+.row-meta .pill.status-wont-fix { text-decoration: line-through; color: var(--mute); }
+.row-meta .pill.status-under-review { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+
+.row-time {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  color: var(--mute);
+  white-space: nowrap;
+}
+
+.row-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.row-excerpt {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--mute);
+  margin: 0 0 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.row-foot {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--mute);
+}
+.row-foot .vote {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.row-foot .vote svg { width: 10px; height: 10px; }
+.row-foot .reply {
+  color: var(--accent);
+  letter-spacing: 0.18em;
+}
+
+/* ─────────── Redaction (private row) ─────────── */
+.row.private .row-title,
+.row.private .row-excerpt { display: none; }
+
+.redact-bar {
+  display: block;
+  height: 16px;
+  background: var(--redact);
+  margin: 0 0 8px;
+  position: relative;
+}
+.redact-bar + .redact-bar { width: 62%; height: 12px; }
+.redact-bar + .redact-bar + .redact-bar { width: 45%; height: 12px; margin-bottom: 12px; }
+
+.redact-label {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 2px 6px;
+  pointer-events: none;
+}
+
+/* ─────────── FAB ─────────── */
+.fab {
+  position: fixed;
+  right: 22px;
+  bottom: 30px;
+  width: 58px;
+  height: 58px;
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  font-family: var(--mono);
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 20;
+  box-shadow: 6px 6px 0 0 var(--accent);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  max-width: 360px;
+}
+.fab:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 0 var(--accent); }
+.fab:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 var(--accent); }
+
+/* Ensure the FAB is anchored to the phone viewport, not the whole page
+   in standalone usage */
+@media (max-width: 500px) {
+  .fab { right: 22px; }
+}
+
+/* Section divider */
+.section-head {
+  padding: 30px 22px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--mute-2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(10, 10, 10, 0.18);
+}
+
+/* Filter summary */
+.filter-bar {
+  padding: 12px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+  border-bottom: 1px solid rgba(10, 10, 10, 0.12);
+}
+.filter-bar .sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="mast">
+    <div class="mast-row">
+      <span><span class="dot"></span>ISSUE 042 / APR 2026</span>
+      <span>KR · v1.9.3</span>
+    </div>
+    <h1>
+      <em>BUG · REQUEST — LEDGER</em>
+      피드백<br>대장
+    </h1>
+    <p class="mast-sub">모든 리포트는 작성자와 관리자만 볼 수 있습니다.<br>타인의 글은 ▀▀▀ 처리됩니다.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab" data-tab="all"     data-active="true">ALL <span class="count">08</span></button>
+    <button class="tab" data-tab="bug"     data-active="false">BUG <span class="count">04</span></button>
+    <button class="tab" data-tab="feature" data-active="false">FEATURE <span class="count">04</span></button>
+    <button class="tab" data-tab="mine"    data-active="false">MINE <span class="count">02</span></button>
+  </nav>
+
+  <div class="filter-bar">
+    <span>08 RECORDS</span>
+    <span class="sort">SORT · NEWEST ↓</span>
+  </div>
+
+  <section id="feed" class="feed"></section>
+
+  <button class="fab" type="button" title="새 리포트 작성">＋</button>
+</div>
+
+<script src="./shared/mock-data.js?v=3"></script>
+<script>
+const statusLabel = {
+  open: 'OPEN',
+  triaged: 'TRIAGED',
+  'under-review': 'REVIEW',
+  shipped: 'SHIPPED',
+  'wont-fix': "WON'T FIX",
+};
+
+function renderRow(post, idx) {
+  const author = window.USERS[post.authorId];
+  const visible = window.isVisible(post, window.CURRENT_USER);
+  const typeLabel = post.type === 'bug' ? 'BUG' : 'FEAT';
+  const pillTypeClass = post.type === 'bug' ? 'bug' : 'feature';
+  const idNum = String(idx + 1).padStart(3, '0');
+
+  const metaLine = `
+    <div class="row-meta">
+      <span class="pill ${pillTypeClass}">${typeLabel}</span>
+      <span class="pill status-${post.status}">${statusLabel[post.status]}</span>
+      <span>▲ ${String(post.votes).padStart(2, '0')}</span>
+    </div>
+  `;
+
+  const timeLine = `<span class="row-time">${post.createdAt}</span>`;
+
+  const body = visible ? `
+    <h3 class="row-title">${escapeHtml(post.title)}</h3>
+    <p class="row-excerpt">${escapeHtml(post.body)}</p>
+    <div class="row-foot">
+      <span class="vote">
+        <svg viewBox="0 0 10 10" fill="currentColor"><path d="M5 0L10 6H0z"/></svg>
+        ${post.votes} VOTES
+      </span>
+      <span>💬 ${post.comments}</span>
+      ${post.hasAdminReply ? '<span class="reply">· TEAM REPLIED</span>' : ''}
+    </div>
+  ` : `
+    <span class="redact-bar"><span class="redact-label">AUTHOR-ONLY</span></span>
+    <span class="redact-bar"></span>
+    <span class="redact-bar"></span>
+    <div class="row-foot">
+      <span>▲ ${post.votes}</span>
+      <span>💬 ${post.comments}</span>
+      <span style="letter-spacing:.22em">· REDACTED</span>
+    </div>
+  `;
+
+  return `
+    <article class="row ${visible ? '' : 'private'}" data-post="${post.id}">
+      <div class="row-idx">${idNum}</div>
+      <div class="row-body">
+        <div class="row-top">
+          ${metaLine}
+          ${timeLine}
+        </div>
+        ${body}
+      </div>
+    </article>
+  `;
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+window.__renderBoard = function () {
+  const feed = document.getElementById('feed');
+  const bySection = [
+    { label: '금주', posts: window.POSTS.slice(0, 4) },
+    { label: '이전 기록', posts: window.POSTS.slice(4) },
+  ];
+  let html = '';
+  let idxCounter = 0;
+  for (const sec of bySection) {
+    html += `<div class="section-head">${sec.label}</div>`;
+    for (const p of sec.posts) {
+      html += renderRow(p, idxCounter++);
+    }
+  }
+  feed.innerHTML = html;
+};
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.dataset.active = 'false');
+    t.dataset.active = 'true';
+  });
+});
+
+window.__renderBoard();
+</script>
+</body>
+</html>

@@ -54,10 +54,10 @@ export const PROJECT_COLORS = [
   '#D4E09B', '#F6BD60',
 ] as const;
 
-/** 프로젝트 아이콘 (16개 이모지) */
+/** 프로젝트 기본 아이콘 (lucide 키 16개) */
 export const PROJECT_ICONS = [
-  '📋', '🎯', '💡', '🚀',
-  '📚', '🏗️', '🎨', '💼',
-  '🏃', '🌱', '⭐', '🔥',
-  '🎓', '🎵', '🏠', '❤️',
+  'briefcase', 'target', 'lightbulb', 'rocket',
+  'book', 'code', 'camera', 'heart',
+  'star', 'leaf', 'flame', 'zap',
+  'flag', 'music', 'home', 'globe',
 ] as const;

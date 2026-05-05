@@ -359,7 +359,7 @@ export function CareRecordView({ userId }: CareRecordViewProps) {
               user_id: userId,
               title: giftTodoTitle,
               schedule_type: giftTodoDate ? 'timed' : 'none',
-              start_time: giftTodoDate ? new Date(`${giftTodoDate}T00:00:00+09:00`).toISOString() : undefined,
+              start_time: giftTodoDate ? new Date(`${giftTodoDate}T00:00:00`).toISOString() : undefined,
             });
           }
 

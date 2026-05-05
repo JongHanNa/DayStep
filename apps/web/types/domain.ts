@@ -56,10 +56,10 @@ export interface Project {
 export type NoteType = 'note' | 'reference' | 'work_in_progress' | 'read_later';
 
 /**
- * 노트 카테고리 (DB note_category 컬럼과 일치)
- * - fuel: 원동력(복잡한 머릿속, 정리해줄게) 기능에서 생성된 노트
+ * 노트 카테고리 (DB category 컬럼과 일치)
+ * - motivation: 원동력(복잡한 머릿속, 정리해줄게) 기능에서 생성된 노트
  */
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'motivation';
 
 /**
  * 노트 (Note)
@@ -69,7 +69,7 @@ export interface Note {
   user_id: string;
   title: string;
   content: string;
-  note_category: NoteCategory; // 노트 카테고리
+  category: NoteCategory; // 노트 카테고리
 
   // 프로젝트 연결
   projects?: Project[]; // 여러 프로젝트 연결 (N:N, project_notes junction table을 통해 로드)

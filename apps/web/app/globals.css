@@ -1027,7 +1027,48 @@ body h1, body h2, body h3, body h4, body h5, body h6, body p, body span, body di
 }
 
 /* ========================================
-   컬러 테마 시스템 (9개 테마)
+   컬러 테마 시스템 (4개 BackgroundPreset)
+   모바일 RN의 backgroundPreset과 단일 소스 공유
+   ======================================== */
+
+[data-color-theme="calmBackground"] {
+  --color-primary: #3B82F6;
+  --color-primary-content: #ffffff;
+}
+[data-color-theme="warmBackground"] {
+  --color-primary: #D97706;
+  --color-primary-content: #ffffff;
+}
+[data-color-theme="eveningBackground"] {
+  --color-primary: #8B5CF6;
+  --color-primary-content: #ffffff;
+}
+[data-color-theme="executionBackground"] {
+  --color-primary: #EA580C;
+  --color-primary-content: #ffffff;
+}
+
+/* 다크 모드 분기 (luminosity +10~15%) */
+[data-theme="dark"][data-color-theme="calmBackground"] {
+  --color-primary: #60A5FA;
+  --color-primary-content: #1a1a1a;
+}
+[data-theme="dark"][data-color-theme="warmBackground"] {
+  --color-primary: #F59E0B;
+  --color-primary-content: #1a1a1a;
+}
+[data-theme="dark"][data-color-theme="eveningBackground"] {
+  --color-primary: #A78BFA;
+  --color-primary-content: #1a1a1a;
+}
+[data-theme="dark"][data-color-theme="executionBackground"] {
+  --color-primary: #FB923C;
+  --color-primary-content: #1a1a1a;
+}
+
+/* ========================================
+   Legacy 컬러 테마 시스템 (9개 테마, deprecated)
+   persist migrate가 BackgroundPreset로 전환하므로 신규 사용자에게는 노출되지 않음
    ======================================== */
 
 /* Luxury Gold */

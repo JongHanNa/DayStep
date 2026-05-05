@@ -35,7 +35,7 @@ function mapDbRowToUsageStats(row: any): UserUsageStats {
     todoCount: row.todo_count,
     habitCount: row.habit_count,
     projectCount: row.project_count,
-    noteCount: row.note_count,
+    noteCount: row.motivation_count,
     contactCount: row.contact_count,
     cherishedPeopleCount: row.cherished_people_count ?? 0,
     careInteractionCount: row.care_interaction_count ?? 0,

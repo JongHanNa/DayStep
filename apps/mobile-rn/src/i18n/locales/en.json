@@ -1,0 +1,98 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "OK",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "close": "Close",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "user": "User"
+  },
+  "tabs": {
+    "home": "Home",
+    "planner": "Planner",
+    "execute": "Focus",
+    "notes": "Notes",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "sectionApp": "App Settings",
+    "sectionAdmin": "Admin",
+    "sectionDev": "Developer",
+    "sectionHelp": "Help",
+    "subscription": "Subscription",
+    "themeColor": "Theme & Color",
+    "language": "Language",
+    "planLimits": "Plan Limits",
+    "planLimitsDesc": "Configure Free/Pro entity limits",
+    "notificationSchedule": "Notification Schedule",
+    "notificationScheduleDesc": "View scheduled notifications",
+    "replayTutorial": "Replay tutorial",
+    "replayTutorialDesc": "See the home screen guide from the start",
+    "viewReferences": "References / Disclaimer",
+    "viewReferencesDesc": "Academic basis for ADHD-related content",
+    "signOut": "Sign Out",
+    "signOutConfirmTitle": "Sign Out",
+    "signOutConfirmMessage": "Are you sure you want to sign out?"
+  },
+  "language": {
+    "title": "Language",
+    "systemDefault": "System Default",
+    "ko": "한국어",
+    "en": "English",
+    "ja": "日本語"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "previous": "Back",
+    "done": "Get started",
+    "stepIndicator": "{{current}} / {{total}}",
+    "learnMore": "Learn more",
+    "home": {
+      "progress": {
+        "title": "Today's progress",
+        "body": "See completed and remaining tasks at a glance.",
+        "rationale": "ADHD brains rely on visualized progress to stay motivated. The large progress ring lets even small wins register."
+      },
+      "mission": {
+        "title": "Today's mission",
+        "body": "Pick one thing to focus on first.",
+        "rationale": "One thing at a time — multitasking is the heaviest load on an ADHD brain. Narrowing to a single mission lowers the start barrier."
+      },
+      "dailyCare": {
+        "title": "Daily care",
+        "body": "Opens Sleep Garden, ADHD Basics, and Tidy-up screens.",
+        "rationale": "Sleep, self-understanding, and a tidy environment are the three load-bearing axes of ADHD daily life — gathered here so the flow doesn't break."
+      },
+      "planning": {
+        "title": "Planning",
+        "body": "Daily plan, projects, AI planning, data cleanup screens.",
+        "rationale": "The act of planning itself is a heavy cognitive load for ADHD. AI assistance and a visual planner lower the start barrier."
+      },
+      "thoughts": {
+        "title": "Thoughts & memory",
+        "body": "Opens Motivations and People-record screens.",
+        "rationale": "ADHD makes it easy to forget your motivation and the people who matter. A short note about why and who helps next time you get stuck."
+      }
+    },
+    "references": {
+      "title": "References",
+      "intro": "ADHD-related content in DayStep draws on the following peer-reviewed academic sources.",
+      "items": [
+        "[1] Hvolby, A. (2015). Associations of sleep disturbance with ADHD: implications for treatment. ADHD Attention Deficit and Hyperactivity Disorders, 7(1), 1–18.",
+        "[2] Coogan, A. N. & McGowan, N. M. (2017). A systematic review of circadian function, chronotype and chronotherapy in ADHD. ADHD Attention Deficit and Hyperactivity Disorders, 9(3), 129–147.",
+        "[3] Volkow, N. D. et al. (2012). Evidence that sleep deprivation downregulates dopamine D2R in ventral striatum in the human brain. Journal of Neuroscience, 32(19), 6711–6717.",
+        "[4] Kooij, J. J. S. & Bijlenga, D. (2013). The circadian rhythm in adult attention-deficit/hyperactivity disorder: current state of affairs. Expert Review of Neurotherapeutics, 13(10), 1107–1116."
+      ]
+    },
+    "disclaimer": {
+      "title": "Educational use",
+      "body": "This content is provided for educational and self-management support only. It does not replace professional medical diagnosis or treatment. If difficulties with sleep, attention, or daily functioning persist, consult a psychiatrist or qualified healthcare provider."
+    }
+  }
+}

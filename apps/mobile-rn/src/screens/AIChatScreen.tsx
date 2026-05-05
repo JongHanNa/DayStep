@@ -13,43 +13,41 @@ import {
   Platform,
   ActivityIndicator,
   Keyboard,
+  Modal,
 } from 'react-native';
-import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import {storage} from '@/lib/mmkv';
+
+const AI_CONSENT_KEY = 'ai_consent_agreed';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {ScreenContainer} from '@/components/core';
 import {
   Send,
   Sparkles,
   Trash2,
-  ChevronDown,
 } from 'lucide-react-native';
 import {
   useAIPlanningStore,
   type ChatMessage,
-  type AIProvider,
 } from '@/stores/aiPlanningStore';
 import {useAuthStore} from '@/stores/authStore';
 import {useSubscriptionStore} from '@/stores/subscriptionStore';
-
-const PROVIDER_LABELS: Record<AIProvider, {label: string; color: string}> = {
-  claude: {label: 'Claude', color: '#D97706'},
-  openai: {label: 'GPT', color: '#10A37F'},
-  groq: {label: 'Groq', color: '#F55036'},
-  gemini: {label: 'Gemini', color: '#4285F4'},
-};
+import {useTheme} from '@/theme';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 
 function ChatBubble({message}: {message: ChatMessage}) {
   const isUser = message.role === 'user';
+  const {primaryColor} = useTheme();
 
   return (
     <View className={`px-4 mb-3 ${isUser ? 'items-end' : 'items-start'}`}>
       <View
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser
-            ? 'bg-blue-500 rounded-br-sm'
+            ? 'rounded-br-sm'
             : 'bg-white rounded-bl-sm'
         }`}
-        style={!isUser ? {shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: {width: 0, height: 2}} : undefined}>
+        style={isUser ? {backgroundColor: primaryColor} : {shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: {width: 0, height: 2}}}>
         <Text
           className={`text-sm leading-5 ${
             isUser ? 'text-white' : 'text-gray-800'
@@ -62,77 +60,18 @@ function ChatBubble({message}: {message: ChatMessage}) {
   );
 }
 
-function ProviderSelector({
-  selected,
-  available,
-  onSelect,
-  visible,
-  onToggle,
-}: {
-  selected: AIProvider;
-  available: AIProvider[];
-  onSelect: (provider: AIProvider) => void;
-  visible: boolean;
-  onToggle: () => void;
-}) {
-  const info = PROVIDER_LABELS[selected];
-
-  return (
-    <View>
-      <TouchableOpacity
-        onPress={onToggle}
-        className="flex-row items-center bg-gray-100 rounded-full px-3 py-1.5">
-        <View
-          className="w-2 h-2 rounded-full mr-1.5"
-          style={{backgroundColor: info.color}}
-        />
-        <Text className="text-xs font-medium text-gray-600">{info.label}</Text>
-        <ChevronDown size={12} color="#9CA3AF" style={{marginLeft: 2}} />
-      </TouchableOpacity>
-
-      {visible && (
-        <Animated.View
-          entering={FadeIn.duration(150)}
-          className="absolute top-10 left-0 bg-white rounded-xl shadow-md z-10 py-1"
-          style={{minWidth: 120}}>
-          {available.map(provider => (
-            <TouchableOpacity
-              key={provider}
-              onPress={() => {
-                onSelect(provider);
-                onToggle();
-              }}
-              className={`flex-row items-center px-4 py-2 ${
-                provider === selected ? 'bg-gray-50' : ''
-              }`}>
-              <View
-                className="w-2 h-2 rounded-full mr-2"
-                style={{backgroundColor: PROVIDER_LABELS[provider].color}}
-              />
-              <Text className="text-sm text-gray-700">
-                {PROVIDER_LABELS[provider].label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </Animated.View>
-      )}
-    </View>
-  );
-}
-
 export default function AIChatScreen() {
+  useDailyCheckIn('ai-chat');
   const user = useAuthStore(s => s.user);
+  const {primaryColor} = useTheme();
   const {hasActiveSubscription} = useSubscriptionStore();
   const {
     messages,
     isLoading,
     isStreaming,
-    provider,
-    availableProviders,
     usage,
     error,
     sendMessage,
-    setProvider,
     setIsPro,
     fetchUsage,
     clearMessages,
@@ -143,8 +82,8 @@ export default function AIChatScreen() {
   const bottomPadding = insets.bottom + TAB_BAR_OFFSET;
 
   const [inputText, setInputText] = useState('');
-  const [showProviders, setShowProviders] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -166,6 +105,13 @@ export default function AIChatScreen() {
     }
   }, [user?.id, hasActiveSubscription]);
 
+  useEffect(() => {
+    const agreed = storage.getBoolean(AI_CONSENT_KEY);
+    if (!agreed) {
+      setShowConsentModal(true);
+    }
+  }, []);
+
   const handleSend = useCallback(async () => {
     if (!inputText.trim() || !user?.id || isLoading) return;
     const text = inputText.trim();
@@ -186,32 +132,60 @@ export default function AIChatScreen() {
 
   return (
     <ScreenContainer gradient="warmBackground">
+      {/* AI 데이터 처리 동의 모달 */}
+      <Modal
+        visible={showConsentModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConsentModal(false)}>
+        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24}}>
+          <View style={{backgroundColor: 'white', borderRadius: 20, padding: 24, width: '100%'}}>
+            <Text style={{fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 12}}>AI 기능 이용 안내</Text>
+            <Text style={{fontSize: 14, color: '#374151', lineHeight: 22, marginBottom: 8}}>
+              AI 기능은 입력하신 메시지를 AI 서비스 제공자(Claude, OpenAI 등)의 서버로 전송하여 응답을 생성합니다.
+            </Text>
+            <Text style={{fontSize: 14, color: '#374151', lineHeight: 22, marginBottom: 8}}>
+              • 전송 데이터: 입력 텍스트, 할일 정보{'\n'}
+              • 목적: AI 기반 일정 계획 및 조언 제공{'\n'}
+              • 보관: DayStep 서버를 통해 전달되며 로그는 30일 후 삭제
+            </Text>
+            <Text style={{fontSize: 13, color: '#6B7280', lineHeight: 20, marginBottom: 20}}>
+              동의하시면 AI 기능을 이용할 수 있습니다. 자세한 내용은 개인정보처리방침을 확인하세요.
+            </Text>
+            <View style={{flexDirection: 'row', gap: 12}}>
+              <TouchableOpacity
+                onPress={() => setShowConsentModal(false)}
+                style={{flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center'}}>
+                <Text style={{fontSize: 15, fontWeight: '600', color: '#6B7280'}}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  storage.set(AI_CONSENT_KEY, true);
+                  setShowConsentModal(false);
+                }}
+                style={{flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: primaryColor}}>
+                <Text style={{fontSize: 15, fontWeight: '600', color: 'white'}}>동의</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         className="flex-1"
         keyboardVerticalOffset={0}>
         {/* 헤더 */}
-        <Animated.View
-          entering={FadeInDown.duration(400)}
-          className="px-4 pt-2 pb-3 flex-row items-center justify-end border-b border-gray-100">
-          <View className="flex-row items-center">
-            <ProviderSelector
-              selected={provider}
-              available={availableProviders}
-              onSelect={setProvider}
-              visible={showProviders}
-              onToggle={() => setShowProviders(!showProviders)}
-            />
-            {messages.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClear}
-                className="ml-3"
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                <Trash2 size={18} color="#9CA3AF" />
-              </TouchableOpacity>
-            )}
-          </View>
-        </Animated.View>
+        {messages.length > 0 && (
+          <Animated.View
+            entering={FadeInDown.duration(400)}
+            className="px-4 pt-2 pb-3 flex-row items-center justify-end border-b border-gray-100">
+            <TouchableOpacity
+              onPress={handleClear}
+              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              <Trash2 size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         {/* 사용량 표시 */}
         {usage && (
@@ -252,7 +226,7 @@ export default function AIChatScreen() {
                     }}
                     className="bg-white rounded-xl px-4 py-3 mb-2"
                     style={{shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, shadowOffset: {width: 0, height: 2}}}>
-                    <Text className="text-sm text-blue-600">💬 {prompt}</Text>
+                    <Text className="text-sm" style={{color: primaryColor}}>💬 {prompt}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -282,9 +256,8 @@ export default function AIChatScreen() {
             <TouchableOpacity
               onPress={handleSend}
               disabled={!inputText.trim() || isLoading}
-              className={`ml-2 w-10 h-10 rounded-full items-center justify-center ${
-                inputText.trim() && !isLoading ? 'bg-blue-500' : 'bg-gray-200'
-              }`}>
+              className="ml-2 w-10 h-10 rounded-full items-center justify-center"
+              style={{backgroundColor: inputText.trim() && !isLoading ? primaryColor : '#E5E7EB'}}>
               {isLoading ? (
                 <ActivityIndicator size="small" color="#9CA3AF" />
               ) : (

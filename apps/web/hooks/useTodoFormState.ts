@@ -4,7 +4,7 @@ import { toZonedTime } from 'date-fns-tz';
 import type { Todo, ScheduleType, RecurrencePattern } from '@/types';
 import { UnifiedIconKey } from '@/lib/icon-collection';
 import { DEFAULT_COLOR, getColorByHex, getColorById } from '@/lib/color-palette';
-import type { MemoData } from '@/components/todos/form/NoteInput';
+import type { MemoData } from '@/components/todos/form/MotivationInput';
 
 export interface TodoFormStateValues {
   // 기본 필드

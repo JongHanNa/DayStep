@@ -1,3 +1,4 @@
+require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -15,7 +16,26 @@ if linkage != nil
 end
 
 target 'DayStepRN' do
-  config = use_native_modules!
+  use_expo_modules!
+
+  if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
+    config_command = ['node', '-e', "process.argv=['', '', 'config'];require('@react-native-community/cli').run()"];
+  else
+    config_command = [
+      'node',
+      '--no-warnings',
+      '--eval',
+      'require(require.resolve(\'expo-modules-autolinking\', { paths: [require.resolve(\'expo/package.json\')] }))(process.argv.slice(1))',
+      'react-native-config',
+      '--json',
+      '--platform',
+      'ios'
+    ]
+  end
+
+  config = use_native_modules!(config_command)
+
+  pod 'MMKV'  # AppDelegate에서 import MMKV 사용 (UI 테스트 세션 주입)
 
   use_react_native!(
     :path => config[:reactNativePath],
@@ -34,6 +54,14 @@ target 'DayStepRN' do
     # react-native-config ENVFILE: /tmp/envfile 의존 제거 → xcconfig build setting으로 대체
     # pod install 이후에도 ENVFILE 설정이 유지되도록 영속성 확보
     installer.pods_project.targets.each do |target|
+      # ExpoModulesCore: Swift 6 모드에서 Xcode 16.2 컴파일러 크래시 우회
+      # SendNonSendable SIL pass 버그 → Swift 5 모드로 다운그레이드
+      if target.name == 'ExpoModulesCore'
+        target.build_configurations.each do |config|
+          config.build_settings['SWIFT_VERSION'] = '5.0'
+        end
+      end
+
       if target.name == 'react-native-config'
         target.build_configurations.each do |config|
           if config.name == 'Debug'

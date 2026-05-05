@@ -1,0 +1,122 @@
+[
+  {
+    "id": "01_home",
+    "title": "ADHD 일상,\n하나로 돌봐요",
+    "subtitle": "할일·수면·청소·동기부여까지\n흩어진 일상을 한 곳에서",
+    "screenshotPatterns": ["01_Home.png", "01_home.png"],
+    "bgStart": "#3B82F6",
+    "bgEnd": "#1D4ED8",
+    "glow": "#60A5FA",
+    "glowPosition": "top-right",
+    "rotateY": "-3",
+    "rotateX": "1"
+  },
+  {
+    "id": "02_planner",
+    "title": "작업 기억 대신\n앱이 기억해요",
+    "subtitle": "ADHD 뇌가 놓치는 할일을\n꺼내고, 배치하고, 실행까지",
+    "screenshotPatterns": ["02_Planner.png", "02_planner.png"],
+    "bgStart": "#2563EB",
+    "bgEnd": "#1E40AF",
+    "glow": "#93C5FD",
+    "glowPosition": "bottom-left",
+    "rotateY": "-2",
+    "rotateX": "2"
+  },
+  {
+    "id": "03_execute",
+    "title": "실행 마비,\n20분이면 풀려요",
+    "subtitle": "도파민 부족으로 시작이 안 될 때\nADHD 맞춤 포모도로 타이머",
+    "screenshotPatterns": ["03_Execute.png", "03_execute.png"],
+    "bgStart": "#7C3AED",
+    "bgEnd": "#4C1D95",
+    "glow": "#A78BFA",
+    "glowPosition": "top-left",
+    "rotateY": "3",
+    "rotateX": "1"
+  },
+  {
+    "id": "04_sleep",
+    "title": "ADHD 뇌는\n잠으로 충전돼요",
+    "subtitle": "전두엽을 회복하는 수면 습관\n나무가 자라는 수면 정원",
+    "screenshotPatterns": ["04_SleepGarden.png", "04_sleep.png"],
+    "bgStart": "#1E1B4B",
+    "bgEnd": "#312E81",
+    "glow": "#818CF8",
+    "glowPosition": "top-right",
+    "rotateY": "2",
+    "rotateX": "1"
+  },
+  {
+    "id": "05_cleaning",
+    "title": "실행기능 장애?\n2분이면 돼요",
+    "subtitle": "뇌가 멈출 때, 마이크로태스크로\n시작 장벽을 극단적으로 낮춰요",
+    "screenshotPatterns": ["05_Cleaning.png", "05_cleaning.png"],
+    "bgStart": "#059669",
+    "bgEnd": "#065F46",
+    "glow": "#6EE7B7",
+    "glowPosition": "bottom-right",
+    "rotateY": "-3",
+    "rotateX": "1"
+  },
+  {
+    "id": "06_adhd",
+    "title": "게으른 게 아니에요\n뇌가 달라요",
+    "subtitle": "전두엽·도파민·실행기능\n내 뇌를 과학적으로 이해하세요",
+    "screenshotPatterns": ["07_ADHD.png", "07_adhd.png"],
+    "bgStart": "#0D9488",
+    "bgEnd": "#115E59",
+    "glow": "#5EEAD4",
+    "glowPosition": "top-left",
+    "rotateY": "3",
+    "rotateX": "2"
+  },
+  {
+    "id": "07_notes",
+    "title": "도파민이 바닥날 때\n꺼내보세요",
+    "subtitle": "동기가 살아있는 순간 기록하고\nADHD 뇌의 외부 동기 저장소",
+    "screenshotPatterns": ["08_Notes.png", "08_notes.png"],
+    "bgStart": "#D97706",
+    "bgEnd": "#92400E",
+    "glow": "#FCD34D",
+    "glowPosition": "bottom-left",
+    "rotateY": "-2",
+    "rotateX": "1"
+  },
+  {
+    "id": "08_reflection",
+    "title": "의사결정 피로를\n줄여드려요",
+    "subtitle": "뭐부터 해야 할지 모를 때\n아이젠하워 매트릭스가 정리해요",
+    "screenshotPatterns": ["09_Reflection.png", "09_reflection.png"],
+    "bgStart": "#E11D48",
+    "bgEnd": "#9F1239",
+    "glow": "#FDA4AF",
+    "glowPosition": "top-right",
+    "rotateY": "2",
+    "rotateX": "2"
+  },
+  {
+    "id": "09_timeblock",
+    "title": "시간 감각 왜곡,\n눈으로 잡아요",
+    "subtitle": "ADHD의 time blindness를\n타임그리드로 시각화",
+    "screenshotPatterns": ["10_TimeBlock.png", "10_timeblock.png"],
+    "bgStart": "#0284C7",
+    "bgEnd": "#075985",
+    "glow": "#7DD3FC",
+    "glowPosition": "bottom-right",
+    "rotateY": "-3",
+    "rotateX": "1"
+  },
+  {
+    "id": "10_projects",
+    "title": "큰 목표가\n작은 할일이 돼요",
+    "subtitle": "실행 가능한 단위로 분해해\n전두엽 부담을 줄여요",
+    "screenshotPatterns": ["06_Projects.png", "06_projects.png"],
+    "bgStart": "#F59E0B",
+    "bgEnd": "#D97706",
+    "glow": "#FDE68A",
+    "glowPosition": "top-left",
+    "rotateY": "3",
+    "rotateX": "2"
+  }
+]

@@ -43,35 +43,35 @@ export const shadows = {
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.05,
     shadowRadius: 2,
-    elevation: 1,
+    elevation: 0,
   },
   md: {
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 0,
   },
   lg: {
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.1,
     shadowRadius: 16,
-    elevation: 6,
+    elevation: 0,
   },
   xl: {
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 8},
     shadowOpacity: 0.12,
     shadowRadius: 24,
-    elevation: 8,
+    elevation: 0,
   },
   glow: (color: string) => ({
     shadowColor: color,
     shadowOffset: {width: 0, height: 0},
     shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 4,
+    elevation: 0,
   }),
 } as const;
 
@@ -116,4 +116,49 @@ export const layout = {
   sectionGap: spacing['2xl'],
   tabBarHeight: 80,
   headerHeight: 56,
+} as const;
+
+// ============================================
+// Breakpoints (iPad/태블릿 반응형)
+// ============================================
+export const breakpoints = {
+  phone: 0,
+  tablet: 768,
+  tabletLandscape: 1024,
+} as const;
+
+// ============================================
+// Responsive Layout (브레이크포인트별 레이아웃 값)
+// ============================================
+export const responsiveLayout = {
+  phone: {
+    screenPadding: spacing.lg,       // 16
+    contentMaxWidth: 0,              // 0 = 제한 없음
+    columns: 2,
+    ringSize: 280,
+    tabBarHorizontalInset: 16,
+    sectionGap: spacing['2xl'],      // 24
+    cardPadding: spacing.lg,         // 16
+    peekWidth: 40,
+  },
+  tablet: {
+    screenPadding: spacing['3xl'],   // 32
+    contentMaxWidth: 720,
+    columns: 3,
+    ringSize: 360,
+    tabBarHorizontalInset: 80,
+    sectionGap: spacing['3xl'],      // 32
+    cardPadding: spacing.xl,         // 20
+    peekWidth: 80,
+  },
+  tabletLandscape: {
+    screenPadding: spacing['4xl'],   // 40
+    contentMaxWidth: 960,
+    columns: 4,
+    ringSize: 400,
+    tabBarHorizontalInset: 120,
+    sectionGap: spacing['4xl'],      // 40
+    cardPadding: spacing['2xl'],     // 24
+    peekWidth: 80,
+  },
 } as const;

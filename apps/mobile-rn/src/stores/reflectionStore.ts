@@ -17,6 +17,10 @@ interface DayReflection {
   reflection: string;
   spending_note: string;
   thought_archive: string;
+  today_lesson: string;
+  today_resolution: string;
+  current_period: string;
+  today_prayer: string;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +65,9 @@ export const useReflectionStore = create<ReflectionState>()(
               reflections: {...state.reflections, [date]: data},
             }));
           }
+          // DB에 데이터가 없을 때 캐시를 클리어하지 않음:
+          // 진행 중인 upsertReflection의 optimistic 캐시가 손실되어
+          // 화면 이동 후 입력 내용이 사라지는 race condition을 유발함
         } catch (err: any) {
           console.error('[ReflectionStore] Load error:', err);
           set({error: err.message ?? 'Failed to load reflection'});
@@ -84,6 +91,10 @@ export const useReflectionStore = create<ReflectionState>()(
             reflection: '',
             spending_note: '',
             thought_archive: '',
+            today_lesson: '',
+            today_resolution: '',
+            current_period: '',
+            today_prayer: '',
             created_at: new Date().toISOString(),
           }),
           ...data,

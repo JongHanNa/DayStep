@@ -12,11 +12,11 @@ interface ProScreenGuardProps {
 }
 
 export function ProScreenGuard({screenId, children}: ProScreenGuardProps) {
-  const {hasActiveSubscription} = useSubscriptionStore();
+  const {hasActiveSubscription, isInGracePeriod} = useSubscriptionStore();
   const navigation = useNavigation();
   const screen = SCREEN_REGISTRY[screenId];
 
-  if (screen?.isPro && !hasActiveSubscription) {
+  if (screen?.isPro && !hasActiveSubscription && !isInGracePeriod) {
     return (
       <ScreenContainer gradient="warmBackground">
         <View className="flex-1 items-center justify-center px-8">

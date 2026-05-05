@@ -6,6 +6,13 @@
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {zustandMMKVStorage} from '@/lib/mmkv';
+import {
+  shieldForFocus,
+  clearFocusShield,
+  requestAuthorization,
+  getAuthorizationStatus,
+} from '@/lib/screenTimeManager';
+import {Platform} from 'react-native';
 
 // ============================================
 // Types
@@ -52,6 +59,27 @@ interface PomodoroStats {
   todaySessions: number;
 }
 
+// ============================================
+// Focus Garden types
+// ============================================
+
+export type FocusGardenViewMode = 'day' | 'week' | 'month' | 'year';
+
+export interface FocusTreeInfo {
+  sessionId: string;
+  durationSeconds: number;
+  outcome: 'completed' | 'abandoned';
+}
+
+export interface FocusGardenDayInfo {
+  date: string; // yyyy-MM-dd
+  trees: FocusTreeInfo[];
+}
+
+export interface FocusGardenPayload {
+  days: FocusGardenDayInfo[];
+}
+
 interface PomodoroState {
   timerState: TimerState;
   settings: PomodoroSettings;
@@ -61,6 +89,13 @@ interface PomodoroState {
   consecutivePomodoros: number;
   focusMode: 'todo' | 'quick' | null;
   focusTodoTitle: string | null;
+
+  // ---- 앱 차단 연동 (포커스 전용) ----
+  screenTimeLinkEnabled: boolean;
+
+  // ---- 집중 정원 뷰 상태 ----
+  focusGardenViewMode: FocusGardenViewMode;
+  focusGardenSelectedDate: string; // yyyy-MM-dd
 
   // Timer control
   startTimer: (timerType?: TimerType, todoId?: string | null) => void;
@@ -79,6 +114,16 @@ interface PomodoroState {
 
   // Stats
   recalculateStats: () => void;
+
+  // 앱 차단
+  toggleScreenTimeLink: () => Promise<boolean>; // 반환값: 최종 활성 여부
+  setScreenTimeLinkEnabled: (v: boolean) => void;
+  checkOrphanedSession: () => void;
+
+  // 집중 정원
+  setFocusGardenViewMode: (mode: FocusGardenViewMode) => void;
+  setFocusGardenSelectedDate: (date: string) => void;
+  getFocusGardenPayload: (days?: number) => FocusGardenPayload;
 }
 
 // ============================================
@@ -113,6 +158,10 @@ const DEFAULT_STATS: PomodoroStats = {
   longestStreak: 0,
   todaySessions: 0,
 };
+
+function todayString(): string {
+  return new Date().toISOString().split('T')[0];
+}
 
 // ============================================
 // Helpers
@@ -183,8 +232,12 @@ export const usePomodoroStore = create<PomodoroState>()(
       focusMode: null,
       focusTodoTitle: null,
 
+      screenTimeLinkEnabled: false,
+      focusGardenViewMode: 'day',
+      focusGardenSelectedDate: todayString(),
+
       startTimer: (timerType?: TimerType, todoId?: string | null) => {
-        const {settings} = get();
+        const {settings, screenTimeLinkEnabled} = get();
         const type = timerType ?? 'POMODORO';
         const duration = getDurationForType(type, settings);
 
@@ -201,9 +254,14 @@ export const usePomodoroStore = create<PomodoroState>()(
           },
           connectedTodoId: todoId ?? get().connectedTodoId,
         });
+
+        if (screenTimeLinkEnabled && type === 'POMODORO') {
+          shieldForFocus().catch(err => console.error('[Pomodoro] shieldForFocus:', err));
+        }
       },
 
       startFocusTimer: (durationSeconds: number, mode: 'todo' | 'quick', todoId?: string, todoTitle?: string) => {
+        const {screenTimeLinkEnabled} = get();
         set({
           timerState: {
             isRunning: true,
@@ -219,6 +277,10 @@ export const usePomodoroStore = create<PomodoroState>()(
           focusMode: mode,
           focusTodoTitle: todoTitle ?? null,
         });
+
+        if (screenTimeLinkEnabled) {
+          shieldForFocus().catch(err => console.error('[Pomodoro] shieldForFocus:', err));
+        }
       },
 
       pauseTimer: () => {
@@ -244,7 +306,7 @@ export const usePomodoroStore = create<PomodoroState>()(
       },
 
       stopTimer: () => {
-        const {timerState, connectedTodoId, sessions} = get();
+        const {timerState, connectedTodoId, sessions, screenTimeLinkEnabled} = get();
 
         // 세션 기록 (중단)
         if (timerState.elapsed > 0) {
@@ -256,8 +318,12 @@ export const usePomodoroStore = create<PomodoroState>()(
             interrupted: true,
             connectedTodoId,
           };
-          const updated = [session, ...sessions].slice(0, 100);
+          const updated = [session, ...sessions].slice(0, 200);
           set({sessions: updated, stats: calcStats(updated)});
+        }
+
+        if (screenTimeLinkEnabled) {
+          clearFocusShield().catch(err => console.error('[Pomodoro] clearFocusShield:', err));
         }
 
         set({
@@ -291,7 +357,7 @@ export const usePomodoroStore = create<PomodoroState>()(
       },
 
       completeSession: () => {
-        const {timerState, connectedTodoId, sessions, settings, consecutivePomodoros} =
+        const {timerState, connectedTodoId, sessions, settings, consecutivePomodoros, screenTimeLinkEnabled} =
           get();
 
         const session: PomodoroSession = {
@@ -303,7 +369,7 @@ export const usePomodoroStore = create<PomodoroState>()(
           connectedTodoId,
         };
 
-        const updated = [session, ...sessions].slice(0, 100);
+        const updated = [session, ...sessions].slice(0, 200);
         const newStats = calcStats(updated);
 
         // 다음 타이머 결정
@@ -312,6 +378,10 @@ export const usePomodoroStore = create<PomodoroState>()(
           nextConsecutive++;
         } else {
           nextConsecutive = 0;
+        }
+
+        if (screenTimeLinkEnabled && timerState.timerType === 'POMODORO') {
+          clearFocusShield().catch(err => console.error('[Pomodoro] clearFocusShield:', err));
         }
 
         set({
@@ -354,6 +424,97 @@ export const usePomodoroStore = create<PomodoroState>()(
       recalculateStats: () => {
         set(state => ({stats: calcStats(state.sessions)}));
       },
+
+      toggleScreenTimeLink: async () => {
+        const current = get().screenTimeLinkEnabled;
+        const next = !current;
+
+        if (next && Platform.OS === 'ios') {
+          // 권한 체크 — 미승인이면 요청
+          try {
+            if (getAuthorizationStatus() !== 'approved') {
+              await requestAuthorization();
+            }
+          } catch (err) {
+            console.error('[Pomodoro] requestAuthorization error:', err);
+            return current; // 권한 실패 시 상태 변경 없음
+          }
+        }
+
+        set({screenTimeLinkEnabled: next});
+
+        // 세션 진행 중이면 즉시 shield 적용/해제
+        const {timerState} = get();
+        if (timerState.isRunning || timerState.isPaused) {
+          if (next) {
+            shieldForFocus().catch(err => console.error('[Pomodoro] shieldForFocus:', err));
+          } else {
+            clearFocusShield().catch(err => console.error('[Pomodoro] clearFocusShield:', err));
+          }
+        }
+
+        return next;
+      },
+
+      setScreenTimeLinkEnabled: (v) => set({screenTimeLinkEnabled: v}),
+
+      checkOrphanedSession: () => {
+        const {timerState, screenTimeLinkEnabled} = get();
+        if (!timerState.isRunning && !timerState.isPaused) return;
+
+        // 앱 재시작 시 고아 세션 → shield 해제 + timer 리셋
+        if (screenTimeLinkEnabled) {
+          clearFocusShield().catch(err => console.error('[Pomodoro] clearFocusShield orphan:', err));
+        }
+
+        set({
+          timerState: {...DEFAULT_TIMER},
+          connectedTodoId: null,
+          focusMode: null,
+          focusTodoTitle: null,
+        });
+      },
+
+      setFocusGardenViewMode: (mode) => set({focusGardenViewMode: mode}),
+      setFocusGardenSelectedDate: (date) => set({focusGardenSelectedDate: date}),
+
+      getFocusGardenPayload: (days = 365) => {
+        const {sessions} = get();
+        const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+
+        const map = new Map<string, FocusTreeInfo[]>();
+
+        for (const s of sessions) {
+          if (s.timerType !== 'POMODORO') continue;
+          const ts = new Date(s.completedAt).getTime();
+          if (isNaN(ts) || ts < cutoff) continue;
+
+          // 2분 미만은 표시에서 제외 (씨앗 미만)
+          if (s.duration < 120) continue;
+
+          const date = s.completedAt.slice(0, 10); // yyyy-MM-dd
+          const tree: FocusTreeInfo = {
+            sessionId: s.id,
+            durationSeconds: s.duration,
+            outcome: s.interrupted ? 'abandoned' : 'completed',
+          };
+          const arr = map.get(date);
+          if (arr) {
+            arr.push(tree);
+          } else {
+            map.set(date, [tree]);
+          }
+        }
+
+        const daysArr: FocusGardenDayInfo[] = [];
+        for (const [date, trees] of map.entries()) {
+          daysArr.push({date, trees});
+        }
+        // 날짜 오름차순 정렬 (일관성)
+        daysArr.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+
+        return {days: daysArr};
+      },
     }),
     {
       name: 'pomodoro-store',
@@ -367,6 +528,9 @@ export const usePomodoroStore = create<PomodoroState>()(
         connectedTodoId: state.connectedTodoId,
         focusMode: state.focusMode,
         focusTodoTitle: state.focusTodoTitle,
+        screenTimeLinkEnabled: state.screenTimeLinkEnabled,
+        focusGardenViewMode: state.focusGardenViewMode,
+        focusGardenSelectedDate: state.focusGardenSelectedDate,
       }),
     },
   ),

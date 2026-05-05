@@ -6,7 +6,7 @@
 import React, {useRef} from 'react';
 import {ScrollView, View, Text, StyleSheet} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
-import {format, parseISO, isToday, isTomorrow} from 'date-fns';
+import {format, parseISO, isToday, isTomorrow, isSameDay} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {getAlarmsLabel} from '@/lib/notifications';
 import {
@@ -16,8 +16,10 @@ import {
   Repeat,
   Flag,
   Sparkles,
+  Palette,
 } from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
+import {fixedColors} from '@/theme/colors';
 
 // ============================================
 // Types
@@ -39,6 +41,7 @@ interface ToolbarForm {
   recurrenceDaysOfWeek: number[];
   importance: boolean;
   urgency: boolean;
+  color?: string;
 }
 
 interface AttributeToolbarProps {
@@ -46,6 +49,8 @@ interface AttributeToolbarProps {
   onDatePress: () => void;
   onPriorityPress: (anchor: AnchorRect) => void;
   onIconPress?: (anchor: AnchorRect) => void;
+  onColorPress?: (anchor: AnchorRect) => void;
+  onIconColorPress?: () => void;
   // Legacy: 기존 Edit 모드에서 사용 (서브시트 직접 열기)
   onTimePress?: () => void;
   onAlarmPress?: () => void;
@@ -58,11 +63,52 @@ interface AttributeToolbarProps {
 // Helpers
 // ============================================
 
-function getDateChipLabel(dateStr: string): string {
-  const date = parseISO(dateStr);
-  if (isToday(date)) return '오늘';
-  if (isTomorrow(date)) return '내일';
-  return format(date, 'M/d (EEE)', {locale: ko});
+function getDateChipLabel(form: ToolbarForm): string {
+  // ── 날짜 부분 ──
+  const isMultiDay =
+    (form.scheduleType === 'timed' || form.scheduleType === 'all_day') &&
+    !!form.startTime &&
+    !!form.endTime &&
+    !isSameDay(form.startTime, form.endTime);
+
+  let datePart: string;
+  if (isMultiDay) {
+    datePart = `${format(form.startTime!, 'M/d')} → ${format(form.endTime!, 'M/d')}`;
+  } else {
+    const date = parseISO(form.scheduledDate);
+    if (isToday(date)) datePart = '오늘';
+    else if (isTomorrow(date)) datePart = '내일';
+    else datePart = format(date, 'M/d (EEE)', {locale: ko});
+  }
+
+  // ── 시간 부분 ──
+  let timePart = '';
+  if (form.scheduleType === 'timed' && form.startTime) {
+    const start = format(form.startTime, 'HH:mm');
+    const end = form.endTime ? format(form.endTime, 'HH:mm') : '';
+    timePart = end ? `${start}~${end}` : start;
+  } else if (form.scheduleType === 'all_day') {
+    timePart = '종일';
+  } else if (form.scheduleType === 'anytime') {
+    timePart = form.anytimeDuration ? `언제든지 ${form.anytimeDuration}분` : '언제든지';
+  }
+
+  // ── 반복 부분 ──
+  let recPart = '';
+  if (form.recurrencePattern === 'daily') {
+    recPart = '매일';
+  } else if (form.recurrencePattern === 'weekly') {
+    const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+    const days = form.recurrenceDaysOfWeek
+      .sort()
+      .map(d => dayNames[d])
+      .join(',');
+    recPart = days ? `매주 ${days}` : '매주';
+  } else if (form.recurrencePattern === 'monthly') {
+    recPart = '매월';
+  }
+
+  return [datePart, timePart, recPart].filter(Boolean).join(' · ');
 }
 
 function getTimeChipLabel(form: ToolbarForm): string {
@@ -71,7 +117,16 @@ function getTimeChipLabel(form: ToolbarForm): string {
     const end = form.endTime ? format(form.endTime, 'HH:mm') : '';
     return end ? `${start}~${end}` : start;
   }
-  if (form.scheduleType === 'all_day') return '종일';
+  if (form.scheduleType === 'all_day') {
+    if (
+      form.startTime &&
+      form.endTime &&
+      !isSameDay(form.startTime, form.endTime)
+    ) {
+      return '다일 종일';
+    }
+    return '종일';
+  }
   return '언제든지';
 }
 
@@ -97,9 +152,9 @@ function getPriorityChipLabel(form: ToolbarForm): string {
 }
 
 function getPriorityChipStyle(form: ToolbarForm): {bg: string; border: string; text: string} {
-  if (form.importance && form.urgency) return {bg: '#FEF2F2', border: '#EF4444', text: '#DC2626'};
-  if (form.importance) return {bg: '#FFFBEB', border: '#F59E0B', text: '#B45309'};
-  if (form.urgency) return {bg: '#EFF6FF', border: '#3B82F6', text: '#1D4ED8'};
+  if (form.importance && form.urgency) return {bg: '#FEF2F2', border: fixedColors.priorityReluctant, text: '#DC2626'};
+  if (form.importance) return {bg: '#FFFBEB', border: fixedColors.priorityImportance, text: '#B45309'};
+  if (form.urgency) return {bg: '#EFF6FF', border: fixedColors.priorityUrgency, text: '#1D4ED8'};
   return {bg: '#F3F4F6', border: 'transparent', text: '#4B5563'};
 }
 
@@ -112,6 +167,8 @@ export function AttributeToolbar({
   onDatePress,
   onPriorityPress,
   onIconPress,
+  onColorPress,
+  onIconColorPress,
   onTimePress,
   onAlarmPress,
   onRecurrencePress,
@@ -120,6 +177,7 @@ export function AttributeToolbar({
   const priorityStyle = getPriorityChipStyle(form);
   const priorityChipRef = useRef<View>(null);
   const iconChipRef = useRef<View>(null);
+  const colorChipRef = useRef<View>(null);
 
   const handlePriorityMeasure = () => {
     priorityChipRef.current?.measureInWindow((x, y, w, h) => {
@@ -133,15 +191,21 @@ export function AttributeToolbar({
     });
   };
 
+  const handleColorMeasure = () => {
+    colorChipRef.current?.measureInWindow((x, y, w, h) => {
+      onColorPress?.({x, y, width: w, height: h});
+    });
+  };
+
   if (compact) {
     // Create 모드: 날짜, 우선순위, 아이콘 칩
     return (
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.toolbar}
-        keyboardShouldPersistTaps="handled">
-        <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
+        contentContainerStyle={[styles.toolbar, {flexGrow: 1}]}
+        keyboardShouldPersistTaps="always">
+        <Chip icon={Calendar} label={getDateChipLabel(form)} onPress={onDatePress} />
 
         {(form.importance || form.urgency) && (
           <View ref={priorityChipRef} collapsable={false}>
@@ -160,9 +224,28 @@ export function AttributeToolbar({
           </View>
         )}
 
-        {onIconPress && (
+        {onIconColorPress && (
+          <Chip icon={Palette} label="" onPress={onIconColorPress} />
+        )}
+
+        {!onIconColorPress && onIconPress && (
           <View ref={iconChipRef} collapsable={false}>
             <Chip icon={Sparkles} label="" onPress={handleIconMeasure} />
+          </View>
+        )}
+
+        {!onIconColorPress && onColorPress && (
+          <View ref={colorChipRef} collapsable={false}>
+            {form.color ? (
+              <AnimatedPressable
+                onPress={handleColorMeasure}
+                hapticType="selection"
+                style={[styles.chip, {borderColor: form.color, borderWidth: 1.5}]}>
+                <View style={[styles.colorDot, {backgroundColor: form.color}]} />
+              </AnimatedPressable>
+            ) : (
+              <Chip icon={Palette} label="" onPress={handleColorMeasure} />
+            )}
           </View>
         )}
       </ScrollView>
@@ -176,7 +259,7 @@ export function AttributeToolbar({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.toolbar}
       keyboardShouldPersistTaps="handled">
-      <Chip icon={Calendar} label={getDateChipLabel(form.scheduledDate)} onPress={onDatePress} />
+      <Chip icon={Calendar} label={getDateChipLabel(form)} onPress={onDatePress} />
       {onTimePress && (
         <Chip icon={Clock} label={getTimeChipLabel(form)} onPress={onTimePress} />
       )}
@@ -260,5 +343,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#4B5563',
     fontWeight: '500',
+  },
+  colorDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
 });

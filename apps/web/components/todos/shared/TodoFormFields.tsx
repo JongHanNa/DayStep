@@ -7,7 +7,7 @@ import { format, isToday, isTomorrow, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Note } from '@/types/domain';
 import type { RecurrencePattern, Project } from '@/types';
-import CollapsibleNoteSection from '@/components/shared/CollapsibleNoteSection';
+import CollapsibleMotivationSection from '@/components/shared/CollapsibleMotivationSection';
 import CollapsibleProjectSection from './CollapsibleProjectSection';
 import RecurrenceSettings from '@/components/todos/form/RecurrenceSettings';
 import EnhancedIconBrowserModal from '@/components/ui/EnhancedIconBrowserModal';
@@ -385,7 +385,7 @@ export default function TodoFormFields({
 
       {/* 노트 추가 (다중 선택) - onCreateNote prop이 있을 때만 표시 */}
       {onCreateNote && (
-        <CollapsibleNoteSection
+        <CollapsibleMotivationSection
           selectedNoteIds={todo.noteIds || []}
           allNotes={notes}
           onChange={(noteIds) => onChange({ ...todo, noteIds })}

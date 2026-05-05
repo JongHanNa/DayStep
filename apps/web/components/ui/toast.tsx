@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/hooks/useTheme';
 import type { Toast } from '@/hooks/use-toast';
 
 interface ToastProps {
@@ -43,26 +44,37 @@ const toastVariants = {
 };
 
 const ToastItem: React.FC<ToastProps> = ({ toast, onDismiss }) => {
-  const getIcon = () => {
-    switch (toast.variant) {
-      case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'destructive':
-        return <AlertCircle className="w-5 h-5 text-red-500" />;
-      default:
-        return <Info className="w-5 h-5 text-blue-500" />;
-    }
-  };
+  const { colors, primaryColor, hexWithOpacity } = useTheme();
 
-  const getColorClasses = () => {
+  // 시맨틱 + 메인컬러 매핑
+  // - success/destructive는 시맨틱 고정 (의미 전달)
+  // - info(default)는 사용자 메인컬러를 따라 톤 통일
+  const accent = (() => {
     switch (toast.variant) {
       case 'success':
-        return 'border-green-200 bg-green-50 text-green-900';
+        return colors.success;
       case 'destructive':
-        return 'border-red-200 bg-red-50 text-red-900';
+        return colors.error;
       default:
-        return 'border-blue-200 bg-blue-50 text-blue-900';
+        return primaryColor;
     }
+  })();
+
+  const Icon = (() => {
+    switch (toast.variant) {
+      case 'success':
+        return CheckCircle;
+      case 'destructive':
+        return AlertCircle;
+      default:
+        return Info;
+    }
+  })();
+
+  const containerStyle: React.CSSProperties = {
+    backgroundColor: hexWithOpacity(accent, 0.08),
+    borderColor: hexWithOpacity(accent, 0.25),
+    color: accent,
   };
 
   return (
@@ -72,17 +84,15 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onDismiss }) => {
       initial="initial"
       animate="animate"
       exit="exit"
+      style={containerStyle}
       className={cn(
         'relative flex items-start gap-3 p-4 pr-8 rounded-lg border shadow-lg backdrop-blur-sm min-w-80 max-w-md',
-        getColorClasses()
       )}
     >
-      {/* 아이콘 */}
       <div className="flex-shrink-0 mt-0.5">
-        {getIcon()}
+        <Icon className="w-5 h-5" style={{ color: accent }} />
       </div>
 
-      {/* 내용 */}
       <div className="flex-1 min-w-0">
         {toast.title && (
           <div className="font-semibold text-sm mb-1">
@@ -92,8 +102,7 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onDismiss }) => {
         <div className="text-sm opacity-90">
           {toast.description}
         </div>
-        
-        {/* 액션 버튼 */}
+
         {toast.action && (
           <div className="mt-2">
             <Button
@@ -108,7 +117,6 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onDismiss }) => {
         )}
       </div>
 
-      {/* 닫기 버튼 */}
       <Button
         variant="ghost"
         size="sm"
@@ -118,10 +126,10 @@ const ToastItem: React.FC<ToastProps> = ({ toast, onDismiss }) => {
         <X className="w-3 h-3" />
       </Button>
 
-      {/* 진행률 바 (duration이 있는 경우) */}
       {toast.duration && toast.duration > 0 && (
         <motion.div
-          className="absolute bottom-0 left-0 h-1 bg-current opacity-30 rounded-b-lg"
+          className="absolute bottom-0 left-0 h-1 opacity-30 rounded-b-lg"
+          style={{ backgroundColor: accent }}
           initial={{ width: '100%' }}
           animate={{ width: '0%' }}
           transition={{

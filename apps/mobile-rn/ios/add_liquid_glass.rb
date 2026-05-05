@@ -35,8 +35,8 @@ NEW_FILES = %w[
   LiquidGlassUtils.swift
   LiquidGlassTabBar.swift
   LiquidGlassTabBarBridge.m
-  LiquidGlassFuelCard.swift
-  LiquidGlassFuelCardBridge.m
+  LiquidGlassMotivationCard.swift
+  LiquidGlassMotivationCardBridge.m
   LiquidGlassBackgroundView.swift
   LiquidGlassBackgroundBridge.m
 ]

@@ -113,8 +113,26 @@ export default function LandingPage() {
 
   // "모바일 앱 다운로드" 버튼 클릭 핸들러
   const handleMobileDownload = () => {
-    // TODO: 앱 다운로드 페이지 또는 모달 구현
-    alert('모바일 앱은 곧 출시 예정입니다!\n\niOS와 Android에서 만나보세요.');
+    const APP_STORE_URL = 'https://apps.apple.com/kr/app/id6755368911';
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document);
+    const isAndroid = /Android/i.test(ua);
+
+    if (isIOS) {
+      // iOS: App Store로 바로 이동
+      window.location.href = APP_STORE_URL;
+    } else if (isAndroid) {
+      // Android: 아직 출시 전
+      alert('Android 앱은 곧 출시 예정입니다!\n\niOS는 App Store에서 다운로드하실 수 있습니다.');
+    } else {
+      // Desktop: iOS 출시 안내 + App Store 이동 옵션
+      const goToAppStore = confirm(
+        'iOS 앱이 출시되었습니다!\nApp Store로 이동하시겠습니까?\n\n(Android 앱은 곧 출시 예정입니다)'
+      );
+      if (goToAppStore) {
+        window.open(APP_STORE_URL, '_blank');
+      }
+    }
   };
 
   // 로딩 중 표시

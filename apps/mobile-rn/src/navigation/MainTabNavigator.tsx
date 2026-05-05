@@ -1,49 +1,59 @@
 /**
- * Main Tab Navigator
- * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 설정
- * Home 탭은 HomeStack (메인 + 9개 전용 화면)
- * Execute 탭은 스택 네비게이터로 실행 랜딩 + 풀스크린 타이머
+ * Main Tab Navigator — CustomTabBar 기반
+ * CustomTabBar가 iOS 26+ Liquid Glass 모프 + iOS 25- JS 폴백 모두 처리
+ * More 패널도 CustomTabBar 내부에서 탭바와 하나의 글래스로 통합 처리
+ *
+ * 5탭: 홈 / 플래너 / 실행(중앙) / 노트 / 더 보기
  */
-import React from 'react';
+import React, {useEffect} from 'react';
+import {View, StyleSheet} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {useNavigation} from '@react-navigation/native';
 import {CustomTabBar} from '@/components/navigation/CustomTabBar';
+import {useSettingsStore} from '@/stores/settingsStore';
+
+// Screens
 import HomeScreen from '../screens/HomeScreen';
-import TodoListScreen from '../screens/TodoListScreen';
+import PlannerScreen from '../screens/PlannerScreen';
 import ExecutionScreen from '../screens/ExecutionScreen';
-import FocusTimerScreen from '../screens/FocusTimerScreen';
-import NotesScreen from '../screens/NotesScreen';
+import NotesScreen from '../screens/MotivationsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
-// Home Stack 전용 화면
-import MonthlyPlannerScreen from '../screens/MonthlyPlannerScreen';
-import AIPlanScreen from '../screens/AIPlanScreen';
+// Home Stack / More Stack 공유 화면
+import ProjectsScreen from '../screens/ProjectsScreen';
 import AIChatScreen from '../screens/AIChatScreen';
 import GuideScreen from '../screens/GuideScreen';
-import RecordScreen from '../screens/RecordScreen';
-import NewsScreen from '../screens/NewsScreen';
-import ContactScreen from '../screens/ContactScreen';
-import GratitudeScreen from '../screens/GratitudeScreen';
-import ActivityScreen from '../screens/ActivityScreen';
+import CareScreen from '../screens/CareScreen';
 import CleanupScreen from '../screens/CleanupScreen';
+// import SleepRecordScreen from '../screens/SleepRecordScreen'; // 수면 정원으로 대체
+import SleepGardenScreen from '../screens/SleepGardenScreen';
+import SleepSessionScreen from '../screens/SleepSessionScreen';
+import ADHDUnderstandingScreen from '../screens/ADHDUnderstandingScreen';
+import CleaningScreen from '../screens/CleaningScreen';
+import CleaningSessionScreen from '../screens/CleaningSessionScreen';
+import SleepGoalScreen from '../screens/SleepGoalScreen';
+import ScreenTimeAppsScreen from '../screens/ScreenTimeAppsScreen';
+import SleepADHDInfoScreen from '../screens/SleepADHDInfoScreen';
+import CleaningADHDInfoScreen from '../screens/CleaningADHDInfoScreen';
+import FocusGardenScreen from '../screens/FocusGardenScreen';
+import FeedbackBoardScreen from '../screens/FeedbackBoardScreen';
+import OnboardingReferencesScreen from '../screens/OnboardingReferencesScreen';
 
-// Execute Stack (실행 모드 + 포모도로)
-const ExecuteStack = createNativeStackNavigator();
+/** MonthlyPlanner 리다이렉트: Planner 탭으로 이동 + viewMode='monthlyPlanner' */
+function MonthlyPlannerRedirect() {
+  const navigation = useNavigation<any>();
+  const setPlannerViewMode = useSettingsStore(s => s.setPlannerViewMode);
 
-function ExecuteStackNavigator() {
-  return (
-    <ExecuteStack.Navigator screenOptions={{headerShown: false}}>
-      <ExecuteStack.Screen name="ExecutionMain" component={ExecutionScreen} />
-      <ExecuteStack.Screen
-        name="FocusTimer"
-        component={FocusTimerScreen}
-        options={{presentation: 'fullScreenModal', animation: 'fade'}}
-      />
-    </ExecuteStack.Navigator>
-  );
+  useEffect(() => {
+    setPlannerViewMode('monthlyPlanner');
+    navigation.navigate('Planner');
+  }, [navigation, setPlannerViewMode]);
+
+  return null;
 }
 
-// Home Stack (메인 + 9개 전용 화면)
+// Home Stack (메인 + 하위 화면)
 const HomeStack = createNativeStackNavigator();
 
 function HomeStackNavigator() {
@@ -54,17 +64,76 @@ function HomeStackNavigator() {
         animation: 'fade',
       }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-      <HomeStack.Screen name="MonthlyPlanner" component={MonthlyPlannerScreen} />
-      <HomeStack.Screen name="AIPlan" component={AIPlanScreen} />
+      <HomeStack.Screen name="MonthlyPlanner" component={MonthlyPlannerRedirect} />
+      <HomeStack.Screen name="Projects" component={ProjectsScreen} />
       <HomeStack.Screen name="AIChat" component={AIChatScreen} />
       <HomeStack.Screen name="Guide" component={GuideScreen} />
-      <HomeStack.Screen name="Record" component={RecordScreen} />
-      <HomeStack.Screen name="News" component={NewsScreen} />
-      <HomeStack.Screen name="Contact" component={ContactScreen} />
-      <HomeStack.Screen name="Gratitude" component={GratitudeScreen} />
-      <HomeStack.Screen name="Activity" component={ActivityScreen} />
+      <HomeStack.Screen name="Care" component={CareScreen} />
       <HomeStack.Screen name="Cleanup" component={CleanupScreen} />
+      <HomeStack.Screen name="SleepGarden" component={SleepGardenScreen} />
+      <HomeStack.Screen name="SleepSession" component={SleepSessionScreen}  />
+      <HomeStack.Screen name="SleepGoal" component={SleepGoalScreen} />
+      <HomeStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
+      <HomeStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
+      <HomeStack.Screen name="Cleaning" component={CleaningScreen} />
+      <HomeStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
+      <HomeStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
+      <HomeStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
+      <HomeStack.Screen name="FocusGarden" component={FocusGardenScreen} />
+      <HomeStack.Screen name="FeedbackBoard" component={FeedbackBoardScreen} />
+      <HomeStack.Screen name="OnboardingReferences" component={OnboardingReferencesScreen} />
     </HomeStack.Navigator>
+  );
+}
+
+// Execute Stack — 집중 화면 + 집중 정원 + 허용 앱 관리
+const ExecuteStack = createNativeStackNavigator();
+
+function ExecuteStackNavigator() {
+  return (
+    <ExecuteStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+      }}>
+      <ExecuteStack.Screen name="ExecuteMain" component={ExecutionScreen} />
+      <ExecuteStack.Screen name="FocusGarden" component={FocusGardenScreen} />
+      <ExecuteStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
+    </ExecuteStack.Navigator>
+  );
+}
+
+// More Stack (설정 랜딩 + 부가 화면)
+const MoreStack = createNativeStackNavigator();
+
+function MoreStackNavigator() {
+  return (
+    <MoreStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+      }}>
+      <MoreStack.Screen name="MoreLanding" component={SettingsScreen} />
+      <MoreStack.Screen name="Settings" component={SettingsScreen} />
+      <MoreStack.Screen name="MonthlyPlanner" component={MonthlyPlannerRedirect} />
+      <MoreStack.Screen name="Projects" component={ProjectsScreen} />
+      <MoreStack.Screen name="AIChat" component={AIChatScreen} />
+      <MoreStack.Screen name="Guide" component={GuideScreen} />
+      <MoreStack.Screen name="Care" component={CareScreen} />
+      <MoreStack.Screen name="Cleanup" component={CleanupScreen} />
+      <MoreStack.Screen name="SleepGarden" component={SleepGardenScreen} />
+      <MoreStack.Screen name="SleepSession" component={SleepSessionScreen}  />
+      <MoreStack.Screen name="SleepGoal" component={SleepGoalScreen} />
+      <MoreStack.Screen name="ScreenTimeApps" component={ScreenTimeAppsScreen} />
+      <MoreStack.Screen name="ADHDUnderstanding" component={ADHDUnderstandingScreen} />
+      <MoreStack.Screen name="Cleaning" component={CleaningScreen} />
+      <MoreStack.Screen name="CleaningSession" component={CleaningSessionScreen} />
+      <MoreStack.Screen name="SleepADHDInfo" component={SleepADHDInfoScreen} />
+      <MoreStack.Screen name="CleaningADHDInfo" component={CleaningADHDInfoScreen} />
+      <MoreStack.Screen name="FocusGarden" component={FocusGardenScreen} />
+      <MoreStack.Screen name="FeedbackBoard" component={FeedbackBoardScreen} />
+      <MoreStack.Screen name="OnboardingReferences" component={OnboardingReferencesScreen} />
+    </MoreStack.Navigator>
   );
 }
 
@@ -72,16 +141,22 @@ const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
   return (
-    <Tab.Navigator
-      tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-      }}>
-      <Tab.Screen name="Home" component={HomeStackNavigator} />
-      <Tab.Screen name="Planner" component={TodoListScreen} />
-      <Tab.Screen name="Execute" component={ExecuteStackNavigator} />
-      <Tab.Screen name="Notes" component={NotesScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
-    </Tab.Navigator>
+    <View style={styles.root}>
+      <Tab.Navigator
+        tabBar={props => <CustomTabBar {...props} />}
+        screenOptions={{headerShown: false}}>
+        <Tab.Screen name="Home" component={HomeStackNavigator} />
+        <Tab.Screen name="Planner" component={PlannerScreen} />
+        <Tab.Screen name="Execute" component={ExecuteStackNavigator} />
+        <Tab.Screen name="Notes" component={NotesScreen} />
+        <Tab.Screen name="More" component={MoreStackNavigator} />
+      </Tab.Navigator>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

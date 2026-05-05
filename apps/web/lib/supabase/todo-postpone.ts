@@ -17,7 +17,7 @@ import type { PostponeParams, AnytimeInboxItem } from '@/types';
  */
 function convertToISOTime(occurrenceDate: string, time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
-  const dateObj = new Date(occurrenceDate + 'T00:00:00+09:00'); // KST 기준
+  const dateObj = new Date(occurrenceDate + 'T00:00:00'); // 사용자 기기 로컬 자정
   dateObj.setHours(hours, minutes, 0, 0);
   return dateObj.toISOString();
 }

@@ -21,8 +21,6 @@ export interface CherishedPerson {
   user_id: string;
   name: string;
   nickname?: string;
-  relationships: string[];
-  roles: string[];
   last_interaction_at?: string;
   interaction_count: number;
   created_at: string;
@@ -34,6 +32,26 @@ export interface ContactRecommendation {
   daysSinceContact: number;
   priority: 'high' | 'medium' | 'normal';
 }
+
+export type CategoryKind = 'relationship' | 'role' | 'department';
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  color: string;
+}
+
+const TABLE_BY_KIND: Record<CategoryKind, string> = {
+  relationship: 'relationships',
+  role: 'roles',
+  department: 'departments',
+};
+
+const JUNCTION_BY_KIND: Record<CategoryKind, {table: string; fk: string}> = {
+  relationship: {table: 'person_relationships', fk: 'relationship_id'},
+  role: {table: 'person_roles', fk: 'role_id'},
+  department: {table: 'person_departments', fk: 'department_id'},
+};
 
 interface CherishedPeopleState {
   people: CherishedPerson[];
@@ -50,6 +68,7 @@ interface CherishedPeopleState {
   // 사람 CRUD (신규)
   addPerson: (userId: string, data: {name: string; nickname?: string}) => Promise<CherishedPerson | null>;
   updatePerson: (userId: string, personId: string, data: Partial<{name: string; nickname: string}>) => Promise<boolean>;
+  deletePerson: (userId: string, personId: string) => Promise<boolean>;
 
   // CareInteraction CRUD (신규)
   addInteraction: (userId: string, input: CareInteractionInput) => Promise<CareInteraction | null>;
@@ -66,9 +85,26 @@ interface CherishedPeopleState {
   getGratitudeNotes: (userId: string, personId?: string) => Promise<NoteWithPerson[]>;
   getRecentNewsNotes: (userId: string, personId?: string) => Promise<NoteWithPerson[]>;
 
+  // 사람별 최근 기록 조회 (관심 키우기 통합 UI용)
+  getRecentNotesPerPerson: (userId: string) => Promise<Map<string, NoteWithPerson[]>>;
+
   // 통계 (신규)
   getDetailedStats: (userId: string) => Promise<DetailedStats>;
   getRelationshipStats: (userId: string) => Promise<RelationshipStats>;
+
+  // 카테고리 CRUD (관계/역할/부서)
+  addCategory: (
+    userId: string,
+    kind: CategoryKind,
+    data: {name: string; color: string},
+  ) => Promise<CategoryItem | null>;
+  updateCategory: (
+    userId: string,
+    kind: CategoryKind,
+    id: string,
+    patch: {name?: string; color?: string},
+  ) => Promise<boolean>;
+  deleteCategory: (userId: string, kind: CategoryKind, id: string) => Promise<boolean>;
 }
 
 /** 오늘 날짜 YYYY-MM-DD (KST) */
@@ -98,11 +134,7 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           if (error) throw error;
 
           set({
-            people: (data ?? []).map(p => ({
-              ...p,
-              relationships: p.relationships ?? [],
-              roles: p.roles ?? [],
-            })),
+            people: (data ?? []) as CherishedPerson[],
           });
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Load error:', err);
@@ -166,19 +198,13 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
               name: data.name,
               nickname: data.nickname ?? null,
               interaction_count: 0,
-              relationships: [],
-              roles: [],
             })
             .select()
             .single();
 
           if (error) throw error;
 
-          const person = {
-            ...created,
-            relationships: created.relationships ?? [],
-            roles: created.roles ?? [],
-          } as CherishedPerson;
+          const person = created as CherishedPerson;
 
           set(state => ({people: [...state.people, person]}));
           return person;
@@ -207,6 +233,39 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
           return true;
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Update person error:', err);
+          return false;
+        }
+      },
+
+      deletePerson: async (userId, personId) => {
+        try {
+          // 1. care_interactions 먼저 삭제 (FK 의존)
+          const {error: interactionError} = await supabase
+            .from('care_interactions')
+            .delete()
+            .eq('person_id', personId)
+            .eq('user_id', userId);
+
+          if (interactionError) throw interactionError;
+
+          // 2. cherished_people 삭제
+          const {error: personError} = await supabase
+            .from('cherished_people')
+            .delete()
+            .eq('id', personId)
+            .eq('user_id', userId);
+
+          if (personError) throw personError;
+
+          // 3. 로컬 상태 제거
+          set(state => ({
+            people: state.people.filter(p => p.id !== personId),
+            recommendations: state.recommendations.filter(r => r.person.id !== personId),
+          }));
+
+          return true;
+        } catch (err: any) {
+          console.error('[CherishedPeopleStore] Delete person error:', err);
           return false;
         }
       },
@@ -434,6 +493,47 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
         }
       },
 
+      // ── 사람별 최근 기록 조회 ──
+
+      getRecentNotesPerPerson: async (userId) => {
+        try {
+          const {data, error} = await supabase
+            .from('care_interactions')
+            .select('*, cherished_people!inner(name, nickname)')
+            .eq('user_id', userId)
+            .or('recent_news.not.is.null,gratitude_note.not.is.null')
+            .order('interaction_date', {ascending: false})
+            .limit(100);
+
+          if (error) throw error;
+
+          const map = new Map<string, NoteWithPerson[]>();
+          for (const item of data ?? []) {
+            const note: NoteWithPerson = {
+              id: item.id,
+              person_id: item.person_id,
+              person_name: item.cherished_people?.name ?? '',
+              person_nickname: item.cherished_people?.nickname,
+              interaction_type: item.interaction_type,
+              interaction_date: item.interaction_date,
+              gratitude_note: item.gratitude_note,
+              recent_news: item.recent_news,
+              description: item.description,
+              created_at: item.created_at,
+            };
+            const existing = map.get(item.person_id) ?? [];
+            if (existing.length < 2) {
+              existing.push(note);
+              map.set(item.person_id, existing);
+            }
+          }
+          return map;
+        } catch (err: any) {
+          console.error('[CherishedPeopleStore] Get recent notes per person error:', err);
+          return new Map();
+        }
+      },
+
       // ── 통계 (신규) ──
 
       getDetailedStats: async (userId) => {
@@ -557,6 +657,68 @@ export const useCherishedPeopleStore = create<CherishedPeopleState>()(
         } catch (err: any) {
           console.error('[CherishedPeopleStore] Relationship stats error:', err);
           return {totalPeople: 0, activeThisWeek: 0, needsAttention: 0, totalInteractions: 0};
+        }
+      },
+
+      // ── 카테고리 CRUD (관계/역할/부서) ──
+
+      addCategory: async (userId, kind, data) => {
+        try {
+          const {data: created, error} = await supabase
+            .from(TABLE_BY_KIND[kind])
+            .insert({user_id: userId, name: data.name, color: data.color, is_active: true})
+            .select('id, name, color')
+            .single();
+
+          if (error) throw error;
+          return created as CategoryItem;
+        } catch (err: any) {
+          console.error(`[CherishedPeopleStore] Add ${kind} error:`, err);
+          return null;
+        }
+      },
+
+      updateCategory: async (userId, kind, id, patch) => {
+        try {
+          const {error} = await supabase
+            .from(TABLE_BY_KIND[kind])
+            .update(patch)
+            .eq('id', id)
+            .eq('user_id', userId);
+
+          if (error) throw error;
+          return true;
+        } catch (err: any) {
+          console.error(`[CherishedPeopleStore] Update ${kind} error:`, err);
+          return false;
+        }
+      },
+
+      deleteCategory: async (userId, kind, id) => {
+        try {
+          const junction = JUNCTION_BY_KIND[kind];
+
+          // 1. 정션 테이블 hard delete
+          const {error: junctionError} = await supabase
+            .from(junction.table)
+            .delete()
+            .eq(junction.fk, id)
+            .eq('user_id', userId);
+
+          if (junctionError) throw junctionError;
+
+          // 2. 카테고리 soft delete
+          const {error: categoryError} = await supabase
+            .from(TABLE_BY_KIND[kind])
+            .update({is_active: false})
+            .eq('id', id)
+            .eq('user_id', userId);
+
+          if (categoryError) throw categoryError;
+          return true;
+        } catch (err: any) {
+          console.error(`[CherishedPeopleStore] Delete ${kind} error:`, err);
+          return false;
         }
       },
     }),

@@ -29,7 +29,7 @@ export function useTimelineNavigation({
   const [viewAnchorMonth, setViewAnchorMonth] = useState<Date>(startOfMonth(new Date()));
   const [hasScrolledToToday, setHasScrolledToToday] = useState(false);
   const [isScrollReady, setIsScrollReady] = useState(false);
-  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
+  const [expandedMotivationId, setExpandedMotivationId] = useState<string | null>(null);
 
   // Refs
   const monthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -314,11 +314,11 @@ export function useTimelineNavigation({
     navigatedMonth,
     viewAnchorMonth,
     isScrollReady,
-    expandedFuelId,
+    expandedMotivationId,
     // Setters
     setNavigatedMonth,
     setViewAnchorMonth,
-    setExpandedFuelId,
+    setExpandedMotivationId,
     // Refs
     monthSectionRefs,
     todaySectionRef,

@@ -7,24 +7,80 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		03A711A6634CCE600EF8A599 /* LiquidGlassFuelCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */; };
-		051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */; };
-		0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */; };
+		01AA11BB22CC33DD44EE55F6 /* NativeTodoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */; };
+		01CC33DD44EE55FF66778899 /* NativeTodoPickerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */; };
+		02AA11BB22CC33DD44EE55F6 /* NativeMotivationJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */; };
+		02CC33DD44EE55FF66778899 /* NativeMotivationJournalBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */; };
+		03AA11BB22CC33DD44EE55F6 /* NativeFeedbackEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */; };
+		03CC33DD44EE55FF66778899 /* NativeFeedbackEditorBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */; };
+		04AA11BB22CC33DD44EE55F6 /* NativeProjectForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */; };
+		04CC33DD44EE55FF66778899 /* NativeProjectFormBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */; };
+		05AA11BB22CC33DD44EE55F6 /* NativeAddPerson.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */; };
+		05CC33DD44EE55FF66778899 /* NativeAddPersonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */; };
+		03A711A6634CCE600EF8A599 /* NativeMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */; };
+		051A3F3962BD4CA6AC7F4177 /* NativeUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* NativeUtils.swift */; };
+		0B3C275442CA372D372F51C4 /* NativeMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* NativeMotivationCardBridge.m */; };
+		117B8C9D0E1F2A3B4C5D6E7F /* NativeMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* NativeMenuBridge.m */; };
+		124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		24AF1E9FD7B1F890C4E155B2 /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 511CEB6B0AE6818D00C27C21 /* libPods-DayStepRN.a */; };
-		63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */; };
-		671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */; };
+		1F11AF99A05E5B04B2E2585D /* NativeProgressCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */; };
+		2471C3C4D3E00A76861BDF22 /* NativeProgressCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */; };
+		4EA6F8C29F16FFE12737528C /* NativeMissionCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */; };
+		63A98DDE31BBA1B7DC82E704 /* NativeTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8261A30623C9454D703B9FB7 /* NativeTabBar.swift */; };
+		671C9C480796F50BF822F737 /* NativeBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFDECFAAAA2C0F7988EEC88 /* NativeBackground.swift */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */; };
+		9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */; };
 		A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D662F483FF800A4C1D8 /* StoreKit.framework */; };
 		A41F7D6F2F500A4C00A4C1D8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */; };
 		A41F7D712F500A4C00A4C1D8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */; };
 		A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A41F7D8C2F500BD800A4C1D8 /* DayStepWidgetModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */; };
 		A41F7D8D2F500BD800A4C1D8 /* DayStepWidgetModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */; };
-		B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */; };
+		A43C01082F6CB890001C082C /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C01072F6CB890001C082C /* DeviceActivity.framework */; };
+		A43C01102F6CB891001C082C /* ActivityMonitorExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A43C011D2F6CB8BC001C082C /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */; };
+		A43C011F2F6CB8BC001C082C /* ManagedSettingsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C011E2F6CB8BC001C082C /* ManagedSettingsUI.framework */; };
+		A43C01272F6CB8BC001C082C /* ShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A43C01332F6CB8DF001C082C /* ManagedSettings.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */; };
+		A43C013B2F6CB8DF001C082C /* ShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A43C01322F6CB8DF001C082C /* ShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A476069A2F9175C900375BC1 /* DayStepShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A47606902F9175C900375BC1 /* DayStepShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A47606AD2F9177BD00375BC1 /* CallKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A47606AC2F9177BD00375BC1 /* CallKit.framework */; };
+		A49F65942F97DF7100E608ED /* NativeFocusGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */; };
+		A49F65952F97DF7100E608ED /* NativeFocusGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */; };
+		A4F440BE2F9180CD00C25E59 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */; };
+		A4F440BF2F9180CD00C25E59 /* DayStepShareModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */; };
+		A4F440C02F9180CD00C25E59 /* DayStepShareModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */; };
+		A4F440C12F9180CD00C25E59 /* AddTodoIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */; };
+		A4F440C22F9180CD00C25E59 /* CallDetectorModule.m in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */; };
+		A4F440C32F9180CD00C25E59 /* CallDetectorModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */; };
+		A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */; };
+		AA1B2C3D4E5F6A7B8C9D0E1F /* NativeButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2C3D4E5F6A7B8C9D0E1F2A /* NativeButton.swift */; };
+		B0474C71554CEB2C206F066A /* NativeBackgroundBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 079876F8CC97D9070E6729CB /* NativeBackgroundBridge.m */; };
+		C3CAAEF0626409E6D2C3155C /* NativeMissionCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */; };
+		C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */; };
+		C6F8A1669C5EDFADDD08FB8D /* NativeContactNudge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59502988256F1D4368F740C1 /* NativeContactNudge.swift */; };
+		C7D8E9F0A1B2C3D4E5F6A7B8 /* NativeMonthCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */; };
+		CC3D4E5F6A7B8C9D0E1F2A3B /* NativeButtonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4E5F6A7B8C9D0E1F2A3B4C /* NativeButtonBridge.m */; };
+		D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */; };
+		DA5E6F7A8B9C0D1E2F3A4B5C /* NativeDayTimeGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */; };
+		DA6F7A8B9C0D1E2F3A4B5C6D /* NativeDayTimeGridBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */; };
+		DA7A8B9C0D1E2F3A4B5C6D7E /* NativeMultiDayTimeGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */; };
+		DA8B9C0D1E2F3A4B5C6D7E8F /* NativeMultiDayTimeGridBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */; };
+		E1F2A3B4C5D6E7F8A9B0C1D2 /* NativeWeekStripCalendar.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */; };
+		E4762033124F21875BA5CD8A /* NativeGroupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B5E30421766026F915B4B0 /* NativeGroupSection.swift */; };
 		E8360D97C583B54448CDCCD7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
-		F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */; };
+		EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */; };
+		EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */; };
+		EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E89E96ED34AC96B9B503807 /* ExpoModulesProvider.swift */; };
+		EE5F6A7B8C9D0E1F2A3B4C5D /* NativeMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF6A7B8C9D0E1F2A3B4C5D6E /* NativeMenu.swift */; };
+		F1B6C7D8E9F0A1B2C3D4E5F7 /* NativeFeedbackSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B4C5D6E7F8A9B0C1D2E3F5 /* NativeFeedbackSection.swift */; };
+		F1B7C8D9E0F1A2B3C4D5E6F8 /* NativeFeedbackSectionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = F1B5C6D7E8F9A0B1C2D3E4F6 /* NativeFeedbackSectionBridge.m */; };
+		F264FE52D348AB48BFF6D85D /* NativeTabBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2927152AB13CA4A60605A287 /* NativeTabBarBridge.m */; };
+		F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */; };
+		FA1B2C3D4E5F6A7B8C9D0E1F /* NativeSleepGarden.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */; };
+		FA3D4E5F6A7B8C9D0E1F2A3B /* NativeSleepGardenBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +91,41 @@
 			remoteGlobalIDString = A41F7D6C2F500A4C00A4C1D8;
 			remoteInfo = DayStepCalendarWidgetExtension;
 		};
+		A42367262F729E6E0054947D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
+			remoteInfo = DayStepRN;
+		};
+		A43C010E2F6CB891001C082C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A43C01052F6CB890001C082C;
+			remoteInfo = ActivityMonitorExtension;
+		};
+		A43C01252F6CB8BC001C082C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A43C011A2F6CB8BC001C082C;
+			remoteInfo = ShieldConfiguration;
+		};
+		A43C01392F6CB8DF001C082C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A43C01312F6CB8DF001C082C;
+			remoteInfo = ShieldAction;
+		};
+		A47606982F9175C900375BC1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A476068F2F9175C900375BC1;
+			remoteInfo = DayStepShareExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +135,10 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				A43C01272F6CB8BC001C082C /* ShieldConfiguration.appex in Embed Foundation Extensions */,
+				A43C013B2F6CB8DF001C082C /* ShieldAction.appex in Embed Foundation Extensions */,
+				A476069A2F9175C900375BC1 /* DayStepShareExtension.appex in Embed Foundation Extensions */,
+				A43C01102F6CB891001C082C /* ActivityMonitorExtension.appex in Embed Foundation Extensions */,
 				A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -52,46 +147,200 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassBackgroundBridge.m; path = DayStepRN/LiquidGlassBackgroundBridge.m; sourceTree = "<group>"; };
+		01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeTodoPicker.swift; path = DayStepRN/NativeModules/Form/NativeTodoPicker.swift; sourceTree = "<group>"; };
+		01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeTodoPickerBridge.m; path = DayStepRN/NativeModules/Form/NativeTodoPickerBridge.m; sourceTree = "<group>"; };
+		02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMotivationJournal.swift; path = DayStepRN/NativeModules/Form/NativeMotivationJournal.swift; sourceTree = "<group>"; };
+		02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMotivationJournalBridge.m; path = DayStepRN/NativeModules/Form/NativeMotivationJournalBridge.m; sourceTree = "<group>"; };
+		03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeFeedbackEditor.swift; path = DayStepRN/NativeModules/Form/NativeFeedbackEditor.swift; sourceTree = "<group>"; };
+		03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeFeedbackEditorBridge.m; path = DayStepRN/NativeModules/Form/NativeFeedbackEditorBridge.m; sourceTree = "<group>"; };
+		04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeProjectForm.swift; path = DayStepRN/NativeModules/Form/NativeProjectForm.swift; sourceTree = "<group>"; };
+		04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeProjectFormBridge.m; path = DayStepRN/NativeModules/Form/NativeProjectFormBridge.m; sourceTree = "<group>"; };
+		05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAddPerson.swift; path = DayStepRN/NativeModules/Form/NativeAddPerson.swift; sourceTree = "<group>"; };
+		05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeAddPersonBridge.m; path = DayStepRN/NativeModules/Form/NativeAddPersonBridge.m; sourceTree = "<group>"; };
+		079876F8CC97D9070E6729CB /* NativeBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeBackgroundBridge.m; path = DayStepRN/DesignSystem/NativeBackgroundBridge.m; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DayStepRN/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = DayStepRN/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassFuelCard.swift; path = DayStepRN/LiquidGlassFuelCard.swift; sourceTree = "<group>"; };
-		2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassTabBarBridge.m; path = DayStepRN/LiquidGlassTabBarBridge.m; sourceTree = "<group>"; };
-		42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiquidGlassFuelCardBridge.m; path = DayStepRN/LiquidGlassFuelCardBridge.m; sourceTree = "<group>"; };
-		4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassBackgroundView.swift; path = DayStepRN/LiquidGlassBackgroundView.swift; sourceTree = "<group>"; };
-		511CEB6B0AE6818D00C27C21 /* libPods-DayStepRN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DayStepRN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassUtils.swift; path = DayStepRN/LiquidGlassUtils.swift; sourceTree = "<group>"; };
+		1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMotivationCard.swift; path = DayStepRN/NativeModules/Cards/NativeMotivationCard.swift; sourceTree = "<group>"; };
+		228C9D0E1F2A3B4C5D6E7F80 /* NativeMenuBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMenuBridge.m; path = DayStepRN/DesignSystem/NativeMenuBridge.m; sourceTree = "<group>"; };
+		25B5E30421766026F915B4B0 /* NativeGroupSection.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeGroupSection.swift; path = DayStepRN/NativeModules/Sections/NativeGroupSection.swift; sourceTree = "<group>"; };
+		2927152AB13CA4A60605A287 /* NativeTabBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeTabBarBridge.m; path = DayStepRN/DesignSystem/NativeTabBarBridge.m; sourceTree = "<group>"; };
+		3E89E96ED34AC96B9B503807 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DayStepRN/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		42023738D1793F209AFDF171 /* NativeMotivationCardBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMotivationCardBridge.m; path = DayStepRN/NativeModules/Cards/NativeMotivationCardBridge.m; sourceTree = "<group>"; };
+		4EFDECFAAAA2C0F7988EEC88 /* NativeBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeBackground.swift; path = DayStepRN/DesignSystem/NativeBackground.swift; sourceTree = "<group>"; };
+		59502988256F1D4368F740C1 /* NativeContactNudge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeContactNudge.swift; path = DayStepRN/NativeModules/Cards/NativeContactNudge.swift; sourceTree = "<group>"; };
+		735A184A2544A4E64A659FAF /* NativeUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeUtils.swift; path = DayStepRN/DesignSystem/NativeUtils.swift; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DayStepRN/AppDelegate.swift; sourceTree = "<group>"; };
+		7D38102E52F68EAC32641FB1 /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
+		8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeProgressCard.swift; path = DayStepRN/NativeModules/Cards/NativeProgressCard.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = DayStepRN/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiquidGlassTabBar.swift; path = DayStepRN/LiquidGlassTabBar.swift; sourceTree = "<group>"; };
-		934DE732F8983F094AAA965F /* Pods-DayStepRN.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.release.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.release.xcconfig"; sourceTree = "<group>"; };
+		8261A30623C9454D703B9FB7 /* NativeTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeTabBar.swift; path = DayStepRN/DesignSystem/NativeTabBar.swift; sourceTree = "<group>"; };
+		8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeMissionCardBridge.m; path = DayStepRN/NativeModules/Cards/NativeMissionCardBridge.m; sourceTree = "<group>"; };
+		960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeGroupSectionBridge.m; path = DayStepRN/NativeModules/Sections/NativeGroupSectionBridge.m; sourceTree = "<group>"; };
+		9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeContactNudgeBridge.m; path = DayStepRN/NativeModules/Cards/NativeContactNudgeBridge.m; sourceTree = "<group>"; };
+		9EEA7499BC65BF0DA97E5E45 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
+		A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DayStepRN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleanupAccordion.swift; path = DayStepRN/NativeModules/Sections/NativeCleanupAccordion.swift; sourceTree = "<group>"; };
 		A41F7D662F483FF800A4C1D8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = DayStepRN.entitlements; path = DayStepRN/DayStepRN.entitlements; sourceTree = "<group>"; };
 		A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepCalendarWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		A41F7D892F500A6D00A4C1D8 /* DayStepCalendarWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DayStepCalendarWidgetExtension.entitlements; sourceTree = "<group>"; };
-		A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = DayStepWidgetModule.m; path = DayStepRN/DayStepWidgetModule.m; sourceTree = "<group>"; };
-		A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepWidgetModule.swift; path = DayStepRN/DayStepWidgetModule.swift; sourceTree = "<group>"; };
-		BC637E3DAF953FA361157DB6 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
+		A41F7D8A2F500BD800A4C1D8 /* DayStepWidgetModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = DayStepWidgetModule.m; path = DayStepRN/Modules/DayStepWidgetModule.m; sourceTree = "<group>"; };
+		A41F7D8B2F500BD800A4C1D8 /* DayStepWidgetModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepWidgetModule.swift; path = DayStepRN/Modules/DayStepWidgetModule.swift; sourceTree = "<group>"; };
+		A42367202F729E6E0054947D /* DayStepRNUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DayStepRNUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ActivityMonitorExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A43C01072F6CB890001C082C /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
+		A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettings.framework; path = System/Library/Frameworks/ManagedSettings.framework; sourceTree = SDKROOT; };
+		A43C011E2F6CB8BC001C082C /* ManagedSettingsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ManagedSettingsUI.framework; path = System/Library/Frameworks/ManagedSettingsUI.framework; sourceTree = SDKROOT; };
+		A43C01322F6CB8DF001C082C /* ShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A47606902F9175C900375BC1 /* DayStepShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A47606AC2F9177BD00375BC1 /* CallKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CallKit.framework; path = System/Library/Frameworks/CallKit.framework; sourceTree = SDKROOT; };
+		A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeFocusGarden.swift; path = DayStepRN/NativeModules/Garden/NativeFocusGarden.swift; sourceTree = "<group>"; };
+		A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeFocusGardenBridge.m; path = DayStepRN/NativeModules/Garden/NativeFocusGardenBridge.m; sourceTree = "<group>"; };
+		A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeWeekStripCalendarBridge.m; path = DayStepRN/NativeModules/Calendar/NativeWeekStripCalendarBridge.m; sourceTree = "<group>"; };
+		A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AddTodoIntent.swift; path = DayStepRN/Intents/AddTodoIntent.swift; sourceTree = "<group>"; };
+		A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppShortcuts.swift; path = DayStepRN/Intents/AppShortcuts.swift; sourceTree = "<group>"; };
+		A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = CallDetectorModule.m; path = DayStepRN/Modules/CallDetectorModule.m; sourceTree = "<group>"; };
+		A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CallDetectorModule.swift; path = DayStepRN/Modules/CallDetectorModule.swift; sourceTree = "<group>"; };
+		A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = DayStepShareModule.m; path = DayStepRN/Modules/DayStepShareModule.m; sourceTree = "<group>"; };
+		A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DayStepShareModule.swift; path = DayStepRN/Modules/DayStepShareModule.swift; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleanupAccordionBridge.m; path = DayStepRN/NativeModules/Sections/NativeCleanupAccordionBridge.m; sourceTree = "<group>"; };
+		B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeMissionCard.swift; path = DayStepRN/NativeModules/Cards/NativeMissionCard.swift; sourceTree = "<group>"; };
+		B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMonthCalendar.swift; path = DayStepRN/NativeModules/Calendar/NativeMonthCalendar.swift; sourceTree = "<group>"; };
+		BB2C3D4E5F6A7B8C9D0E1F2A /* NativeButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeButton.swift; path = DayStepRN/DesignSystem/NativeButton.swift; sourceTree = "<group>"; };
+		C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeProgressCardBridge.m; path = DayStepRN/NativeModules/Cards/NativeProgressCardBridge.m; sourceTree = "<group>"; };
 		D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = Products.storekit; path = DayStepRN/Products.storekit; sourceTree = "<group>"; };
+		D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMonthCalendarBridge.m; path = DayStepRN/NativeModules/Calendar/NativeMonthCalendarBridge.m; sourceTree = "<group>"; };
+		DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeDayTimeGrid.swift; path = DayStepRN/NativeModules/Calendar/NativeDayTimeGrid.swift; sourceTree = "<group>"; };
+		DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeDayTimeGridBridge.m; path = DayStepRN/NativeModules/Calendar/NativeDayTimeGridBridge.m; sourceTree = "<group>"; };
+		DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMultiDayTimeGrid.swift; path = DayStepRN/NativeModules/Calendar/NativeMultiDayTimeGrid.swift; sourceTree = "<group>"; };
+		DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeMultiDayTimeGridBridge.m; path = DayStepRN/NativeModules/Calendar/NativeMultiDayTimeGridBridge.m; sourceTree = "<group>"; };
+		DD4E5F6A7B8C9D0E1F2A3B4C /* NativeButtonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeButtonBridge.m; path = DayStepRN/DesignSystem/NativeButtonBridge.m; sourceTree = "<group>"; };
+		EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleaningGarden.swift; path = DayStepRN/NativeModules/Garden/NativeCleaningGarden.swift; sourceTree = "<group>"; };
+		EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeCleaningGardenBridge.m; path = DayStepRN/NativeModules/Garden/NativeCleaningGardenBridge.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F1B4C5D6E7F8A9B0C1D2E3F5 /* NativeFeedbackSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeFeedbackSection.swift; path = DayStepRN/NativeModules/Sections/NativeFeedbackSection.swift; sourceTree = "<group>"; };
+		F1B5C6D7E8F9A0B1C2D3E4F6 /* NativeFeedbackSectionBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeFeedbackSectionBridge.m; path = DayStepRN/NativeModules/Sections/NativeFeedbackSectionBridge.m; sourceTree = "<group>"; };
+		F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeWeekStripCalendar.swift; path = DayStepRN/NativeModules/Calendar/NativeWeekStripCalendar.swift; sourceTree = "<group>"; };
+		FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NativeSleepGarden.swift; path = DayStepRN/NativeModules/Garden/NativeSleepGarden.swift; sourceTree = "<group>"; };
+		FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = NativeSleepGardenBridge.m; path = DayStepRN/NativeModules/Garden/NativeSleepGardenBridge.m; sourceTree = "<group>"; };
+		FF6A7B8C9D0E1F2A3B4C5D6E /* NativeMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeMenu.swift; path = DayStepRN/DesignSystem/NativeMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A41F7D832F500A4E00A4C1D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		A41F7D832F500A4E00A4C1D8 /* Exceptions for "DayStepCalendarWidget" folder in "DayStepCalendarWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */;
 		};
+		A43C01132F6CB891001C082C /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A43C01052F6CB890001C082C /* ActivityMonitorExtension */;
+		};
+		A43C01282F6CB8BC001C082C /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A43C011A2F6CB8BC001C082C /* ShieldConfiguration */;
+		};
+		A43C013C2F6CB8DF001C082C /* Exceptions for "ShieldAction" folder in "ShieldAction" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A43C01312F6CB8DF001C082C /* ShieldAction */;
+		};
+		A476069D2F9175C900375BC1 /* Exceptions for "DayStepShareExtension" folder in "DayStepShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A476068F2F9175C900375BC1 /* DayStepShareExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A41F7D832F500A4E00A4C1D8 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = DayStepCalendarWidget; sourceTree = "<group>"; };
+		A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A41F7D832F500A4E00A4C1D8 /* Exceptions for "DayStepCalendarWidget" folder in "DayStepCalendarWidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = DayStepCalendarWidget;
+			sourceTree = "<group>";
+		};
+		A42367212F729E6E0054947D /* DayStepRNUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = DayStepRNUITests;
+			sourceTree = "<group>";
+		};
+		A43C01092F6CB890001C082C /* ActivityMonitorExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A43C01132F6CB891001C082C /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ActivityMonitorExtension;
+			sourceTree = "<group>";
+		};
+		A43C01202F6CB8BC001C082C /* ShieldConfiguration */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A43C01282F6CB8BC001C082C /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ShieldConfiguration;
+			sourceTree = "<group>";
+		};
+		A43C01342F6CB8DF001C082C /* ShieldAction */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A43C013C2F6CB8DF001C082C /* Exceptions for "ShieldAction" folder in "ShieldAction" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ShieldAction;
+			sourceTree = "<group>";
+		};
+		A47606912F9175C900375BC1 /* DayStepShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A476069D2F9175C900375BC1 /* Exceptions for "DayStepShareExtension" folder in "DayStepShareExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = DayStepShareExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,8 +348,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				24AF1E9FD7B1F890C4E155B2 /* libPods-DayStepRN.a in Frameworks */,
+				A47606AD2F9177BD00375BC1 /* CallKit.framework in Frameworks */,
 				A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */,
+				124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,38 +363,199 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A423671D2F729E6E0054947D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01032F6CB890001C082C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A43C01082F6CB890001C082C /* DeviceActivity.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01182F6CB8BC001C082C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A43C011D2F6CB8BC001C082C /* ManagedSettings.framework in Frameworks */,
+				A43C011F2F6CB8BC001C082C /* ManagedSettingsUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C012F2F6CB8DF001C082C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A43C01332F6CB8DF001C082C /* ManagedSettings.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A476068D2F9175C900375BC1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		13B07FAE1A68108700A75B9A /* DayStepRN */ = {
 			isa = PBXGroup;
 			children = (
+				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
-				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */,
-				735A184A2544A4E64A659FAF /* LiquidGlassUtils.swift */,
-				8261A30623C9454D703B9FB7 /* LiquidGlassTabBar.swift */,
-				2927152AB13CA4A60605A287 /* LiquidGlassTabBarBridge.m */,
-				1A6A9F20785788C781CC10EE /* LiquidGlassFuelCard.swift */,
-				42023738D1793F209AFDF171 /* LiquidGlassFuelCardBridge.m */,
-				4EFDECFAAAA2C0F7988EEC88 /* LiquidGlassBackgroundView.swift */,
-				079876F8CC97D9070E6729CB /* LiquidGlassBackgroundBridge.m */,
+				0991000010000000A1B20001 /* Intents */,
+				0991000010000000A1B20002 /* DesignSystem */,
+				0991000010000000A1B20003 /* NativeModules */,
+				0991000010000000A1B20009 /* Modules */,
 			);
 			name = DayStepRN;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20001 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				A4F440B82F9180CD00C25E59 /* AddTodoIntent.swift */,
+				A4F440B92F9180CD00C25E59 /* AppShortcuts.swift */,
+			);
+			name = Intents;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20002 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				735A184A2544A4E64A659FAF /* NativeUtils.swift */,
+				4EFDECFAAAA2C0F7988EEC88 /* NativeBackground.swift */,
+				079876F8CC97D9070E6729CB /* NativeBackgroundBridge.m */,
+				BB2C3D4E5F6A7B8C9D0E1F2A /* NativeButton.swift */,
+				DD4E5F6A7B8C9D0E1F2A3B4C /* NativeButtonBridge.m */,
+				FF6A7B8C9D0E1F2A3B4C5D6E /* NativeMenu.swift */,
+				228C9D0E1F2A3B4C5D6E7F80 /* NativeMenuBridge.m */,
+				8261A30623C9454D703B9FB7 /* NativeTabBar.swift */,
+				2927152AB13CA4A60605A287 /* NativeTabBarBridge.m */,
+			);
+			name = DesignSystem;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20003 /* NativeModules */ = {
+			isa = PBXGroup;
+			children = (
+				0991000010000000A1B20004 /* Calendar */,
+				0991000010000000A1B20007 /* Cards */,
+				0991000010000000A1B20006 /* Form */,
+				0991000010000000A1B20005 /* Garden */,
+				0991000010000000A1B20008 /* Sections */,
+			);
+			name = NativeModules;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20004 /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				DA1A2B3C4D5E6F7A8B9C0D1E /* NativeDayTimeGrid.swift */,
+				DA2B3C4D5E6F7A8B9C0D1E2F /* NativeDayTimeGridBridge.m */,
+				B6C7D8E9F0A1B2C3D4E5F6A7 /* NativeMonthCalendar.swift */,
+				D8E9F0A1B2C3D4E5F6A7B8C9 /* NativeMonthCalendarBridge.m */,
+				DA3C4D5E6F7A8B9C0D1E2F3A /* NativeMultiDayTimeGrid.swift */,
+				DA4D5E6F7A8B9C0D1E2F3A4B /* NativeMultiDayTimeGridBridge.m */,
+				F2A3B4C5D6E7F8A9B0C1D2E3 /* NativeWeekStripCalendar.swift */,
+				A4C5D6E7F8A9B0C1D2E3F4A5 /* NativeWeekStripCalendarBridge.m */,
+			);
+			name = Calendar;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20005 /* Garden */ = {
+			isa = PBXGroup;
+			children = (
+				EB2C3D4E5F6A7B8C9D0E1F2A /* NativeCleaningGarden.swift */,
+				EC4E5F6A7B8C9D0E1F2A3B4C /* NativeCleaningGardenBridge.m */,
+				A49F65922F97DF7100E608ED /* NativeFocusGarden.swift */,
+				A49F65932F97DF7100E608ED /* NativeFocusGardenBridge.m */,
+				FB2C3D4E5F6A7B8C9D0E1F2A /* NativeSleepGarden.swift */,
+				FC4E5F6A7B8C9D0E1F2A3B4C /* NativeSleepGardenBridge.m */,
+			);
+			name = Garden;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20006 /* Form */ = {
+			isa = PBXGroup;
+			children = (
+				05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */,
+				05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */,
+				03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */,
+				03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */,
+				02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */,
+				02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */,
+				04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */,
+				04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */,
+				01BB22CC33DD44EE55FF6677 /* NativeTodoPicker.swift */,
+				01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */,
+			);
+			name = Form;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20007 /* Cards */ = {
+			isa = PBXGroup;
+			children = (
+				59502988256F1D4368F740C1 /* NativeContactNudge.swift */,
+				9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */,
+				B64A261330AF6125F9DB1562 /* NativeMissionCard.swift */,
+				8A236F21A47F4F88F1E6A541 /* NativeMissionCardBridge.m */,
+				1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */,
+				42023738D1793F209AFDF171 /* NativeMotivationCardBridge.m */,
+				8189F51A3446D82E8BDA17A6 /* NativeProgressCard.swift */,
+				C50E5A5195F322382EAC2BD9 /* NativeProgressCardBridge.m */,
+			);
+			name = Cards;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20008 /* Sections */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */,
+				B2C3D4E5F6A7B8C9D0E1F2A3 /* NativeCleanupAccordionBridge.m */,
+				F1B4C5D6E7F8A9B0C1D2E3F5 /* NativeFeedbackSection.swift */,
+				F1B5C6D7E8F9A0B1C2D3E4F6 /* NativeFeedbackSectionBridge.m */,
+				25B5E30421766026F915B4B0 /* NativeGroupSection.swift */,
+				960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */,
+			);
+			name = Sections;
+			sourceTree = "<group>";
+		};
+		0991000010000000A1B20009 /* Modules */ = {
+			isa = PBXGroup;
+			children = (
+				A4F440BA2F9180CD00C25E59 /* CallDetectorModule.m */,
+				A4F440BB2F9180CD00C25E59 /* CallDetectorModule.swift */,
+				A4F440BC2F9180CD00C25E59 /* DayStepShareModule.m */,
+				A4F440BD2F9180CD00C25E59 /* DayStepShareModule.swift */,
+			);
+			name = Modules;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A47606AC2F9177BD00375BC1 /* CallKit.framework */,
 				A41F7D662F483FF800A4C1D8 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				511CEB6B0AE6818D00C27C21 /* libPods-DayStepRN.a */,
 				A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */,
 				A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */,
+				A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */,
+				A43C01072F6CB890001C082C /* DeviceActivity.framework */,
+				A43C011C2F6CB8BC001C082C /* ManagedSettings.framework */,
+				A43C011E2F6CB8BC001C082C /* ManagedSettingsUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -165,9 +576,15 @@
 				13B07FAE1A68108700A75B9A /* DayStepRN */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				A41F7D722F500A4C00A4C1D8 /* DayStepCalendarWidget */,
+				A43C01092F6CB890001C082C /* ActivityMonitorExtension */,
+				A43C01202F6CB8BC001C082C /* ShieldConfiguration */,
+				A43C01342F6CB8DF001C082C /* ShieldAction */,
+				A42367212F729E6E0054947D /* DayStepRNUITests */,
+				A47606912F9175C900375BC1 /* DayStepShareExtension */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				FD32158C53816A8B57B18997 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -179,6 +596,11 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* DevDayStep.app */,
 				A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */,
+				A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */,
+				A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */,
+				A43C01322F6CB8DF001C082C /* ShieldAction.appex */,
+				A42367202F729E6E0054947D /* DayStepRNUITests.xctest */,
+				A47606902F9175C900375BC1 /* DayStepShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -186,10 +608,26 @@
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				BC637E3DAF953FA361157DB6 /* Pods-DayStepRN.debug.xcconfig */,
-				934DE732F8983F094AAA965F /* Pods-DayStepRN.release.xcconfig */,
+				9EEA7499BC65BF0DA97E5E45 /* Pods-DayStepRN.debug.xcconfig */,
+				7D38102E52F68EAC32641FB1 /* Pods-DayStepRN.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		FD32158C53816A8B57B18997 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				FFA126C45CA6DAADBEE83D75 /* DayStepRN */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		FFA126C45CA6DAADBEE83D75 /* DayStepRN */ = {
+			isa = PBXGroup;
+			children = (
+				3E89E96ED34AC96B9B503807 /* ExpoModulesProvider.swift */,
+			);
+			name = DayStepRN;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -199,19 +637,24 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DayStepRN" */;
 			buildPhases = (
-				8222B56E707FCC9BEAE8C2FD /* [CP] Check Pods Manifest.lock */,
+				B7B288025332AEF5D3423722 /* [CP] Check Pods Manifest.lock */,
+				58185CB7D6F85EA6E423B6E3 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				F416E35D5BAC6537C6CF7AF1 /* [CP] Embed Pods Frameworks */,
-				7A8B5C275AF80CE13F336682 /* [CP] Copy Pods Resources */,
 				A41F7D872F500A4E00A4C1D8 /* Embed Foundation Extensions */,
+				AC3EAE42BDE6A8360A15920C /* [CP] Embed Pods Frameworks */,
+				E76DD9ACCCB4385C6DA30EAF /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				A41F7D812F500A4E00A4C1D8 /* PBXTargetDependency */,
+				A43C010F2F6CB891001C082C /* PBXTargetDependency */,
+				A43C01262F6CB8BC001C082C /* PBXTargetDependency */,
+				A43C013A2F6CB8DF001C082C /* PBXTargetDependency */,
+				A47606992F9175C900375BC1 /* PBXTargetDependency */,
 			);
 			name = DayStepRN;
 			productName = DayStepRN;
@@ -238,6 +681,107 @@
 			productReference = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		A423671F2F729E6E0054947D /* DayStepRNUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A423672A2F729E6E0054947D /* Build configuration list for PBXNativeTarget "DayStepRNUITests" */;
+			buildPhases = (
+				A423671C2F729E6E0054947D /* Sources */,
+				A423671D2F729E6E0054947D /* Frameworks */,
+				A423671E2F729E6E0054947D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A42367272F729E6E0054947D /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A42367212F729E6E0054947D /* DayStepRNUITests */,
+			);
+			name = DayStepRNUITests;
+			productName = DayStepRNUITests;
+			productReference = A42367202F729E6E0054947D /* DayStepRNUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		A43C01052F6CB890001C082C /* ActivityMonitorExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A43C01142F6CB891001C082C /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */;
+			buildPhases = (
+				A43C01022F6CB890001C082C /* Sources */,
+				A43C01032F6CB890001C082C /* Frameworks */,
+				A43C01042F6CB890001C082C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A43C01092F6CB890001C082C /* ActivityMonitorExtension */,
+			);
+			name = ActivityMonitorExtension;
+			productName = ActivityMonitorExtension;
+			productReference = A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A43C011A2F6CB8BC001C082C /* ShieldConfiguration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A43C01292F6CB8BC001C082C /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */;
+			buildPhases = (
+				A43C01172F6CB8BC001C082C /* Sources */,
+				A43C01182F6CB8BC001C082C /* Frameworks */,
+				A43C01192F6CB8BC001C082C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A43C01202F6CB8BC001C082C /* ShieldConfiguration */,
+			);
+			name = ShieldConfiguration;
+			productName = ShieldConfiguration;
+			productReference = A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A43C01312F6CB8DF001C082C /* ShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A43C013D2F6CB8DF001C082C /* Build configuration list for PBXNativeTarget "ShieldAction" */;
+			buildPhases = (
+				A43C012E2F6CB8DF001C082C /* Sources */,
+				A43C012F2F6CB8DF001C082C /* Frameworks */,
+				A43C01302F6CB8DF001C082C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A43C01342F6CB8DF001C082C /* ShieldAction */,
+			);
+			name = ShieldAction;
+			productName = ShieldAction;
+			productReference = A43C01322F6CB8DF001C082C /* ShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A476068F2F9175C900375BC1 /* DayStepShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A476069E2F9175C900375BC1 /* Build configuration list for PBXNativeTarget "DayStepShareExtension" */;
+			buildPhases = (
+				A476068C2F9175C900375BC1 /* Sources */,
+				A476068D2F9175C900375BC1 /* Frameworks */,
+				A476068E2F9175C900375BC1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A47606912F9175C900375BC1 /* DayStepShareExtension */,
+			);
+			name = DayStepShareExtension;
+			productName = DayStepShareExtension;
+			productReference = A47606902F9175C900375BC1 /* DayStepShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -251,6 +795,22 @@
 						LastSwiftMigration = 2620;
 					};
 					A41F7D6C2F500A4C00A4C1D8 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A423671F2F729E6E0054947D = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
+					A43C01052F6CB890001C082C = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A43C011A2F6CB8BC001C082C = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A43C01312F6CB8DF001C082C = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					A476068F2F9175C900375BC1 = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -270,6 +830,11 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* DayStepRN */,
 				A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */,
+				A43C01052F6CB890001C082C /* ActivityMonitorExtension */,
+				A43C011A2F6CB8BC001C082C /* ShieldConfiguration */,
+				A43C01312F6CB8DF001C082C /* ShieldAction */,
+				A423671F2F729E6E0054947D /* DayStepRNUITests */,
+				A476068F2F9175C900375BC1 /* DayStepShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -286,6 +851,41 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A41F7D6B2F500A4C00A4C1D8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A423671E2F729E6E0054947D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01042F6CB890001C082C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01192F6CB8BC001C082C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01302F6CB8DF001C082C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A476068E2F9175C900375BC1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -309,30 +909,50 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli')\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n";
 		};
-		7A8B5C275AF80CE13F336682 /* [CP] Copy Pods Resources */ = {
+		58185CB7D6F85EA6E423B6E3 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/.xcode.env",
+				"$(SRCROOT)/.xcode.env.local",
+				"$(SRCROOT)/DayStepRN/DayStepRN.entitlements",
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DayStepRN/expo-configure-project.sh",
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Pods/Target Support Files/Pods-DayStepRN/ExpoModulesProvider.swift",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-DayStepRN/expo-configure-project.sh\"\n";
+		};
+		AC3EAE42BDE6A8360A15920C /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
+			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8222B56E707FCC9BEAE8C2FD /* [CP] Check Pods Manifest.lock */ = {
+		B7B288025332AEF5D3423722 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -354,25 +974,21 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		F416E35D5BAC6537C6CF7AF1 /* [CP] Embed Pods Frameworks */ = {
+		E76DD9ACCCB4385C6DA30EAF /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
+			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DayStepRN/Pods-DayStepRN-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -385,17 +1001,99 @@
 				A41F7D8C2F500BD800A4C1D8 /* DayStepWidgetModule.swift in Sources */,
 				A41F7D8D2F500BD800A4C1D8 /* DayStepWidgetModule.m in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
-				051A3F3962BD4CA6AC7F4177 /* LiquidGlassUtils.swift in Sources */,
-				63A98DDE31BBA1B7DC82E704 /* LiquidGlassTabBar.swift in Sources */,
-				F264FE52D348AB48BFF6D85D /* LiquidGlassTabBarBridge.m in Sources */,
-				03A711A6634CCE600EF8A599 /* LiquidGlassFuelCard.swift in Sources */,
-				0B3C275442CA372D372F51C4 /* LiquidGlassFuelCardBridge.m in Sources */,
-				671C9C480796F50BF822F737 /* LiquidGlassBackgroundView.swift in Sources */,
-				B0474C71554CEB2C206F066A /* LiquidGlassBackgroundBridge.m in Sources */,
+				A49F65942F97DF7100E608ED /* NativeFocusGarden.swift in Sources */,
+				A49F65952F97DF7100E608ED /* NativeFocusGardenBridge.m in Sources */,
+				051A3F3962BD4CA6AC7F4177 /* NativeUtils.swift in Sources */,
+				63A98DDE31BBA1B7DC82E704 /* NativeTabBar.swift in Sources */,
+				F264FE52D348AB48BFF6D85D /* NativeTabBarBridge.m in Sources */,
+				03A711A6634CCE600EF8A599 /* NativeMotivationCard.swift in Sources */,
+				0B3C275442CA372D372F51C4 /* NativeMotivationCardBridge.m in Sources */,
+				671C9C480796F50BF822F737 /* NativeBackground.swift in Sources */,
+				B0474C71554CEB2C206F066A /* NativeBackgroundBridge.m in Sources */,
+				AA1B2C3D4E5F6A7B8C9D0E1F /* NativeButton.swift in Sources */,
+				CC3D4E5F6A7B8C9D0E1F2A3B /* NativeButtonBridge.m in Sources */,
+				EE5F6A7B8C9D0E1F2A3B4C5D /* NativeMenu.swift in Sources */,
+				117B8C9D0E1F2A3B4C5D6E7F /* NativeMenuBridge.m in Sources */,
+				A4F440BE2F9180CD00C25E59 /* AppShortcuts.swift in Sources */,
+				A4F440BF2F9180CD00C25E59 /* DayStepShareModule.swift in Sources */,
+				A4F440C02F9180CD00C25E59 /* DayStepShareModule.m in Sources */,
+				A4F440C12F9180CD00C25E59 /* AddTodoIntent.swift in Sources */,
+				A4F440C22F9180CD00C25E59 /* CallDetectorModule.m in Sources */,
+				A4F440C32F9180CD00C25E59 /* CallDetectorModule.swift in Sources */,
+				C3D4E5F6A7B8C9D0E1F2A3B4 /* NativeCleanupAccordion.swift in Sources */,
+				D4E5F6A7B8C9D0E1F2A3B4C5 /* NativeCleanupAccordionBridge.m in Sources */,
+				F1B6C7D8E9F0A1B2C3D4E5F7 /* NativeFeedbackSection.swift in Sources */,
+				F1B7C8D9E0F1A2B3C4D5E6F8 /* NativeFeedbackSectionBridge.m in Sources */,
+				E1F2A3B4C5D6E7F8A9B0C1D2 /* NativeWeekStripCalendar.swift in Sources */,
+				F3B4C5D6E7F8A9B0C1D2E3F4 /* NativeWeekStripCalendarBridge.m in Sources */,
+				A5B6C7D8E9F0A1B2C3D4E5F6 /* NativeMonthCalendar.swift in Sources */,
+				C7D8E9F0A1B2C3D4E5F6A7B8 /* NativeMonthCalendarBridge.m in Sources */,
+				DA5E6F7A8B9C0D1E2F3A4B5C /* NativeDayTimeGrid.swift in Sources */,
+				DA6F7A8B9C0D1E2F3A4B5C6D /* NativeDayTimeGridBridge.m in Sources */,
+				DA7A8B9C0D1E2F3A4B5C6D7E /* NativeMultiDayTimeGrid.swift in Sources */,
+				DA8B9C0D1E2F3A4B5C6D7E8F /* NativeMultiDayTimeGridBridge.m in Sources */,
+				2471C3C4D3E00A76861BDF22 /* NativeProgressCard.swift in Sources */,
+				1F11AF99A05E5B04B2E2585D /* NativeProgressCardBridge.m in Sources */,
+				FA1B2C3D4E5F6A7B8C9D0E1F /* NativeSleepGarden.swift in Sources */,
+				FA3D4E5F6A7B8C9D0E1F2A3B /* NativeSleepGardenBridge.m in Sources */,
+				E4762033124F21875BA5CD8A /* NativeGroupSection.swift in Sources */,
+				899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */,
+				4EA6F8C29F16FFE12737528C /* NativeMissionCard.swift in Sources */,
+				C3CAAEF0626409E6D2C3155C /* NativeMissionCardBridge.m in Sources */,
+				C6F8A1669C5EDFADDD08FB8D /* NativeContactNudge.swift in Sources */,
+				9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */,
+				EA1B2C3D4E5F6A7B8C9D0E1F /* NativeCleaningGarden.swift in Sources */,
+				EA3D4E5F6A7B8C9D0E1F2A3B /* NativeCleaningGardenBridge.m in Sources */,
+				01AA11BB22CC33DD44EE55F6 /* NativeTodoPicker.swift in Sources */,
+				01CC33DD44EE55FF66778899 /* NativeTodoPickerBridge.m in Sources */,
+				02AA11BB22CC33DD44EE55F6 /* NativeMotivationJournal.swift in Sources */,
+				02CC33DD44EE55FF66778899 /* NativeMotivationJournalBridge.m in Sources */,
+				03AA11BB22CC33DD44EE55F6 /* NativeFeedbackEditor.swift in Sources */,
+				03CC33DD44EE55FF66778899 /* NativeFeedbackEditorBridge.m in Sources */,
+				04AA11BB22CC33DD44EE55F6 /* NativeProjectForm.swift in Sources */,
+				04CC33DD44EE55FF66778899 /* NativeProjectFormBridge.m in Sources */,
+				05AA11BB22CC33DD44EE55F6 /* NativeAddPerson.swift in Sources */,
+				05CC33DD44EE55FF66778899 /* NativeAddPersonBridge.m in Sources */,
+				EC24CDE51001F7F463172537 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A41F7D692F500A4C00A4C1D8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A423671C2F729E6E0054947D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01022F6CB890001C082C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C01172F6CB8BC001C082C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A43C012E2F6CB8DF001C082C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A476068C2F9175C900375BC1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -410,17 +1108,44 @@
 			target = A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */;
 			targetProxy = A41F7D802F500A4E00A4C1D8 /* PBXContainerItemProxy */;
 		};
+		A42367272F729E6E0054947D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 13B07F861A680F5B00A75B9A /* DayStepRN */;
+			targetProxy = A42367262F729E6E0054947D /* PBXContainerItemProxy */;
+		};
+		A43C010F2F6CB891001C082C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A43C01052F6CB890001C082C /* ActivityMonitorExtension */;
+			targetProxy = A43C010E2F6CB891001C082C /* PBXContainerItemProxy */;
+		};
+		A43C01262F6CB8BC001C082C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A43C011A2F6CB8BC001C082C /* ShieldConfiguration */;
+			targetProxy = A43C01252F6CB8BC001C082C /* PBXContainerItemProxy */;
+		};
+		A43C013A2F6CB8DF001C082C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A43C01312F6CB8DF001C082C /* ShieldAction */;
+			targetProxy = A43C01392F6CB8DF001C082C /* PBXContainerItemProxy */;
+		};
+		A47606992F9175C900375BC1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A476068F2F9175C900375BC1 /* DayStepShareExtension */;
+			targetProxy = A47606982F9175C900375BC1 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BC637E3DAF953FA361157DB6 /* Pods-DayStepRN.debug.xcconfig */;
+			baseConfigurationReference = 9EEA7499BC65BF0DA97E5E45 /* Pods-DayStepRN.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DayStepRN/DayStepRN.entitlements;
-				CURRENT_PROJECT_VERSION = 11;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = DayStepRN/Info.plist;
@@ -429,14 +1154,17 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev;
 				PRODUCT_NAME = DevDayStep;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
 				SWIFT_OBJC_BRIDGING_HEADER = "DayStepRN/DayStepRN-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -446,12 +1174,14 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 934DE732F8983F094AAA965F /* Pods-DayStepRN.release.xcconfig */;
+			baseConfigurationReference = 7D38102E52F68EAC32641FB1 /* Pods-DayStepRN.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = DayStepRN/DayStepRN.entitlements;
-				CURRENT_PROJECT_VERSION = 11;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 16;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				INFOPLIST_FILE = DayStepRN/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -459,14 +1189,17 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app;
 				PRODUCT_NAME = DayStep;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
 				SWIFT_OBJC_BRIDGING_HEADER = "DayStepRN/DayStepRN-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -546,6 +1279,7 @@
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
+				SWIFT_VERSION = 5.0;
 				USE_HERMES = true;
 			};
 			name = Debug;
@@ -614,6 +1348,7 @@
 				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -632,8 +1367,9 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = DayStepCalendarWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 16;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -649,11 +1385,13 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.DayStepCalendarWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
@@ -679,9 +1417,10 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_ENTITLEMENTS = DayStepCalendarWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 16;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -697,9 +1436,462 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.DayStepCalendarWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A42367282F729E6E0054947D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = jhn.DayStepRNUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DayStepRN;
+			};
+			name = Debug;
+		};
+		A42367292F729E6E0054947D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = jhn.DayStepRNUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = DayStepRN;
+			};
+			name = Release;
+		};
+		A43C01112F6CB891001C082C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ActivityMonitorExtension/ActivityMonitorExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ActivityMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.ActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A43C01122F6CB891001C082C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ActivityMonitorExtension/ActivityMonitorExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ActivityMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A43C012A2F6CB8BC001C082C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldConfiguration/ShieldConfiguration.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A43C012B2F6CB8BC001C082C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldConfiguration/ShieldConfiguration.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A43C013E2F6CB8DF001C082C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldAction/ShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A43C013F2F6CB8DF001C082C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = ShieldAction/ShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 16;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A476069B2F9175C900375BC1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = DayStepShareExtension/DayStepShareExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DayStepShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DayStepShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev.DayStepShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A476069C2F9175C900375BC1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = DayStepShareExtension/DayStepShareExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DayStepShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DayStepShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.1;
+				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.DayStepShareExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -738,6 +1930,51 @@
 			buildConfigurations = (
 				A41F7D852F500A4E00A4C1D8 /* Debug */,
 				A41F7D862F500A4E00A4C1D8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A423672A2F729E6E0054947D /* Build configuration list for PBXNativeTarget "DayStepRNUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A42367282F729E6E0054947D /* Debug */,
+				A42367292F729E6E0054947D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A43C01142F6CB891001C082C /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A43C01112F6CB891001C082C /* Debug */,
+				A43C01122F6CB891001C082C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A43C01292F6CB8BC001C082C /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A43C012A2F6CB8BC001C082C /* Debug */,
+				A43C012B2F6CB8BC001C082C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A43C013D2F6CB8DF001C082C /* Build configuration list for PBXNativeTarget "ShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A43C013E2F6CB8DF001C082C /* Debug */,
+				A43C013F2F6CB8DF001C082C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A476069E2F9175C900375BC1 /* Build configuration list for PBXNativeTarget "DayStepShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A476069B2F9175C900375BC1 /* Debug */,
+				A476069C2F9175C900375BC1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -6,7 +6,7 @@ import { Todo } from '@/entities/todo/Todo';
 // 타입 정의
 // ============================================
 
-export type ADHDScreen = 'home' | 'entry' | 'execute' | 'care' | 'relationship-insights' | 'task-organize' | 'fuel' | 'settings' | 'project' | null;
+export type ADHDScreen = 'home' | 'entry' | 'execute' | 'care' | 'relationship-insights' | 'task-organize' | 'motivation' | 'settings' | 'project' | null;
 
 /** @deprecated Use ADHDScreen instead */
 export type ADHDMode = ADHDScreen;
@@ -78,19 +78,19 @@ interface CareModeState {
 }
 
 // 복잡한 머릿속, 정리해줄게 모드 상태 (구 나의 마음 챙기기)
-import type { FuelViewState, TodoDraft } from '@/types/fuel';
-export type { FuelViewState };
-export type FuelEntryType = 'reflection' | 'comfort' | 'gratitude';
+import type { MotivationViewState, TodoDraft } from '@/types/motivation';
+export type { MotivationViewState };
+export type MotivationEntryType = 'reflection' | 'comfort' | 'gratitude';
 
-/** @deprecated Use FuelViewState instead */
-export type InboxViewState = FuelViewState;
-/** @deprecated Use FuelEntryType instead */
-export type InboxEntryType = FuelEntryType;
+/** @deprecated Use MotivationViewState instead */
+export type InboxViewState = MotivationViewState;
+/** @deprecated Use MotivationEntryType instead */
+export type InboxEntryType = MotivationEntryType;
 
-interface FuelModeState {
+interface MotivationModeState {
   isActive: boolean;
   startedAt: Date | null;
-  viewState: FuelViewState;
+  viewState: MotivationViewState;
   selectedNoteId: string | null;  // 배너에서 진입 시 선택된 원동력 ID
 
   // 수집 필드
@@ -146,7 +146,7 @@ interface ADHDModeState {
   careMode: CareModeState;
 
   // 복잡한 머릿속, 정리해줄게 모드 상태
-  fuelMode: FuelModeState;
+  motivationMode: MotivationModeState;
 
   // 설정 모드 상태
   settingsMode: SettingsModeState;
@@ -208,9 +208,9 @@ interface ADHDModeState {
   enterProjectMode: (userId: string, initialTab?: string) => void;
 
   // === 복잡한 머릿속, 정리해줄게 모드 Actions ===
-  enterFuelMode: (userId: string, selectedNoteId?: string, initialTab?: string) => void;
-  setFuelViewState: (viewState: FuelViewState) => void;
-  setFuelDraft: (draft: {
+  enterMotivationMode: (userId: string, selectedNoteId?: string, initialTab?: string) => void;
+  setMotivationViewState: (viewState: MotivationViewState) => void;
+  setMotivationDraft: (draft: {
     // 수집 필드
     title?: string;
     content?: string;
@@ -227,18 +227,18 @@ interface ADHDModeState {
     newProjectPreparation?: string;
     todosDraft?: TodoDraft[];
   }) => void;
-  resetFuelDraft: () => void;
-  endFuelMode: () => void;
+  resetMotivationDraft: () => void;
+  endMotivationMode: () => void;
 
-  /** @deprecated Use enterFuelMode instead */
+  /** @deprecated Use enterMotivationMode instead */
   enterInboxMode: (userId: string) => void;
-  /** @deprecated Use setFuelViewState instead */
-  setInboxViewState: (viewState: FuelViewState) => void;
-  /** @deprecated Use setFuelDraft instead */
+  /** @deprecated Use setMotivationViewState instead */
+  setInboxViewState: (viewState: MotivationViewState) => void;
+  /** @deprecated Use setMotivationDraft instead */
   setInboxDraft: (draft: any) => void;
-  /** @deprecated Use resetFuelDraft instead */
+  /** @deprecated Use resetMotivationDraft instead */
   resetInboxDraft: () => void;
-  /** @deprecated Use endFuelMode instead */
+  /** @deprecated Use endMotivationMode instead */
   endInboxMode: () => void;
 
   // === 설정 모드 Actions ===
@@ -325,7 +325,7 @@ const DEFAULT_CARE_MODE: CareModeState = {
   linkedTodoId: null,
 };
 
-const DEFAULT_FUEL_MODE: FuelModeState = {
+const DEFAULT_MOTIVATION_MODE: MotivationModeState = {
   isActive: false,
   startedAt: null,
   viewState: 'select-duration',
@@ -369,7 +369,7 @@ export const useADHDStore = create<ADHDModeState>()(
         focusEnvironmentPrefs: DEFAULT_FOCUS_ENVIRONMENT_PREFS,
         organizeMode: DEFAULT_ORGANIZE_MODE,
         careMode: DEFAULT_CARE_MODE,
-        fuelMode: DEFAULT_FUEL_MODE,
+        motivationMode: DEFAULT_MOTIVATION_MODE,
         settingsMode: DEFAULT_SETTINGS_MODE,
         awakeningSentence: null,
         cachedPatterns: null,
@@ -413,7 +413,7 @@ export const useADHDStore = create<ADHDModeState>()(
             focusMode: DEFAULT_FOCUS_MODE,
             organizeMode: DEFAULT_ORGANIZE_MODE,
             careMode: DEFAULT_CARE_MODE,
-            fuelMode: DEFAULT_FUEL_MODE,
+            motivationMode: DEFAULT_MOTIVATION_MODE,
             settingsMode: DEFAULT_SETTINGS_MODE,
             currentUserId: null,
           });
@@ -668,13 +668,13 @@ export const useADHDStore = create<ADHDModeState>()(
         },
 
         // === 복잡한 머릿속, 정리해줄게 모드 Actions ===
-        enterFuelMode: (userId: string, selectedNoteId?: string, initialTab?: string) => {
+        enterMotivationMode: (userId: string, selectedNoteId?: string, initialTab?: string) => {
           console.log('💡 ADHD: 원동력 모드 진입', selectedNoteId ? `(선택된 노트: ${selectedNoteId})` : '', initialTab ? `(탭: ${initialTab})` : '');
           set({
-            currentMode: 'fuel',
+            currentMode: 'motivation',
             currentUserId: userId,
             currentSubView: initialTab || null,
-            fuelMode: {
+            motivationMode: {
               isActive: true,
               startedAt: new Date(),
               viewState: 'select-duration',
@@ -698,30 +698,30 @@ export const useADHDStore = create<ADHDModeState>()(
           });
         },
 
-        setFuelViewState: (viewState: FuelViewState) => {
+        setMotivationViewState: (viewState: MotivationViewState) => {
           console.log('💡 ADHD: 원동력 뷰 상태 변경', viewState);
           set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
+            motivationMode: {
+              ...state.motivationMode,
               viewState,
             }
           }));
         },
 
-        setFuelEntryType: (entryType: FuelEntryType) => {
+        setMotivationEntryType: (entryType: MotivationEntryType) => {
           console.log('💡 ADHD: 원동력 유형 선택', entryType);
           set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
+            motivationMode: {
+              ...state.motivationMode,
               selectedEntryType: entryType,
             }
           }));
         },
 
-        setFuelDraft: (draft) => {
+        setMotivationDraft: (draft) => {
           set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
+            motivationMode: {
+              ...state.motivationMode,
               // 수집 필드
               ...(draft.title !== undefined && { draftTitle: draft.title }),
               ...(draft.content !== undefined && { draftContent: draft.content }),
@@ -741,10 +741,10 @@ export const useADHDStore = create<ADHDModeState>()(
           }));
         },
 
-        resetFuelDraft: () => {
+        resetMotivationDraft: () => {
           set((state) => ({
-            fuelMode: {
-              ...state.fuelMode,
+            motivationMode: {
+              ...state.motivationMode,
               // 수집 필드 초기화
               draftTitle: '',
               draftContent: '',
@@ -764,43 +764,43 @@ export const useADHDStore = create<ADHDModeState>()(
           }));
         },
 
-        endFuelMode: () => {
+        endMotivationMode: () => {
           console.log('💡 ADHD: 원동력 모드 종료');
           set({
             currentMode: 'entry',
-            fuelMode: DEFAULT_FUEL_MODE,
+            motivationMode: DEFAULT_MOTIVATION_MODE,
           });
         },
 
         // === 하위 호환성을 위한 별칭 (deprecated) ===
-        /** @deprecated Use enterFuelMode instead */
+        /** @deprecated Use enterMotivationMode instead */
         enterInboxMode: (userId: string) => {
-          console.warn('⚠️ enterInboxMode는 deprecated입니다. enterFuelMode를 사용하세요.');
-          get().enterFuelMode(userId);
+          console.warn('⚠️ enterInboxMode는 deprecated입니다. enterMotivationMode를 사용하세요.');
+          get().enterMotivationMode(userId);
         },
 
-        /** @deprecated Use setFuelViewState instead */
-        setInboxViewState: (viewState: FuelViewState) => {
-          console.warn('⚠️ setInboxViewState는 deprecated입니다. setFuelViewState를 사용하세요.');
-          get().setFuelViewState(viewState);
+        /** @deprecated Use setMotivationViewState instead */
+        setInboxViewState: (viewState: MotivationViewState) => {
+          console.warn('⚠️ setInboxViewState는 deprecated입니다. setMotivationViewState를 사용하세요.');
+          get().setMotivationViewState(viewState);
         },
 
-        /** @deprecated Use setFuelDraft instead */
+        /** @deprecated Use setMotivationDraft instead */
         setInboxDraft: (draft: any) => {
-          console.warn('⚠️ setInboxDraft는 deprecated입니다. setFuelDraft를 사용하세요.');
-          get().setFuelDraft(draft);
+          console.warn('⚠️ setInboxDraft는 deprecated입니다. setMotivationDraft를 사용하세요.');
+          get().setMotivationDraft(draft);
         },
 
-        /** @deprecated Use resetFuelDraft instead */
+        /** @deprecated Use resetMotivationDraft instead */
         resetInboxDraft: () => {
-          console.warn('⚠️ resetInboxDraft는 deprecated입니다. resetFuelDraft를 사용하세요.');
-          get().resetFuelDraft();
+          console.warn('⚠️ resetInboxDraft는 deprecated입니다. resetMotivationDraft를 사용하세요.');
+          get().resetMotivationDraft();
         },
 
-        /** @deprecated Use endFuelMode instead */
+        /** @deprecated Use endMotivationMode instead */
         endInboxMode: () => {
-          console.warn('⚠️ endInboxMode는 deprecated입니다. endFuelMode를 사용하세요.');
-          get().endFuelMode();
+          console.warn('⚠️ endInboxMode는 deprecated입니다. endMotivationMode를 사용하세요.');
+          get().endMotivationMode();
         },
 
         // === 설정 모드 Actions ===
@@ -905,8 +905,8 @@ export const useADHDStore = create<ADHDModeState>()(
             case 'project':
               if (userId) get().enterProjectMode(userId, tab || undefined);
               break;
-            case 'fuel':
-              if (userId) get().enterFuelMode(userId, undefined, tab || undefined);
+            case 'motivation':
+              if (userId) get().enterMotivationMode(userId, undefined, tab || undefined);
               break;
             case 'relationship-insights':
               if (userId) get().enterRelationshipInsightsMode(userId, tab || undefined);

@@ -1,32 +1,40 @@
 /**
  * BannerPage — Home Page 1
- * 원동력(fuel note) 카드 + 관계 리마인더 카드
+ * 원동력(motivation note) 카드 + 관계 리마인더 카드
  * 실제 데이터 연동: noteStore + cherishedPeopleStore
  */
 import React, {useEffect, useMemo} from 'react';
 import {View, Text, ScrollView} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import Animated, {FadeIn, FadeInDown, FadeOut} from 'react-native-reanimated';
 import {AnimatedCard} from '@/components/core';
 import {GradientBackground} from '@/components/core';
-import {useNoteStore} from '@/stores/noteStore';
+import {useMotivationStore} from '@/stores/motivationStore';
 import {useCherishedPeopleStore} from '@/stores/cherishedPeopleStore';
 import {useAuthStore} from '@/stores/authStore';
+import {useRotatingNote} from '@/hooks/useRotatingNote';
 import {Flame, Heart, Sparkles, Phone} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 export function BannerPage() {
+  const {primaryColor} = useTheme();
   const user = useAuthStore(s => s.user);
-  const {notes, fetchFuelNotes, getRandomFuelNote} = useNoteStore();
+  const {notes, fetchMotivationNotes} = useMotivationStore();
   const {recommendations, loadRecommendations, getRandomRecommendation} =
     useCherishedPeopleStore();
 
   useEffect(() => {
     if (user?.id) {
-      fetchFuelNotes(user.id);
+      fetchMotivationNotes(user.id);
       loadRecommendations(user.id);
     }
   }, [user?.id]);
 
-  const fuelNote = useMemo(() => getRandomFuelNote(), [notes]);
+  // pinned 원동력이 있으면 그것만 회전, 없으면 전체 노트 회전 (8초 간격)
+  const motivationPool = useMemo(() => {
+    const pinned = notes.filter(n => n.is_banner_pinned === true);
+    return pinned.length > 0 ? pinned : notes;
+  }, [notes]);
+  const motivationNote = useRotatingNote(motivationPool, 8000);
   const recommendation = useMemo(
     () => getRandomRecommendation(),
     [recommendations],
@@ -59,21 +67,24 @@ export function BannerPage() {
               나의 원동력
             </Text>
           </View>
-          {fuelNote ? (
-            <>
-              {fuelNote.title && (
+          {motivationNote ? (
+            <Animated.View
+              key={motivationNote.id}
+              entering={FadeIn.duration(220)}
+              exiting={FadeOut.duration(140)}>
+              {motivationNote.title && (
                 <Text className="text-base font-medium text-amber-900 mb-1">
-                  {fuelNote.title}
+                  {motivationNote.title}
                 </Text>
               )}
-              <Text className="text-sm text-amber-800/80 leading-5">
-                {fuelNote.content}
+              <Text className="text-sm text-amber-800/80 leading-5" numberOfLines={4}>
+                {motivationNote.content}
               </Text>
-            </>
+            </Animated.View>
           ) : (
             <Text className="text-sm text-amber-800/60">
               아직 원동력이 없어요.{'\n'}
-              노트에서 Fuel 모드로 나만의 원동력을 기록해보세요.
+              노트에서 나만의 원동력을 기록해보세요.
             </Text>
           )}
         </GradientBackground>
@@ -136,7 +147,7 @@ export function BannerPage() {
       <Animated.View entering={FadeInDown.delay(400).duration(400)}>
         <AnimatedCard>
           <View className="items-center py-4">
-            <Sparkles size={24} color="#8B5CF6" />
+            <Sparkles size={24} color={primaryColor} />
             <Text className="text-sm text-gray-500 mt-3 text-center leading-5">
               "ADHD가 있어도 일상을 잘 돌볼 수 있어요"{'\n'}
               DayStep이 오늘도 함께할게요.

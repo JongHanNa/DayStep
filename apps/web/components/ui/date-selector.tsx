@@ -9,6 +9,8 @@ import { Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { useTheme } from '@/hooks/useTheme';
+import { hexWithOpacity } from '@/lib/colors';
 
 interface DateSelectorProps {
   selectedDate: string;
@@ -22,11 +24,13 @@ interface DateSelectorProps {
 export function DateSelector({
   selectedDate,
   onDateChange,
-  accentColor = '#DBAC6C',
+  accentColor: accentColorProp,
   className,
   showQuickOptions = true,
   useMinimalCalendar = true
 }: DateSelectorProps) {
+  const { primaryColor } = useTheme();
+  const accentColor = accentColorProp ?? primaryColor;
   const [showCalendar, setShowCalendar] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
 
@@ -169,7 +173,7 @@ export function DateSelector({
           <div className="text-center">
             <div
               className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium"
-              style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
+              style={{ backgroundColor: hexWithOpacity(accentColor, 0.125), color: accentColor }}
             >
               사용자 선택: {format(new Date(selectedDate), 'M월 d일 (E)', { locale: ko })}
             </div>

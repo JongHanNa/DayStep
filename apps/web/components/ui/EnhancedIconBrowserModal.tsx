@@ -9,6 +9,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import ColorPicker from '@/components/ui/ColorPicker';
 import { cn } from '@/lib/utils';
 import { createModalConfig } from '@/lib/modal-config';
+import { useTheme } from '@/hooks/useTheme';
+import { hexWithOpacity } from '@/lib/colors';
 import {
   Search, X, Filter, Grid3X3,
   Clock, Home, Briefcase, Utensils, Car, Gamepad2,
@@ -89,6 +91,9 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
   const [selectedStyle, setSelectedStyle] = useState<IconStyle | ''>('');
   const [selectedCategory, setSelectedCategory] = useState<IconCategory | ''>('');
   const [showFilters, setShowFilters] = useState(false);
+  const { primaryColor } = useTheme();
+  const accentSoftBg = hexWithOpacity(primaryColor, 0.1);
+  const accentSoftBorder = hexWithOpacity(primaryColor, 0.3);
 
   // 필터링된 아이콘 목록
   const filteredIcons = useMemo(() => {
@@ -227,14 +232,23 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  "flex items-center gap-1 transition-colors p-2",
-                  showFilters && "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/20 dark:border-blue-800 dark:text-blue-400"
-                )}
+                className="flex items-center gap-1 transition-colors p-2"
+                style={
+                  showFilters
+                    ? {
+                        backgroundColor: accentSoftBg,
+                        borderColor: accentSoftBorder,
+                        color: primaryColor,
+                      }
+                    : undefined
+                }
               >
                 <Filter className="w-4 h-4" />
                 {(selectedStyle || selectedCategory) && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: primaryColor }}
+                  />
                 )}
               </Button>
             </div>
@@ -247,25 +261,30 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                   <span className="text-sm font-medium text-gray-600 flex items-center gap-1">
                     스타일:
                   </span>
-                  {iconStyles.map((style) => (
-                    <Badge
-                      key={style}
-                      variant={selectedStyle === style ? "default" : "outline"}
-                      className={cn(
-                        "cursor-pointer transition-colors hover:bg-blue-100 dark:hover:bg-blue-900",
-                        selectedStyle === style && "bg-blue-500 text-white hover:bg-blue-600"
-                      )}
-                      onClick={() => {
-                        setSelectedStyle(selectedStyle === style ? '' : style);
-                        setSelectedCategory(''); // 스타일 변경 시 카테고리 초기화
-                      }}
-                    >
-                      {styleDisplayNames[style]}
-                      <span className="ml-1 text-xs">
-                        ({iconStats[style] || 0})
-                      </span>
-                    </Badge>
-                  ))}
+                  {iconStyles.map((style) => {
+                    const isActive = selectedStyle === style;
+                    return (
+                      <Badge
+                        key={style}
+                        variant={isActive ? "default" : "outline"}
+                        className="cursor-pointer transition-colors"
+                        style={
+                          isActive
+                            ? { backgroundColor: primaryColor, color: 'white' }
+                            : undefined
+                        }
+                        onClick={() => {
+                          setSelectedStyle(selectedStyle === style ? '' : style);
+                          setSelectedCategory('');
+                        }}
+                      >
+                        {styleDisplayNames[style]}
+                        <span className="ml-1 text-xs">
+                          ({iconStats[style] || 0})
+                        </span>
+                      </Badge>
+                    );
+                  })}
                 </div>
 
                 {/* 카테고리 필터 */}
@@ -275,19 +294,24 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                     카테고리:
                   </span>
                   <div className="flex flex-wrap gap-2">
-                    {availableCategories.map((category) => (
-                      <Badge
-                        key={category}
-                        variant={selectedCategory === category ? "default" : "outline"}
-                        className={cn(
-                          "cursor-pointer transition-colors hover:bg-green-100 dark:hover:bg-green-900",
-                          selectedCategory === category && "bg-green-500 text-white hover:bg-green-600"
-                        )}
-                        onClick={() => setSelectedCategory(selectedCategory === category ? '' : category)}
-                      >
-                        {category}
-                      </Badge>
-                    ))}
+                    {availableCategories.map((category) => {
+                      const isActive = selectedCategory === category;
+                      return (
+                        <Badge
+                          key={category}
+                          variant={isActive ? "default" : "outline"}
+                          className="cursor-pointer transition-colors"
+                          style={
+                            isActive
+                              ? { backgroundColor: primaryColor, color: 'white' }
+                              : undefined
+                          }
+                          onClick={() => setSelectedCategory(selectedCategory === category ? '' : category)}
+                        >
+                          {category}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -299,7 +323,7 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                         {iconEntries.length}개 아이콘
                       </span>
                       {searchQuery && (
-                        <span className="text-blue-600">
+                        <span style={{ color: primaryColor }}>
                           &quot;{searchQuery}&quot; 검색 결과
                         </span>
                       )}
@@ -395,11 +419,19 @@ export const EnhancedIconBrowserModal: React.FC<EnhancedIconBrowserModalProps> =
                                 onClick={() => handleIconSelect(key as UnifiedIconKey)}
                                 className={cn(
                                   "flex items-center justify-center p-3 rounded-lg border-2 transition-all duration-200",
-                                  "hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                                  isSelected
-                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20 shadow-md"
-                                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                  "hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2",
+                                  !isSelected &&
+                                    "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                                 )}
+                                style={
+                                  isSelected
+                                    ? {
+                                        borderColor: primaryColor,
+                                        backgroundColor: accentSoftBg,
+                                        boxShadow: `0 4px 6px -1px ${hexWithOpacity(primaryColor, 0.15)}`,
+                                      }
+                                    : undefined
+                                }
                               >
                                 <div className="flex items-center justify-center">
                                   <IconComponent

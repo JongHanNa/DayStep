@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProjectFormSheet 리디자인 — 3가지 시안</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #F0F0F5; color: #1A1A2E; min-height: 100vh; padding: 24px; }
+
+  /* ── Tab Navigation ── */
+  .tab-nav { display: flex; gap: 8px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab-btn { padding: 10px 20px; border-radius: 12px; border: 2px solid #E5E7EB; background: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .tab-btn.active { border-color: #3B82F6; background: #3B82F6; color: #fff; }
+  .tab-btn:hover:not(.active) { border-color: #9CA3AF; }
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; align-items: flex-start; }
+
+  /* ── iPhone Frame ── */
+  .phone-frame { width: 375px; min-height: 600px; background: #fff; border-radius: 40px; border: 6px solid #1F2937; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.15); flex-shrink: 0; }
+  .phone-notch { width: 120px; height: 28px; background: #1F2937; border-radius: 0 0 16px 16px; margin: 0 auto; position: relative; z-index: 10; }
+  .phone-screen { padding: 8px 0 24px; max-height: 740px; overflow-y: auto; }
+  .phone-screen::-webkit-scrollbar { display: none; }
+
+  /* ── Sheet Base ── */
+  .sheet { background: #fff; border-radius: 16px 16px 0 0; padding: 0 20px 20px; }
+  .sheet-handle { width: 36px; height: 5px; background: #D1D5DB; border-radius: 3px; margin: 10px auto 12px; }
+
+  /* ── Common Form Elements ── */
+  .sheet-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .sheet-title { font-size: 17px; font-weight: 700; color: #1F2937; }
+  .input-field { width: 100%; background: #F3F4F6; border: none; border-radius: 12px; padding: 14px 16px; font-size: 15px; color: #1A1A2E; outline: none; font-family: inherit; }
+  .input-field::placeholder { color: #9CA3AF; }
+  .input-field.multiline { min-height: 80px; resize: none; }
+  .input-group { margin-bottom: 12px; }
+  .section-label { font-size: 13px; font-weight: 600; color: #6B7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .3px; }
+
+  /* ── Group Card ── */
+  .group-card { background: #F9FAFB; border-radius: 14px; overflow: hidden; margin-top: 16px; }
+
+  /* ── Summary Row ── */
+  .summary-row { display: flex; align-items: center; padding: 14px 16px; cursor: pointer; transition: background .15s; position: relative; }
+  .summary-row:hover { background: rgba(59,130,246,.04); }
+  .summary-row:not(:last-child)::after { content: ''; position: absolute; bottom: 0; left: 52px; right: 16px; height: 1px; background: #E5E7EB; }
+  .sr-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-right: 12px; flex-shrink: 0; }
+  .sr-label { flex: 1; font-size: 15px; font-weight: 500; color: #1F2937; }
+  .sr-suffix { font-size: 13px; color: #9CA3AF; font-weight: 500; margin-right: 6px; }
+  .sr-chevron { color: #9CA3AF; font-size: 14px; }
+  .sr-icon.color-icon { background: #EEF2FF; color: #6366F1; }
+  .sr-icon.icon-icon { background: #FFF7ED; color: #F97316; }
+  .sr-icon.status-icon { background: #F0FDF4; color: #22C55E; }
+  .sr-icon.todo-icon { background: #FEF2F2; color: #EF4444; }
+  .sr-icon.appearance-icon { background: #FDF4FF; color: #A855F7; }
+
+  /* ── Color Palette ── */
+  .color-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .color-dot { width: 36px; height: 36px; border-radius: 18px; cursor: pointer; transition: all .2s; border: 2px solid transparent; }
+  .color-dot:hover { transform: scale(1.1); }
+  .color-dot.selected { border-color: #1F2937; transform: scale(1.15); box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor; }
+  .color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 8px; }
+  .color-grid .color-dot { width: 40px; height: 40px; border-radius: 20px; margin: 0 auto; }
+
+  /* ── Horizontal Color Scroll ── */
+  .color-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 4px 0; scrollbar-width: none; }
+  .color-scroll::-webkit-scrollbar { display: none; }
+
+  /* ── CTA Button ── */
+  .cta-btn { width: 100%; padding: 16px; border-radius: 14px; background: #3B82F6; color: #fff; font-size: 16px; font-weight: 700; border: none; cursor: pointer; transition: all .2s; margin-top: 16px; }
+  .cta-btn:hover { background: #2563EB; transform: translateY(-1px); }
+  .cta-btn.inline { padding: 10px 20px; width: auto; margin: 0; font-size: 14px; border-radius: 10px; }
+
+  /* ── Popover ── */
+  .popover-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.3); z-index: 100; justify-content: center; align-items: center; }
+  .popover-overlay.show { display: flex; }
+  .popover { background: #fff; border-radius: 16px; padding: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.2); min-width: 260px; max-width: 320px; animation: popIn .2s ease-out; }
+  @keyframes popIn { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+  .popover-title { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 12px; text-align: center; }
+
+  /* ── Icon Picker ── */
+  .icon-categories { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0; margin-bottom: 10px; scrollbar-width: none; }
+  .icon-categories::-webkit-scrollbar { display: none; }
+  .cat-chip { padding: 6px 12px; border-radius: 12px; background: #F3F4F6; font-size: 12px; font-weight: 600; color: #6B7280; cursor: pointer; white-space: nowrap; transition: all .15s; border: none; }
+  .cat-chip.active { background: #3B82F6; color: #fff; }
+  .icon-grid { display: flex; flex-wrap: wrap; gap: 8px; max-height: 160px; overflow-y: auto; }
+  .icon-option { width: 40px; height: 40px; border-radius: 10px; background: #F3F4F6; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; border: 2px solid transparent; transition: all .15s; }
+  .icon-option:hover { background: #EBF5FF; }
+  .icon-option.selected { background: rgba(59,130,246,.12); border-color: #3B82F6; }
+  .icon-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; scrollbar-width: none; }
+  .icon-scroll::-webkit-scrollbar { display: none; }
+
+  /* ── Accordion ── */
+  .accordion-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+  .accordion-body.open { max-height: 300px; }
+
+  /* ── Preview Card ── */
+  .preview-card { border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 16px; transition: all .3s; }
+  .preview-icon-box { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,.6); flex-shrink: 0; }
+  .preview-text .preview-title { font-size: 16px; font-weight: 700; color: #1F2937; }
+  .preview-text .preview-desc { font-size: 13px; color: #6B7280; margin-top: 2px; }
+
+  /* ── Sub-view ── */
+  .subview { display: none; }
+  .subview.active { display: block; animation: slideIn .3s ease-out; }
+  .mainview.hidden { display: none; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes slideOut { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+  .back-btn { display: flex; align-items: center; gap: 6px; font-size: 15px; color: #3B82F6; font-weight: 600; cursor: pointer; margin-bottom: 16px; background: none; border: none; font-family: inherit; }
+
+  /* ── Native Control Badge ── */
+  .native-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: .5px; position: absolute; right: 6px; top: -6px; z-index: 5; }
+  .native-badge.ios { background: #DBEAFE; color: #1D4ED8; }
+  .native-badge.js { background: #FEF3C7; color: #92400E; }
+  .native-badge.rn { background: #D1FAE5; color: #065F46; }
+
+  /* ── Annotation Panel ── */
+  .annotation-panel { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,.08); max-width: 340px; flex-shrink: 0; }
+  .annotation-panel h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #1F2937; }
+  .annotation-item { padding: 10px 0; border-bottom: 1px solid #F3F4F6; }
+  .annotation-item:last-child { border-bottom: none; }
+  .annotation-item .label { font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: .3px; margin-bottom: 4px; }
+  .annotation-item .value { font-size: 13px; color: #374151; line-height: 1.5; }
+  .annotation-item .native-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-right: 4px; }
+  .native-tag.ios-native { background: #DBEAFE; color: #1D4ED8; }
+  .native-tag.js-comp { background: #FEF3C7; color: #92400E; }
+  .native-tag.rn-anim { background: #D1FAE5; color: #065F46; }
+
+  /* ── Status Badge ── */
+  .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+  .status-badge.in-progress { background: #DBEAFE; color: #1D4ED8; }
+
+  /* ── Linked Todos ── */
+  .linked-todo { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+  .todo-check { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #D1D5DB; }
+  .todo-text { font-size: 14px; color: #374151; }
+
+  /* ── Comparison table ── */
+  .comparison { max-width: 900px; margin: 40px auto 0; background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+  .comparison h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .comparison table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .comparison th { text-align: left; padding: 10px 12px; background: #F9FAFB; font-weight: 700; color: #374151; border-bottom: 2px solid #E5E7EB; }
+  .comparison td { padding: 10px 12px; border-bottom: 1px solid #F3F4F6; color: #4B5563; }
+  .comparison tr:hover td { background: #F9FAFB; }
+  .win { color: #059669; font-weight: 700; }
+
+  /* ── Page Title ── */
+  .page-title { text-align: center; margin-bottom: 8px; font-size: 24px; font-weight: 800; }
+  .page-subtitle { text-align: center; margin-bottom: 24px; font-size: 14px; color: #6B7280; }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">ProjectFormSheet 리디자인</h1>
+<p class="page-subtitle">3가지 시안 — 탭을 클릭하여 전환 · 요소를 클릭하여 인터랙션 확인</p>
+
+<!-- Tab Navigation -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('a')">A. 최소형 (Summary+Popover)</button>
+  <button class="tab-btn" onclick="switchTab('b')">B. 균형형 (인라인+아코디언)</button>
+  <button class="tab-btn" onclick="switchTab('c')">C. 시각형 (미리보기+서브뷰)</button>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 시안 A: Summary Rows + Popovers       -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-a" class="tab-content active">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+
+        <!-- Header -->
+        <div class="sheet-header">
+          <span class="sheet-title">새 프로젝트</span>
+          <button class="cta-btn inline" onclick="alert('저장!')">만들기</button>
+        </div>
+
+        <!-- Title -->
+        <div class="input-group">
+          <input class="input-field" placeholder="프로젝트 제목" value="아침 루틴 자동화">
+        </div>
+
+        <!-- Description -->
+        <div class="input-group">
+          <textarea class="input-field multiline" placeholder="설명 (선택)">매일 아침 7시 기상 후 루틴 체크리스트</textarea>
+        </div>
+
+        <!-- Group Card -->
+        <div class="group-card">
+          <!-- Color Row -->
+          <div class="summary-row" onclick="showPopover('popover-a-color')" style="position:relative">
+            <span class="native-badge js">JS Popover</span>
+            <div class="sr-icon color-icon">●</div>
+            <span class="sr-label">색상</span>
+            <span class="sr-suffix"><span style="display:inline-block;width:14px;height:14px;border-radius:7px;background:#BDE0FE;vertical-align:middle;margin-right:4px"></span>파스텔블루</span>
+            <span class="sr-chevron">›</span>
+          </div>
+
+          <!-- Icon Row -->
+          <div class="summary-row" onclick="showPopover('popover-a-icon')" style="position:relative">
+            <span class="native-badge js">JS Popover</span>
+            <div class="sr-icon icon-icon">◎</div>
+            <span class="sr-label">아이콘</span>
+            <span class="sr-suffix">☀️ sun</span>
+            <span class="sr-chevron">›</span>
+          </div>
+
+          <!-- Status Row -->
+          <div class="summary-row" onclick="alert('LiquidGlassMenu 또는 ActionSheetIOS 표시')" style="position:relative">
+            <span class="native-badge ios">iOS Native</span>
+            <div class="sr-icon status-icon">▣</div>
+            <span class="sr-label">상태</span>
+            <span class="status-badge in-progress">🔵 진행중</span>
+            <span class="sr-chevron">›</span>
+          </div>
+
+          <!-- Linked Todos -->
+          <div class="summary-row" onclick="toggleAccordion('acc-a-todos')" style="position:relative">
+            <div class="sr-icon todo-icon">≡</div>
+            <span class="sr-label">연결된 할일</span>
+            <span class="sr-suffix">3개</span>
+            <span class="sr-chevron" id="acc-a-todos-chevron">▾</span>
+          </div>
+          <div class="accordion-body" id="acc-a-todos">
+            <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">알람 5분 일찍 맞추기</span></div>
+            <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">스트레칭 10분</span></div>
+            <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">물 한 잔 마시기</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation Panel -->
+  <div class="annotation-panel">
+    <h3>시안 A — 최소형</h3>
+    <div class="annotation-item">
+      <div class="label">컨셉</div>
+      <div class="value">모든 비텍스트 필드를 SummaryRow로 축소. 탭하면 Popover/Menu로 선택.</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">수직 공간</div>
+      <div class="value"><strong class="win">~320px — 스크롤 불필요</strong></div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">네이티브 컨트롤</div>
+      <div class="value">
+        <span class="native-tag ios-native">iOS Native</span> 상태 → <code>LiquidGlassMenu</code> (iOS 26+) / <code>ActionSheetIOS</code> 폴백<br><br>
+        <span class="native-tag js-comp">JS Component</span> 색상/아이콘 → <code>Popover</code> (네이티브 동등물 없음)
+      </div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">재사용 컴포넌트</div>
+      <div class="value"><code>SummaryRow</code>, <code>Popover</code>, <code>InlineIconPicker</code>, <code>LiquidGlassMenu</code>, <code>AnimatedPressable</code></div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">새 컴포넌트</div>
+      <div class="value"><strong class="win">0개</strong></div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">장점</div>
+      <div class="value">• 가장 콤팩트<br>• 기존 컴포넌트 100% 재사용<br>• ADHD 친화: 선택지 숨김</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">단점</div>
+      <div class="value">• Popover ↔ BottomSheet 모달 레이어링 이슈 가능<br>• 색상 선택에 2탭 필요<br>• 실시간 미리보기 없음</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 시안 B: 인라인 색상 + 확장형 아이콘    -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-b" class="tab-content">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" style="margin-bottom:16px">새 프로젝트</div>
+
+        <!-- Title -->
+        <div class="input-group">
+          <input class="input-field" placeholder="프로젝트 제목" value="아침 루틴 자동화">
+        </div>
+
+        <!-- Description -->
+        <div class="input-group">
+          <textarea class="input-field multiline" placeholder="설명 (선택)">매일 아침 7시 기상 후 루틴 체크리스트</textarea>
+        </div>
+
+        <!-- Inline Color Section -->
+        <div style="margin-bottom:16px; position:relative">
+          <span class="native-badge rn" style="top:-2px;right:0">RN ScrollView + Reanimated</span>
+          <div class="section-label">색상</div>
+          <div class="color-scroll" id="b-color-scroll">
+            <!-- Colors rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Group Card -->
+        <div class="group-card">
+          <!-- Icon Accordion -->
+          <div class="summary-row" onclick="toggleAccordion('acc-b-icon')" style="position:relative">
+            <span class="native-badge rn">withSpring 애니메이션</span>
+            <div class="sr-icon icon-icon">◎</div>
+            <span class="sr-label">아이콘</span>
+            <span class="sr-suffix">☀️ sun</span>
+            <span class="sr-chevron" id="acc-b-icon-chevron">▾</span>
+          </div>
+          <div class="accordion-body" id="acc-b-icon">
+            <div style="padding:8px 12px">
+              <div class="icon-categories">
+                <button class="cat-chip active">일상</button>
+                <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">업무</button>
+                <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">건강</button>
+                <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">이동</button>
+                <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">소통</button>
+                <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">창작</button>
+                <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">기타</button>
+              </div>
+              <div class="icon-scroll" id="b-icon-scroll">
+                <!-- Icons rendered by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Status Row -->
+          <div class="summary-row" onclick="alert('LiquidGlassMenu 표시')" style="position:relative">
+            <span class="native-badge ios">iOS Native</span>
+            <div class="sr-icon status-icon">▣</div>
+            <span class="sr-label">상태</span>
+            <span class="status-badge in-progress">🔵 진행중</span>
+            <span class="sr-chevron">›</span>
+          </div>
+
+          <!-- Linked Todos -->
+          <div class="summary-row" onclick="toggleAccordion('acc-b-todos')">
+            <div class="sr-icon todo-icon">≡</div>
+            <span class="sr-label">연결된 할일</span>
+            <span class="sr-suffix">3개</span>
+            <span class="sr-chevron" id="acc-b-todos-chevron">▾</span>
+          </div>
+          <div class="accordion-body" id="acc-b-todos">
+            <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">알람 5분 일찍 맞추기</span></div>
+            <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">스트레칭 10분</span></div>
+            <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">물 한 잔 마시기</span></div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <button class="cta-btn" onclick="alert('저장!')">만들기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation Panel -->
+  <div class="annotation-panel">
+    <h3>시안 B — 균형형</h3>
+    <div class="annotation-item">
+      <div class="label">컨셉</div>
+      <div class="value">색상은 항상 보이는 가로 스크롤, 아이콘은 SummaryRow → 탭 시 아코디언 확장.</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">수직 공간</div>
+      <div class="value">~380px 접힘 / ~480px 펼침</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">네이티브 컨트롤</div>
+      <div class="value">
+        <span class="native-tag ios-native">iOS Native</span> 상태 → <code>LiquidGlassMenu</code><br><br>
+        <span class="native-tag rn-anim">RN Animated</span> 색상 → <code>ScrollView</code> + Reanimated <code>scale</code> 애니메이션<br><br>
+        <span class="native-tag rn-anim">RN Animated</span> 아이콘 확장 → <code>withSpring(nativeGlass)</code> 높이 애니메이션
+      </div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">색상 설정 탭 수</div>
+      <div class="value"><strong class="win">1탭 — 최저 인터랙션 비용</strong></div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">장점</div>
+      <div class="value">• 색상 1탭 선택 (가장 빠름)<br>• 모달 레이어링 없음<br>• ADHD 친화: 아이콘 필요할 때만 확장</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">단점</div>
+      <div class="value">• A보다 세로 공간 약간 더 사용<br>• 실시간 미리보기 없음</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 시안 C: 미리보기 카드 + 외관 서브뷰    -->
+<!-- ═══════════════════════════════════════ -->
+<div id="tab-c" class="tab-content">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="sheet" id="c-sheet">
+
+        <!-- Main View -->
+        <div class="mainview" id="c-mainview">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title" style="margin-bottom:16px">새 프로젝트</div>
+
+          <!-- Live Preview Card -->
+          <div class="preview-card" id="c-preview" style="background:rgba(189,224,254,.25); position:relative">
+            <span class="native-badge rn" style="top:-8px; right:-4px">JS Animated.View + FadeIn</span>
+            <div class="preview-icon-box" id="c-preview-icon">☀️</div>
+            <div class="preview-text">
+              <div class="preview-title" id="c-preview-title">아침 루틴 자동화</div>
+              <div class="preview-desc" id="c-preview-desc">매일 아침 7시 기상 후 루틴 체크리스트</div>
+            </div>
+          </div>
+
+          <!-- Title -->
+          <div class="input-group">
+            <input class="input-field" placeholder="프로젝트 제목" value="아침 루틴 자동화" oninput="document.getElementById('c-preview-title').textContent=this.value||'프로젝트 제목'">
+          </div>
+
+          <!-- Description -->
+          <div class="input-group">
+            <textarea class="input-field multiline" placeholder="설명 (선택)" oninput="document.getElementById('c-preview-desc').textContent=this.value||'설명 미리보기...'">매일 아침 7시 기상 후 루틴 체크리스트</textarea>
+          </div>
+
+          <!-- Group Card -->
+          <div class="group-card">
+            <!-- Appearance Row -->
+            <div class="summary-row" onclick="showSubview()" style="position:relative">
+              <span class="native-badge rn">SlideInRight 전환</span>
+              <div class="sr-icon appearance-icon">🎨</div>
+              <span class="sr-label">외관</span>
+              <span class="sr-suffix">☀️ <span style="display:inline-block;width:12px;height:12px;border-radius:6px;background:#BDE0FE;vertical-align:middle;margin:0 2px"></span> 파스텔</span>
+              <span class="sr-chevron">›</span>
+            </div>
+
+            <!-- Status Row -->
+            <div class="summary-row" onclick="alert('LiquidGlassMenu 표시')" style="position:relative">
+              <span class="native-badge ios">iOS Native</span>
+              <div class="sr-icon status-icon">▣</div>
+              <span class="sr-label">상태</span>
+              <span class="status-badge in-progress">🔵 진행중</span>
+              <span class="sr-chevron">›</span>
+            </div>
+
+            <!-- Linked Todos -->
+            <div class="summary-row" onclick="toggleAccordion('acc-c-todos')">
+              <div class="sr-icon todo-icon">≡</div>
+              <span class="sr-label">연결된 할일</span>
+              <span class="sr-suffix">3개</span>
+              <span class="sr-chevron" id="acc-c-todos-chevron">▾</span>
+            </div>
+            <div class="accordion-body" id="acc-c-todos">
+              <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">알람 5분 일찍 맞추기</span></div>
+              <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">스트레칭 10분</span></div>
+              <div class="linked-todo"><div class="todo-check"></div><span class="todo-text">물 한 잔 마시기</span></div>
+            </div>
+          </div>
+
+          <!-- CTA -->
+          <button class="cta-btn" onclick="alert('저장!')">만들기</button>
+        </div>
+
+        <!-- Appearance Sub-view -->
+        <div class="subview" id="c-subview">
+          <div class="sheet-handle"></div>
+          <button class="back-btn" onclick="hideSubview()">← 뒤로 &nbsp;&nbsp; <span style="font-weight:700;color:#1F2937">외관 설정</span></button>
+
+          <!-- Mini Preview -->
+          <div class="preview-card" id="c-sub-preview" style="background:rgba(189,224,254,.25); margin-bottom:20px">
+            <div class="preview-icon-box" id="c-sub-preview-icon">☀️</div>
+            <div class="preview-text">
+              <div class="preview-title">아침 루틴 자동화</div>
+              <div class="preview-desc">미리보기 — 실시간 업데이트</div>
+            </div>
+          </div>
+
+          <!-- Color Grid -->
+          <div style="margin-bottom:20px">
+            <div class="section-label">색상</div>
+            <div class="color-grid" id="c-color-grid">
+              <!-- Colors rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Icon Picker -->
+          <div>
+            <div class="section-label">아이콘</div>
+            <div class="icon-categories" id="c-icon-cats">
+              <button class="cat-chip active">일상</button>
+              <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">업무</button>
+              <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">건강</button>
+              <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">이동</button>
+              <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">소통</button>
+              <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">창작</button>
+              <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">기타</button>
+            </div>
+            <div class="icon-grid" id="c-icon-grid" style="max-height:200px">
+              <!-- Icons rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Done -->
+          <button class="cta-btn" onclick="hideSubview()">완료</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation Panel -->
+  <div class="annotation-panel">
+    <h3>시안 C — 시각형</h3>
+    <div class="annotation-item">
+      <div class="label">컨셉</div>
+      <div class="value">상단에 실시간 프로젝트 카드 미리보기. 색상+아이콘을 "외관" 하나로 묶어 서브뷰로 진입.</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">핵심 차별점</div>
+      <div class="value"><strong class="win">실시간 미리보기</strong> — 타이핑하면서 프로젝트 카드가 어떻게 보일지 바로 확인</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">네이티브 컨트롤</div>
+      <div class="value">
+        <span class="native-tag ios-native">iOS Native</span> 상태 → <code>LiquidGlassMenu</code><br><br>
+        <span class="native-tag rn-anim">RN Animated</span> 서브뷰 전환 → <code>SlideInRight</code> / <code>SlideOutLeft</code><br><br>
+        <span class="native-tag rn-anim">RN Animated</span> 미리보기 카드 → <code>Animated.View</code> + <code>FadeIn</code>
+      </div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">정보구조 개선</div>
+      <div class="value">색상+아이콘을 <strong>"외관"</strong> 개념 하나로 묶어 인지 부하 감소. 메인 폼에는 3줄(외관/상태/할일)만 표시.</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">새 컴포넌트</div>
+      <div class="value">1개 — <code>PreviewCard</code></div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">장점</div>
+      <div class="value">• 최고의 시각적 피드백<br>• 색상+아이콘 개념 단순화<br>• 메인 폼 가장 깔끔</div>
+    </div>
+    <div class="annotation-item">
+      <div class="label">단점</div>
+      <div class="value">• 구현 난이도 가장 높음<br>• 색상/아이콘 설정에 서브뷰 왕복 필요<br>• 새 컴포넌트 필요</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- Popover Overlays (for 시안 A)          -->
+<!-- ═══════════════════════════════════════ -->
+
+<!-- Color Popover -->
+<div class="popover-overlay" id="popover-a-color" onclick="if(event.target===this)hidePopover('popover-a-color')">
+  <div class="popover">
+    <div class="popover-title">색상 선택</div>
+    <div class="color-grid" id="a-color-grid">
+      <!-- JS rendered -->
+    </div>
+  </div>
+</div>
+
+<!-- Icon Popover -->
+<div class="popover-overlay" id="popover-a-icon" onclick="if(event.target===this)hidePopover('popover-a-icon')">
+  <div class="popover" style="min-width:300px">
+    <div class="popover-title">아이콘 선택</div>
+    <div class="icon-categories" id="a-icon-cats">
+      <button class="cat-chip active">일상</button>
+      <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">업무</button>
+      <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">건강</button>
+      <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">이동</button>
+      <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">소통</button>
+      <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">창작</button>
+      <button class="cat-chip" onclick="this.parentElement.querySelector('.active')?.classList.remove('active');this.classList.add('active')">기타</button>
+    </div>
+    <div class="icon-grid" id="a-icon-grid">
+      <!-- JS rendered -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- Comparison Table                       -->
+<!-- ═══════════════════════════════════════ -->
+<div class="comparison">
+  <h2>시안 비교표</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>차원</th>
+        <th>A (최소형)</th>
+        <th>B (균형형)</th>
+        <th>C (시각형)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>수직 공간 (생성)</td>
+        <td class="win">~320px (스크롤 불필요)</td>
+        <td>~380px 접힘 / ~480px 펼침</td>
+        <td>~450px 메인 / 서브뷰 별도</td>
+      </tr>
+      <tr>
+        <td>아이콘 설정 탭 수</td>
+        <td>3 (행→카테고리→아이콘)</td>
+        <td>3 (행→카테고리→아이콘)</td>
+        <td>4 (행→이동→선택→복귀)</td>
+      </tr>
+      <tr>
+        <td>색상 설정 탭 수</td>
+        <td>2 (행→색상)</td>
+        <td class="win">1 (직접 탭)</td>
+        <td>3 (행→이동→선택→복귀)</td>
+      </tr>
+      <tr>
+        <td>새 컴포넌트</td>
+        <td class="win">0개</td>
+        <td class="win">0개</td>
+        <td>1개 (PreviewCard)</td>
+      </tr>
+      <tr>
+        <td>모달 레이어링</td>
+        <td>Popover ↔ BottomSheet</td>
+        <td class="win">없음</td>
+        <td class="win">없음</td>
+      </tr>
+      <tr>
+        <td>실시간 미리보기</td>
+        <td>없음</td>
+        <td>없음</td>
+        <td class="win">있음</td>
+      </tr>
+      <tr>
+        <td>구현 난이도</td>
+        <td class="win">낮음</td>
+        <td>낮음~중간</td>
+        <td>중간~높음</td>
+      </tr>
+      <tr>
+        <td>ADHD 친화도</td>
+        <td>높음 (선택지 숨김)</td>
+        <td class="win">가장 높음 (최소 탭 + 숨김)</td>
+        <td>높음 (개념 단순화)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+// ── Data ──
+const PROJECT_COLORS = [
+  { hex: '#A8DADC', name: '민트' },
+  { hex: '#FFB4A2', name: '피치' },
+  { hex: '#B5838D', name: '모브' },
+  { hex: '#6D6875', name: '웜그레이' },
+  { hex: '#CDB4DB', name: '라벤더' },
+  { hex: '#FFC8DD', name: '핑크' },
+  { hex: '#BDE0FE', name: '파스텔블루' },
+  { hex: '#A2D2FF', name: '스카이' },
+  { hex: '#D4E09B', name: '세이지' },
+  { hex: '#F6BD60', name: '웜골드' },
+];
+
+const ICON_CATEGORIES = {
+  '일상': ['🏠','☕','🍴','🛒','🛍','🍕','🎁','☂️'],
+  '업무': ['💼','💻','🖥','👨‍💻','📧','📅','📥','👛'],
+  '건강': ['❤️','💊','🏋️','🌿','😊','👁'],
+  '이동': ['🚗','✈️','📍','🧭','🗺','🌍'],
+  '소통': ['📞','💬','📤','👥','🎤','🎧'],
+  '창작': ['📷','🎵','🎬','✒️','🖼','📖','📚','✏️'],
+  '기타': ['⭐','🚩','🔥','🚀','⚡','🎯','💡','✨','🛡','🌙','☀️','☁️','💨'],
+};
+
+let selectedColorIdx = 6; // 파스텔블루
+let selectedIcon = '☀️';
+
+// ── Tab Switching ──
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Popover ──
+function showPopover(id) {
+  document.getElementById(id).classList.add('show');
+}
+function hidePopover(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+// ── Accordion ──
+function toggleAccordion(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  const chevron = document.getElementById(id + '-chevron');
+  if (chevron) chevron.textContent = el.classList.contains('open') ? '▴' : '▾';
+}
+
+// ── Subview (시안 C) ──
+function showSubview() {
+  document.getElementById('c-mainview').classList.add('hidden');
+  document.getElementById('c-subview').classList.add('active');
+}
+function hideSubview() {
+  document.getElementById('c-subview').classList.remove('active');
+  document.getElementById('c-mainview').classList.remove('hidden');
+  document.getElementById('c-mainview').style.animation = 'slideOut .3s ease-out';
+  setTimeout(() => document.getElementById('c-mainview').style.animation = '', 300);
+}
+
+// ── Color Selection ──
+function selectColor(idx, context) {
+  selectedColorIdx = idx;
+  const c = PROJECT_COLORS[idx];
+
+  // Update all color grids
+  document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll(`.color-dot[data-idx="${idx}"]`).forEach(el => el.classList.add('selected'));
+
+  // Update preview card (시안 C)
+  const preview = document.getElementById('c-preview');
+  const subPreview = document.getElementById('c-sub-preview');
+  if (preview) preview.style.background = c.hex + '40';
+  if (subPreview) subPreview.style.background = c.hex + '40';
+}
+
+// ── Icon Selection ──
+function selectIcon(icon) {
+  selectedIcon = icon;
+  document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll(`.icon-option[data-icon="${icon}"]`).forEach(el => el.classList.add('selected'));
+
+  // Update preview (시안 C)
+  const pIcon = document.getElementById('c-preview-icon');
+  const spIcon = document.getElementById('c-sub-preview-icon');
+  if (pIcon) pIcon.textContent = icon;
+  if (spIcon) spIcon.textContent = icon;
+}
+
+// ── Render Color Grids ──
+function renderColorDots(containerId, isGrid) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = PROJECT_COLORS.map((c, i) =>
+    `<div class="color-dot ${i === selectedColorIdx ? 'selected' : ''}"
+          data-idx="${i}"
+          style="background:${c.hex}; ${!isGrid ? 'flex-shrink:0' : ''}"
+          title="${c.name}"
+          onclick="selectColor(${i},'${containerId}')"></div>`
+  ).join('');
+}
+
+// ── Render Icon Grids ──
+function renderIcons(containerId, mode) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const icons = ICON_CATEGORIES['일상']; // Default category
+  container.innerHTML = icons.map(icon =>
+    `<div class="icon-option ${icon === selectedIcon ? 'selected' : ''}"
+          data-icon="${icon}"
+          onclick="selectIcon('${icon}')">${icon}</div>`
+  ).join('');
+}
+
+// ── Init ──
+function init() {
+  // 시안 A popovers
+  renderColorDots('a-color-grid', true);
+  renderIcons('a-icon-grid', 'grid');
+
+  // 시안 B inline
+  renderColorDots('b-color-scroll', false);
+  renderIcons('b-icon-scroll', 'scroll');
+
+  // 시안 C subview
+  renderColorDots('c-color-grid', true);
+  renderIcons('c-icon-grid', 'grid');
+}
+
+init();
+</script>
+
+</body>
+</html>

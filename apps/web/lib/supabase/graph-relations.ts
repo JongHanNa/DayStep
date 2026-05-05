@@ -46,7 +46,7 @@ export async function fetchTodoProjectRelations(userId: string): Promise<TodoPro
  */
 export async function fetchTodoNoteRelations(userId: string): Promise<TodoNoteRelation[]> {
   try {
-    const relations = await queryRLSTableWithJWT('todo_notes', [
+    const relations = await queryRLSTableWithJWT('todo_motivations', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -93,7 +93,7 @@ export async function fetchProjectNoteRelations(projectIds: string[]): Promise<P
 
 /**
  * Note-Note 연결 관계 조회
- * note_notes 테이블에는 user_id가 없으므로 note_id로 필터링
+ * motivation_connections 테이블에는 user_id가 없으므로 motivation_id로 필터링
  */
 export async function fetchNoteNoteRelations(noteIds: string[]): Promise<NoteNoteRelation[]> {
   // UUID 유효성 검사 - temp ID 및 잘못된 형식 필터링
@@ -101,10 +101,10 @@ export async function fetchNoteNoteRelations(noteIds: string[]): Promise<NoteNot
   if (validNoteIds.length === 0) return [];
 
   try {
-    // source_note_id 또는 target_note_id가 사용자의 노트인 관계만 조회
-    const relations = await queryRLSTableWithJWT('note_notes', [
+    // source_motivation_id 또는 target_motivation_id가 사용자의 노트인 관계만 조회
+    const relations = await queryRLSTableWithJWT('motivation_connections', [
       {
-        column: 'source_note_id',
+        column: 'source_motivation_id',
         operator: 'in',
         value: `(${validNoteIds.join(',')})`
       }

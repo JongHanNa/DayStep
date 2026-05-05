@@ -15,7 +15,7 @@ export default function DailyPlannerPage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterFuelMode(user.id, undefined, 'daily-planner');
+      useADHDStore.getState().enterMotivationMode(user.id, undefined, 'daily-planner');
     }
   }, [user?.id]);
 

@@ -1,0 +1,29 @@
+diff --git a/node_modules/metro/src/HmrServer.js b/node_modules/metro/src/HmrServer.js
+index ffdd559..9111964 100644
+--- a/node_modules/metro/src/HmrServer.js
++++ b/node_modules/metro/src/HmrServer.js
+@@ -133,7 +133,7 @@ class HmrServer {
+     if (clientGroup != null) {
+       clientGroup.clients.add(client);
+     } else {
+-      const clientUrl = new URL(requestUrl);
++      const clientUrl = new URL(requestUrl, "http://localhost:8081");
+       clientUrl.protocol = "http";
+       const clientQuery = clientUrl.searchParams;
+       clientQuery.delete("bundleEntry");
+diff --git a/node_modules/metro/src/lib/parseBundleOptionsFromBundleRequestUrl.js b/node_modules/metro/src/lib/parseBundleOptionsFromBundleRequestUrl.js
+index fa4a967..422571a 100644
+--- a/node_modules/metro/src/lib/parseBundleOptionsFromBundleRequestUrl.js
++++ b/node_modules/metro/src/lib/parseBundleOptionsFromBundleRequestUrl.js
+@@ -75,8 +75,9 @@ function parseBundleOptionsFromBundleRequestUrl(
+     hash,
+   } = new URL(rawNonJscSafeUrlEncodedUrl, RESOLVE_BASE_URL);
+   const isRelativeProtocol = rawNonJscSafeUrlEncodedUrl.startsWith("//");
+-  const protocolPart = isRelativeProtocol ? "//" : _tempProtocol + "//";
+-  const isNoProtocol = !isRelativeProtocol && protocolPart === RESOLVE_BASE_URL;
++  const isRelativePath = rawNonJscSafeUrlEncodedUrl.startsWith("/") && !isRelativeProtocol;
++  const protocolPart = isRelativeProtocol ? "//" : isRelativePath ? "http://" : _tempProtocol + "//";
++  const isNoProtocol = !isRelativeProtocol && !isRelativePath && protocolPart === RESOLVE_BASE_URL;
+   if (isNoProtocol) {
+     throw new Error(
+       'Expecting the request url to have a valid protocol, e.g. "http://", "https://", or "//"',

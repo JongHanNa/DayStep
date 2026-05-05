@@ -1,10 +1,10 @@
 'use client';
 
-import { Crown, Check, X, Sparkles } from 'lucide-react';
+import { Crown, Check, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PRO_FEATURES, FEATURE_FLAGS } from '@/lib/featureFlags';
+import { PRO_FEATURES } from '@/lib/featureFlags';
 import { PAYWALL_COMPARISON_FEATURES } from '@daystep/shared-core/constants';
 import { useSubscription } from '@/hooks/useSubscription';
 
@@ -50,7 +50,7 @@ export function Paywall({
   isModal = false,
   onClose,
 }: PaywallProps) {
-  const { hasActiveSubscription, isInTrial, daysRemainingInTrial, isTrialEligible } = useSubscription();
+  const { hasActiveSubscription, isInTrial, daysRemainingInTrial, isInGracePeriod, gracePeriodDaysRemaining } = useSubscription();
   const router = useRouter();
 
   // 현재 기능 찾기
@@ -96,10 +96,10 @@ export function Paywall({
             </div>
           </div>
 
-          {isInTrial && daysRemainingInTrial !== null && daysRemainingInTrial > 0 && (
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                💡 무료 체험이 <strong>{daysRemainingInTrial}일</strong> 남았습니다!
+          {isInGracePeriod && gracePeriodDaysRemaining > 0 && (
+            <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                🎉 Pro 체험 기간 <strong>{gracePeriodDaysRemaining}일</strong> 남았습니다
               </p>
             </div>
           )}
@@ -148,20 +148,12 @@ export function Paywall({
 
           {/* CTA 버튼 */}
           <div className="space-y-3 pt-4 border-t">
-            {isTrialEligible && (
-              <div className="flex items-center justify-center gap-1.5 py-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                  {FEATURE_FLAGS.TRIAL_DAYS}일 무료 체험 가능
-                </span>
-              </div>
-            )}
             <Button
               onClick={handleUpgrade}
               className="w-full h-12 text-base font-semibold bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white"
             >
               <Crown className="w-5 h-5 mr-2" />
-              {isTrialEligible ? `${FEATURE_FLAGS.TRIAL_DAYS}일 무료 체험 시작` : 'Pro 구독하기'}
+              Pro 구독하기
             </Button>
 
             {isModal && onClose && (

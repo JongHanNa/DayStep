@@ -4,11 +4,11 @@
  * — TodoCreatePanel, TodoEditOverlay 양쪽에서 사용
  */
 import {useCallback, useState} from 'react';
-import {Alert} from 'react-native';
+import {Alert, ActionSheetIOS, Platform} from 'react-native';
 import {useHaptic} from '@/hooks/useHaptic';
 import {useTodoStore} from '@/stores/todoStore';
 import {useLimitCheck} from '@/hooks/useLimitCheck';
-import {format, addHours, parseISO, isToday} from 'date-fns';
+import {format, addHours, parseISO, isToday, isSameDay} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import {getAlarmsLabel} from '@/lib/notifications';
 import type {Todo} from '@daystep/shared-core';
@@ -24,6 +24,7 @@ export interface FormData {
   title: string;
   content: string;
   icon: string;
+  color: string;
   scheduledDate: string; // yyyy-MM-dd
   scheduleType: ScheduleType;
   startTime: Date | null;
@@ -36,6 +37,7 @@ export interface FormData {
   recurrencePattern: RecurrencePattern;
   recurrenceDaysOfWeek: number[];
   completed: boolean;
+  projectId: string | null;
 }
 
 /** 다음 정시 계산 */
@@ -51,6 +53,7 @@ export const DEFAULT_FORM: FormData = {
   title: '',
   content: '',
   icon: '',
+  color: '',
   scheduledDate: format(new Date(), 'yyyy-MM-dd'),
   scheduleType: 'timed',
   startTime: getNextHour(),
@@ -63,6 +66,7 @@ export const DEFAULT_FORM: FormData = {
   recurrencePattern: 'none',
   recurrenceDaysOfWeek: [],
   completed: false,
+  projectId: null,
 };
 
 // ============================================
@@ -84,9 +88,33 @@ export function getRecurrenceLabel(form: FormData): string {
 }
 
 export function getDateSummary(form: FormData): string {
-  const parts: string[] = [];
-
   const date = parseISO(form.scheduledDate);
+
+  // 다일 시간 지정 — 시작일과 끝일이 다르면 양쪽 날짜 모두 표시
+  if (
+    form.scheduleType === 'timed' &&
+    form.startTime &&
+    form.endTime &&
+    !isSameDay(form.startTime, form.endTime)
+  ) {
+    const startStr = format(form.startTime, 'M월 d일 (EEE) HH:mm', {locale: ko});
+    const endStr = format(form.endTime, 'M월 d일 (EEE) HH:mm', {locale: ko});
+    return `${startStr} → ${endStr}`;
+  }
+
+  // 다일 종일 — 시작일과 끝일이 다르면 양쪽 날짜 모두 표시
+  if (
+    form.scheduleType === 'all_day' &&
+    form.startTime &&
+    form.endTime &&
+    !isSameDay(form.startTime, form.endTime)
+  ) {
+    const startStr = format(form.startTime, 'M월 d일 (EEE)', {locale: ko});
+    const endStr = format(form.endTime, 'M월 d일 (EEE)', {locale: ko});
+    return `${startStr} → ${endStr} 종일`;
+  }
+
+  const parts: string[] = [];
   if (isToday(date)) {
     parts.push(`오늘, ${format(date, 'M월 d일', {locale: ko})}`);
   } else {
@@ -102,6 +130,9 @@ export function getDateSummary(form: FormData): string {
 
 export function getDateSummaryExtras(form: FormData): string[] {
   const extras: string[] = [];
+  if (form.anytimeDuration) {
+    extras.push(`${form.anytimeDuration}분`);
+  }
   if (form.alarmOffsets.length > 0) {
     extras.push(getAlarmsLabel(form.alarmOffsets));
   }
@@ -134,16 +165,74 @@ export function useTodoForm() {
   );
 
   const resetForCreate = useCallback(
-    (date?: string) => {
+    (date?: string, preset?: 'allDay' | 'anytime' | 'morning' | 'afternoon' | 'evening') => {
       const targetDate = date ?? selectedDate;
-      const nextHour = getNextHour();
+      const [year, month, day] = targetDate.split('-').map(Number);
+
+      // preset에 따라 schedule_type 및 시간대 default 결정
+      let scheduleType: ScheduleType = 'timed';
+      let startTime: Date | null = null;
+      let endTime: Date | null = null;
+      let anytimeDuration: number | null = null;
+
+      const makeAt = (h: number, m = 0) => {
+        const d = new Date();
+        d.setFullYear(year, month - 1, day);
+        d.setHours(h, m, 0, 0);
+        return d;
+      };
+
+      switch (preset) {
+        case 'allDay': {
+          scheduleType = 'all_day';
+          startTime = makeAt(0);
+          endTime = makeAt(0);
+          break;
+        }
+        case 'anytime': {
+          scheduleType = 'anytime';
+          startTime = null;
+          endTime = null;
+          anytimeDuration = 30;
+          break;
+        }
+        case 'morning': {
+          scheduleType = 'timed';
+          startTime = makeAt(9);
+          endTime = makeAt(10);
+          break;
+        }
+        case 'afternoon': {
+          scheduleType = 'timed';
+          startTime = makeAt(14);
+          endTime = makeAt(15);
+          break;
+        }
+        case 'evening': {
+          scheduleType = 'timed';
+          startTime = makeAt(19);
+          endTime = makeAt(20);
+          break;
+        }
+        default: {
+          // 기존 동작 — 다음 정시
+          const nextHour = getNextHour();
+          startTime = new Date(nextHour);
+          startTime.setFullYear(year, month - 1, day);
+          endTime = addHours(startTime, 1);
+        }
+      }
+
       setMode('create');
       setEditingTodo(null);
       setForm({
         ...DEFAULT_FORM,
         scheduledDate: targetDate,
-        startTime: nextHour,
-        endTime: addHours(nextHour, 1),
+        scheduleType,
+        startTime,
+        endTime,
+        anytimeDuration,
+        projectId: null,
       });
     },
     [selectedDate],
@@ -164,7 +253,12 @@ export function useTodoForm() {
       const alarmOffsets = alarmData?.map(r => r.offset_minutes) ?? [];
 
       const startTime = todo.start_time ? new Date(todo.start_time) : null;
-      const endTime = todo.end_time ? new Date(todo.end_time) : null;
+      let endTime = todo.end_time ? new Date(todo.end_time) : null;
+
+      // 종일: DB는 inclusive end(23:59:59.999) — UI는 그 날 자체로 표시되도록 시간 0 정규화
+      if (todo.schedule_type === 'all_day' && endTime) {
+        endTime.setHours(0, 0, 0, 0);
+      }
 
       // timed인데 endTime이 없으면 자동 설정
       const resolvedEndTime =
@@ -176,6 +270,7 @@ export function useTodoForm() {
         title: todo.title,
         content: (todo as any).content ?? '',
         icon: todo.icon ?? '',
+        color: todo.color ?? '',
         scheduledDate: todo.start_time
           ? format(new Date(todo.start_time), 'yyyy-MM-dd')
           : selectedDate,
@@ -193,6 +288,7 @@ export function useTodoForm() {
           ? (todo.recurrence_days_of_week as number[])
           : [],
         completed: todo.completed ?? false,
+        projectId: (todo as any).project_id ?? null,
       });
     },
     [selectedDate],
@@ -214,24 +310,36 @@ export function useTodoForm() {
           title: trimmed,
           content: form.content.trim() || null,
           icon: form.icon || null,
+          color: form.color || null,
           schedule_type: form.scheduleType,
           importance: form.importance || null,
           urgency: form.urgency || null,
           is_reluctant_must_do: form.isReluctantMustDo,
           recurrence_pattern: form.recurrencePattern,
           completed: form.completed,
+          project_id: form.projectId,
         };
 
         if (form.scheduleType === 'timed' && form.startTime) {
           baseData.start_time = form.startTime.toISOString();
           baseData.end_time = form.endTime?.toISOString() ?? null;
         } else if (form.scheduleType === 'anytime') {
-          const dayStart = new Date(selectedDate + 'T00:00:00');
+          const dayStart = new Date(form.scheduledDate + 'T00:00:00');
           baseData.start_time = dayStart.toISOString();
           baseData.anytime_duration = form.anytimeDuration;
         } else if (form.scheduleType === 'all_day') {
-          const dayStart = new Date(selectedDate + 'T00:00:00');
-          baseData.start_time = dayStart.toISOString();
+          // 종일: 시작은 그 날 00:00, 끝은 그 날 23:59:59.999 (inclusive end)
+          // 다일이면 form.endTime의 날짜를 그대로 살리고, 단일이면 startTime과 같은 날
+          const start = form.startTime
+            ? new Date(form.startTime)
+            : new Date(form.scheduledDate + 'T00:00:00');
+          start.setHours(0, 0, 0, 0);
+          baseData.start_time = start.toISOString();
+
+          const endBase = form.endTime ?? start;
+          const end = new Date(endBase);
+          end.setHours(23, 59, 59, 999);
+          baseData.end_time = end.toISOString();
         }
 
         if (form.recurrencePattern === 'weekly') {
@@ -331,24 +439,110 @@ export function useTodoForm() {
   const handleDelete = useCallback(
     (onSuccess?: () => void) => {
       if (!editingTodo) return;
-      const {deleteTodo} = useTodoStore.getState();
+      const isRecurring =
+        !!(editingTodo as any).recurrence_pattern &&
+        (editingTodo as any).recurrence_pattern !== 'none';
 
-      Alert.alert('할일 삭제', '정말 삭제하시겠어요?', [
-        {text: '취소', style: 'cancel'},
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            const {cancelAllTodoAlarms} = await import('@/lib/notifications');
-            await cancelAllTodoAlarms(editingTodo.id);
-            await deleteTodo(editingTodo.id);
-            haptic.medium();
-            onSuccess?.();
+      // 비반복 — 단순 삭제
+      if (!isRecurring) {
+        Alert.alert('할일 삭제', '정말 삭제하시겠어요?', [
+          {text: '취소', style: 'cancel'},
+          {
+            text: '삭제',
+            style: 'destructive',
+            onPress: async () => {
+              const {cancelAllTodoAlarms} = await import('@/lib/notifications');
+              const {deleteTodo} = useTodoStore.getState();
+              await cancelAllTodoAlarms(editingTodo.id);
+              await deleteTodo(editingTodo.id);
+              haptic.medium();
+              onSuccess?.();
+            },
           },
-        },
-      ]);
+        ]);
+        return;
+      }
+
+      // 반복 — 삭제 범위 ActionSheet (지금/지금부터/모든 미완료/취소)
+      const occurrenceDate = editingTodo.start_time
+        ? format(new Date(editingTodo.start_time), 'yyyy-MM-dd')
+        : selectedDate;
+
+      const performDelete = async (deleteType: 'this' | 'future' | 'all') => {
+        try {
+          const {supabase} = await import('@/lib/supabase');
+          const {useAuthStore} = await import('@/stores/authStore');
+          const {cancelAllTodoAlarms} = await import('@/lib/notifications');
+          const userId = useAuthStore.getState().user?.id;
+          if (!userId) throw new Error('Not authenticated');
+
+          if (deleteType === 'this') {
+            // 이 occurrence만 exclusion 등록 (다른 회차는 유지)
+            const {error} = await supabase.from('todo_exclusions').insert({
+              parent_todo_id: editingTodo.id,
+              excluded_date: occurrenceDate,
+              user_id: userId,
+              exclusion_reason: 'deleted',
+            });
+            if (error) throw error;
+            await useTodoStore.getState().fetchTodosForDate(occurrenceDate);
+            useTodoStore.getState().bumpDataVersion();
+          } else if (deleteType === 'future') {
+            // recurrence_end_date를 이 occurrence 직전 날짜로 설정 → 이 occurrence부터 사라짐
+            const prev = new Date(parseISO(occurrenceDate).getTime() - 86_400_000);
+            const prevStr = format(prev, 'yyyy-MM-dd');
+            const {error} = await supabase
+              .from('todos')
+              .update({recurrence_end_date: prevStr})
+              .eq('id', editingTodo.id);
+            if (error) throw error;
+            await cancelAllTodoAlarms(editingTodo.id);
+            await useTodoStore.getState().fetchTodosForDate(occurrenceDate);
+            useTodoStore.getState().bumpDataVersion();
+          } else {
+            // 'all' — 원본 todo 삭제 (모든 occurrence 사라짐)
+            // deleteTodo가 자체적으로 bumpDataVersion 함
+            await cancelAllTodoAlarms(editingTodo.id);
+            await useTodoStore.getState().deleteTodo(editingTodo.id);
+          }
+
+          haptic.medium();
+          onSuccess?.();
+        } catch (e) {
+          haptic.error();
+          Alert.alert('오류', '삭제에 실패했습니다');
+        }
+      };
+
+      if (Platform.OS === 'ios') {
+        ActionSheetIOS.showActionSheetWithOptions(
+          {
+            title: '반복 작업을 삭제하고 있습니다',
+            message: '삭제 범위를 확인해주세요',
+            options: ['지금 반복', '지금부터 모든 반복', '모든 미완료 반복 주기', '취소'],
+            cancelButtonIndex: 3,
+            destructiveButtonIndex: 2,
+          },
+          (idx) => {
+            if (idx === 0) performDelete('this');
+            else if (idx === 1) performDelete('future');
+            else if (idx === 2) performDelete('all');
+          },
+        );
+      } else {
+        Alert.alert('반복 작업을 삭제하고 있습니다', '삭제 범위를 확인해주세요', [
+          {text: '지금 반복', onPress: () => performDelete('this')},
+          {text: '지금부터 모든 반복', onPress: () => performDelete('future')},
+          {
+            text: '모든 미완료 반복 주기',
+            style: 'destructive',
+            onPress: () => performDelete('all'),
+          },
+          {text: '취소', style: 'cancel'},
+        ]);
+      }
     },
-    [editingTodo, haptic],
+    [editingTodo, haptic, selectedDate],
   );
 
   return {

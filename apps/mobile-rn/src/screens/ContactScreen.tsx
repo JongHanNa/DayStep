@@ -12,11 +12,12 @@ import {ProScreenGuard} from '@/components/subscription/ProScreenGuard';
 import {INTERACTION_TYPE_LABELS} from '@/types/cherished-people';
 import type {DetailedStats, RelationshipStats, InteractionType} from '@/types/cherished-people';
 import {resolveTodoIcon} from '@/lib/iconMap';
+import {useTheme} from '@/theme';
 
 function StatCard({
   label,
   value,
-  color = '#3B82F6',
+  color,
   delay = 0,
 }: {
   label: string;
@@ -36,6 +37,7 @@ function StatCard({
 
 export default function ContactScreen() {
   const user = useAuthStore(s => s.user);
+  const {primaryColor} = useTheme();
   const {getDetailedStats, getRelationshipStats, loadPeople} =
     useCherishedPeopleStore();
   const [detailed, setDetailed] = useState<DetailedStats | null>(null);
@@ -76,7 +78,7 @@ export default function ContactScreen() {
                 <StatCard
                   label="소중한 사람"
                   value={relationship?.totalPeople ?? 0}
-                  color="#8B5CF6"
+                  color={primaryColor}
                   delay={100}
                 />
               </View>
@@ -84,7 +86,7 @@ export default function ContactScreen() {
                 <StatCard
                   label="이번 달 기록"
                   value={detailed?.thisMonthCount ?? 0}
-                  color="#3B82F6"
+                  color={primaryColor}
                   delay={150}
                 />
               </View>
@@ -129,7 +131,7 @@ export default function ContactScreen() {
                     return (
                       <View key={type} className="flex-row items-center mb-2">
                         <View className="w-20 flex-row items-center">
-                          {IconComp && <IconComp size={14} color="#8B5CF6" />}
+                          {IconComp && <IconComp size={14} color={primaryColor} />}
                           <Text className="text-xs text-gray-600 ml-1">
                             {label?.label}
                           </Text>
@@ -154,7 +156,7 @@ export default function ContactScreen() {
               <View className="px-4 mb-4">
                 <AnimatedCard enterDelay={400}>
                   <View className="flex-row items-center mb-3">
-                    <TrendingUp size={18} color="#3B82F6" />
+                    <TrendingUp size={18} color={primaryColor} />
                     <Text className="text-base font-semibold text-gray-800 ml-2">
                       자주 연락하는 분
                     </Text>

@@ -11,7 +11,7 @@ export async function createMemoInstanceWithJWT(instanceData: Record<string, any
   console.log('📝 JWT 방식으로 노트 인스턴스 생성:', { instanceData });
 
   try {
-    const result = await createWithJWT('note_instances', instanceData);
+    const result = await createWithJWT('motivation_instances', instanceData);
     console.log('✅ JWT 노트 인스턴스 생성 성공:', { result });
     return result;
   } catch (error) {
@@ -27,7 +27,7 @@ export async function updateMemoInstanceWithJWT(instanceId: string, instanceData
   console.log('📝 JWT 방식으로 노트 인스턴스 업데이트:', { instanceId, instanceData });
 
   try {
-    const result = await updateWithJWT('note_instances', {
+    const result = await updateWithJWT('motivation_instances', {
       column: 'id',
       operator: 'eq',
       value: instanceId
@@ -48,7 +48,7 @@ export async function deleteMemoInstanceWithJWT(instanceId: string): Promise<any
   console.log('📝 JWT 방식으로 노트 인스턴스 삭제:', { instanceId });
 
   try {
-    const result = await deleteWithJWT('note_instances', {
+    const result = await deleteWithJWT('motivation_instances', {
       column: 'id',
       operator: 'eq',
       value: instanceId
@@ -73,14 +73,14 @@ export async function fetchMemoInstancesByMemoIdWithJWT(
   console.log('📝 JWT 방식으로 노트 인스턴스들 조회:', { userId, originalMemoId, options });
 
   try {
-    const instances = await queryRLSTableWithJWT('note_instances', [
+    const instances = await queryRLSTableWithJWT('motivation_instances', [
       {
         column: 'user_id',
         operator: 'eq',
         value: userId
       },
       {
-        column: 'original_note_id',
+        column: 'original_motivation_id',
         operator: 'eq',
         value: originalMemoId
       }
@@ -109,7 +109,7 @@ export async function fetchMemoInstancesByDateWithJWT(
   console.log('📝 JWT 방식으로 특정 날짜 노트 인스턴스들 조회:', { userId, instanceDate, options });
 
   try {
-    const instances = await queryRLSTableWithJWT('note_instances', [
+    const instances = await queryRLSTableWithJWT('motivation_instances', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -145,14 +145,14 @@ export async function fetchMemoInstanceByDateWithJWT(
   console.log('📝 JWT 방식으로 특정 노트의 특정 날짜 인스턴스 조회:', { userId, originalMemoId, instanceDate });
 
   try {
-    const instances = await queryRLSTableWithJWT('note_instances', [
+    const instances = await queryRLSTableWithJWT('motivation_instances', [
       {
         column: 'user_id',
         operator: 'eq',
         value: userId
       },
       {
-        column: 'original_note_id',
+        column: 'original_motivation_id',
         operator: 'eq',
         value: originalMemoId
       },
@@ -186,7 +186,7 @@ export async function fetchMemoInstancesByTaskIdWithJWT(
   console.log('📝 JWT 방식으로 특정 할일의 노트 인스턴스들 조회:', { userId, taskId, options });
 
   try {
-    const instances = await queryRLSTableWithJWT('note_instances', [
+    const instances = await queryRLSTableWithJWT('motivation_instances', [
       {
         column: 'user_id',
         operator: 'eq',
@@ -234,7 +234,7 @@ export async function createMultipleMemoInstancesWithJWT(
 
     for (const date of dates) {
       const instanceData = {
-        original_note_id: originalMemoId,
+        original_motivation_id: originalMemoId,
         user_id: userId,
         instance_date: date,
         content: content,

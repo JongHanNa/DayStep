@@ -6,6 +6,12 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ko</string>
+		<string>ja</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundleExecutable</key>
@@ -23,7 +29,9 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>16</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -33,8 +41,6 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>할일 시작 전에 알림을 보내드립니다.</string>
 	<key>NSUserNotificationsTimeSensitiveUsageDescription</key>
@@ -70,5 +76,9 @@
 			</array>
 		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>757915574433-ksm0oaisr0e8heoi4c1ffld3v0jvqkr5.apps.googleusercontent.com</string>
+	<key>REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP</key>
+	<string>$(REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP)</string>
 </dict>
 </plist>

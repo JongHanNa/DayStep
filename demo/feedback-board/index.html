@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>DayStep · 버그/기능 게시판 — 시안 3종 비교</title>
+<meta name="viewport" content="width=1600" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./shared/iphone-frame.css" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(120% 60% at 20% 0%, #0f172a, transparent 60%),
+    radial-gradient(80% 60% at 90% 10%, #1e1b4b, transparent 55%),
+    radial-gradient(100% 80% at 50% 100%, #0b1220, transparent 70%),
+    #05070e;
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: #eef4ff;
+  padding-bottom: 80px;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 40px 48px 0;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.branding {
+  max-width: 720px;
+}
+.branding .eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(238,244,255,0.55);
+  margin-bottom: 18px;
+}
+.branding h1 {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-size: 52px;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: #fff;
+}
+.branding h1 em {
+  font-style: italic;
+  background: linear-gradient(120deg, #60a5fa, #a78bfa 50%, #93c5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.branding p {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(238,244,255,0.72);
+  max-width: 620px;
+}
+
+/* Role toggle */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+.role-toggle {
+  display: inline-flex;
+  padding: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.role-toggle button {
+  padding: 9px 18px;
+  background: transparent;
+  border: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(238,244,255,0.62);
+  cursor: pointer;
+  border-radius: 999px;
+  transition: all 0.15s ease;
+}
+.role-toggle button[data-active="true"] {
+  color: #0b1220;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(255,255,255,0.15);
+}
+.role-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(238,244,255,0.5);
+  padding-right: 12px;
+  text-align: right;
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+/* Phone labels */
+.phone-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.phone-meta .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(238,244,255,0.55);
+}
+.phone-meta .name {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+.phone-meta .desc {
+  font-size: 12px;
+  color: rgba(238,244,255,0.62);
+  max-width: 280px;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+
+.phone-stage {
+  /* Slightly override shared frame stage for wide layout */
+  padding: 36px 36px 0;
+}
+
+/* Footer legend */
+.legend {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 48px 24px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(238,244,255,0.6);
+}
+.legend .item { display: flex; align-items: center; gap: 10px; }
+.legend .swatch {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.legend .swatch.a { background: #fafaf7; }
+.legend .swatch.b { background: linear-gradient(135deg, #3b82f6, #a78bfa); }
+.legend .swatch.c { background: #f5f1e8; }
+
+/* Responsive: stack if window too narrow */
+@media (max-width: 1340px) {
+  .phone-stage { flex-wrap: wrap; justify-content: center; gap: 40px; padding: 32px 12px 0; }
+}
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="branding">
+      <div class="eyebrow">DayStep · Mobile · Feedback Board · 2026.04</div>
+      <h1>버그 신고 &amp; 기능 요청<br/><em>디자인 시안 3종.</em></h1>
+      <p>같은 8개 샘플 게시글을 세 가지 방향성으로 렌더했습니다. 본인 글(#1·#4)은 공개, 타인의 글 6건은 비공개 처리됩니다. 우측 상단 토글로 <code>user → admin</code>으로 바꾸면 3개 시안이 동시에 리렌더되어 관리자 뷰를 확인할 수 있어요.</p>
+    </div>
+    <div class="controls">
+      <div class="role-hint">현재 뷰어 역할 — 토글하면<br/>3개 시안이 동시에 재렌더됩니다</div>
+      <div class="role-toggle" id="roleToggle">
+        <button data-role="user"  data-active="true">👤 User (u1)</button>
+        <button data-role="admin" data-active="false">🛡 Admin</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="phone-stage">
+    <div class="phone-column">
+      <div class="phone-meta">
+        <div class="tag">Variant A</div>
+        <div class="name">Monastic Brutalism</div>
+        <div class="desc">노이즈 제로 · 헤어라인 · █████ 리댁션. 엔지니어 감성.</div>
+      </div>
+      <div class="phone-frame"><div class="phone-screen">
+        <iframe id="frameA" src="./variant-a-monastic.html?v=3" title="Variant A"></iframe>
+      </div></div>
+    </div>
+
+    <div class="phone-column">
+      <div class="phone-meta">
+        <div class="tag">Variant B</div>
+        <div class="name">Liquid Glass Luxe</div>
+        <div class="desc">앱 기본 언어 극대화 · 다크 + Ocean Blue 메시 · 글래스 카드 · 🔒 Blur.</div>
+      </div>
+      <div class="phone-frame"><div class="phone-screen">
+        <iframe id="frameB" src="./variant-b-liquid.html?v=3" title="Variant B"></iframe>
+      </div></div>
+    </div>
+
+    <div class="phone-column">
+      <div class="phone-meta">
+        <div class="tag">Variant C</div>
+        <div class="name">Editorial Zine</div>
+        <div class="desc">독자 투고 잡지 · Fraunces + Plex · CLASSIFIED 스탬프.</div>
+      </div>
+      <div class="phone-frame"><div class="phone-screen">
+        <iframe id="frameC" src="./variant-c-zine.html?v=3" title="Variant C"></iframe>
+      </div></div>
+    </div>
+  </main>
+
+  <div class="legend">
+    <div class="item"><span class="swatch a"></span>A — 잉크 #0A0A0A · 오프화이트 #FAFAF7 · 액센트 #FF3D00</div>
+    <div class="item"><span class="swatch b"></span>B — 딥 네이비 #0B1220 · Ocean Blue #3B82F6 → #A78BFA 메시</div>
+    <div class="item"><span class="swatch c"></span>C — 아이보리 #F5F1E8 · 잉크 #1A1815 · 적동색 #B84A1E</div>
+  </div>
+
+<script>
+const frames = ['frameA','frameB','frameC'].map(id => document.getElementById(id));
+const toggle = document.getElementById('roleToggle');
+
+function setRole(role) {
+  toggle.querySelectorAll('button').forEach(b => {
+    b.dataset.active = (b.dataset.role === role) ? 'true' : 'false';
+  });
+  frames.forEach(f => {
+    if (f && f.contentWindow) {
+      f.contentWindow.postMessage({ type: 'set-role', role }, '*');
+    }
+  });
+}
+
+toggle.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-role]');
+  if (!btn) return;
+  setRole(btn.dataset.role);
+});
+
+// Re-apply role when iframes finish loading (prevents initial mismatch)
+frames.forEach(f => {
+  f.addEventListener('load', () => {
+    const active = toggle.querySelector('button[data-active="true"]');
+    if (active && f.contentWindow) {
+      f.contentWindow.postMessage({ type: 'set-role', role: active.dataset.role }, '*');
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@ import {AnimatedPressable} from '@/components/core';
 import {useTheme} from '@/theme';
 import {EMOTION_CONFIG, EMOTION_TAGS} from '@/lib/motivationUtils';
 import type {StatusFilter} from '@/lib/motivationUtils';
-import type {EmotionTag} from '@/stores/noteStore';
+import type {EmotionTag} from '@/stores/motivationStore';
 import {Search} from 'lucide-react-native';
 
 interface MotivationFilterBarProps {

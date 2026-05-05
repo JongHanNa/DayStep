@@ -4,8 +4,10 @@
  */
 import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
+import {NativeModules, Platform} from 'react-native';
+import Config from 'react-native-config';
 import {supabase} from '@/lib/supabase';
-import {zustandMMKVStorage, sessionStorage} from '@/lib/mmkv';
+import {zustandMMKVStorage, sessionStorage, storage} from '@/lib/mmkv';
 import type {Session, User, AuthChangeEvent} from '@supabase/supabase-js';
 
 interface AuthState {
@@ -56,6 +58,28 @@ function setupTokenRefresh(expiresAt?: number) {
   }, refreshAt);
 }
 
+/** Share Extension에 인증 정보 동기화 (iOS App Group UserDefaults) */
+function syncAuthToExtension(session: Session | null) {
+  if (Platform.OS !== 'ios' || !session?.user?.id || !session?.access_token) return;
+  const mod = NativeModules.DayStepShareModule;
+  if (!mod?.setAuthForExtension) return;
+  mod.setAuthForExtension(
+    session.user.id,
+    session.access_token,
+    session.refresh_token ?? '',
+    session.expires_at ?? 0,
+    Config.SUPABASE_URL ?? '',
+    Config.SUPABASE_ANON_KEY ?? '',
+  ).catch(() => {});
+}
+
+function clearAuthFromExtension() {
+  if (Platform.OS !== 'ios') return;
+  const mod = NativeModules.DayStepShareModule;
+  if (!mod?.clearAuthForExtension) return;
+  mod.clearAuthForExtension().catch(() => {});
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -69,6 +93,30 @@ export const useAuthStore = create<AuthState>()(
       initialize: async () => {
         try {
           set({initializing: true, error: null});
+
+          // UI Test 모드: AppDelegate에서 --uitesting 플래그 감지 시 MMKV에 저장
+          const isUITestMode = storage.getBoolean('uitest_mode') === true;
+          if (isUITestMode) {
+            storage.remove('uitest_mode'); // 일회용 플래그 삭제
+            storage.set('uitest_active', true); // 앱 전역 참조용 (모달 억제 등)
+            // 마케팅 데모 계정으로 실제 로그인 (DB 데이터 로드를 위해)
+            try {
+              const {data, error} = await supabase.auth.signInWithPassword({
+                email: 'demo@daystep.app',
+                password: 'DayStep2026!',
+              });
+              if (data?.session) {
+                set({user: data.session.user, session: data.session, isAuthenticated: true, initializing: false});
+                return;
+              }
+              console.warn('[Auth] UITest signIn failed:', error?.message);
+            } catch (e) {
+              console.warn('[Auth] UITest signIn error:', e);
+            }
+            // 로그인 실패 시 기존 방식 폴백
+            set({isAuthenticated: true, initializing: false});
+            return;
+          }
 
           // 1. 기존 세션 복원 (10초 타임아웃: 만료 세션의 refreshSession hang 방지)
           const sessionPromise = supabase.auth.getSession();
@@ -89,6 +137,8 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
             });
             setupTokenRefresh(session.expires_at);
+            // Share Extension에 인증 정보 동기화 (앱 시작 시 기존 세션)
+            syncAuthToExtension(session);
           }
 
           // 2. 인증 상태 변경 리스너
@@ -112,6 +162,8 @@ export const useAuthStore = create<AuthState>()(
                   if (newSession?.expires_at) {
                     setupTokenRefresh(newSession.expires_at);
                   }
+                  // Share Extension에 인증 정보 동기화 (iOS)
+                  syncAuthToExtension(newSession);
                   break;
 
                 case 'SIGNED_OUT':
@@ -124,6 +176,8 @@ export const useAuthStore = create<AuthState>()(
                     clearTimeout(tokenRefreshTimer);
                     tokenRefreshTimer = null;
                   }
+                  // Share Extension 인증 정보 삭제
+                  clearAuthFromExtension();
                   break;
               }
             },

@@ -6,6 +6,9 @@
 //
 
 #import <React/RCTBridgeModule.h>
+#import <Expo/Expo.h>
 #import <React/RCTEventEmitter.h>
 #import <React/RCTViewManager.h>
 #import <React/RCTComponent.h>
+#import <React/RCTDevLoadingViewSetEnabled.h>
+#import <React/RCTLinkingManager.h>

@@ -1,0 +1,98 @@
+{
+  "common": {
+    "cancel": "キャンセル",
+    "confirm": "OK",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "back": "戻る",
+    "close": "閉じる",
+    "loading": "読み込み中...",
+    "retry": "再試行",
+    "user": "ユーザー"
+  },
+  "tabs": {
+    "home": "ホーム",
+    "planner": "プランナー",
+    "execute": "集中",
+    "notes": "ノート",
+    "settings": "設定"
+  },
+  "settings": {
+    "title": "設定",
+    "sectionApp": "アプリ設定",
+    "sectionAdmin": "管理者",
+    "sectionDev": "開発者ツール",
+    "sectionHelp": "ヘルプ",
+    "subscription": "サブスクリプション",
+    "themeColor": "テーマ・カラー",
+    "language": "言語",
+    "planLimits": "プラン上限管理",
+    "planLimitsDesc": "Free/Proエンティティ上限を設定",
+    "notificationSchedule": "通知スケジュール",
+    "notificationScheduleDesc": "スケジュール済み通知を確認",
+    "replayTutorial": "チュートリアルをもう一度",
+    "replayTutorialDesc": "ホーム画面のガイドを最初から再生します",
+    "viewReferences": "参考文献 / 免責事項",
+    "viewReferencesDesc": "ADHD関連コンテンツの学術的根拠",
+    "signOut": "ログアウト",
+    "signOutConfirmTitle": "ログアウト",
+    "signOutConfirmMessage": "本当にログアウトしますか？"
+  },
+  "language": {
+    "title": "言語",
+    "systemDefault": "システム既定",
+    "ko": "한국어",
+    "en": "English",
+    "ja": "日本語"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "previous": "Back",
+    "done": "Get started",
+    "stepIndicator": "{{current}} / {{total}}",
+    "learnMore": "Learn more",
+    "home": {
+      "progress": {
+        "title": "Today's progress",
+        "body": "See completed and remaining tasks at a glance.",
+        "rationale": "ADHD brains rely on visualized progress to stay motivated. The large progress ring lets even small wins register."
+      },
+      "mission": {
+        "title": "Today's mission",
+        "body": "Pick one thing to focus on first.",
+        "rationale": "One thing at a time — multitasking is the heaviest load on an ADHD brain. Narrowing to a single mission lowers the start barrier."
+      },
+      "dailyCare": {
+        "title": "Daily care",
+        "body": "Opens Sleep Garden, ADHD Basics, and Tidy-up screens.",
+        "rationale": "Sleep, self-understanding, and a tidy environment are the three load-bearing axes of ADHD daily life — gathered here so the flow doesn't break."
+      },
+      "planning": {
+        "title": "Planning",
+        "body": "Daily plan, projects, AI planning, data cleanup screens.",
+        "rationale": "The act of planning itself is a heavy cognitive load for ADHD. AI assistance and a visual planner lower the start barrier."
+      },
+      "thoughts": {
+        "title": "Thoughts & memory",
+        "body": "Opens Motivations and People-record screens.",
+        "rationale": "ADHD makes it easy to forget your motivation and the people who matter. A short note about why and who helps next time you get stuck."
+      }
+    },
+    "references": {
+      "title": "References",
+      "intro": "ADHD-related content in DayStep draws on the following peer-reviewed academic sources.",
+      "items": [
+        "[1] Hvolby, A. (2015). Associations of sleep disturbance with ADHD: implications for treatment. ADHD Attention Deficit and Hyperactivity Disorders, 7(1), 1–18.",
+        "[2] Coogan, A. N. & McGowan, N. M. (2017). A systematic review of circadian function, chronotype and chronotherapy in ADHD. ADHD Attention Deficit and Hyperactivity Disorders, 9(3), 129–147.",
+        "[3] Volkow, N. D. et al. (2012). Evidence that sleep deprivation downregulates dopamine D2R in ventral striatum in the human brain. Journal of Neuroscience, 32(19), 6711–6717.",
+        "[4] Kooij, J. J. S. & Bijlenga, D. (2013). The circadian rhythm in adult attention-deficit/hyperactivity disorder: current state of affairs. Expert Review of Neurotherapeutics, 13(10), 1107–1116."
+      ]
+    },
+    "disclaimer": {
+      "title": "Educational use",
+      "body": "This content is provided for educational and self-management support only. It does not replace professional medical diagnosis or treatment. If difficulties with sleep, attention, or daily functioning persist, consult a psychiatrist or qualified healthcare provider."
+    }
+  }
+}

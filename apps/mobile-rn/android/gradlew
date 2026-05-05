@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# NVM node를 Android Studio에서 찾을 수 있도록 PATH 보강
+export PATH="/usr/local/bin:$HOME/.nvm/versions/node/v22.17.1/bin:$PATH"
+
 #
 # Copyright © 2015 the original authors.
 #

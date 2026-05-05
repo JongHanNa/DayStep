@@ -18,7 +18,7 @@ export * from './common';
 export { default as ADHDEntryScreen } from './ADHDEntryScreen';
 export { default as HomeTableOfContents } from './HomeTableOfContents';
 export { default as ADHDInterruptModal } from './ADHDInterruptModal';
-export { default as MotivationNoteSelector } from './MotivationNoteSelector';
+export { default as MotivationSelector } from './MotivationSelector';
 export { default as MotivationReminderBanner } from './MotivationReminderBanner';
 export { default as QuickLogModal } from './QuickLogModal';
 export { default as AwakeningSentenceSetup } from './AwakeningSentenceSetup';
@@ -43,5 +43,5 @@ export {
   EmptyStateView,
   AdhocTimerView,
   AdhocCaptureView,
-  AdhocNoteConnectionView,
+  AdhocMotivationConnectionView,
 } from './screens/execute/components';

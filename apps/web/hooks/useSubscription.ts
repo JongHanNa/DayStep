@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import {
   useSubscriptionStore,
   type SubscriptionInfo,
@@ -6,7 +6,6 @@ import {
   type Platform,
 } from '@/state/stores/subscriptionStore';
 import { FEATURE_FLAGS } from '@/lib/featureFlags';
-import { supabase } from '@/lib/supabase';
 import { queryRLSTableWithJWT } from '@/lib/supabase/core';
 
 /**
@@ -25,14 +24,13 @@ export const useSubscription = () => {
     isInTrial,
     daysRemainingInTrial,
     subscriptionExpiresAt,
-    isTrialEligible,
-    hasSeenTrialOffer,
+    isInGracePeriod,
+    gracePeriodDaysRemaining,
     setSubscriptionInfo,
     setCustomerInfo,
     setLoading,
     setError,
-    setHasSeenTrialOffer,
-    setTrialEligible,
+    setUserCreatedAt,
     reset,
   } = useSubscriptionStore();
 
@@ -122,46 +120,6 @@ export const useSubscription = () => {
   );
 
   /**
-   * 트라이얼 자격 확인
-   * subscription_history에서 trial_started 이벤트가 있으면 이미 체험한 유저
-   */
-  const checkTrialEligibility = useCallback(
-    async (userId: string) => {
-      try {
-        // subscription_history에서 trial_started 이벤트 확인 (교차 플랫폼 악용 방지)
-        const historyData = await queryRLSTableWithJWT(
-          'subscription_history',
-          [
-            { column: 'user_id', operator: 'eq', value: userId },
-            { column: 'event_type', operator: 'eq', value: 'trial_started' },
-          ],
-          {
-            select: 'id',
-            limit: 1,
-          }
-        );
-
-        // trial_started 이벤트가 있으면 이미 체험한 유저 → 자격 없음
-        if (historyData && historyData.length > 0) {
-          setTrialEligible(false);
-          return false;
-        }
-
-        // trial_started 이력 없음 → 자격 있음
-        // (활성 구독 여부는 TrialOfferProvider의 !hasActiveSubscription 조건이 처리)
-        setTrialEligible(true);
-        return true;
-      } catch (err) {
-        console.error('💳 트라이얼 자격 확인 실패:', err);
-        // 에러 시 신규 유저에게 trial 기회 보장
-        setTrialEligible(true);
-        return true;
-      }
-    },
-    [setTrialEligible]
-  );
-
-  /**
    * 구독 구매 (웹 전용)
    */
   const purchasePackage = useCallback(
@@ -235,10 +193,10 @@ export const useSubscription = () => {
         return true;
       }
 
-      // 활성 구독이 있으면 모든 Pro 기능 허용
-      return hasActiveSubscription;
+      // 활성 구독 또는 grace period 내이면 Pro 기능 허용
+      return hasActiveSubscription || isInGracePeriod;
     },
-    [hasActiveSubscription]
+    [hasActiveSubscription, isInGracePeriod]
   );
 
   return {
@@ -253,18 +211,17 @@ export const useSubscription = () => {
     isInTrial,
     daysRemainingInTrial,
     subscriptionExpiresAt,
-    isTrialEligible,
-    hasSeenTrialOffer,
+    isInGracePeriod,
+    gracePeriodDaysRemaining,
 
     // Actions
     syncSubscription,
-    checkTrialEligibility,
     purchasePackage,
     restoreSubscription,
     linkUserToRevenueCat,
     unlinkUserFromRevenueCat,
     canAccessProFeature,
-    setHasSeenTrialOffer,
+    setUserCreatedAt,
 
     // 환경 정보
     paymentsEnabled: FEATURE_FLAGS.PAYMENTS_ENABLED,

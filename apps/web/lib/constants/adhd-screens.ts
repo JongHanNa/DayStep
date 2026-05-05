@@ -24,13 +24,13 @@ import {
 export type ADHDGroupId = 'memory' | 'care' | 'project';
 
 /** 라우트 그룹 ID (실제 URL 경로에 사용되는 그룹) */
-export type ADHDRouteGroupId = 'dashboard' | 'project' | 'fuel' | 'relationship';
+export type ADHDRouteGroupId = 'dashboard' | 'project' | 'motivation' | 'relationship';
 
 export type ADHDSubViewId =
   | 'banner'
   | 'contact'
   | 'activity'
-  | 'ai-plan'
+  | 'projects'
   | 'ai-chat'
   | 'guide'
   | 'timeline'
@@ -112,7 +112,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'motivation',
     label: '원동력 새기기',
     icon: Lightbulb,
-    shortDescription: '왜 해야 하는지 기록',
+    shortDescription: '내 삶의 원동력 기록',
     componentPath: 'screens/motivation/MotivationScreen',
     help: {
       title: '원동력 새기기',
@@ -125,7 +125,7 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     id: 'record',
     label: '관계 기록하기',
     icon: PenLine,
-    shortDescription: '소중한 만남과 대화 기록',
+    shortDescription: '사람들과 에너지 주고 받으며 성장하기',
     componentPath: 'screens/record/RecordScreen',
     help: {
       title: '관계 기록하기',
@@ -218,12 +218,12 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
       help: '타이머 + 방해차단 + 원동력 상기 → 시작의 마찰을 줄여 첫 발을 내딛도록 도움!',
     },
   },
-  'ai-plan': {
-    id: 'ai-plan',
+  'projects': {
+    id: 'projects',
     label: '내 계획 보기',
     icon: FolderKanban,
     shortDescription: '프로젝트 목록과 진행 상황 확인',
-    componentPath: 'screens/ai-plan/AIPlanScreen',
+    componentPath: 'screens/projects/ProjectsScreen',
   },
   'ai-chat': {
     id: 'ai-chat',
@@ -250,7 +250,7 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'project',
     title: '계획 세우기',
-    screenIds: ['daily-planner', 'timeline', 'ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['daily-planner', 'timeline', 'projects', 'ai-chat', 'guide'],
   },
   {
     id: 'memory',
@@ -275,8 +275,8 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
     screenIds: ['banner', 'contact', 'activity'],
   },
   {
-    id: 'fuel',
-    basePath: '/adhd/fuel',
+    id: 'motivation',
+    basePath: '/adhd/motivation',
     screenIds: ['motivation', 'timeline', 'daily-planner', 'execute'],
   },
   {
@@ -287,7 +287,7 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
   {
     id: 'project',
     basePath: '/adhd/project',
-    screenIds: ['ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['projects', 'ai-chat', 'guide'],
   },
 ];
 
@@ -305,7 +305,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'motivation',
         label: '원동력 새기기',
         icon: Lightbulb,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '원동력 새기기',
           difficulty:
@@ -381,7 +381,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'execute',
         label: '집중 실행하기',
         icon: Target,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '집중 실행하기',
           difficulty:
@@ -390,7 +390,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         },
       },
       {
-        id: 'ai-plan',
+        id: 'projects',
         label: '내 계획 보기',
         icon: FolderKanban,
         routeGroup: 'project',
@@ -411,7 +411,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'timeline',
         label: '일정 계획하기',
         icon: Calendar,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '일정 계획하기',
           difficulty:
@@ -423,7 +423,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'daily-planner',
         label: '하루 계획하기',
         icon: Calendar,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
       },
     ],
   },
@@ -503,7 +503,7 @@ export const getGroupHelpContent = (
 
 /**
  * 라우트 그룹별로 화면 아이템 조회
- * 기존 컴포넌트(ADHDEntryScreen, FuelMode 등)에서 사용
+ * 기존 컴포넌트(ADHDEntryScreen, MotivationMode 등)에서 사용
  */
 export const getItemsByRouteGroup = (
   routeGroupId: ADHDRouteGroupId

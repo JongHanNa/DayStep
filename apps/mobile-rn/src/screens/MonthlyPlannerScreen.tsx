@@ -1,33 +1,31 @@
 /**
  * Monthly Planner Screen — 월간 계획하기
- * TickTick 스타일 월 그리드 + 날짜 탭 → 플래너 이동
+ * 네이티브 SwiftUI 월간 캘린더 + 날짜 탭 → 상세 패널 → Planner 이동
  */
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {
-  Text,
-  View,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {ScreenContainer} from '@/components/core';
+import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {CalendarRange} from 'lucide-react-native';
 import {
   TodoFormBottomSheet,
   type TodoFormBottomSheetRef,
 } from '@/components/todo/TodoFormBottomSheet';
-import {MonthCalendarGrid, MonthlyFAB} from '@/components/monthly-planner';
+import {MonthlyFAB} from '@/components/monthly-planner';
+import {NativeMonthCalendarNative} from '@/components/native';
 import {useTodoStore} from '@/stores/todoStore';
-import {format, addMonths, subMonths} from 'date-fns';
-import {ko} from 'date-fns/locale';
-import {ChevronLeft, ChevronRight} from 'lucide-react-native';
-
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+import {useCalendarStore} from '@/stores/calendarStore';
+import {format, parseISO} from 'date-fns';
+import {useTheme} from '@/theme';
 
 export default function MonthlyPlannerScreen() {
   const navigation = useNavigation<any>();
-  const {monthViewData, monthViewLoading, fetchTodosForMonthView, setSelectedDate} =
+  const {primaryColor} = useTheme();
+  const {monthViewData, fetchTodosForMonthView, setSelectedDate, selectedDate} =
     useTodoStore();
+  const dataVersion = useTodoStore(s => s.dataVersion);
+  const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
 
   const insets = useSafeAreaInsets();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -35,28 +33,36 @@ export default function MonthlyPlannerScreen() {
 
   const loadMonth = useCallback(
     (date: Date) => {
-      fetchTodosForMonthView(date.getFullYear(), date.getMonth() + 1);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      fetchTodosForMonthView(year, month);
+      if (isConnected) {
+        fetchEventsForMonth(year, month);
+      }
     },
-    [fetchTodosForMonthView],
+    [fetchTodosForMonthView, isConnected, fetchEventsForMonth],
   );
 
   useEffect(() => {
     loadMonth(currentMonth);
-  }, [currentMonth, loadMonth]);
-
-  const handlePrevMonth = useCallback(() => {
-    setCurrentMonth(prev => subMonths(prev, 1));
-  }, []);
-
-  const handleNextMonth = useCallback(() => {
-    setCurrentMonth(prev => addMonths(prev, 1));
-  }, []);
-
-  const handleTodayMonth = useCallback(() => {
-    setCurrentMonth(new Date());
-  }, []);
+  }, [currentMonth, loadMonth, dataVersion]);
 
   const handleDayPress = useCallback(
+    (dateStr: string) => {
+      setSelectedDate(dateStr);
+    },
+    [setSelectedDate],
+  );
+
+  const handleMonthChange = useCallback(
+    (year: number, month: number) => {
+      const d = new Date(year, month - 1, 1);
+      setCurrentMonth(d);
+    },
+    [],
+  );
+
+  const handleNavigateToPlanner = useCallback(
     (dateStr: string) => {
       setSelectedDate(dateStr);
       navigation.navigate('Planner', {initialPage: 0});
@@ -65,59 +71,52 @@ export default function MonthlyPlannerScreen() {
   );
 
   const handleFABPress = useCallback(() => {
-    formSheetRef.current?.openCreate(format(new Date(), 'yyyy-MM-dd'));
-  }, []);
+    // selectedDate가 현재 표시 월에 속하면 그 날짜로, 아니면 월 1일로 fallback
+    const sel = parseISO(selectedDate);
+    const inCurrentMonth =
+      sel.getFullYear() === currentMonth.getFullYear() &&
+      sel.getMonth() === currentMonth.getMonth();
+    const target = inCurrentMonth ? selectedDate : format(currentMonth, 'yyyy-MM-dd');
+    formSheetRef.current?.openCreate(target);
+  }, [currentMonth, selectedDate]);
+
+  const monthDataJson = useMemo(
+    () => JSON.stringify(monthViewData ?? {}),
+    [monthViewData],
+  );
+
+  const eventDataJson = useMemo(
+    () => JSON.stringify(isConnected ? monthEvents : {}),
+    [isConnected, monthEvents],
+  );
 
   return (
     <ScreenContainer gradient="warmBackground">
-      {/* 월 네비게이터 */}
-      <View className="flex-row items-center justify-between px-4 py-2">
-        <TouchableOpacity
-          onPress={handlePrevMonth}
-          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <ChevronLeft size={24} color="#6B7280" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleTodayMonth}>
-          <Text className="text-base font-bold text-gray-800">
-            {format(currentMonth, 'yyyy년 M월', {locale: ko})}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleNextMonth}
-          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <ChevronRight size={24} color="#6B7280" />
-        </TouchableOpacity>
-      </View>
-
-      {/* 요일 헤더 */}
-      <View className="flex-row pb-1">
-        {DAY_LABELS.map((label, i) => (
-          <View key={label} style={{flex: 1, alignItems: 'center'}}>
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: '600',
-                color: i === 0 ? '#EF4444' : i === 6 ? '#3B82F6' : '#6B7280',
-              }}>
-              {label}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* 캘린더 그리드 */}
-      <View style={{flex: 1, paddingBottom: 64 + insets.bottom}}>
-        {monthViewLoading || !monthViewData ? (
-          <View className="py-20 items-center">
-            <ActivityIndicator size="large" color="#3B82F6" />
-          </View>
-        ) : (
-          <MonthCalendarGrid
-            currentMonth={currentMonth}
-            monthViewData={monthViewData}
-            onDayPress={handleDayPress}
-          />
-        )}
+      {/* 네이티브 월간 캘린더 + 뷰 전환 오버레이 */}
+      <View style={{flex: 1, paddingBottom: 64 + insets.bottom, position: 'relative'}}>
+        <NativeMonthCalendarNative
+          selectedDate=""
+          primaryColor={primaryColor}
+          monthData={monthDataJson}
+          eventData={eventDataJson}
+          onDateSelect={e => handleDayPress(e.nativeEvent.date)}
+          onMonthChange={e => {
+            handleMonthChange(e.nativeEvent.year, e.nativeEvent.month);
+          }}
+          onNavigateToPlanner={e => {
+            handleNavigateToPlanner(e.nativeEvent.date);
+          }}
+          onHeightChange={() => {}}
+          style={{flex: 1}}
+        />
+        {/* 헤더 중앙 뷰 전환 아이콘 */}
+        <View style={{position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center', zIndex: 10}} pointerEvents="box-none">
+          <AnimatedPressable
+            onPress={() => navigation.navigate('Planner')}
+            style={{padding: 6}}>
+            <CalendarRange size={22} color="#6B7280" />
+          </AnimatedPressable>
+        </View>
       </View>
 
       {/* FAB */}

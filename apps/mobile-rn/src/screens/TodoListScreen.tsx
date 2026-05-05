@@ -5,9 +5,11 @@
  */
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Text, View, SectionList, RefreshControl, StyleSheet, Alert} from 'react-native';
-import Animated, {FadeInDown, FadeIn} from 'react-native-reanimated';
+import {NativeWeekStripCalendarNative} from '@/components/native';
+import Animated, {FadeInDown, FadeIn, useSharedValue, useAnimatedStyle} from 'react-native-reanimated';
 import {useRoute, useFocusEffect, useNavigation} from '@react-navigation/native';
-import {ScreenContainer, AnimatedPressable} from '@/components/core';
+import {ScreenContainer, AnimatedPressable, gradientPresets} from '@/components/core';
+import {useSettingsStore} from '@/stores/settingsStore';
 import {useFocusRefetch} from '@/hooks/useFocusRefetch';
 import {TodoCard} from '@/components/todo/TodoCard';
 import {
@@ -16,6 +18,7 @@ import {
 } from '@/components/todo/TodoFormBottomSheet';
 import {
   PostponeBottomSheet,
+  type PostponeBottomSheetRef,
   type PostponeAction,
 } from '@/components/todo/PostponeBottomSheet';
 import {SwipeablePages, type SwipeablePagesRef} from '@/components/core/SwipeablePages';
@@ -27,22 +30,17 @@ import {
 import {DndProvider, useDnd} from '@/components/planner/DndContext';
 import {DraggableTodoChip} from '@/components/planner/DraggableTodoChip';
 import {useTodoStore} from '@/stores/todoStore';
+import {useProjectStore} from '@/stores/projectStore';
+import {useAuthStore} from '@/stores/authStore';
+import {usePomodoroStore} from '@/stores/pomodoroStore';
+import {useCalendarStore} from '@/stores/calendarStore';
+import {DailyCalendarEventCard} from '@/components/todo/DailyCalendarEventCard';
 import {useTheme} from '@/theme';
-import {format, addDays, subDays} from 'date-fns';
-import {ko} from 'date-fns/locale';
+import {format} from 'date-fns';
 import type {Todo} from '@daystep/shared-core';
-import {Sunrise, Sun, Moon, Infinity, Inbox, PauseCircle} from 'lucide-react-native';
-import type {LucideIcon} from 'lucide-react-native';
+import {Inbox, CalendarDays} from 'lucide-react-native';
 
 type TimePeriod = 'morning' | 'afternoon' | 'evening' | 'anytime' | 'deferred';
-
-const SECTION_ICONS: Record<TimePeriod, {Icon: LucideIcon; color: string}> = {
-  morning: {Icon: Sunrise, color: '#F59E0B'},
-  afternoon: {Icon: Sun, color: '#F97316'},
-  evening: {Icon: Moon, color: '#8B5CF6'},
-  anytime: {Icon: Infinity, color: '#10B981'},
-  deferred: {Icon: PauseCircle, color: '#A855F7'},
-};
 
 interface TodoSection {
   title: string;
@@ -102,11 +100,10 @@ function TodoListScreenInner() {
   const {
     todos,
     selectedDate,
-    loading,
-    fuelMap,
+    motivationMap,
     setSelectedDate,
     fetchTodosForDate,
-    fetchFuelsForTodos,
+    fetchMotivationsForTodos,
     toggleTodoCompletion,
     updateTodo,
     skipTodo,
@@ -115,6 +112,27 @@ function TodoListScreenInner() {
     restoreDeferredTodo,
   } = useTodoStore();
   const {primaryColor} = useTheme();
+  const backgroundPreset = useSettingsStore(s => s.backgroundPreset);
+  const gradient = gradientPresets[backgroundPreset];
+  const {projects, fetchProjects} = useProjectStore();
+  const user = useAuthStore(s => s.user);
+  const {isConnected, monthEvents, fetchEventsForMonth} = useCalendarStore();
+
+  // 프로젝트 맵 생성
+  const projectMap = useMemo(() => {
+    const map = new Map<string, {title: string; color: string; icon?: string}>();
+    for (const p of projects) {
+      map.set(p.id, {title: p.title, color: p.color, icon: p.icon});
+    }
+    return map;
+  }, [projects]);
+
+  // 화면 포커스 시 프로젝트 데이터 로드
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) fetchProjects(user.id);
+    }, [user?.id, fetchProjects]),
+  );
   const route = useRoute<any>();
   const formRef = useRef<TodoFormBottomSheetRef>(null);
   const pickerRef = useRef<TodoPickerSheetRef>(null);
@@ -122,26 +140,40 @@ function TodoListScreenInner() {
   const pagesRef = useRef<SwipeablePagesRef>(null);
   const {dragState, setPagesRef, currentPageRef, triggerRemeasure} = useDnd();
 
-  // PostponeBottomSheet 상태
-  const [postponingTodo, setPostponingTodo] = useState<Todo | null>(null);
-  const [showPostponeSheet, setShowPostponeSheet] = useState(false);
+  // PostponeBottomSheet ref
+  const postponeRef = useRef<PostponeBottomSheetRef>(null);
+  const postponingTodoRef = useRef<Todo | null>(null);
 
   useEffect(() => {
     fetchTodosForDate(selectedDate);
   }, []);
+
+  // selectedDate 변경 시 해당 월 캘린더 이벤트 fetch
+  useEffect(() => {
+    if (isConnected && selectedDate) {
+      const [y, m] = selectedDate.split('-').map(Number);
+      fetchEventsForMonth(y, m);
+    }
+  }, [selectedDate, isConnected, fetchEventsForMonth]);
+
+  // 해당일 캘린더 이벤트
+  const dailyCalendarEvents = useMemo(() => {
+    if (!isConnected) return [];
+    return monthEvents[selectedDate] ?? [];
+  }, [isConnected, monthEvents, selectedDate]);
 
   // 화면 포커스 시 데이터 재조회 (다른 탭 갔다 돌아올 때)
   useFocusRefetch(useCallback(() => {
     fetchTodosForDate(selectedDate);
   }, [selectedDate, fetchTodosForDate]));
 
-  // todos 변경 시 fuel 데이터 로드
+  // todos 변경 시 motivation 데이터 로드
   useEffect(() => {
     const todoIds = todos.map(t => t.id).filter(id => !id.startsWith('temp_'));
     if (todoIds.length > 0) {
-      fetchFuelsForTodos(todoIds);
+      fetchMotivationsForTodos(todoIds);
     }
-  }, [todos, fetchFuelsForTodos]);
+  }, [todos, fetchMotivationsForTodos]);
 
   // HomeScreen에서 initialPage param으로 특정 페이지 이동
   useFocusEffect(
@@ -186,23 +218,39 @@ function TodoListScreenInner() {
     [updateTodo],
   );
 
+  // "다음 일정" 계산을 위한 now state (60초마다 갱신)
+  const [nowForUpcoming, setNowForUpcoming] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowForUpcoming(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // 다음 일정 할일 ID: 시간 지정 + 미완료 + start_time > now 중 가장 빠른 것
+  const nextUpcomingId = useMemo(() => {
+    const nowMs = nowForUpcoming;
+    let earliest: {id: string; startMs: number} | null = null;
+    for (const todo of todos) {
+      if (todo.completed || !todo.start_time || todo.schedule_type === 'anytime') continue;
+      if ((todo as any).skip_status) continue;
+      const startMs = new Date(todo.start_time).getTime();
+      if (startMs > nowMs) {
+        if (!earliest || startMs < earliest.startMs) {
+          earliest = {id: todo.id, startMs};
+        }
+      }
+    }
+    return earliest?.id ?? null;
+  }, [todos, nowForUpcoming]);
+
   const sections = useMemo(() => categorizeTodos(todos), [todos]);
-  const dateDisplay = format(new Date(selectedDate), 'M월 d일 EEEE', {locale: ko});
   const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
 
-  const goToPrevDay = useCallback(() => {
-    const prev = format(subDays(new Date(selectedDate), 1), 'yyyy-MM-dd');
-    setSelectedDate(prev);
-  }, [selectedDate, setSelectedDate]);
-
-  const goToNextDay = useCallback(() => {
-    const next = format(addDays(new Date(selectedDate), 1), 'yyyy-MM-dd');
-    setSelectedDate(next);
-  }, [selectedDate, setSelectedDate]);
-
-  const goToToday = useCallback(() => {
-    setSelectedDate(format(new Date(), 'yyyy-MM-dd'));
-  }, [setSelectedDate]);
+  // 주간 스트립 캘린더 높이
+  const calendarHeight = useSharedValue(0);
+  const calendarHeightStyle = useAnimatedStyle(() => ({
+    height: calendarHeight.value > 0 ? calendarHeight.value : undefined,
+    overflow: 'hidden' as const,
+  }));
 
   const handleToggle = useCallback(
     (id: string) => {
@@ -211,8 +259,14 @@ function TodoListScreenInner() {
     [toggleTodoCompletion],
   );
 
-  const handleRefresh = useCallback(() => {
-    fetchTodosForDate(selectedDate);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await fetchTodosForDate(selectedDate);
+    } finally {
+      setIsRefreshing(false);
+    }
   }, [selectedDate, fetchTodosForDate]);
 
   const handleTodoPress = useCallback((todo: Todo) => {
@@ -241,15 +295,14 @@ function TodoListScreenInner() {
       durationSeconds = (todo as any).anytime_duration * 60;
     }
 
-    navigation.navigate('Execute', {
-      screen: 'FocusTimer',
-      params: {
-        mode: 'todo',
-        todoId: todo.id,
-        todoTitle: todo.title,
-        durationSeconds,
-      },
-    });
+    // pomodoroStore에서 직접 타이머 시작 후 Execute 탭으로 이동
+    usePomodoroStore.getState().startFocusTimer(
+      durationSeconds,
+      'todo',
+      todo.id,
+      todo.title,
+    );
+    navigation.navigate('Execute');
   }, [navigation]);
 
   const handleAddTodo = useCallback(() => {
@@ -264,9 +317,6 @@ function TodoListScreenInner() {
     [],
   );
 
-  const handleReluctantAdd = useCallback(() => {
-    pickerRef.current?.open({type: 'reluctant'});
-  }, []);
 
   // skip 핸들러
   const handleSkipTodo = useCallback(
@@ -291,65 +341,64 @@ function TodoListScreenInner() {
 
   // postpone 핸들러: 바텀시트 열기
   const handlePostpone = useCallback((todo: Todo) => {
-    setPostponingTodo(todo);
-    setShowPostponeSheet(true);
+    postponingTodoRef.current = todo;
+    postponeRef.current?.open(todo);
   }, []);
 
   // postpone 확인 핸들러
   const handlePostponeConfirm = useCallback(
     async (action: PostponeAction, newTime?: string) => {
-      if (!postponingTodo) return;
+      const target = postponingTodoRef.current;
+      if (!target) return;
 
       if (action === 'start_now') {
-        // FocusTimer로 이동
-        setShowPostponeSheet(false);
-        setPostponingTodo(null);
-
         const isRecurring =
-          postponingTodo.recurrence_pattern &&
-          postponingTodo.recurrence_pattern !== 'none';
+          target.recurrence_pattern &&
+          target.recurrence_pattern !== 'none';
         if (isRecurring) {
-          // 반복 할일: exclusion + 독립 할일 생성 후 FocusTimer
-          await postponeTodo(postponingTodo.id, 'start_now');
+          await postponeTodo(target.id, 'start_now');
         }
-        handleFocusTodo(postponingTodo);
+        postponingTodoRef.current = null;
+        handleFocusTodo(target);
         return;
       }
 
-      await postponeTodo(postponingTodo.id, action, newTime);
-      setShowPostponeSheet(false);
-      setPostponingTodo(null);
-      // 데이터 새로고침
+      await postponeTodo(target.id, action, newTime);
+      postponingTodoRef.current = null;
       fetchTodosForDate(selectedDate);
     },
-    [postponingTodo, postponeTodo, handleFocusTodo, fetchTodosForDate, selectedDate],
+    [postponeTodo, handleFocusTodo, fetchTodosForDate, selectedDate],
   );
 
   return (
     <ScreenContainer gradient="calmBackground">
-      {/* 날짜 네비게이터 */}
-      <Animated.View
-        entering={FadeIn.duration(400)}
-        className="flex-row items-center justify-between px-5 pt-4 pb-3">
-        <AnimatedPressable onPress={goToPrevDay} hapticType="selection" className="p-2">
-          <Text className="text-xl text-gray-400">‹</Text>
-        </AnimatedPressable>
-
-        <AnimatedPressable onPress={goToToday} haptic={!isToday}>
-          <View className="items-center">
-            <Text className="text-lg font-bold text-gray-800">{dateDisplay}</Text>
-            {!isToday && (
-              <Text className="text-xs mt-1" style={{color: primaryColor}}>
-                오늘로 돌아가기
-              </Text>
-            )}
-          </View>
-        </AnimatedPressable>
-
-        <AnimatedPressable onPress={goToNextDay} hapticType="selection" className="p-2">
-          <Text className="text-xl text-gray-400">›</Text>
-        </AnimatedPressable>
-      </Animated.View>
+      {/* 주간 스트립 캘린더 + 뷰 전환 오버레이 */}
+      <View style={{position: 'relative'}}>
+        <Animated.View style={calendarHeightStyle}>
+          <NativeWeekStripCalendarNative
+            selectedDate={selectedDate}
+            primaryColor={primaryColor}
+            gradientColors={gradient.colors}
+            gradientStartX={gradient.start.x}
+            gradientStartY={gradient.start.y}
+            gradientEndX={gradient.end.x}
+            gradientEndY={gradient.end.y}
+            onDateSelect={(e) => setSelectedDate(e.nativeEvent.date)}
+            onHeightChange={(e) => {
+              calendarHeight.value = e.nativeEvent.height;
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+        {/* 헤더 중앙 뷰 전환 아이콘 */}
+        <View style={{position: 'absolute', top: 8, left: 0, right: 0, alignItems: 'center', zIndex: 10}} pointerEvents="box-none">
+          <AnimatedPressable
+            onPress={() => navigation.navigate('Home', {screen: 'MonthlyPlanner'})}
+            style={{padding: 6}}>
+            <CalendarDays size={22} color={primaryColor} />
+          </AnimatedPressable>
+        </View>
+      </View>
 
       <SwipeablePages ref={pagesRef} isDragging={dragState.isDragging} onPageChange={handlePageChange}>
         {/* Page 0: 시간대별 할일 리스트 */}
@@ -360,16 +409,25 @@ function TodoListScreenInner() {
             contentContainerStyle={{paddingHorizontal: 4, paddingBottom: 100}}
             stickySectionHeadersEnabled={false}
             scrollEnabled={!dragState.isDragging}
+            ListHeaderComponent={
+              dailyCalendarEvents.length > 0 ? (
+                <View style={{marginTop: 8, marginBottom: 4}}>
+                  <Text className="text-xs font-semibold text-gray-400 mb-1.5">
+                    Google 캘린더
+                  </Text>
+                  {dailyCalendarEvents.map(event => (
+                    <DailyCalendarEventCard key={event.id} event={event} />
+                  ))}
+                </View>
+              ) : null
+            }
             refreshControl={
-              <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+              <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
             }
             renderSectionHeader={({section}) => {
-              const iconConfig = SECTION_ICONS[section.period];
-              const SectionIcon = iconConfig.Icon;
               return (
                 <View className="flex-row items-center mt-4 mb-2">
-                  <SectionIcon size={16} color={iconConfig.color} strokeWidth={2} />
-                  <Text className="text-sm font-semibold text-gray-500 ml-2">
+                  <Text className="text-sm font-semibold text-gray-500">
                     {section.title}
                   </Text>
                   <Text className="text-xs text-gray-400 ml-2">
@@ -383,6 +441,7 @@ function TodoListScreenInner() {
                 <TodoCard
                   todo={item}
                   index={index}
+                  projectMap={projectMap}
                   onToggle={handleToggle}
                   onPress={handleTodoPress}
                   onFocus={handleFocusTodo}
@@ -391,7 +450,8 @@ function TodoListScreenInner() {
                   onPostpone={handlePostpone}
                   onDeferComplete={(todo) => handleToggle(todo.id)}
                   onRestoreOriginal={handleRestoreOriginal}
-                  linkedFuels={fuelMap[item.id]}
+                  linkedMotivations={motivationMap[item.id]}
+                  isNextUpcoming={item.id === nextUpcomingId}
                 />
               </DraggableTodoChip>
             )}
@@ -409,8 +469,8 @@ function TodoListScreenInner() {
           />
         </View>
 
-        {/* Page 1: 우선순위 매트릭스 + 하기 싫지만 해야 할 일 + 보상/칭찬/감사 */}
-        <PlannerPage2 onMatrixAdd={handleMatrixAdd} onReluctantAdd={handleReluctantAdd} />
+        {/* Page 1: 우선순위 매트릭스 + 브레인 덤프 + 회고 */}
+        <PlannerPage2 onMatrixAdd={handleMatrixAdd} />
       </SwipeablePages>
 
       {/* FAB (할일 추가) */}
@@ -432,12 +492,7 @@ function TodoListScreenInner() {
 
       {/* 미루기 바텀시트 */}
       <PostponeBottomSheet
-        visible={showPostponeSheet}
-        todo={postponingTodo}
-        onClose={() => {
-          setShowPostponeSheet(false);
-          setPostponingTodo(null);
-        }}
+        ref={postponeRef}
         onConfirm={handlePostponeConfirm}
       />
     </ScreenContainer>
@@ -448,7 +503,7 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
     right: 20,
-    bottom: 100,
+    bottom: 75,
   },
   fab: {
     width: 56,

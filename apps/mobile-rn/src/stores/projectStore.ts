@@ -94,7 +94,7 @@ export const useProjectStore = create<ProjectStoreState>()(
             .from('todos')
             .select('id, completed')
             .eq('user_id', userId)
-            .contains('project_ids', [projectId]);
+            .eq('project_id', projectId);
 
           if (error) throw error;
 
@@ -127,7 +127,7 @@ export const useProjectStore = create<ProjectStoreState>()(
             .from('todos')
             .select('*')
             .eq('user_id', userId)
-            .contains('project_ids', [projectId])
+            .eq('project_id', projectId)
             .order('order_index', {ascending: true});
 
           if (error) throw error;
@@ -304,7 +304,7 @@ export const useProjectStore = create<ProjectStoreState>()(
         try {
           const {error} = await supabase
             .from('todos')
-            .update({project_ids: null, updated_at: new Date().toISOString()})
+            .update({project_id: null, updated_at: new Date().toISOString()})
             .eq('id', todoId)
             .eq('user_id', userId);
 

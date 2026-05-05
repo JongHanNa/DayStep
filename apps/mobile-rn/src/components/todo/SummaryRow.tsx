@@ -8,12 +8,15 @@ import {View, Text, StyleSheet, Switch} from 'react-native';
 import {AnimatedPressable} from '@/components/core';
 import {ChevronRight} from 'lucide-react-native';
 import type {LucideIcon} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 interface SummaryRowProps {
   Icon: LucideIcon;
   iconColor?: string;
   label: string;
   suffix?: string;
+  /** 커스텀 trailing 콘텐츠 (suffix 대신 렌더링) */
+  suffixContent?: React.ReactNode;
   onPress?: () => void;
   showChevron?: boolean;
   /** Switch 모드: onPress 대신 Switch 표시 */
@@ -27,12 +30,15 @@ export function SummaryRow({
   iconColor = '#6B7280',
   label,
   suffix,
+  suffixContent,
   onPress,
   showChevron = true,
   switchValue,
   onSwitchChange,
-  primaryColor = '#3B82F6',
+  primaryColor: primaryColorProp,
 }: SummaryRowProps) {
+  const {primaryColor: themePrimaryColor} = useTheme();
+  const primaryColor = primaryColorProp ?? themePrimaryColor;
   const isSwitch = switchValue !== undefined;
 
   const content = (
@@ -42,7 +48,7 @@ export function SummaryRow({
         {label}
       </Text>
       <View style={styles.trailing}>
-        {suffix && <Text style={styles.suffix}>{suffix}</Text>}
+        {suffixContent ? suffixContent : suffix ? <Text style={styles.suffix}>{suffix}</Text> : null}
         {isSwitch ? (
           <Switch
             value={switchValue}

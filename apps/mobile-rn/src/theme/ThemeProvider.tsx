@@ -11,6 +11,7 @@ import {
   getColorThemeConfig,
   type ColorThemeConfig,
 } from './colors';
+import {useSettingsStore, getMainColorForPreset} from '@/stores/settingsStore';
 
 type ColorMode = 'light' | 'dark';
 
@@ -29,10 +30,17 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
   const systemColorScheme = useColorScheme();
   const [colorModeOverride, setColorModeOverride] = useState<ColorMode | null>(null);
   const [themeId, setThemeId] = useState<ColorTheme>(DEFAULT_COLOR_THEME);
+  const backgroundPreset = useSettingsStore(s => s.backgroundPreset);
 
   const colorMode = colorModeOverride ?? (systemColorScheme === 'dark' ? 'dark' : 'light');
   const colorTheme = useMemo(() => getColorThemeConfig(themeId), [themeId]);
   const colors = semanticColors[colorMode];
+
+  // primaryColor를 배경 프리셋의 mainColor에서 가져옴
+  const presetPrimaryColor = useMemo(
+    () => getMainColorForPreset(backgroundPreset),
+    [backgroundPreset],
+  );
 
   const toggleColorMode = useCallback(() => {
     setColorModeOverride(prev => {
@@ -46,11 +54,11 @@ export function ThemeProvider({children}: {children: React.ReactNode}) {
       colorMode,
       colorTheme,
       colors,
-      primaryColor: colorTheme.colors.primary,
+      primaryColor: presetPrimaryColor,
       setColorTheme: setThemeId,
       toggleColorMode,
     }),
-    [colorMode, colorTheme, colors, toggleColorMode],
+    [colorMode, colorTheme, colors, presetPrimaryColor, toggleColorMode],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

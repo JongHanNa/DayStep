@@ -100,9 +100,9 @@ export interface NoteTagLinkInsert {
 }
 
 // Note types (manually defined until Supabase types are updated)
-export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'fuel';
+export type NoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'motivation';
 
-/** @deprecated Use 'fuel' instead of 'inbox' */
+/** @deprecated Use 'motivation' instead of 'inbox' */
 export type LegacyNoteCategory = 'none' | 'work_in_progress' | 'read_later' | 'reference' | 'inbox';
 
 export interface Note {
@@ -122,15 +122,15 @@ export interface Note {
   // Tags are loaded separately for performance
   tags?: NoteTag[];
   // Second Brain fields
-  note_category?: NoteCategory;
-  // Fuel 감정 태그
+  category?: NoteCategory;
+  // Motivation 감정 태그
   emotion_tag?: string | null;
 }
 
 // Note instance types (manually defined until Supabase types are updated)
 export interface NoteInstance {
   id: string;
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -158,7 +158,7 @@ export interface NoteInsert {
 
 // Note instance insert types (manually defined until Supabase types are updated)
 export interface NoteInstanceInsert {
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -331,7 +331,7 @@ export interface CreateTodoInput {
 
 // Note instance types
 export interface CreateNoteInstanceInput {
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string; // YYYY-MM-DD format
   content: string;
@@ -358,13 +358,13 @@ export interface NoteWithInstances {
   updated_at: string;
   is_recurring?: boolean;
   recurrence_type?: 'single' | 'recurring';
-  note_instances?: NoteInstance[];
+  motivation_instances?: NoteInstance[];
 }
 
 // Note instance with original note information
 export interface NoteInstanceWithOriginal {
   id: string;
-  original_note_id: string;
+  original_motivation_id: string;
   user_id: string;
   instance_date: string;
   content: string;
@@ -431,7 +431,7 @@ export interface TodoExtendedFields {
 
 // Extended Note type with new fields (기존 Note 타입을 확장하지 않고 새 필드만 문서화)
 export interface NoteExtendedFields {
-  note_category: NoteCategory;
+  category: NoteCategory;
 }
 
 // Statistics types
@@ -523,6 +523,10 @@ export interface DailyReflection {
   reflection: string;
   spending_note: string;
   thought_archive: string;
+  today_lesson: string;
+  today_resolution: string;
+  current_period: string;
+  today_prayer: string;
   created_at: string;
   updated_at: string;
 }

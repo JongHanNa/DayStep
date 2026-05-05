@@ -10,16 +10,19 @@ import {
 } from 'date-fns';
 import {CalendarDayCell} from './CalendarDayCell';
 import type {MonthTodoSummary} from '@/stores/todoStore';
+import type {GoogleCalendarEvent} from '@/lib/googleCalendarApi';
 
 interface MonthCalendarGridProps {
   currentMonth: Date;
   monthViewData: Record<string, MonthTodoSummary[]>;
+  calendarEvents?: Record<string, GoogleCalendarEvent[]>;
   onDayPress: (dateStr: string) => void;
 }
 
 export function MonthCalendarGrid({
   currentMonth,
   monthViewData,
+  calendarEvents,
   onDayPress,
 }: MonthCalendarGridProps) {
   const rows = useMemo(() => {
@@ -52,6 +55,7 @@ export function MonthCalendarGrid({
               dateStr={dateStr}
               currentMonth={currentMonth}
               todos={monthViewData[dateStr] ?? []}
+              calendarEvents={calendarEvents?.[dateStr] ?? []}
               onPress={onDayPress}
             />
           ))}

@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import { useADHDStore } from '@/state/stores/adhdStore';
 import { useTodoStore } from '@/state/stores/todoStore';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import { usePomodoroStore } from '@/state/stores/pomodoroStore';
-import { addTodoNote } from '@/lib/supabase/todo-notes';
+import { addTodoNote } from '@/lib/supabase/todo-motivations';
 import { removeAnytimeOverrideWithJWT } from '@/lib/supabase/todo-postpone';
 import { usePomodoro } from '@/hooks/usePomodoro';
 import { usePomodoroLiveActivity } from '@/hooks/usePomodoroLiveActivity';
@@ -35,7 +35,7 @@ import {
   EmptyStateView,
   AdhocTimerView,
   AdhocCaptureView,
-  AdhocNoteConnectionView,
+  AdhocMotivationConnectionView,
 } from '../screens/execute/components';
 import { useExecutionRecommendation } from '../hooks/useExecutionRecommendation';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
@@ -69,7 +69,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
   } = useADHDStore();
 
   // 노트 스토어
-  const { getInboxNotes, createInboxNote, notes: allNotes } = useNoteStore();
+  const { getInboxNotes, createInboxNote, notes: allNotes } = useMotivationStore();
 
   // 포모도로 훅
   const {
@@ -749,7 +749,7 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
                 title: t.title,
                 isRelationshipTask: t.isRelationshipTask
               }))}
-              notes={allNotes.filter(n => n.note_category === 'fuel')}
+              notes={allNotes.filter(n => n.category === 'motivation')}
               onConnectNote={handleConnectNoteFromCompleted}
               lastCompletedTodoId={
                 todayCompletedTodos.length > 0
@@ -821,9 +821,9 @@ export default function ExecutionContainer({ onExit, hideNavigation = false }: E
           )}
 
           {viewState === 'adhoc-note-connection' && (
-            <AdhocNoteConnectionView
+            <AdhocMotivationConnectionView
               key="adhoc-note-connection"
-              notes={allNotes.filter(n => n.note_category === 'fuel')}
+              notes={allNotes.filter(n => n.category === 'motivation')}
               selectedNoteId={selectedNoteId}
               onSelectNote={setSelectedNoteId}
               newNoteContent={newNoteContent}

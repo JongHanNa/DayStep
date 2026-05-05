@@ -41,7 +41,7 @@ function getTimerColor(type: string, primaryColor: string): string {
     case 'SHORT_BREAK':
       return '#22C55E';
     case 'LONG_BREAK':
-      return '#8B5CF6';
+      return primaryColor;
     default:
       return primaryColor;
   }
@@ -52,7 +52,7 @@ function getTimerColor(type: string, primaryColor: string): string {
 // ============================================
 
 export default function PomodoroScreen() {
-  const {primaryColor} = useTheme();
+  const {primaryColor, colors} = useTheme();
   const haptic = useHaptic();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -251,7 +251,7 @@ export default function PomodoroScreen() {
               hapticType="light"
               scaleValue={0.95}
               style={styles.stopBtn}>
-              <Text style={styles.stopBtnText}>중단</Text>
+              <Text style={[styles.stopBtnText, {color: colors.error}]}>중단</Text>
             </AnimatedPressable>
           </View>
         )}
@@ -407,7 +407,6 @@ const styles = StyleSheet.create({
   stopBtnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#EF4444',
   },
 
   // Streak bar

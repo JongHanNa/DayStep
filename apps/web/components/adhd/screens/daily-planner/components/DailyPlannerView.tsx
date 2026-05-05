@@ -20,16 +20,15 @@ import { restrictToWindowEdges, snapCenterToCursor } from '@dnd-kit/modifiers';
 
 import { useTodoStore } from '@/state/stores/todoStore';
 import { useADHDStore } from '@/state/stores/adhdStore';
+import { useAuth } from '@/app/context/AuthContext';
 import { useFocusSession } from '@/components/adhd/hooks/useFocusSession';
 import { FocusOverlay } from '@/components/adhd/common/FocusOverlay';
 import { FocusSidePanel } from '@/components/adhd/common/FocusSidePanel';
 import { useDailyPlannerData } from '../hooks/useDailyPlannerData';
 import { TimeSchedulePanel } from './TimeSchedulePanel';
 import { PriorityMatrixPanel } from './PriorityMatrixPanel';
-import { ReluctantTasksPanel } from './ReluctantTasksPanel';
-import { RewardPanel } from './RewardPanel';
-import { PraisePanel } from './PraisePanel';
-import { GratitudePanel } from './GratitudePanel';
+import { BrainDumpPanel } from './BrainDumpPanel';
+import { ReflectionPanels } from './ReflectionPanels';
 import { DayReflectionBar } from './DayReflectionBar';
 import { DraggableTodoChip } from './DraggableTodoChip';
 import { ProjectSummaryBar } from './ProjectSummaryBar';
@@ -43,8 +42,8 @@ interface DailyPlannerViewProps {
   userId: string;
   date: Date;
   timelineItems: TimelineItem[];
-  showFuelBadges?: boolean;
-  getLinkedFuels?: (item: TimelineItem) => Note[];
+  showMotivationBadges?: boolean;
+  getLinkedMotivations?: (item: TimelineItem) => Note[];
   onEditClick?: (item: TimelineItem) => void;
   onToggleComplete?: (item: TimelineItem) => void;
   onUnskipTodo?: (item: TimelineItem) => void;
@@ -54,11 +53,13 @@ interface DailyPlannerViewProps {
   onAddTodo?: (prefillStart?: Date, prefillEnd?: Date, mode?: 'detailed' | 'new') => void;
 }
 
-export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, getLinkedFuels, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onRestoreOriginal, onAddTodo }: DailyPlannerViewProps) {
+export function DailyPlannerView({ userId, date, timelineItems, showMotivationBadges, getLinkedMotivations, onEditClick, onToggleComplete, onUnskipTodo, onSkipTodo, onOpenPostponeSheet, onRestoreOriginal, onAddTodo }: DailyPlannerViewProps) {
   const updateTodo = useTodoStore(s => s.updateTodo);
   const updateRecurringTodo = useTodoStore(s => s.updateRecurringTodo);
   const todos = useTodoStore(s => s.todos);
   const { focusMode, startFocus } = useADHDStore();
+  const { appUser } = useAuth();
+  const isAdmin = appUser?.isAdmin ?? false;
   // todayTodos는 timelineItems 기반 → 가상 반복 인스턴스 포함, 정확한 timed 할일만
   const {
     todayTodos,
@@ -68,7 +69,6 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
     afternoonTodos,
     eveningTodos,
     matrixTodos,
-    reluctantTodos,
     reflection,
     upsertReflection,
     dateStr,
@@ -83,20 +83,20 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
 
   // 프로젝트 하이라이트 필터 상태
   const [highlightProjectId, setHighlightProjectId] = useState<string | null>(null);
-  const [expandedFuelId, setExpandedFuelId] = useState<string | null>(null);
+  const [expandedMotivationId, setExpandedMotivationId] = useState<string | null>(null);
 
-  // todoId → linked fuels 매핑
-  const todoFuelMap = useMemo(() => {
-    if (!showFuelBadges || !getLinkedFuels) return {};
+  // todoId → linked motivations 매핑
+  const todoMotivationMap = useMemo(() => {
+    if (!showMotivationBadges || !getLinkedMotivations) return {};
     const map: Record<string, { id: string; title: string; content: string }[]> = {};
     for (const item of timelineItems) {
-      const fuels = getLinkedFuels(item);
-      if (fuels.length > 0) {
-        map[item.id] = fuels.map(f => ({ id: f.id, title: f.title, content: f.content }));
+      const motivations = getLinkedMotivations(item);
+      if (motivations.length > 0) {
+        map[item.id] = motivations.map(f => ({ id: f.id, title: f.title, content: f.content }));
       }
     }
     return map;
-  }, [showFuelBadges, getLinkedFuels, timelineItems]);
+  }, [showMotivationBadges, getLinkedMotivations, timelineItems]);
 
   const focusSession = useFocusSession(todayTodos);
 
@@ -276,21 +276,6 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
           await updateTodo(dbId, matrixUpdates);
           break;
         }
-        case 'reluctant': {
-          const reluctantUpdates: any = {
-            is_reluctant_must_do: true,
-          };
-          if (isRecurrenceInstance && timelineItem) {
-            reluctantUpdates.start_time = timelineItem.startTime?.toISOString();
-            reluctantUpdates.end_time = timelineItem.endTime?.toISOString();
-            const todoTitle = timelineItem.title || '';
-            setPendingDrop({todoId: dbId, updates: reluctantUpdates, title: todoTitle});
-            setRecurringDialogOpen(true);
-            return;
-          }
-          await updateTodo(dbId, reluctantUpdates);
-          break;
-        }
       }
     } catch (error) {
       console.error('드래그 앤 드롭 업데이트 실패:', error);
@@ -379,25 +364,6 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
     await updateTodo(dbId, updates);
   }, [timelineItems, updateTodo]);
 
-  const handleUnassignReluctant = useCallback(async (todo: Todo) => {
-    const timelineItem = timelineItems.find(i => i.id === todo.id);
-    const isRecurrenceInstance = timelineItem?.isRecurrenceInstance;
-    const dbId = isRecurrenceInstance ? timelineItem?.recurrenceSourceId : todo.id;
-    if (!dbId) return;
-
-    const updates = { is_reluctant_must_do: false };
-    if (isRecurrenceInstance && timelineItem) {
-      setPendingDrop({
-        todoId: dbId,
-        updates: { ...updates, start_time: timelineItem.startTime?.toISOString(), end_time: timelineItem.endTime?.toISOString() },
-        title: timelineItem.title || '',
-      });
-      setRecurringDialogOpen(true);
-      return;
-    }
-    await updateTodo(dbId, updates);
-  }, [timelineItems, updateTodo]);
-
   // 섹션별 추가 핸들러
   const handleAddMorning = useCallback(() => {
     if (!onAddTodo) return;
@@ -427,11 +393,6 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
   }, [date, onAddTodo]);
 
   const handleAddMatrix = useCallback(() => {
-    if (!onAddTodo) return;
-    onAddTodo(undefined, undefined, 'new');
-  }, [onAddTodo]);
-
-  const handleAddReluctant = useCallback(() => {
     if (!onAddTodo) return;
     onAddTodo(undefined, undefined, 'new');
   }, [onAddTodo]);
@@ -514,9 +475,9 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
         projectMap={projectMap}
         departmentMap={departmentMap}
         highlightProjectId={highlightProjectId}
-        todoFuelMap={todoFuelMap}
-        expandedFuelId={expandedFuelId}
-        onExpandFuel={setExpandedFuelId}
+        todoMotivationMap={todoMotivationMap}
+        expandedMotivationId={expandedMotivationId}
+        onExpandMotivation={setExpandedMotivationId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
@@ -539,9 +500,9 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
         projectMap={projectMap}
         departmentMap={departmentMap}
         highlightProjectId={highlightProjectId}
-        todoFuelMap={todoFuelMap}
-        expandedFuelId={expandedFuelId}
-        onExpandFuel={setExpandedFuelId}
+        todoMotivationMap={todoMotivationMap}
+        expandedMotivationId={expandedMotivationId}
+        onExpandMotivation={setExpandedMotivationId}
         onEditClick={handleChipEditClick}
         onToggle={handleChipToggle}
         onUnskip={handleChipUnskip}
@@ -550,33 +511,17 @@ export function DailyPlannerView({ userId, date, timelineItems, showFuelBadges, 
         onAddClick={handleAddMatrix}
         onUnassign={handleUnassignMatrix}
       />
-      <ReluctantTasksPanel
-        todos={reluctantTodos}
-        projectMap={projectMap}
-        departmentMap={departmentMap}
-        highlightProjectId={highlightProjectId}
-        todoFuelMap={todoFuelMap}
-        expandedFuelId={expandedFuelId}
-        onExpandFuel={setExpandedFuelId}
-        onEditClick={handleChipEditClick}
-        onToggle={handleChipToggle}
-        onUnskip={handleChipUnskip}
-        onSkipTodo={handleChipSkip}
-        onPostpone={handleChipPostpone}
-        onAddClick={handleAddReluctant}
-        onUnassign={handleUnassignReluctant}
+      <BrainDumpPanel
+        value={reflection?.thought_archive || ''}
+        onChange={v => handleReflectionUpdate('thought_archive', v)}
       />
-      <RewardPanel
-        value={reflection?.reward || ''}
-        onChange={v => handleReflectionUpdate('reward', v)}
-      />
-      <PraisePanel
-        values={reflection?.praises || []}
-        onChange={v => handleReflectionUpdate('praises', v)}
-      />
-      <GratitudePanel
-        values={reflection?.gratitudes || []}
-        onChange={v => handleReflectionUpdate('gratitudes', v)}
+      <ReflectionPanels
+        currentPeriod={reflection?.current_period || ''}
+        todayResolution={reflection?.today_resolution || ''}
+        todayPrayer={reflection?.today_prayer || ''}
+        todayLesson={reflection?.today_lesson || ''}
+        isAdmin={isAdmin}
+        onChange={(field, value) => handleReflectionUpdate(field, value)}
       />
     </div>
   );

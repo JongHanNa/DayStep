@@ -32,7 +32,7 @@ function mapRow(row: any): UserUsageStats {
     todoCount: row.todo_count ?? 0,
     habitCount: row.habit_count ?? 0,
     projectCount: row.project_count ?? 0,
-    noteCount: row.note_count ?? 0,
+    noteCount: row.motivation_count ?? 0,
     contactCount: row.contact_count ?? 0,
     cherishedPeopleCount: row.cherished_people_count ?? 0,
     careInteractionCount: row.care_interaction_count ?? 0,
@@ -49,7 +49,7 @@ export function useUsageStats() {
 
     setIsLoading(true);
     try {
-      // user_usage_stats에 project_count/note_count 컬럼 없음 → 직접 COUNT
+      // user_usage_stats에 project_count/motivation_count 컬럼 없음 → 직접 COUNT
       const [usageResult, projectResult, noteResult] = await Promise.all([
         supabase
           .from('user_usage_stats')
@@ -61,10 +61,10 @@ export function useUsageStats() {
           .select('*', {count: 'exact', head: true})
           .eq('user_id', user.id),
         supabase
-          .from('notes')
+          .from('motivations')
           .select('*', {count: 'exact', head: true})
           .eq('user_id', user.id)
-          .eq('note_category', 'fuel'),
+          .eq('category', 'motivation'),
       ]);
 
       const {data, error} = usageResult;

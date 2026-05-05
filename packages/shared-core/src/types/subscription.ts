@@ -46,6 +46,35 @@ export interface WebSubscriptionInfo extends SubscriptionInfo {
 }
 
 // ============================================
+// Grace Period (신규 가입 7일 Pro 화면 접근)
+// ============================================
+
+/** 신규 가입 후 Pro 화면 무료 접근 기간 (일) */
+export const GRACE_PERIOD_DAYS = 7;
+
+/**
+ * 신규 가입 grace period 내인지 확인
+ * auth.users.created_at 기준
+ */
+export function isInGracePeriod(userCreatedAt: string | null | undefined): boolean {
+  if (!userCreatedAt) return false;
+  const createdMs = new Date(userCreatedAt).getTime();
+  const graceEndMs = createdMs + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+  return Date.now() < graceEndMs;
+}
+
+/**
+ * Grace period 남은 일수 계산
+ */
+export function gracePeriodDaysRemaining(userCreatedAt: string | null | undefined): number {
+  if (!userCreatedAt) return 0;
+  const createdMs = new Date(userCreatedAt).getTime();
+  const graceEndMs = createdMs + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+  const remaining = Math.ceil((graceEndMs - Date.now()) / (1000 * 60 * 60 * 24));
+  return remaining > 0 ? remaining : 0;
+}
+
+// ============================================
 // 순수 헬퍼 함수
 // ============================================
 

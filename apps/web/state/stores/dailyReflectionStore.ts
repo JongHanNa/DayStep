@@ -58,6 +58,10 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
             reflection: data.reflection || '',
             spending_note: data.spending_note || '',
             thought_archive: data.thought_archive || '',
+            today_lesson: data.today_lesson || '',
+            today_resolution: data.today_resolution || '',
+            current_period: data.current_period || '',
+            today_prayer: data.today_prayer || '',
             created_at: data.created_at,
             updated_at: data.updated_at,
           };
@@ -97,6 +101,10 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
         reflection: data.reflection ?? existing?.reflection ?? '',
         spending_note: data.spending_note ?? existing?.spending_note ?? '',
         thought_archive: data.thought_archive ?? existing?.thought_archive ?? '',
+        today_lesson: data.today_lesson ?? existing?.today_lesson ?? '',
+        today_resolution: data.today_resolution ?? existing?.today_resolution ?? '',
+        current_period: data.current_period ?? existing?.current_period ?? '',
+        today_prayer: data.today_prayer ?? existing?.today_prayer ?? '',
         created_at: existing?.created_at ?? new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -115,6 +123,10 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
           reflection: optimistic.reflection,
           spending_note: optimistic.spending_note,
           thought_archive: optimistic.thought_archive,
+          today_lesson: optimistic.today_lesson,
+          today_resolution: optimistic.today_resolution,
+          current_period: optimistic.current_period,
+          today_prayer: optimistic.today_prayer,
           updated_at: new Date().toISOString(),
         };
 
@@ -137,6 +149,10 @@ export const useDailyReflectionStore = createStore<DailyReflectionStoreState>(
               reflection: result.reflection || '',
               spending_note: result.spending_note || '',
               thought_archive: result.thought_archive || '',
+              today_lesson: result.today_lesson || '',
+              today_resolution: result.today_resolution || '',
+              current_period: result.current_period || '',
+              today_prayer: result.today_prayer || '',
               created_at: result.created_at,
               updated_at: result.updated_at,
             });

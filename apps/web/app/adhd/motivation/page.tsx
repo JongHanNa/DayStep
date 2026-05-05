@@ -15,7 +15,7 @@ export default function MotivationPage() {
   // Store 동기화
   useEffect(() => {
     if (user?.id) {
-      useADHDStore.getState().enterFuelMode(user.id, undefined, 'motivation');
+      useADHDStore.getState().enterMotivationMode(user.id, undefined, 'motivation');
     }
   }, [user?.id]);
 

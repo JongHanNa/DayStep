@@ -10,7 +10,10 @@ import {ThemeSettingsView} from '@/components/settings/ThemeSettingsView';
 import {SubscriptionView} from '@/components/settings/SubscriptionView';
 import {AccountView} from '@/components/settings/AccountView';
 import {DevNotificationsView} from '@/components/settings/DevNotificationsView';
+import {LanguageSettingsView} from '@/components/settings/LanguageSettingsView';
 import {AdminPlanLimitsScreen} from '@/screens/admin/AdminPlanLimitsScreen';
+import {QAChecklistScreen} from '@/screens/admin/QAChecklistScreen';
+import {MarketingToolkitScreen} from '@/screens/admin/MarketingToolkitScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import Animated, {FadeIn} from 'react-native-reanimated';
 
@@ -19,8 +22,11 @@ type SettingsView =
   | 'theme'
   | 'subscription'
   | 'account'
+  | 'language'
   | 'devNotifications'
-  | 'adminPlanLimits';
+  | 'adminPlanLimits'
+  | 'qaChecklist'
+  | 'marketingToolkit';
 
 export default function SettingsScreen() {
   const [view, setView] = useState<SettingsView>('main');
@@ -53,7 +59,10 @@ export default function SettingsScreen() {
         {view === 'main' && <SettingsMainView onNavigate={handleNavigate} />}
         {view === 'theme' && <ThemeSettingsView onBack={goBack} />}
         {view === 'account' && <AccountView onBack={goBack} />}
+        {view === 'language' && <LanguageSettingsView onBack={goBack} />}
         {view === 'adminPlanLimits' && <AdminPlanLimitsScreen onBack={goBack} />}
+        {view === 'qaChecklist' && <QAChecklistScreen onBack={goBack} />}
+        {view === 'marketingToolkit' && <MarketingToolkitScreen onBack={goBack} />}
         {__DEV__ && view === 'devNotifications' && (
           <DevNotificationsView onBack={goBack} />
         )}

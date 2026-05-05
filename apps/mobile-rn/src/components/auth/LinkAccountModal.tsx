@@ -14,6 +14,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {Link2} from 'lucide-react-native';
+import {useTheme} from '@/theme';
 
 const PROVIDER_LABEL: Record<string, string> = {
   google: 'Google',
@@ -37,6 +38,7 @@ export function LinkAccountModal({
   onConfirm,
   onCancel,
 }: LinkAccountModalProps) {
+  const {primaryColor} = useTheme();
   const existingLabel = PROVIDER_LABEL[existingProvider ?? ''] ?? existingProvider;
   const newLabel = PROVIDER_LABEL[newProvider] ?? newProvider;
 
@@ -51,8 +53,8 @@ export function LinkAccountModal({
           <TouchableWithoutFeedback onPress={() => {}}>
             <View style={styles.container}>
               {/* 아이콘 */}
-              <View style={styles.iconWrap}>
-                <Link2 size={32} color="#3B82F6" />
+              <View style={[styles.iconWrap, {backgroundColor: `${primaryColor}15`}]}>
+                <Link2 size={32} color={primaryColor} />
               </View>
 
               {/* 제목 */}
@@ -73,7 +75,7 @@ export function LinkAccountModal({
 
               {/* 연결 버튼 */}
               <TouchableOpacity
-                style={styles.confirmButton}
+                style={[styles.confirmButton, {backgroundColor: primaryColor}]}
                 onPress={onConfirm}
                 disabled={loading}
                 activeOpacity={0.85}>
@@ -123,7 +125,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -156,7 +157,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#3B82F6',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 24,

@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADHD 이해하기 - 디자인 시안 3종</title>
+<style>
+  /* ═══════════════════════════════════════════
+     DayStep Design System Tokens
+     ═══════════════════════════════════════════ */
+  :root {
+    --primary: #3B82F6;
+    --primary-10: rgba(59, 130, 246, 0.10);
+    --primary-15: rgba(59, 130, 246, 0.15);
+    --primary-20: rgba(59, 130, 246, 0.20);
+    --primary-50: rgba(59, 130, 246, 0.50);
+    --primary-70: rgba(59, 130, 246, 0.70);
+
+    --text-primary: #1A1A2E;
+    --text-secondary: #6B7280;
+    --text-tertiary: #9CA3AF;
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8F9FA;
+    --bg-tertiary: #F1F3F5;
+    --border: #E5E7EB;
+    --divider: #F1F3F5;
+
+    --gradient-warm-start: #FFF7ED;
+    --gradient-warm-mid: #FFFBEB;
+    --gradient-calm-start: #F0F9FF;
+    --gradient-calm-mid: #F5F3FF;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-chip: 20px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.10);
+
+    --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: #F8F9FA;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ═══════════════════════════════════════════
+     iOS Native Menu Controller
+     ═══════════════════════════════════════════ */
+  .menu-controller {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 200;
+  }
+  .menu-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: var(--radius-xl);
+    border: none;
+    background: rgba(255,255,255,0.80);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-md);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+  }
+  .menu-trigger:hover {
+    background: rgba(255,255,255,0.95);
+    box-shadow: var(--shadow-lg);
+  }
+  .menu-trigger:active {
+    transform: scale(0.97);
+  }
+  .menu-chevron {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    transition: transform 0.2s ease;
+  }
+  .menu-controller.open .menu-chevron {
+    transform: rotate(180deg);
+  }
+  .menu-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 220px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.15), 0 0 0 0.5px rgba(0,0,0,0.05);
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+    transform-origin: top left;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .menu-controller.open .menu-dropdown {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-body);
+  }
+  .menu-item:hover {
+    background: var(--bg-tertiary);
+  }
+  .menu-item:active {
+    background: var(--bg-secondary);
+  }
+  .menu-item + .menu-item {
+    border-top: 0.5px solid var(--divider);
+  }
+  .menu-item .menu-check {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .menu-item.active .menu-check {
+    opacity: 1;
+  }
+  .menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+  }
+  .menu-controller.open ~ .menu-overlay {
+    display: block;
+  }
+
+  .demo-container { display: none; }
+  .demo-container.active { display: block; }
+
+  /* ═══════════════════════════════════════════
+     iPhone Frame
+     ═══════════════════════════════════════════ */
+  .phone-frame {
+    width: 393px;
+    height: 852px;
+    margin: 32px auto;
+    border-radius: 48px;
+    background: #000;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.1);
+    position: relative;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 38px;
+    overflow: hidden;
+    position: relative;
+    background: white;
+  }
+  .phone-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 34px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 50;
+  }
+  .phone-home-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 5px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+    z-index: 50;
+  }
+  .screen-content {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .screen-content::-webkit-scrollbar { display: none; }
+
+  /* Status bar */
+  .status-bar {
+    height: 54px;
+    padding: 14px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 40;
+  }
+  .status-time { font-size: 15px; font-weight: 600; }
+  .status-icons { display: flex; gap: 5px; align-items: center; }
+  .status-icons svg { width: 16px; height: 16px; }
+
+  /* ═══════════════════════════════════════════
+     시안 설명 패널
+     ═══════════════════════════════════════════ */
+  .design-info {
+    max-width: 480px;
+    margin: 0 auto 24px;
+    padding: 0 24px;
+  }
+  .design-info h2 {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+  }
+  .design-info .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .design-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .design-tag {
+    padding: 4px 10px;
+    border-radius: var(--radius-chip);
+    background: var(--primary-10);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ═══════════════════════════════════════════
+     시안 A: 아코디언 가이드
+     ═══════════════════════════════════════════ */
+  .a-bg {
+    background: linear-gradient(180deg, var(--gradient-warm-start) 0%, var(--gradient-warm-mid) 40%, #FFFFFF 100%);
+    min-height: 100%;
+  }
+  .a-header {
+    padding: 16px 20px 0;
+  }
+  .a-back {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    border: none; cursor: pointer;
+  }
+  .a-hero {
+    padding: 24px 20px 20px;
+    text-align: center;
+  }
+  .a-hero-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: var(--radius-chip);
+    background: var(--primary-10);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: -0.08px;
+  }
+  .a-hero h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+    margin-bottom: 8px;
+  }
+  .a-hero p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    letter-spacing: -0.24px;
+  }
+  /* Progress */
+  .a-progress {
+    padding: 0 20px;
+    margin-bottom: 20px;
+  }
+  .a-progress-bar {
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .a-progress-fill {
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, var(--primary), #60A5FA);
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .a-progress-text {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+  /* Accordion items */
+  .a-list {
+    padding: 0 16px 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .a-item {
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+  }
+  .a-item:hover { box-shadow: var(--shadow-md); }
+  .a-item-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .a-item-num {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: var(--primary-10);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .a-item-title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.32px;
+  }
+  .a-item-chevron {
+    width: 20px; height: 20px;
+    color: var(--text-tertiary);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+  }
+  .a-item.open .a-item-chevron { transform: rotate(180deg); }
+  .a-item-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .a-item.open .a-item-body { max-height: 800px; }
+  .a-item-content {
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--divider);
+    padding-top: 14px;
+  }
+  .a-section {
+    margin-bottom: 16px;
+  }
+  .a-section:last-child { margin-bottom: 0; }
+  .a-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 8px;
+    padding-left: 10px;
+    border-left: 3px solid var(--primary-50);
+    line-height: 1.3;
+  }
+  .a-section-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    letter-spacing: -0.08px;
+    margin-bottom: 6px;
+  }
+  .a-bullet {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    padding-left: 12px;
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .a-bullet::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary-50);
+  }
+  .a-item.read .a-item-num {
+    background: var(--primary);
+    color: white;
+  }
+
+  /* ═══════════════════════════════════════════
+     시안 B: 카드 스와이프 리더
+     ═══════════════════════════════════════════ */
+  .b-bg {
+    background: linear-gradient(180deg, var(--gradient-calm-start) 0%, var(--gradient-calm-mid) 40%, #FFFFFF 100%);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .b-nav-header {
+    padding: 16px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .b-nav-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.41px;
+  }
+  .b-chapter-indicator {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .b-chapter-num {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--primary-20);
+    line-height: 1;
+  }
+  .b-chapter-info {
+    flex: 1;
+  }
+  .b-chapter-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .b-chapter-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.35px;
+  }
+  /* Progress dots */
+  .b-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 0 16px;
+  }
+  .b-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--primary-15);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .b-dot.active {
+    width: 24px;
+    border-radius: 4px;
+    background: var(--primary);
+  }
+  .b-dot.read { background: var(--primary-50); }
+  /* Card area */
+  .b-card-area {
+    flex: 1;
+    padding: 0 16px;
+    overflow-y: auto;
+    padding-bottom: 110px;
+  }
+  .b-card {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    padding: 24px 20px;
+    min-height: 460px;
+  }
+  .b-card-intro {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-bottom: 20px;
+    letter-spacing: -0.24px;
+  }
+  .b-card-section {
+    margin-bottom: 20px;
+  }
+  .b-card-section:last-child { margin-bottom: 0; }
+  .b-card-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .b-card-section-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+  }
+  .b-card-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.32px;
+  }
+  .b-card-section-body {
+    padding-left: 18px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+  .b-card-section-body strong {
+    color: var(--primary);
+    font-weight: 600;
+  }
+  /* Bottom nav */
+  .b-bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    padding: 16px 20px 40px;
+    background: linear-gradient(transparent, rgba(255,255,255,0.95) 30%);
+    display: flex;
+    gap: 10px;
+  }
+  .b-nav-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font-body);
+    transition: all 0.2s ease;
+  }
+  .b-nav-prev {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+  }
+  .b-nav-next {
+    background: var(--primary);
+    color: white;
+  }
+  .b-nav-next:active { transform: scale(0.97); }
+  .b-reading-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    padding: 12px 20px 0;
+  }
+
+  /* ═══════════════════════════════════════════
+     시안 C: 비주얼 맵 + 바텀시트
+     ═══════════════════════════════════════════ */
+  .c-bg {
+    background: linear-gradient(180deg, #EDE9FE 0%, #F5F3FF 40%, #FFFFFF 100%);
+    min-height: 100%;
+  }
+  .c-header {
+    padding: 16px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .c-title-area {
+    text-align: center;
+    padding: 20px 20px 8px;
+  }
+  .c-title-area h1 {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+    margin-bottom: 4px;
+  }
+  .c-title-area p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  /* Brain visual map */
+  .c-brain-map {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    margin: 8px auto 16px;
+  }
+  .c-brain-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-15), rgba(139, 92, 246, 0.12));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 40px var(--primary-10);
+  }
+  .c-brain-icon {
+    font-size: 48px;
+    opacity: 0.6;
+    filter: grayscale(0.3);
+  }
+  .c-brain-pulse {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    border: 2px solid var(--primary-10);
+    animation: pulse-ring 3s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    0% { transform: translate(-50%, -50%) scale(0.85); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+  }
+  /* Topic nodes */
+  .c-node {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .c-node:active { transform: scale(0.93); }
+  .c-node-circle {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: white;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+  .c-node.selected .c-node-circle {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-lg), 0 0 0 4px var(--primary-10);
+  }
+  .c-node-icon {
+    width: 24px; height: 24px;
+    color: var(--primary-70);
+  }
+  .c-node-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    max-width: 72px;
+    line-height: 1.3;
+  }
+  .c-node.selected .c-node-label { color: var(--primary); }
+  /* Connection lines */
+  .c-connections {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .c-connections line {
+    stroke: var(--primary-15);
+    stroke-width: 1.5;
+    stroke-dasharray: 4, 4;
+  }
+  /* Positions */
+  .c-node-1 { top: 20px; left: 50%; transform: translateX(-50%); }
+  .c-node-2 { top: 100px; right: 12px; }
+  .c-node-3 { bottom: 60px; right: 24px; }
+  .c-node-4 { bottom: 60px; left: 24px; }
+  .c-node-5 { top: 100px; left: 12px; }
+
+  /* Bottom sheet */
+  .c-sheet {
+    background: white;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    padding: 0 20px 40px;
+    min-height: 340px;
+    position: relative;
+  }
+  .c-sheet-handle {
+    width: 36px; height: 5px;
+    border-radius: 3px;
+    background: var(--bg-tertiary);
+    margin: 10px auto 16px;
+  }
+  .c-sheet-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    letter-spacing: -0.38px;
+  }
+  .c-sheet-subtitle {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+  .c-sheet-section {
+    margin-bottom: 14px;
+  }
+  .c-sheet-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .c-sheet-section-title::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+  }
+  .c-sheet-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    padding-left: 14px;
+  }
+  .c-sheet-highlight {
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  /* ═══════════════════════════════════════════
+     시안 비교 레이아웃
+     ═══════════════════════════════════════════ */
+  .comparison-note {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 24px 12px;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+
+  /* SVG Icons inline */
+  .icon-chevron {
+    width: 20px; height: 20px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .icon-back {
+    width: 20px; height: 20px;
+    stroke: var(--text-primary);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Animate entrance */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .a-item { animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .a-item:nth-child(1) { animation-delay: 0.05s; }
+  .a-item:nth-child(2) { animation-delay: 0.1s; }
+  .a-item:nth-child(3) { animation-delay: 0.15s; }
+  .a-item:nth-child(4) { animation-delay: 0.2s; }
+  .a-item:nth-child(5) { animation-delay: 0.25s; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     시안 선택 헤더
+     ═══════════════════════════════════════════ -->
+<div class="menu-controller" id="menuController">
+  <button class="menu-trigger" onclick="toggleMenu(event)">
+    <span id="menuLabel">C. 비주얼 맵</span>
+    <span class="menu-chevron">▼</span>
+  </button>
+  <div class="menu-dropdown">
+    <button class="menu-item" data-demo="a" onclick="showDemo('a')">
+      A. 아코디언 가이드
+      <span class="menu-check">✓</span>
+    </button>
+    <button class="menu-item" data-demo="b" onclick="showDemo('b')">
+      B. 카드 리더
+      <span class="menu-check">✓</span>
+    </button>
+    <button class="menu-item active" data-demo="c" onclick="showDemo('c')">
+      C. 비주얼 맵
+      <span class="menu-check">✓</span>
+    </button>
+  </div>
+</div>
+<div class="menu-overlay" onclick="closeMenu()"></div>
+
+<!-- ═══════════════════════════════════════════
+     시안 A: 아코디언 가이드
+     ═══════════════════════════════════════════ -->
+<div id="demo-a" class="demo-container">
+  <div class="design-info">
+    <h2>A. 아코디언 가이드</h2>
+    <p class="subtitle">한 화면에서 모든 토픽을 탐색하는 싱글 페이지 구조. 전체 구조를 한눈에 파악하고, 관심 있는 항목만 펼쳐서 읽는 패턴. 읽기 진행률로 완독 동기를 부여합니다.</p>
+    <div class="design-tags">
+      <span class="design-tag">싱글 페이지</span>
+      <span class="design-tag">아코디언 확장</span>
+      <span class="design-tag">진행률 추적</span>
+      <span class="design-tag">자유 탐색</span>
+    </div>
+  </div>
+  <div class="comparison-note">행동 설계: 전체 목차 노출 → 인지 부하 감소 / 진행률 바 → 완독 동기 / 읽은 항목 표시 → 성취감</div>
+
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="phone-notch"></div>
+      <div class="phone-home-indicator"></div>
+      <div class="screen-content">
+        <div class="a-bg">
+          <!-- Status bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="6" width="4" height="12" rx="1"/><rect x="7" y="4" width="4" height="14" rx="1"/><rect x="13" y="2" width="4" height="16" rx="1"/><rect x="19" y="0" width="4" height="18" rx="1"/></svg>
+              <svg width="24" height="12" viewBox="0 0 27 13" fill="currentColor"><rect x="0" y="1" width="22" height="11" rx="2.5" stroke="currentColor" stroke-width="1" fill="none"/><rect x="23.5" y="4" width="2" height="5" rx="1" opacity="0.4"/><rect x="2" y="3" width="14" height="7" rx="1.5" fill="#34C759"/></svg>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="a-header">
+            <button class="a-back">
+              <svg class="icon-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+          </div>
+
+          <!-- Hero -->
+          <div class="a-hero">
+            <span class="a-hero-badge">ADHD 이해하기</span>
+            <h1>내 뇌를 알아가는 시간</h1>
+            <p>왜 그런지 이해하면,<br>자신을 탓하는 대신 방법을 찾을 수 있어요</p>
+          </div>
+
+          <!-- Progress -->
+          <div class="a-progress">
+            <div class="a-progress-bar">
+              <div class="a-progress-fill"></div>
+            </div>
+            <div class="a-progress-text">
+              <span>2/5 읽음</span>
+              <span>40%</span>
+            </div>
+          </div>
+
+          <!-- Accordion list -->
+          <div class="a-list">
+            <!-- Item 1 - Read & Open -->
+            <div class="a-item read open" onclick="toggleAccordion(this)">
+              <div class="a-item-header">
+                <div class="a-item-num">1</div>
+                <div class="a-item-title">대표적인 키워드</div>
+                <svg class="a-item-chevron icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="a-item-body">
+                <div class="a-item-content">
+                  <div class="a-section">
+                    <div class="a-section-title">전두엽</div>
+                    <div class="a-section-desc">계획, 감정 조절, 충동 억제, 목표 달성을 위한 판단 등 <strong>"집행기능"</strong>을 담당해요.</div>
+                    <div class="a-bullet">ADHD 뇌에서는 전두엽의 활성도가 상대적으로 낮다는 연구가 있어요</div>
+                    <div class="a-bullet">"머리로는 알지만 행동으로 옮기기 힘든" 이유가 바로 전두엽의 조절 능력과 관련</div>
+                  </div>
+                  <div class="a-section">
+                    <div class="a-section-title">도파민</div>
+                    <div class="a-section-desc">동기부여, 보상, 즐거움, 집중과 같은 <strong>"하고 싶다"</strong>는 마음을 만들어주는 신경전달물질이에요.</div>
+                    <div class="a-bullet">ADHD 뇌에서는 도파민이 적게 분비되거나 전달 효율이 떨어진다는 연구가 많아요</div>
+                    <div class="a-bullet">하기 싫은 일에 집중이 어렵고, 즉각적인 보상이 없는 일을 미루는 경향이 나타나요</div>
+                  </div>
+                  <div class="a-section">
+                    <div class="a-section-title">보상회로</div>
+                    <div class="a-section-desc">'재밌다', '보람 있다' 같은 감정을 만들어내며, 행동을 반복하도록 동기를 부여해요.</div>
+                    <div class="a-bullet">ADHD 뇌는 즉각적인 보상에는 민감하게 반응하지만, 지연된 보상에는 반응이 약해요</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 2 - Read -->
+            <div class="a-item read" onclick="toggleAccordion(this)">
+              <div class="a-item-header">
+                <div class="a-item-num">2</div>
+                <div class="a-item-title">수면이 어려운 이유</div>
+                <svg class="a-item-chevron icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="a-item-body">
+                <div class="a-item-content">
+                  <div class="a-section">
+                    <div class="a-section-title">쉽게 잠들지 못하는 이유</div>
+                    <div class="a-bullet">과잉 사고: 내일의 계획과 걱정이 머릿속에서 계속 맴돌아요</div>
+                    <div class="a-bullet">감각 예민: 작은 소리, 빛에도 민감하게 반응해요</div>
+                    <div class="a-bullet">멜라토닌 분비 지연: 수면 호르몬이 늦게 분비되어 생체 시계가 뒤로 밀려요</div>
+                  </div>
+                  <div class="a-section">
+                    <div class="a-section-title">밤과 아침은 연결되어 있어요</div>
+                    <div class="a-bullet">"밤에 잘 안 잠 → 일어나기 힘듦 → 낮에 피곤 → 밤에 또 못 잠" 악순환</div>
+                  </div>
+                  <div class="a-section">
+                    <div class="a-section-title">야간 각성 줄이기</div>
+                    <div class="a-bullet">자기 전 1시간은 전자기기를 멀리하세요</div>
+                    <div class="a-bullet">짧은 스트레칭, 명상, 따뜻한 차 한 잔 등 루틴을 만들어보세요</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="a-item" onclick="toggleAccordion(this)">
+              <div class="a-item-header">
+                <div class="a-item-num">3</div>
+                <div class="a-item-title">집안일 실행이 어려운 이유</div>
+                <svg class="a-item-chevron icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="a-item-body">
+                <div class="a-item-content">
+                  <div class="a-section">
+                    <div class="a-section-title">실행이 막막해지는 순간</div>
+                    <div class="a-bullet">계획 실행이 막막할 때: 어디서부터 시작해야 할지 감이 오지 않아요</div>
+                    <div class="a-bullet">할 일이 많아 복잡할 때: 우선순위를 정리하지 못해 멍해져요</div>
+                    <div class="a-bullet">감정적으로 압도될 때: 불안과 좌절감이 커져 몸이 굳어버려요</div>
+                  </div>
+                  <div class="a-section">
+                    <div class="a-section-title">실행을 돕는 방법</div>
+                    <div class="a-bullet">아주 작은 일부터 시작하기: 청소가 막막할 땐 일단 양말을 집는다거나</div>
+                    <div class="a-bullet">할 일 쪼개기: 큰 단위를 작은 단위로 쪼개면 뇌가 부담을 덜 느껴요</div>
+                    <div class="a-bullet">짧은 시간 정하기: '5분만 해보자'는 마음으로 시작하면 두려움이 줄어들어요</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 4 -->
+            <div class="a-item" onclick="toggleAccordion(this)">
+              <div class="a-item-header">
+                <div class="a-item-num">4</div>
+                <div class="a-item-title">온전한 휴식이 어려운 이유</div>
+                <svg class="a-item-chevron icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="a-item-body">
+                <div class="a-item-content">
+                  <div class="a-section">
+                    <div class="a-section-title">온전한 휴식이 어려운 이유</div>
+                    <div class="a-bullet">'일'에서 '쉼'으로 전환이 어려움: 머릿속에서 할 일이 계속 떠올라요</div>
+                    <div class="a-bullet">가만히 있는 게 불편함: 누워 있어도 스마트폰을 만지며 무언가를 해요</div>
+                    <div class="a-bullet">예민한 감각으로 쉽게 불편해짐: 작은 소음, 밝은 불빛에도 방해받아요</div>
+                  </div>
+                  <div class="a-section">
+                    <div class="a-section-title">편안한 휴식을 만드는 방법</div>
+                    <div class="a-bullet">쉬는 것도 잘해야 한다는 강박 내려놓기</div>
+                    <div class="a-bullet">활동적 휴식 선택하기: 산책, 스트레칭, 그림 그리기</div>
+                    <div class="a-bullet">해야 할 일 잠깐 내려놓기: 적어두면 마음이 가벼워져요</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Item 5 -->
+            <div class="a-item" onclick="toggleAccordion(this)">
+              <div class="a-item-header">
+                <div class="a-item-num">5</div>
+                <div class="a-item-title">신경 다양성에 대해</div>
+                <svg class="a-item-chevron icon-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="a-item-body">
+                <div class="a-item-content">
+                  <div class="a-section">
+                    <div class="a-section-title">신경다양성의 의미</div>
+                    <div class="a-section-desc">사람들이 각기 다른 방식으로 생각하고 느끼고 행동한다는 사실을 인정하고 존중하자는 생각이에요.</div>
+                    <div class="a-bullet">안경을 쓰는 사람이 "고쳐야 하는 결함"이 아닌 것처럼, 뇌가 다르게 발달한 것도 그 자체로 존중받아야 해요</div>
+                  </div>
+                  <div class="a-section">
+                    <div class="a-section-title">신경 다양성의 가치</div>
+                    <div class="a-bullet">ADHD인들도 독창적이고 창의적인 능력을 발휘할 수 있어요</div>
+                    <div class="a-bullet">다른 방식으로 정보를 처리하고 문제를 해결하는 것은 사회 전체의 다양성을 넓혀줘요</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     시안 B: 카드 스와이프 리더
+     ═══════════════════════════════════════════ -->
+<div id="demo-b" class="demo-container">
+  <div class="design-info">
+    <h2>B. 카드 리더</h2>
+    <p class="subtitle">챕터별 카드 네비게이션. ADHD 특성상 긴 스크롤 대신 한 번에 하나의 토픽에 집중하는 구조. 이전/다음 버튼으로 순차 탐색하며, 도트 인디케이터로 전체 진행 상황을 파악합니다.</p>
+    <div class="design-tags">
+      <span class="design-tag">챕터 네비게이션</span>
+      <span class="design-tag">집중 읽기</span>
+      <span class="design-tag">단계별 진행</span>
+      <span class="design-tag">읽기 시간 표시</span>
+    </div>
+  </div>
+  <div class="comparison-note">행동 설계: 한 토픽씩 집중 → 인지 과부하 방지 / 큰 챕터 번호 → 진행감 / 읽기 시간 표시 → 예측 가능성 제공</div>
+
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="phone-notch"></div>
+      <div class="phone-home-indicator"></div>
+      <div class="screen-content">
+        <div class="b-bg">
+          <!-- Status bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="6" width="4" height="12" rx="1"/><rect x="7" y="4" width="4" height="14" rx="1"/><rect x="13" y="2" width="4" height="16" rx="1"/><rect x="19" y="0" width="4" height="18" rx="1"/></svg>
+              <svg width="24" height="12" viewBox="0 0 27 13" fill="currentColor"><rect x="0" y="1" width="22" height="11" rx="2.5" stroke="currentColor" stroke-width="1" fill="none"/><rect x="23.5" y="4" width="2" height="5" rx="1" opacity="0.4"/><rect x="2" y="3" width="14" height="7" rx="1.5" fill="#34C759"/></svg>
+            </div>
+          </div>
+
+          <!-- Nav header -->
+          <div class="b-nav-header">
+            <button class="a-back">
+              <svg class="icon-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <span class="b-nav-title">ADHD 이해하기</span>
+            <div style="width: 36px;"></div>
+          </div>
+
+          <!-- Chapter indicator -->
+          <div class="b-chapter-indicator">
+            <div class="b-chapter-num">02</div>
+            <div class="b-chapter-info">
+              <div class="b-chapter-label">Chapter</div>
+              <div class="b-chapter-title">수면이 어려운 이유</div>
+            </div>
+          </div>
+
+          <!-- Reading time -->
+          <div class="b-reading-time">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>읽기 약 3분</span>
+          </div>
+
+          <!-- Dots -->
+          <div class="b-dots">
+            <div class="b-dot read"></div>
+            <div class="b-dot active"></div>
+            <div class="b-dot"></div>
+            <div class="b-dot"></div>
+            <div class="b-dot"></div>
+          </div>
+
+          <!-- Card -->
+          <div class="b-card-area">
+            <div class="b-card">
+              <div class="b-card-intro">
+                ADHD인의 뇌는 밤이 되면 꺼져야 할 때에도 과도하게 활성화되는 경우가 많아요.
+              </div>
+
+              <div class="b-card-section">
+                <div class="b-card-section-header">
+                  <div class="b-card-section-dot"></div>
+                  <div class="b-card-section-title">쉽게 잠들지 못하는 이유</div>
+                </div>
+                <div class="b-card-section-body">
+                  <strong>과잉 사고</strong>: 내일의 계획과 걱정이 머릿속에서 계속 맴돌아요. 뇌가 "쉬어도 된다"는 신호를 받지 못하는 거죠.<br><br>
+                  <strong>감각 예민</strong>: 주변이 조금만 시끄럽거나 빛이 새어 들어오면 쉽게 깨거나 잠들지 못해요.<br><br>
+                  <strong>멜라토닌 분비 지연</strong>: 수면을 유도하는 호르몬이 늦게 분비되어 생체 시계가 뒤로 밀려 있어요.
+                </div>
+              </div>
+
+              <div class="b-card-section">
+                <div class="b-card-section-header">
+                  <div class="b-card-section-dot"></div>
+                  <div class="b-card-section-title">아침에 일어나기 힘든 이유</div>
+                </div>
+                <div class="b-card-section-body">
+                  <strong>멜라토닌 분비 이상</strong>: 밤에 늦게 분비된 멜라토닌이 아침에도 여전히 남아 있어, 뇌는 "아직 잘 시간"이라고 착각해요.<br><br>
+                  <strong>도파민 부족</strong>: "일어나서 뭘 해야겠다"는 동기부여가 약해, 눈을 뜨고도 몸을 움직이기가 힘들어요.
+                </div>
+              </div>
+
+              <div class="b-card-section">
+                <div class="b-card-section-header">
+                  <div class="b-card-section-dot"></div>
+                  <div class="b-card-section-title">밤과 아침은 연결되어 있어요</div>
+                </div>
+                <div class="b-card-section-body">
+                  밤에 과도하게 깨어 있는 만큼, 아침에 일어나기 어려운 것은 자연스러운 결과예요.<br><br>
+                  "밤에 잘 안 잠 → 일어나기 힘듦 → 낮에 피곤 → 밤에 또 못 잠"이라는 악순환이 반복돼요.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom nav -->
+          <div class="b-bottom-nav">
+            <button class="b-nav-btn b-nav-prev">이전</button>
+            <button class="b-nav-btn b-nav-next">다음 챕터</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     시안 C: 비주얼 맵 + 바텀시트
+     ═══════════════════════════════════════════ -->
+<div id="demo-c" class="demo-container active">
+  <div class="design-info">
+    <h2>C. 비주얼 맵 + 바텀시트</h2>
+    <p class="subtitle">뇌를 중심으로 5개 토픽이 방사형으로 배치된 인터랙티브 맵. 순서 없이 자유롭게 탐색하며, 선택한 토픽이 바텀시트로 올라옵니다. 시각적 흥미를 유발하여 탐색 동기를 높입니다.</p>
+    <div class="design-tags">
+      <span class="design-tag">비주얼 내비게이션</span>
+      <span class="design-tag">바텀시트 상세</span>
+      <span class="design-tag">자유 탐색 순서</span>
+      <span class="design-tag">시각적 흥미 유발</span>
+    </div>
+  </div>
+  <div class="comparison-note">행동 설계: 시각적 허브 → 호기심 자극 / 비순차 탐색 → ADHD 자유로운 사고 방식 존중 / 점선 연결 → 토픽 간 관계 암시</div>
+
+  <div class="phone-frame">
+    <div class="phone-screen">
+      <div class="phone-notch"></div>
+      <div class="phone-home-indicator"></div>
+      <div class="screen-content">
+        <div class="c-bg">
+          <!-- Status bar -->
+          <div class="status-bar">
+            <span class="status-time">9:41</span>
+            <div class="status-icons">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="6" width="4" height="12" rx="1"/><rect x="7" y="4" width="4" height="14" rx="1"/><rect x="13" y="2" width="4" height="16" rx="1"/><rect x="19" y="0" width="4" height="18" rx="1"/></svg>
+              <svg width="24" height="12" viewBox="0 0 27 13" fill="currentColor"><rect x="0" y="1" width="22" height="11" rx="2.5" stroke="currentColor" stroke-width="1" fill="none"/><rect x="23.5" y="4" width="2" height="5" rx="1" opacity="0.4"/><rect x="2" y="3" width="14" height="7" rx="1.5" fill="#34C759"/></svg>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="c-header">
+            <button class="a-back">
+              <svg class="icon-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div style="width: 36px;"></div>
+          </div>
+
+          <!-- Title -->
+          <div class="c-title-area">
+            <h1>ADHD 이해하기</h1>
+            <p>토픽을 눌러 자유롭게 탐색하세요</p>
+          </div>
+
+          <!-- Brain map -->
+          <div class="c-brain-map">
+            <!-- Connection lines -->
+            <svg class="c-connections" viewBox="0 0 320 320">
+              <line x1="160" y1="88" x2="160" y2="130"/>
+              <line x1="240" y1="140" x2="190" y2="150"/>
+              <line x1="230" y1="230" x2="190" y2="180"/>
+              <line x1="90" y1="230" x2="130" y2="180"/>
+              <line x1="80" y1="140" x2="130" y2="150"/>
+            </svg>
+
+            <!-- Center brain -->
+            <div class="c-brain-center">
+              <div class="c-brain-pulse"></div>
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--primary-70)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 2a4.5 4.5 0 0 0-4.13 6.3A5 5 0 0 0 2 13a4.98 4.98 0 0 0 3.13 4.63A4.5 4.5 0 0 0 12 21.5a4.5 4.5 0 0 0 6.87-3.87A4.98 4.98 0 0 0 22 13a5 5 0 0 0-3.37-4.7A4.5 4.5 0 0 0 14.5 2a4.5 4.5 0 0 0-5 0"/>
+                <path d="M12 2v20"/>
+              </svg>
+            </div>
+
+            <!-- Topic nodes -->
+            <div class="c-node c-node-1" onclick="selectNode(this, 1)">
+              <div class="c-node-circle">
+                <svg class="c-node-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              </div>
+              <span class="c-node-label">대표 키워드</span>
+            </div>
+
+            <div class="c-node c-node-2 selected" onclick="selectNode(this, 2)">
+              <div class="c-node-circle">
+                <svg class="c-node-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12l4-4"/><path d="M2 12h2"/><path d="M12 2v2"/><path d="M20 12h2"/></svg>
+              </div>
+              <span class="c-node-label">수면</span>
+            </div>
+
+            <div class="c-node c-node-3" onclick="selectNode(this, 3)">
+              <div class="c-node-circle">
+                <svg class="c-node-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              </div>
+              <span class="c-node-label">집안일</span>
+            </div>
+
+            <div class="c-node c-node-4" onclick="selectNode(this, 4)">
+              <div class="c-node-circle">
+                <svg class="c-node-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M2 8c0-2.2.7-4.3 2-6"/><path d="M22 8a10 10 0 0 0-2-6"/></svg>
+              </div>
+              <span class="c-node-label">휴식</span>
+            </div>
+
+            <div class="c-node c-node-5" onclick="selectNode(this, 5)">
+              <div class="c-node-circle">
+                <svg class="c-node-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <span class="c-node-label">신경다양성</span>
+            </div>
+          </div>
+
+          <!-- Bottom sheet -->
+          <div class="c-sheet">
+            <div class="c-sheet-handle"></div>
+            <div class="c-sheet-title">수면이 어려운 이유</div>
+            <div class="c-sheet-subtitle">ADHD와 수면의 관계</div>
+
+            <div class="c-sheet-section">
+              <div class="c-sheet-section-title">쉽게 잠들지 못하는 이유</div>
+              <div class="c-sheet-text">
+                ADHD인의 뇌는 밤이 되면 꺼져야 할 때에도 과도하게 활성화돼요.
+                <span class="c-sheet-highlight">과잉 사고</span>로 내일의 계획과 걱정이 머릿속에서 계속 맴돌고,
+                <span class="c-sheet-highlight">감각 예민</span>으로 작은 자극에도 쉽게 깨요.
+              </div>
+            </div>
+
+            <div class="c-sheet-section">
+              <div class="c-sheet-section-title">밤과 아침의 악순환</div>
+              <div class="c-sheet-text">
+                밤에 잘 안 잠 → 일어나기 힘듦 → 낮에 피곤 → 밤에 또 못 잠.
+                <span class="c-sheet-highlight">멜라토닌 분비 지연</span>이 이 악순환의 핵심 원인이에요.
+              </div>
+            </div>
+
+            <div class="c-sheet-section">
+              <div class="c-sheet-section-title">야간 각성 줄이기</div>
+              <div class="c-sheet-text">
+                자기 전 1시간은 전자기기를 멀리하고, 짧은 스트레칭이나 따뜻한 차 한 잔으로 뇌에 "잘 준비"를 알려주세요.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     JavaScript
+     ═══════════════════════════════════════════ -->
+<script>
+  const menuLabels = { a: 'A. 아코디언 가이드', b: 'B. 카드 리더', c: 'C. 비주얼 맵' };
+
+  function showDemo(id) {
+    document.querySelectorAll('.demo-container').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+    document.getElementById('demo-' + id).classList.add('active');
+    document.querySelector('.menu-item[data-demo="' + id + '"]').classList.add('active');
+    document.getElementById('menuLabel').textContent = menuLabels[id];
+    closeMenu();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleMenu(e) {
+    e.stopPropagation();
+    document.getElementById('menuController').classList.toggle('open');
+  }
+
+  function closeMenu() {
+    document.getElementById('menuController').classList.remove('open');
+  }
+
+  function toggleAccordion(item) {
+    const wasOpen = item.classList.contains('open');
+    // Close all
+    item.parentElement.querySelectorAll('.a-item').forEach(i => i.classList.remove('open'));
+    // Toggle clicked
+    if (!wasOpen) item.classList.add('open');
+  }
+
+  function selectNode(node, index) {
+    document.querySelectorAll('.c-node').forEach(n => n.classList.remove('selected'));
+    node.classList.add('selected');
+
+    const contents = {
+      1: {
+        title: '대표적인 키워드',
+        subtitle: 'ADHD 뇌의 핵심 개념들',
+        sections: [
+          { title: '전두엽', text: '계획, 감정 조절, 충동 억제를 담당하는 <span class="c-sheet-highlight">"집행기능"</span>의 중심. ADHD 뇌에서는 활성도가 상대적으로 낮아, "머리로는 알지만 행동으로 옮기기 힘든" 상태가 돼요.' },
+          { title: '도파민과 보상회로', text: '<span class="c-sheet-highlight">"하고 싶다"</span>는 마음을 만드는 신경전달물질. ADHD 뇌는 즉각적인 보상에는 민감하지만, 지연된 보상에는 반응이 약해 할 일을 미루게 돼요.' },
+          { title: '실행기능', text: '목표를 세우고 계획을 짜고 우선순위를 정하는 역할. ADHD는 단순히 주의력 부족이 아니라, <span class="c-sheet-highlight">뇌의 관리 시스템이 원활하지 않은 상태</span>예요.' }
+        ]
+      },
+      2: {
+        title: '수면이 어려운 이유',
+        subtitle: 'ADHD와 수면의 관계',
+        sections: [
+          { title: '쉽게 잠들지 못하는 이유', text: 'ADHD인의 뇌는 밤에도 과도하게 활성화돼요. <span class="c-sheet-highlight">과잉 사고</span>로 걱정이 맴돌고, <span class="c-sheet-highlight">감각 예민</span>으로 작은 자극에도 깨요.' },
+          { title: '밤과 아침의 악순환', text: '밤에 잘 안 잠 → 일어나기 힘듦 → 낮에 피곤 → 밤에 또 못 잠. <span class="c-sheet-highlight">멜라토닌 분비 지연</span>이 핵심 원인이에요.' },
+          { title: '야간 각성 줄이기', text: '자기 전 1시간은 전자기기를 멀리하고, 짧은 스트레칭이나 따뜻한 차로 뇌에 "잘 준비"를 알려주세요.' }
+        ]
+      },
+      3: {
+        title: '집안일 실행이 어려운 이유',
+        subtitle: '실행 기능과 일상의 관계',
+        sections: [
+          { title: '실행이 막막해지는 순간', text: '어디서부터 시작할지 감이 안 오거나, 할 일이 많아 <span class="c-sheet-highlight">우선순위를 정리하지 못해</span> 멍해져요. 감정적 압도감에 몸이 굳기도 해요.' },
+          { title: '뇌 과학적 이유', text: '<span class="c-sheet-highlight">전두엽 기능 저하</span>로 계획→실행 전환이 어렵고, <span class="c-sheet-highlight">도파민 시스템 문제</span>로 재미없는 일의 시작이 특히 힘들어요.' },
+          { title: '실행을 돕는 방법', text: '아주 작은 일부터 시작하기, 할 일 쪼개기, 5분만 해보기. 작은 성공이 다음 행동의 연료가 돼요.' }
+        ]
+      },
+      4: {
+        title: '온전한 휴식이 어려운 이유',
+        subtitle: '쉬는 것도 기술이에요',
+        sections: [
+          { title: '왜 쉬기가 어려울까', text: '머릿속에서 할 일이 계속 떠오르고, 가만히 있으면 오히려 <span class="c-sheet-highlight">불편하고 불안</span>해져요. 쉴 때도 자극을 찾게 되죠.' },
+          { title: '편안한 휴식 만들기', text: '"잘 쉬어야 한다"는 강박 내려놓기. <span class="c-sheet-highlight">활동적 휴식</span>(산책, 스트레칭)도 좋은 방법이에요.' }
+        ]
+      },
+      5: {
+        title: '신경 다양성에 대해',
+        subtitle: '다름을 존중하는 관점',
+        sections: [
+          { title: '신경다양성의 의미', text: '사람들이 각기 다른 방식으로 생각하고 행동한다는 것을 <span class="c-sheet-highlight">인정하고 존중</span>하자는 개념이에요.' },
+          { title: '신경 다양성의 가치', text: 'ADHD인들의 <span class="c-sheet-highlight">독창적이고 창의적인 능력</span>은 사회 전체의 다양성과 창의성을 넓혀줘요.' },
+          { title: '존중과 지원', text: '신경다양성이란 <span class="c-sheet-highlight">"다름을 존중하자"</span>는 외침이에요. 뇌의 차이는 결함이 아니라 사람다움의 또 다른 모습이에요.' }
+        ]
+      }
+    };
+
+    const data = contents[index];
+    const sheet = document.querySelector('.c-sheet');
+    sheet.querySelector('.c-sheet-title').textContent = data.title;
+    sheet.querySelector('.c-sheet-subtitle').textContent = data.subtitle;
+
+    const sectionsHtml = data.sections.map(s => `
+      <div class="c-sheet-section">
+        <div class="c-sheet-section-title">${s.title}</div>
+        <div class="c-sheet-text">${s.text}</div>
+      </div>
+    `).join('');
+
+    // Remove old sections and add new ones
+    sheet.querySelectorAll('.c-sheet-section').forEach(s => s.remove());
+    sheet.insertAdjacentHTML('beforeend', sectionsHtml);
+  }
+</script>
+
+</body>
+</html>

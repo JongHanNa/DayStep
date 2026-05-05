@@ -26,6 +26,8 @@ import {
   Rocket,
 } from 'lucide-react-native';
 import Config from 'react-native-config';
+import {useTheme} from '@/theme';
+import {useDailyCheckIn} from '@/hooks/useDailyCheckIn';
 
 const SUPABASE_URL = Config.SUPABASE_URL ?? '';
 const MCP_AUTH_URL = `${SUPABASE_URL}/functions/v1/mcp-server/auth/init`;
@@ -52,6 +54,7 @@ interface StepProps {
 }
 
 function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: StepProps) {
+  const {primaryColor} = useTheme();
   return (
     <AnimatedCard enterDelay={stepNumber * 100}>
       <TouchableOpacity
@@ -59,8 +62,8 @@ function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: 
         className="flex-row items-center justify-between"
         activeOpacity={0.7}>
         <View className="flex-row items-center flex-1">
-          <View className="w-8 h-8 rounded-full bg-blue-100 items-center justify-center mr-3">
-            <Text className="text-blue-600 font-bold text-sm">{stepNumber}</Text>
+          <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{backgroundColor: primaryColor + '20'}}>
+            <Text className="font-bold text-sm" style={{color: primaryColor}}>{stepNumber}</Text>
           </View>
           <View className="flex-row items-center flex-1">
             {icon}
@@ -81,6 +84,8 @@ function StepAccordion({stepNumber, title, icon, expanded, onToggle, children}: 
 }
 
 export default function GuideScreen() {
+  useDailyCheckIn('guide');
+  const {primaryColor} = useTheme();
   const [expandedStep, setExpandedStep] = useState<number | null>(1);
   const [copiedConfig, setCopiedConfig] = useState(false);
 
@@ -112,14 +117,14 @@ export default function GuideScreen() {
         <Animated.View
           entering={FadeInDown.delay(50).duration(400)}
           className="px-4 mb-4">
-          <View className="bg-blue-50 rounded-2xl p-4">
+          <View className="rounded-2xl p-4" style={{backgroundColor: primaryColor + '10'}}>
             <View className="flex-row items-center mb-2">
-              <Sparkles size={20} color="#3B82F6" />
-              <Text className="text-sm font-semibold text-blue-700 ml-2">
+              <Sparkles size={20} color={primaryColor} />
+              <Text className="text-sm font-semibold ml-2" style={{color: primaryColor}}>
                 DayStep + Claude Desktop
               </Text>
             </View>
-            <Text className="text-sm text-blue-600 leading-5">
+            <Text className="text-sm leading-5" style={{color: primaryColor}}>
               Claude Desktop에서 DayStep의 할일, 프로젝트, 메모를 직접 관리할 수
               있습니다. MCP(Model Context Protocol)를 통해 연결합니다.
             </Text>
@@ -131,7 +136,7 @@ export default function GuideScreen() {
           <StepAccordion
             stepNumber={1}
             title="MCP 토큰 발급"
-            icon={<Key size={18} color="#3B82F6" />}
+            icon={<Key size={18} color={primaryColor} />}
             expanded={expandedStep === 1}
             onToggle={() => toggleStep(1)}>
             <Text className="text-sm text-gray-600 mb-4 leading-5">
@@ -140,7 +145,8 @@ export default function GuideScreen() {
             </Text>
             <TouchableOpacity
               onPress={handleOpenAuth}
-              className="bg-blue-500 rounded-xl py-3 px-4 flex-row items-center justify-center">
+              style={{backgroundColor: primaryColor}}
+              className="rounded-xl py-3 px-4 flex-row items-center justify-center">
               <ExternalLink size={16} color="#FFFFFF" />
               <Text className="text-white font-semibold ml-2">
                 토큰 발급 페이지 열기
@@ -154,7 +160,7 @@ export default function GuideScreen() {
           <StepAccordion
             stepNumber={2}
             title="Claude Desktop 설정"
-            icon={<Laptop size={18} color="#3B82F6" />}
+            icon={<Laptop size={18} color={primaryColor} />}
             expanded={expandedStep === 2}
             onToggle={() => toggleStep(2)}>
             <Text className="text-sm text-gray-600 mb-2 leading-5">
@@ -200,7 +206,7 @@ export default function GuideScreen() {
           <StepAccordion
             stepNumber={3}
             title="연결 테스트"
-            icon={<Rocket size={18} color="#3B82F6" />}
+            icon={<Rocket size={18} color={primaryColor} />}
             expanded={expandedStep === 3}
             onToggle={() => toggleStep(3)}>
             <Text className="text-sm text-gray-600 mb-4 leading-5">
@@ -214,7 +220,7 @@ export default function GuideScreen() {
                 '오늘 해야 할 중요한 일을 정리해줘',
               ].map((prompt, i) => (
                 <View key={i} className="flex-row items-start mb-2">
-                  <Text className="text-blue-500 mr-2 mt-0.5">💬</Text>
+                  <Text className="mr-2 mt-0.5" style={{color: primaryColor}}>💬</Text>
                   <Text className="text-sm text-gray-700 flex-1 italic">
                     "{prompt}"
                   </Text>

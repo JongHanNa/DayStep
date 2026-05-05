@@ -1,0 +1,137 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: 9:41
+    - generic [ref=e5]: ●●●●● · LTE · 92%
+  - banner [ref=e6]:
+    - generic [ref=e7]: FEEDBACK · YOUR VOICE
+    - heading "우리가 고쳐야 할 것을 알려주세요." [level=1] [ref=e8]:
+      - text: 우리가 고쳐야 할 것을
+      - emphasis [ref=e9]: 알려주세요.
+    - paragraph [ref=e10]: 당신의 게시글은 오직 당신과 DayStep 팀만 볼 수 있어요. 다른 분들의 글은 비공개로 표시됩니다.
+  - generic [ref=e11]:
+    - button "All" [ref=e12] [cursor=pointer]
+    - button "🐛 Bug" [ref=e13] [cursor=pointer]
+    - button "✨ Feature" [ref=e14] [cursor=pointer]
+    - button "Mine" [ref=e15] [cursor=pointer]
+  - generic [ref=e16]:
+    - generic [ref=e17]:
+      - generic [ref=e18]: 02건
+      - generic [ref=e19]: 내 리포트
+    - generic [ref=e20]:
+      - generic [ref=e21]: 01답변
+      - generic [ref=e22]: 팀 답변
+    - generic [ref=e23]:
+      - generic [ref=e24]: 10표
+      - generic [ref=e25]: 받은 공감
+  - generic [ref=e26]:
+    - article [ref=e27] [cursor=pointer]:
+      - generic [ref=e28]:
+        - generic [ref=e29]: 🐛 Bug
+        - generic [ref=e30]: 2시간 전
+      - generic [ref=e31]: Triaged
+      - heading "플래너에서 주간 스트립 스크롤이 끊깁니다" [level=3] [ref=e33]
+      - paragraph [ref=e34]: 주간 뷰에서 좌우로 넘길 때 가끔 두 프레임 정도 끊기는 느낌이 있어요. iPhone 13, iOS 17.4. 재현율은 30% 정도.
+      - generic [ref=e35]:
+        - generic [ref=e36]: ▲ 3
+        - generic [ref=e37]: 💬 1
+        - generic [ref=e38]: · TEAM REPLIED
+    - article [ref=e39] [cursor=pointer]:
+      - generic [ref=e40]:
+        - generic [ref=e41]: ✨ Feature
+        - generic [ref=e42]: 5시간 전
+      - generic [ref=e43]: Open
+      - heading "• • • • • • • • • • • • • • • • • •" [level=3]
+      - paragraph: • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •
+      - generic [ref=e45]:
+        - generic [ref=e46]: ▲ 12
+        - generic [ref=e47]: 💬 4
+      - generic [ref=e48]:
+        - generic [ref=e49]: 🔒
+        - text: 비공개
+        - emphasis [ref=e50]: · 작성자만 열람
+    - article [ref=e51] [cursor=pointer]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: 🐛 Bug
+        - generic [ref=e54]: 어제
+      - generic [ref=e55]: Shipped
+      - heading "• • • • • • • • • • • • • • • • • •" [level=3]
+      - paragraph: • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •
+      - generic [ref=e57]:
+        - generic [ref=e58]: ▲ 1
+        - generic [ref=e59]: 💬 2
+        - generic [ref=e60]: · TEAM REPLIED
+      - generic [ref=e61]:
+        - generic [ref=e62]: 🔒
+        - text: 비공개
+        - emphasis [ref=e63]: · 작성자만 열람
+    - article [ref=e64] [cursor=pointer]:
+      - generic [ref=e65]:
+        - generic [ref=e66]: ✨ Feature
+        - generic [ref=e67]: 3일 전
+      - generic [ref=e68]: Under review
+      - heading "포커스 모드에서 알림 음소거 강도 단계 조절" [level=3] [ref=e70]
+      - paragraph [ref=e71]: 포커스 중에도 가족/긴급 연락은 받고 싶어요. 3단계 정도로 나눠서 — 전부차단 / 즐겨찾기만 / 전부허용 — 선택할 수 있으면 좋겠습니다.
+      - generic [ref=e72]:
+        - generic [ref=e73]: ▲ 7
+        - generic [ref=e74]: 💬 0
+    - article [ref=e75] [cursor=pointer]:
+      - generic [ref=e76]:
+        - generic [ref=e77]: 🐛 Bug
+        - generic [ref=e78]: 4일 전
+      - generic [ref=e79]: Open
+      - heading "• • • • • • • • • • • • • • • • • •" [level=3]
+      - paragraph: • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •
+      - generic [ref=e81]:
+        - generic [ref=e82]: ▲ 9
+        - generic [ref=e83]: 💬 3
+      - generic [ref=e84]:
+        - generic [ref=e85]: 🔒
+        - text: 비공개
+        - emphasis [ref=e86]: · 작성자만 열람
+    - article [ref=e87] [cursor=pointer]:
+      - generic [ref=e88]:
+        - generic [ref=e89]: ✨ Feature
+        - generic [ref=e90]: 지난주
+      - generic [ref=e91]: Won't fix
+      - heading "• • • • • • • • • • • • • • • • • •" [level=3]
+      - paragraph: • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •
+      - generic [ref=e93]:
+        - generic [ref=e94]: ▲ 2
+        - generic [ref=e95]: 💬 5
+        - generic [ref=e96]: · TEAM REPLIED
+      - generic [ref=e97]:
+        - generic [ref=e98]: 🔒
+        - text: 비공개
+        - emphasis [ref=e99]: · 작성자만 열람
+    - article [ref=e100] [cursor=pointer]:
+      - generic [ref=e101]:
+        - generic [ref=e102]: ✨ Feature
+        - generic [ref=e103]: 지난주
+      - generic [ref=e104]: Under review
+      - heading "• • • • • • • • • • • • • • • • • •" [level=3]
+      - paragraph: • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •
+      - generic [ref=e106]:
+        - generic [ref=e107]: ▲ 18
+        - generic [ref=e108]: 💬 6
+        - generic [ref=e109]: · TEAM REPLIED
+      - generic [ref=e110]:
+        - generic [ref=e111]: 🔒
+        - text: 비공개
+        - emphasis [ref=e112]: · 작성자만 열람
+    - article [ref=e113] [cursor=pointer]:
+      - generic [ref=e114]:
+        - generic [ref=e115]: 🐛 Bug
+        - generic [ref=e116]: 2주 전
+      - generic [ref=e117]: Triaged
+      - heading "• • • • • • • • • • • • • • • • • •" [level=3]
+      - paragraph: • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •
+      - generic [ref=e119]:
+        - generic [ref=e120]: ▲ 4
+        - generic [ref=e121]: 💬 1
+      - generic [ref=e122]:
+        - generic [ref=e123]: 🔒
+        - text: 비공개
+        - emphasis [ref=e124]: · 작성자만 열람
+  - button "＋ 새 피드백" [ref=e125] [cursor=pointer]:
+    - generic [ref=e126]: ＋
+    - text: 새 피드백

@@ -174,6 +174,24 @@ export const featureColors = {
 } as const;
 
 // ============================================
+// Fixed Colors (테마 무관, 시맨틱 구별 필요)
+// ============================================
+export const fixedColors = {
+  premiumGold: '#F59E0B',
+  priorityImportance: '#F59E0B',
+  priorityUrgency: '#3B82F6',
+  priorityReluctant: '#EF4444',
+  statusInProgress: '#3B82F6',
+  statusOnHold: '#F59E0B',
+  statusCompleted: '#22C55E',
+  statusNotStarted: '#6B7280',
+  calendarSunday: '#EF4444',
+  calendarSaturday: '#3B82F6',
+  contactUrgencyHigh: '#EF4444',
+  contactUrgencyMedium: '#F59E0B',
+} as const;
+
+// ============================================
 // Priority Colors
 // ============================================
 export const priorityColors = {

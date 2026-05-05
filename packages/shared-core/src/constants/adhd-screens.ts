@@ -12,6 +12,8 @@ import {
   PenLine,
   MessageCircle,
   Heart,
+  Moon,
+  Brain,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -23,7 +25,7 @@ import {
 export type ADHDGroupId = 'memory' | 'care' | 'project';
 
 /** 라우트 그룹 ID (실제 URL 경로에 사용되는 그룹) */
-export type ADHDRouteGroupId = 'dashboard' | 'project' | 'fuel' | 'relationship';
+export type ADHDRouteGroupId = 'dashboard' | 'project' | 'motivation' | 'relationship';
 
 export type ADHDSubViewId =
   | 'banner'
@@ -38,7 +40,9 @@ export type ADHDSubViewId =
   | 'organize'
   | 'record'
   | 'news'
-  | 'gratitude';
+  | 'gratitude'
+  | 'sleepRecord'
+  | 'adhdUnderstanding';
 
 export interface ADHDScreenHelp {
   title: string;
@@ -229,6 +233,30 @@ export const SCREEN_REGISTRY: Record<ADHDSubViewId, ScreenDefinition> = {
     icon: BookOpen,
     componentPath: 'screens/guide/GuideScreen',
   },
+  sleepRecord: {
+    id: 'sleepRecord',
+    label: '수면 기록하기',
+    icon: Moon,
+    componentPath: 'screens/SleepRecordScreen',
+    help: {
+      title: '수면 기록하기',
+      difficulty:
+        '시간 감각 왜곡(Time Blindness)과 수면 위생 관리 어려움. 불규칙한 수면 패턴이 ADHD 증상을 악화시킵니다.',
+      help: '매일 취침·기상 시간을 기록하고 월간 패턴을 시각화 → 수면 습관 개선의 첫 걸음!',
+    },
+  },
+  adhdUnderstanding: {
+    id: 'adhdUnderstanding',
+    label: 'ADHD 이해하기',
+    icon: Brain,
+    componentPath: 'screens/ADHDUnderstandingScreen',
+    help: {
+      title: 'ADHD 이해하기',
+      difficulty:
+        'ADHD에 대한 이해 부족. 왜 그런지 모르면 자신을 탓하게 됩니다.',
+      help: '뇌 과학 기반으로 ADHD 특성을 이해하고, 자기 이해를 통해 실천 가능한 전략을 찾아보세요!',
+    },
+  },
 };
 
 // ============================================================================
@@ -245,12 +273,12 @@ export const UI_GROUPS: UIGroupConfig[] = [
   {
     id: 'care',
     title: '일상 돌보기',
-    screenIds: ['gratitude', 'timeline', 'activity'],
+    screenIds: ['gratitude', 'timeline', 'activity', 'sleepRecord'],
   },
   {
     id: 'project',
     title: '계획 세우기',
-    screenIds: ['banner', 'execute', 'organize', 'ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['banner', 'execute', 'organize', 'ai-plan', 'ai-chat', 'guide', 'adhdUnderstanding'],
   },
 ];
 
@@ -265,8 +293,8 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
     screenIds: ['banner', 'contact', 'activity'],
   },
   {
-    id: 'fuel',
-    basePath: '/adhd/fuel',
+    id: 'motivation',
+    basePath: '/adhd/motivation',
     screenIds: ['motivation', 'timeline', 'execute', 'organize'],
   },
   {
@@ -277,7 +305,7 @@ export const ROUTE_GROUPS: RouteGroupConfig[] = [
   {
     id: 'project',
     basePath: '/adhd/project',
-    screenIds: ['ai-plan', 'ai-chat', 'guide'],
+    screenIds: ['ai-plan', 'ai-chat', 'guide', 'adhdUnderstanding'],
   },
 ];
 
@@ -295,7 +323,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'motivation',
         label: '원동력 새기기',
         icon: Lightbulb,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '원동력 새기기',
           difficulty:
@@ -358,7 +386,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'timeline',
         label: '달력',
         icon: Calendar,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '달력',
           difficulty:
@@ -371,6 +399,12 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         label: '활동 살펴보기',
         icon: BarChart3,
         isPro: true,
+        routeGroup: 'dashboard',
+      },
+      {
+        id: 'sleepRecord',
+        label: '수면 기록하기',
+        icon: Moon,
         routeGroup: 'dashboard',
       },
     ],
@@ -389,7 +423,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'execute',
         label: '집중 실행하기',
         icon: Target,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '집중 실행하기',
           difficulty:
@@ -401,7 +435,7 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'organize',
         label: '할일 정리하기',
         icon: Inbox,
-        routeGroup: 'fuel',
+        routeGroup: 'motivation',
         help: {
           title: '할일 정리하기',
           difficulty:
@@ -425,6 +459,12 @@ export const ADHD_SCREENS: Record<ADHDGroupId, ADHDScreenGroup> = {
         id: 'guide',
         label: '사용법 배우기',
         icon: BookOpen,
+        routeGroup: 'project',
+      },
+      {
+        id: 'adhdUnderstanding',
+        label: 'ADHD 이해하기',
+        icon: Brain,
         routeGroup: 'project',
       },
     ],
@@ -505,7 +545,7 @@ export const getGroupHelpContent = (
 
 /**
  * 라우트 그룹별로 화면 아이템 조회
- * 기존 컴포넌트(ADHDEntryScreen, FuelMode 등)에서 사용
+ * 기존 컴포넌트(ADHDEntryScreen, MotivationMode 등)에서 사용
  */
 export const getItemsByRouteGroup = (
   routeGroupId: ADHDRouteGroupId

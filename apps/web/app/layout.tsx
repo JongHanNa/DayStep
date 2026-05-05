@@ -18,8 +18,8 @@ import { ReminderProvider } from "@/components/providers/ReminderProvider";
 import { AppLifecycleHandler } from "@/components/providers/AppLifecycleHandler";
 import { ElectronLifecycleHandler } from "@/components/providers/ElectronLifecycleHandler";
 import { TitleBar } from "@/components/electron/TitleBar";
+import { QuickAddBridge } from "@/components/electron/QuickAddBridge";
 import { SubscriptionSyncProvider } from "@/components/providers/SubscriptionSyncProvider";
-import { TrialOfferProvider } from "@/components/providers/TrialOfferProvider";
 import { STYLING, UI_LAYOUT } from "@/lib/constants";
 import { getTailwindClasses } from "@/lib/theme-colors";
 import { ActiveTodoBannerProvider } from "@/components/providers/ActiveTodoBannerProvider";
@@ -55,9 +55,9 @@ export default function RootLayout({
             <AuthProvider>
               <AppLifecycleHandler />
               <ElectronLifecycleHandler />
+              <QuickAddBridge />
               <TitleBar />
               <SubscriptionSyncProvider>
-                <TrialOfferProvider>
                 <RealtimeSyncProvider>
                   <ReminderProvider>
                   {/* 진행 중인 할일 배너 */}
@@ -84,7 +84,6 @@ export default function RootLayout({
                   />
                   </ReminderProvider>
                 </RealtimeSyncProvider>
-                </TrialOfferProvider>
               </SubscriptionSyncProvider>
             </AuthProvider>
           </FontProvider>

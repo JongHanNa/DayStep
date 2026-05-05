@@ -1,14 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import { SettingsSubView } from '@/state/stores/adhdStore';
 import {
   User,
   Type,
   CheckCircle,
+  Palette,
 } from 'lucide-react';
 import { SyncStatusIndicator } from '@/components/ui/pull-to-refresh';
 import ADHDSettingsSection from '@/components/settings/ADHDSettingsSection';
+import BackgroundPresetModal from '@/components/settings/BackgroundPresetModal';
+import { useSettingsStore } from '@/state/stores/settingsStore';
+import { BACKGROUND_PRESET_META } from '@/lib/color-presets';
 
 interface SettingsMainViewProps {
   onNavigate: (subView: SettingsSubView) => void;
@@ -22,6 +27,9 @@ interface SettingsMainViewProps {
  */
 export default function SettingsMainView({ onNavigate, onExit }: SettingsMainViewProps) {
   const { user } = useAuth();
+  const backgroundPreset = useSettingsStore((s) => s.backgroundPreset);
+  const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
+  const presetMeta = BACKGROUND_PRESET_META[backgroundPreset];
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-6 space-y-8">
@@ -77,7 +85,7 @@ export default function SettingsMainView({ onNavigate, onExit }: SettingsMainVie
               className="group w-full text-left"
             >
               <div
-                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl last:rounded-b-xl"
+                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 first:rounded-t-xl"
                 role="button"
                 aria-label="글꼴 설정 - 읽기 편한 글꼴 선택"
                 tabIndex={0}
@@ -88,6 +96,27 @@ export default function SettingsMainView({ onNavigate, onExit }: SettingsMainVie
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-foreground">글꼴</h4>
                   <p className="text-xs text-muted-foreground">읽기 편한 글꼴 선택</p>
+                </div>
+              </div>
+            </button>
+
+            {/* 배경 테마 설정 */}
+            <button
+              onClick={() => setIsPresetModalOpen(true)}
+              className="group w-full text-left"
+            >
+              <div
+                className="flex items-center gap-4 p-4 transition-all duration-200 hover:bg-muted/50 active:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50 last:rounded-b-xl"
+                role="button"
+                aria-label={`배경 테마 설정 - 현재 ${presetMeta.labelKo}`}
+                tabIndex={0}
+              >
+                <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
+                  <Palette className="w-5 h-5 text-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-foreground">배경 테마</h4>
+                  <p className="text-xs text-muted-foreground">{presetMeta.labelKo} · {presetMeta.description}</p>
                 </div>
               </div>
             </button>
@@ -149,6 +178,11 @@ export default function SettingsMainView({ onNavigate, onExit }: SettingsMainVie
           </div>
         </div>
       </div>
+
+      <BackgroundPresetModal
+        isOpen={isPresetModalOpen}
+        onClose={() => setIsPresetModalOpen(false)}
+      />
     </div>
   );
 }

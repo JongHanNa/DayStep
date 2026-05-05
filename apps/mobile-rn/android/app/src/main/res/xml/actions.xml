@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Google Assistant App Actions
+  "OK Google, DayStep에 메모 추가" 등의 음성 명령으로 할일 등록
+  CREATE_NOTE 인텐트를 daystep://add-todo deep link로 연결
+-->
+<actions>
+    <action intentName="actions.intent.CREATE_NOTE">
+        <fulfillment urlTemplate="daystep://add-todo{?text}">
+            <parameter-mapping
+                intentParameter="note.text"
+                urlParameter="text" />
+        </fulfillment>
+    </action>
+</actions>

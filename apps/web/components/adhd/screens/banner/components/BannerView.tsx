@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useADHDStore } from '@/state/stores/adhdStore';
-import { useNoteStore } from '@/state/stores/noteStore';
+import { useMotivationStore } from '@/state/stores/motivationStore';
 import { useCherishedPeopleStore } from '@/state/stores/cherishedPeopleStore';
 import PriorityReminderBanner from '@/components/cherished/PriorityReminderBanner';
 import MotivationReminderBanner from '@/components/adhd/MotivationReminderBanner';
@@ -11,7 +11,7 @@ import MotivationReminderBanner from '@/components/adhd/MotivationReminderBanner
 interface BannerViewProps {
   userId: string;
   onRelationshipInsights: () => void;
-  onFuel: (noteId?: string) => void;
+  onMotivation: (noteId?: string) => void;
 }
 
 /**
@@ -21,20 +21,20 @@ interface BannerViewProps {
  * - 각성 문장 (설정된 경우)
  * - 빈 상태: 원동력/소중한 사람 모두 없을 때 안내 카드
  */
-export function BannerView({ userId, onRelationshipInsights, onFuel }: BannerViewProps) {
+export function BannerView({ userId, onRelationshipInsights, onMotivation }: BannerViewProps) {
   const { awakeningSentence } = useADHDStore();
-  const { notes, getBannerPinnedFuelNotes } = useNoteStore();
+  const { notes, getBannerPinnedMotivationNotes } = useMotivationStore();
   const { recommendations } = useCherishedPeopleStore();
 
-  const { hasPinnedFuel, hasRecommendations } = useMemo(() => {
-    const pinnedNotes = getBannerPinnedFuelNotes();
+  const { hasPinnedMotivation, hasRecommendations } = useMemo(() => {
+    const pinnedNotes = getBannerPinnedMotivationNotes();
     return {
-      hasPinnedFuel: pinnedNotes.length > 0,
+      hasPinnedMotivation: pinnedNotes.length > 0,
       hasRecommendations: recommendations.length > 0,
     };
-  }, [notes, getBannerPinnedFuelNotes, recommendations]);
+  }, [notes, getBannerPinnedMotivationNotes, recommendations]);
 
-  const showGuide = !awakeningSentence && (!hasPinnedFuel || !hasRecommendations);
+  const showGuide = !awakeningSentence && (!hasPinnedMotivation || !hasRecommendations);
 
   return (
     <motion.div
@@ -46,7 +46,7 @@ export function BannerView({ userId, onRelationshipInsights, onFuel }: BannerVie
       {/* 원동력 상기 배너 */}
       <MotivationReminderBanner
         userId={userId}
-        onFuelClick={(noteId) => onFuel(noteId)}
+        onMotivationClick={(noteId) => onMotivation(noteId)}
       />
 
       {/* 우선순위 상기 배너 */}
@@ -63,10 +63,10 @@ export function BannerView({ userId, onRelationshipInsights, onFuel }: BannerVie
           transition={{ delay: 0.2 }}
           className="text-sm text-base-content/50 mb-8 italic"
         >
-          {!hasPinnedFuel && (
+          {!hasPinnedMotivation && (
             <>원동력 새기기에서 원동력을 작성하고 고정하면 매일 하나씩 보여드려요</>
           )}
-          {!hasPinnedFuel && !hasRecommendations && <br />}
+          {!hasPinnedMotivation && !hasRecommendations && <br />}
           {!hasRecommendations && (
             <>관계 기록하기에서 소중한 사람을 등록하면 연락 안부를 챙겨드려요</>
           )}

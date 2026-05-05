@@ -8,6 +8,7 @@ import { getBidirectionalViewportOptions, tiltVariants, getMagneticProps } from 
 import InfiniteSlider from './InfiniteSlider';
 
 // ADHD 관련 실제 통계 데이터
+// 모바일 톤과 통일: 4개 카드 모두 동일한 차분한 흰색 베이스 + 메인컬러 액센트
 const stats = [
   {
     icon: Users,
@@ -17,8 +18,6 @@ const stats = [
     decimals: 0,
     label: '전 세계 성인 ADHD 유병률',
     description: '생각보다 많은 분들이 겪고 있어요',
-    iconBgColor: 'bg-blue-500/20',
-    iconColor: 'text-blue-400',
   },
   {
     icon: Brain,
@@ -28,8 +27,6 @@ const stats = [
     decimals: 0,
     label: '불안/우울 동반 비율',
     description: '혼자 힘들어하지 않아도 돼요',
-    iconBgColor: 'bg-purple-500/20',
-    iconColor: 'text-purple-400',
   },
   {
     icon: TrendingUp,
@@ -39,8 +36,6 @@ const stats = [
     decimals: 0,
     label: '관리로 개선 가능',
     description: '적절한 도구와 전략이 도움이 돼요',
-    iconBgColor: 'bg-green-500/20',
-    iconColor: 'text-green-400',
   },
   {
     icon: Award,
@@ -50,8 +45,6 @@ const stats = [
     decimals: 0,
     label: '업무 효율 저하 원인',
     description: 'WHO 선정, 관리가 중요해요',
-    iconBgColor: 'bg-orange-500/20',
-    iconColor: 'text-orange-400',
   },
 ];
 
@@ -97,8 +90,8 @@ export default function StatsSection() {
         whileHover="hover"
         className="flex flex-col items-center justify-center p-8 bg-transparent rounded-2xl min-w-[220px] flex-shrink-0"
       >
-        <div className={`w-20 h-20 ${stat.iconBgColor} rounded-full flex items-center justify-center mb-4`}>
-          <Icon className={`w-10 h-10 ${stat.iconColor}`} />
+        <div className="w-20 h-20 bg-white/15 rounded-full flex items-center justify-center mb-4">
+          <Icon className="w-10 h-10 text-white/90" />
         </div>
         <CountUpNumber
           value={stat.value}

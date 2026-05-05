@@ -1,4 +1,7 @@
 {
   "name": "DayStepRN",
-  "displayName": "DayStepRN"
+  "displayName": "DayStepRN",
+  "expo": {
+    "entryPoint": "./index.js"
+  }
 }

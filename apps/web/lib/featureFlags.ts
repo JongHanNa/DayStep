@@ -8,14 +8,9 @@ export const FEATURE_FLAGS = {
   /**
    * 결제 기능 활성화 여부
    * - false: 모든 기능 무료로 사용 가능 (기본값, 초기 배포)
-   * - true: 7일 무료 체험 후 구독 필요
+   * - true: 구독 필요 (신규 가입 7일간 Pro 화면 접근 허용)
    */
   PAYMENTS_ENABLED: process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === 'true',
-
-  /**
-   * 무료 체험 기간 (일)
-   */
-  TRIAL_DAYS: parseInt(process.env.NEXT_PUBLIC_TRIAL_DAYS || '7', 10),
 
   /**
    * Pro 월간 구독 가격 (표시용)

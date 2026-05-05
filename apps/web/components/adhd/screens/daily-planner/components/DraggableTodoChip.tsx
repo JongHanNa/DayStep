@@ -21,7 +21,7 @@ const getTodoIcon = (iconName?: string | null): React.ComponentType<any> | null 
   return iconData?.component || null;
 };
 
-interface LinkedFuel {
+interface LinkedMotivation {
   id: string;
   title: string;
   content: string;
@@ -34,9 +34,9 @@ interface DraggableTodoChipProps {
   projectMap?: Map<string, ProjectMapValue>;
   departmentMap?: Map<string, DepartmentMapValue>;
   highlightProjectId?: string | null;
-  linkedFuels?: LinkedFuel[];
-  expandedFuelId?: string | null;
-  onExpandFuel?: (id: string | null) => void;
+  linkedMotivations?: LinkedMotivation[];
+  expandedMotivationId?: string | null;
+  onExpandMotivation?: (id: string | null) => void;
   onEditClick?: (todo: Todo) => void;
   onToggle?: (todo: Todo) => void;
   onUnskip?: (todo: Todo) => void;
@@ -47,7 +47,7 @@ interface DraggableTodoChipProps {
   onUnassign?: (todo: Todo) => void;
 }
 
-export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, projectMap, departmentMap, highlightProjectId, linkedFuels, expandedFuelId, onExpandFuel, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
+export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false, projectMap, departmentMap, highlightProjectId, linkedMotivations, expandedMotivationId, onExpandMotivation, onEditClick, onToggle, onUnskip, onSkipTodo, onPostpone, onRestoreOriginal, onStartFocus, onUnassign }: DraggableTodoChipProps) {
   const toggleTodo = useTodoStore(s => s.toggleTodo);
   const hasSubtasks = useTodoStore(s => s.hasSubtasks);
   const getSubtaskProgress = useTodoStore(s => s.getSubtaskProgress);
@@ -290,21 +290,21 @@ export function DraggableTodoChip({ todo, showTime = false, hideOverdue = false,
             </div>
           )}
 
-          {/* 연결된 원동력(fuel) 배지 */}
-          {linkedFuels && linkedFuels.length > 0 && (
+          {/* 연결된 원동력(motivation) 배지 */}
+          {linkedMotivations && linkedMotivations.length > 0 && (
             <div className="flex flex-col gap-0.5 ml-7 mt-1 overflow-hidden">
-              {linkedFuels.map(fuel => {
-                const text = fuel.title && fuel.content
-                  ? `${fuel.title} - ${fuel.content}`
-                  : fuel.title || fuel.content;
-                const isExpanded = expandedFuelId === fuel.id;
+              {linkedMotivations.map(motivation => {
+                const text = motivation.title && motivation.content
+                  ? `${motivation.title} - ${motivation.content}`
+                  : motivation.title || motivation.content;
+                const isExpanded = expandedMotivationId === motivation.id;
 
                 return (
                   <div
-                    key={fuel.id}
+                    key={motivation.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onExpandFuel?.(isExpanded ? null : fuel.id);
+                      onExpandMotivation?.(isExpanded ? null : motivation.id);
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
                     className="inline-flex items-start gap-0.5 px-2 py-0.5 rounded-full text-xs bg-orange-500/20 text-orange-600 dark:text-orange-400 cursor-pointer hover:bg-orange-500/30 transition-all"

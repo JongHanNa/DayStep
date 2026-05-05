@@ -10,7 +10,7 @@ import { useTodoStore } from '@/state/stores/todoStore';
 import { useAuth } from '@/app/context/AuthContext';
 import type { Project, Todo, ProjectStatus } from '@/types';
 import type { Note } from '@/types/domain';
-import { fetchNotesWithJWT } from '@/lib/supabase/notes';
+import { fetchNotesWithJWT } from '@/lib/supabase/motivations';
 import { useUsageLimitCheck } from '@/hooks/useUsageLimitCheck';
 import { UsageLimitModal } from '@/components/subscription/UsageLimitModal';
 import SubtaskList from '@/components/todos/SubtaskList';
@@ -84,8 +84,8 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
 
   const { checkAndProceed, limitResult, isModalOpen: isLimitModalOpen, closeModal: closeLimitModal, onCreateSuccess } = useUsageLimitCheck();
 
-  // 연결된 실행 원동력을 위한 fuel 노트 상태
-  const [fuelNotes, setFuelNotes] = useState<Note[]>([]);
+  // 연결된 실행 원동력을 위한 motivation 노트 상태
+  const [motivationNotes, setMotivationNotes] = useState<Note[]>([]);
 
   const isEditing = !!project;
 
@@ -99,7 +99,7 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
 
   // 연결된 할일 상태
   const [linkedTodos, setLinkedTodos] = useState<Todo[]>([]);
-  const [isTodosExpanded, setIsTodosExpanded] = useState(false);
+  const [isTodosExpanded, setIsTodosExpanded] = useState(true);
   const [loadingTodos, setLoadingTodos] = useState(false);
 
   // 할일 편집 상태
@@ -136,20 +136,20 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
     }
   }, [projectTodos, project]);
 
-  // fuel 노트 (실행 원동력) 로드
+  // motivation 노트 (실행 원동력) 로드
   useEffect(() => {
-    const loadFuelNotes = async () => {
+    const loadMotivationNotes = async () => {
       if (!userId) return;
 
       try {
         const allNotes = await fetchNotesWithJWT(userId);
-        const fuel = allNotes.filter(n => n.note_category === 'fuel');
-        setFuelNotes(fuel);
+        const motivations = allNotes.filter(n => n.category === 'motivation');
+        setMotivationNotes(motivations);
       } catch (error) {
-        console.error('fuel 노트 로드 실패:', error);
+        console.error('motivation 노트 로드 실패:', error);
       }
     };
-    loadFuelNotes();
+    loadMotivationNotes();
   }, [userId]);
 
   // 저장
@@ -734,8 +734,8 @@ export default function ProjectEditModal({ project, onClose }: ProjectEditModalP
           onDelete={handleEditDelete}
           headerTitle="할일 편집"
           showProject={true}
-          showLinkedFuels={true}
-          fuelNotes={fuelNotes}
+          showLinkedMotivations={true}
+          motivationNotes={motivationNotes}
           projects={projects}
           todoId={editingTodo?.id}
           userId={userId}

@@ -21,7 +21,7 @@ const PRO_ONLY_TABS = DASHBOARD_ITEMS.filter((item) => item.isPro).map((item) =>
 interface ADHDEntryScreenProps {
   userId?: string;
   onRelationshipInsights: () => void;
-  onFuel: (noteId?: string) => void;
+  onMotivation: (noteId?: string) => void;
 }
 
 /**
@@ -32,7 +32,7 @@ interface ADHDEntryScreenProps {
  * - 연락 돌아보기 (Pro): 관계 통계 (StatsDashboardView)
  * - 활동 살펴보기 (Pro): 할일 통계 (TodoStatsView)
  */
-export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel }: ADHDEntryScreenProps) {
+export default function ADHDEntryScreen({ userId, onRelationshipInsights, onMotivation }: ADHDEntryScreenProps) {
   const { awakeningSentence, currentSubView } = useADHDStore();
   const [activeTab, setActiveTab] = useState<TabType>((currentSubView as TabType) || 'banner');
   const { hasActiveSubscription } = useSubscription();
@@ -79,7 +79,7 @@ export default function ADHDEntryScreen({ userId, onRelationshipInsights, onFuel
             {/* 원동력 상기 배너 */}
             <MotivationReminderBanner
               userId={userId}
-              onFuelClick={(noteId) => onFuel(noteId)}
+              onMotivationClick={(noteId) => onMotivation(noteId)}
             />
 
             {/* 우선순위 상기 배너 */}

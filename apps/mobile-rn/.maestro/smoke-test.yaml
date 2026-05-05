@@ -1,0 +1,58 @@
+appId: com.daystep.app.dev
+---
+# ⚡ DayStep 스모크 테스트
+# QA 체크리스트의 자동화 가능 항목을 검증합니다.
+# 전제조건: 이미 로그인된 상태
+
+# ── 0. 앱 시작 ──
+- launchApp
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+
+# ── 1. 홈 화면 검증 ──
+# 홈 화면이 정상적으로 로드되었는지 확인
+- assertVisible:
+    id: "tab_Home"
+- assertVisible:
+    id: "tab_Planner"
+- assertVisible:
+    id: "tab_Execute"
+- assertVisible:
+    id: "tab_Notes"
+- assertVisible:
+    id: "tab_More"
+- takeScreenshot: "smoke_01_home"
+
+# ── 2. 플래너 탭 전환 ──
+- tapOn:
+    id: "tab_Planner"
+- waitForAnimationToEnd
+- takeScreenshot: "smoke_02_planner"
+
+# ── 3. 실행/집중 탭 전환 ──
+- tapOn:
+    id: "tab_Execute"
+- waitForAnimationToEnd
+- takeScreenshot: "smoke_03_execute"
+
+# ── 4. 노트 탭 전환 ──
+- tapOn:
+    id: "tab_Notes"
+- waitForAnimationToEnd
+- takeScreenshot: "smoke_04_notes"
+
+# ── 5. 설정(더보기) 탭 전환 ──
+- tapOn:
+    id: "tab_More"
+- waitForAnimationToEnd
+- takeScreenshot: "smoke_05_settings"
+
+# ── 6. 홈으로 복귀 ──
+- tapOn:
+    id: "tab_Home"
+- waitForAnimationToEnd
+
+# ── 완료 ──
+- takeScreenshot: "smoke_06_back_home"

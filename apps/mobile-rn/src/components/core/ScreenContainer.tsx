@@ -2,11 +2,15 @@
  * ScreenContainer
  * SafeArea + 그라디언트 배경 래퍼 — 모든 화면의 기본 컨테이너
  */
-import React from 'react';
-import {StyleSheet, ViewStyle, StyleProp, StatusBar} from 'react-native';
+import React, {useCallback, useEffect} from 'react';
+import {StyleSheet, View, ViewStyle, StyleProp, StatusBar, Platform, NativeModules} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useFocusEffect} from '@react-navigation/native';
 import {GradientBackground, gradientPresets} from './GradientBackground';
 import {useSettingsStore} from '@/stores/settingsStore';
+import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
+
+const {NavigationBarColor} = NativeModules;
 
 type GradientPreset = keyof typeof gradientPresets;
 
@@ -38,10 +42,35 @@ export function ScreenContainer({
   const effectiveGradient = backgroundPreset;
   const preset = effectiveGradient ? gradientPresets[effectiveGradient] : null;
   const colors = gradientColors ?? preset?.colors;
+  const {contentMaxWidth} = useResponsiveLayout();
+
+  // Android: 프리셋 첫 번째 색상을 상태바/네비게이션바에 적용
+  const systemBarColor = colors?.[0] ?? backgroundColor;
+  const isLightBar = statusBarStyle === 'dark-content';
+
+  // 화면 포커스 시마다 네비바 색상 복원 (다른 화면에서 변경된 색상 덮어쓰기)
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'android' && NavigationBarColor) {
+        NavigationBarColor.setColor(systemBarColor, !isLightBar);
+      }
+    }, [systemBarColor, isLightBar]),
+  );
+
+  const innerContent = contentMaxWidth > 0 ? (
+    <View style={[styles.flex, {alignItems: 'center'}]}>
+      <View style={[styles.flex, {width: '100%', maxWidth: contentMaxWidth}]}>
+        {children}
+      </View>
+    </View>
+  ) : children;
 
   return (
     <>
-      <StatusBar barStyle={statusBarStyle} />
+      <StatusBar
+        barStyle={statusBarStyle}
+        backgroundColor={Platform.OS === 'android' ? systemBarColor : undefined}
+      />
       {colors ? (
         <GradientBackground
           colors={colors}
@@ -49,14 +78,14 @@ export function ScreenContainer({
           end={preset?.end}
           style={styles.flex}>
           <SafeAreaView edges={edges} style={[styles.flex, style]}>
-            {children}
+            {innerContent}
           </SafeAreaView>
         </GradientBackground>
       ) : (
         <SafeAreaView
           edges={edges}
           style={[styles.flex, {backgroundColor}, style]}>
-          {children}
+          {innerContent}
         </SafeAreaView>
       )}
     </>

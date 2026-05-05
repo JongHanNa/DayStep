@@ -3,7 +3,7 @@
  */
 
 import { fetchWithJWT, queryRLSTableWithJWT, createWithJWT, updateWithJWT, deleteWithJWT, getMaxOrderIndexWithJWT, QueryOptions } from './core';
-import { updateTodoNotes } from './todo-notes';
+import { updateTodoNotes } from './todo-motivations';
 
 /**
  * 특정 날짜 범위의 할일 목록 조회 (성능 최적화)
@@ -34,6 +34,8 @@ export async function fetchTodosForDateRange(
     const orConditions = [
       // 시간 지정 할일: start_time이 범위 내에 있고 반복이 아닌 경우만
       `and(schedule_type.eq.timed,start_time.gte.${utcStart.toISOString()},start_time.lte.${utcEnd.toISOString()},recurrence_pattern.eq.none)`,
+      // 크로스데이 할일: 전날 시작, 이 날짜까지 걸침
+      `and(schedule_type.eq.timed,start_time.lt.${utcStart.toISOString()},end_time.gt.${utcStart.toISOString()},recurrence_pattern.eq.none)`,
       // 언제든지 할일: created_at이 범위 내에 있는 경우
       `and(schedule_type.eq.anytime,created_at.gte.${utcStart.toISOString()},created_at.lte.${utcEnd.toISOString()})`,
       // 하루종일 할일: created_at이 범위 내에 있는 경우

@@ -57,6 +57,7 @@ export interface MonthTodoSummary {
   id: string;
   title: string;
   start_time: string | null;
+  end_time: string | null;
   schedule_type: string;
   recurrence_pattern: string;
   recurrence_days_of_week: number[] | null;
@@ -64,7 +65,7 @@ export interface MonthTodoSummary {
   color: string | null;
 }
 
-interface LinkedFuel {
+interface LinkedMotivation {
   id: string;
   title: string;
   content: string;
@@ -75,7 +76,7 @@ interface TodoState {
   todos: Todo[];
   completions: TodoCompletion[]; // 반복할일 날짜별 완료 기록
   selectedDate: string; // ISO date string (YYYY-MM-DD)
-  fuelMap: Record<string, LinkedFuel[]>; // todoId → linked fuels
+  motivationMap: Record<string, LinkedMotivation[]>; // todoId → linked motivations
 
   // 로딩 상태
   loading: boolean;
@@ -85,13 +86,21 @@ interface TodoState {
   monthViewData: Record<string, MonthTodoSummary[]> | null;
   monthViewLoading: boolean;
 
+  /** 모든 todo mutation에서 +1. 각 화면이 useEffect dep으로 listen해 자동 reload. */
+  dataVersion: number;
+
   // 오프라인 큐
   offlineQueue: OfflineAction[];
 
   // 액션
+  /** 모든 todo mutation에서 호출 — 각 화면 useEffect dep으로 자동 reload trigger */
+  bumpDataVersion: () => void;
   fetchTodosForDate: (date: string) => Promise<void>;
+  fetchTodosForDateRange: (startDate: string, endDate: string) => Promise<Record<string, Todo[]>>;
   fetchTodosForMonthView: (year: number, month: number) => Promise<void>;
-  fetchFuelsForTodos: (todoIds: string[]) => Promise<void>;
+  /** 위젯에 3개월 풀셋을 직접 DB에서 쿼리해서 동기화 (연/월 미지정 시 오늘 기준) */
+  syncWidget: (year?: number, month?: number) => Promise<void>;
+  fetchMotivationsForTodos: (todoIds: string[]) => Promise<void>;
   fetchAllTodos: (userId: string, days?: number) => Promise<Todo[]>;
   createTodo: (input: CreateTodoInput) => Promise<Todo | null>;
   updateTodo: (id: string, updates: Partial<Todo>) => Promise<boolean>;
@@ -140,6 +149,116 @@ async function getCurrentUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
+/**
+ * 위젯 payload 빌드 + 동기화 (3개월 범위: 전월/당월/익월)
+ * 인메모리 todos 스냅샷 기준 — mutation 직후 호출 시 DB 재쿼리 없이 반영
+ */
+function buildAndSyncWidget(todos: Todo[], year: number, month: number): void {
+  const monthAnchor = new Date(year, month - 1, 1);
+  const prevMonthStart = startOfMonth(subMonths(monthAnchor, 1));
+  const nextMonthEnd = endOfMonth(addMonths(monthAnchor, 1));
+
+  const filterTodosForDay = (dateStr: string, dayOfWeek: number) => {
+    return todos.filter((todo: any) => {
+      if (todo.recurrence_pattern === 'daily') {
+        if (!todo.start_time) return false;
+        const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+        if (startDate > dateStr) return false;
+        if (todo.recurrence_end_date && todo.recurrence_end_date <= dateStr) return false;
+        return true;
+      }
+      if (todo.recurrence_pattern === 'weekly') {
+        if (!todo.start_time) return false;
+        const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+        if (startDate > dateStr) return false;
+        if (todo.recurrence_end_date && todo.recurrence_end_date <= dateStr) return false;
+        return todo.recurrence_days_of_week?.includes(dayOfWeek) ?? false;
+      }
+      if (todo.start_time) {
+        const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+        if (startDate === dateStr) return true;
+        if (todo.end_time && todo.schedule_type === 'timed') {
+          const endDate = format(parseISO(todo.end_time), 'yyyy-MM-dd');
+          if (startDate < dateStr && endDate >= dateStr) return true;
+        }
+      }
+      return false;
+    });
+  };
+
+  const allDays = eachDayOfInterval({start: prevMonthStart, end: nextMonthEnd});
+  const widgetDays = allDays.map(day => {
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const dayTodos = filterTodosForDay(dateStr, getDay(day));
+    return {
+      date: dateStr,
+      todos: dayTodos.slice(0, 5).map((t: any) => ({
+        title: t.title,
+        color: t.color || '#3B82F6',
+      })),
+    };
+  });
+
+  syncWidgetData({year, month, days: widgetDays}).catch(() => {/* 위젯 실패는 조용히 */});
+}
+
+/** 특정 할일 기준으로 위젯 동기화 대상 월을 결정 */
+function getWidgetMonthForTodo(todo: any, fallbackDate: string): {year: number; month: number} {
+  const dateStr = todo?.start_time
+    ? format(parseISO(todo.start_time), 'yyyy-MM-dd')
+    : fallbackDate;
+  const d = parseISO(dateStr);
+  return {year: d.getFullYear(), month: d.getMonth() + 1};
+}
+
+/**
+ * 위젯용 3개월(전월~익월) 범위 Supabase 쿼리
+ * fetchTodosForMonthView와 syncWidgetForMonth에서 공용
+ */
+async function fetchWidgetTodosRange(
+  userId: string,
+  year: number,
+  month: number,
+): Promise<MonthTodoSummary[]> {
+  const monthAnchor = new Date(year, month - 1);
+  const prevMonthStart = startOfMonth(subMonths(monthAnchor, 1));
+  const nextMonthEnd = endOfMonth(addMonths(monthAnchor, 1));
+  const rangeStartISO = prevMonthStart.toISOString();
+  const rangeEndISO = nextMonthEnd.toISOString();
+  const rangeStartDate = format(prevMonthStart, 'yyyy-MM-dd');
+
+  const {data, error} = await supabase
+    .from('todos')
+    .select('id, title, start_time, end_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
+    .eq('user_id', userId)
+    .or(
+      [
+        `and(schedule_type.eq.timed,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
+        `and(schedule_type.eq.anytime,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
+        `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
+        `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
+      ].join(','),
+    );
+
+  if (error) throw error;
+  return (data ?? []) as MonthTodoSummary[];
+}
+
+/**
+ * 특정 월 기준 3개월 풀셋을 DB에서 쿼리해 위젯에 동기화
+ * mutation 후 호출 — state.todos가 1일치만 있어도 위젯은 풀셋 유지
+ */
+async function syncWidgetForMonth(year: number, month: number): Promise<void> {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return;
+    const rangeTodos = await fetchWidgetTodosRange(userId, year, month);
+    buildAndSyncWidget(rangeTodos as unknown as Todo[], year, month);
+  } catch {
+    /* 위젯 동기화 실패는 조용히 */
+  }
+}
+
 // ============================================
 // Store
 // ============================================
@@ -150,12 +269,15 @@ export const useTodoStore = create<TodoState>()(
       todos: [],
       completions: [],
       selectedDate: format(new Date(), 'yyyy-MM-dd'),
-      fuelMap: {},
+      motivationMap: {},
       loading: false,
       error: null,
       offlineQueue: [],
       monthViewData: null,
       monthViewLoading: false,
+      dataVersion: 0,
+
+      bumpDataVersion: () => set(s => ({dataVersion: s.dataVersion + 1})),
 
       setSelectedDate: (date: string) => {
         set({selectedDate: date});
@@ -183,14 +305,24 @@ export const useTodoStore = create<TodoState>()(
             .eq('user_id', userId)
             .or(
               [
-                // 시간 지정 할일 (해당 날짜)
-                `and(schedule_type.eq.timed,start_time.gte.${dayStart},start_time.lte.${dayEnd})`,
+                // 시간 지정 할일 (해당 날짜에 시작)
+                `and(schedule_type.eq.timed,start_time.gte.${dayStart},start_time.lte.${dayEnd},recurrence_pattern.eq.none)`,
+                // 크로스데이 시간 지정 (전날 시작했지만 이 날짜까지 걸침)
+                `and(schedule_type.eq.timed,start_time.lt.${dayStart},end_time.gt.${dayStart},recurrence_pattern.eq.none)`,
+                // 종일 할일 (해당 날짜에 시작) — 단일·다일 모두 시작일에서 매치
+                `and(schedule_type.eq.all_day,start_time.gte.${dayStart},start_time.lte.${dayEnd},recurrence_pattern.eq.none)`,
+                // 크로스데이 종일 (전날 이전 시작, end_time이 이 날짜 안까지 — inclusive end 23:59:59.999 저장 가정)
+                `and(schedule_type.eq.all_day,start_time.lt.${dayStart},end_time.gt.${dayStart},recurrence_pattern.eq.none)`,
                 // 매일 반복 (종료일 필터 포함)
                 `and(recurrence_pattern.eq.daily,start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
                 // 주간 반복 (해당 요일, 종료일 필터 포함)
                 `and(recurrence_pattern.eq.weekly,recurrence_days_of_week.cs.[${dayOfWeek}],start_time.lte.${dayEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${date}))`,
                 // anytime (시간 미지정)
                 `and(schedule_type.eq.anytime,start_time.gte.${dayStart},start_time.lte.${dayEnd})`,
+                // 반복 할일에서 파생된 미룸 (occurrence_date로 날짜 매칭)
+                `and(parent_recurring_todo_id.not.is.null,occurrence_date.eq.${date})`,
+                // 비반복 미룸 (original_start_time으로 날짜 매칭)
+                `and(schedule_type.eq.anytime,start_time.is.null,original_start_time.gte.${dayStart},original_start_time.lte.${dayEnd})`,
               ].join(','),
             )
             .order('order_index', {ascending: true});
@@ -204,14 +336,28 @@ export const useTodoStore = create<TodoState>()(
             .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
             .map(t => t.id);
 
-          if (recurringIds.length > 0) {
-            const {data: exclusions} = await supabase
-              .from('todo_exclusions')
-              .select('parent_todo_id, exclusion_reason')
-              .eq('excluded_date', date)
-              .in('parent_todo_id', recurringIds);
+          let completionData: TodoCompletion[] = [];
 
-            // deleted/postponed exclusion 빌드 (exclusions 없을 수도 있으므로 항상 실행)
+          if (recurringIds.length > 0) {
+            // exclusions + completions 병렬 실행 (네트워크 대기 시간 절감)
+            const [exclusionsResult, completionsResult] = await Promise.all([
+              supabase
+                .from('todo_exclusions')
+                .select('parent_todo_id, exclusion_reason')
+                .eq('excluded_date', date)
+                .in('parent_todo_id', recurringIds),
+              supabase
+                .from('todo_completions')
+                .select('id, todo_id, user_id, completion_date')
+                .eq('completion_date', date)
+                .eq('user_id', userId)
+                .in('todo_id', recurringIds),
+            ]);
+
+            const exclusions = exclusionsResult.data;
+            const completions = completionsResult.data;
+
+            // deleted/postponed exclusion 빌드
             const excludedIds = new Set(
               (exclusions ?? [])
                 .filter(e => e.exclusion_reason === 'deleted' || e.exclusion_reason === 'postponed')
@@ -220,7 +366,6 @@ export const useTodoStore = create<TodoState>()(
             filteredData = filteredData.filter(t => !excludedIds.has(t.id));
 
             // not_needed/missed → todo_exclusions 기준으로 skip_status 결정
-            // (DB의 stale skip_status 초기화 포함 — 반복 할일은 항상 exclusion 기준)
             const skipMap = new Map<string, string>();
             (exclusions ?? [])
               .filter(e => e.exclusion_reason === 'not_needed' || e.exclusion_reason === 'missed')
@@ -228,27 +373,13 @@ export const useTodoStore = create<TodoState>()(
 
             filteredData = filteredData.map(t => {
               const isRecurring = t.recurrence_pattern && t.recurrence_pattern !== 'none';
-              if (!isRecurring) return t; // 일반 할일: DB skip_status 그대로 사용
-              // 반복 할일: exclusion에 있으면 적용, 없으면 null로 초기화 (stale 데이터 방지)
+              if (!isRecurring) return t;
               return {...t, skip_status: skipMap.get(t.id) ?? null};
             });
-          }
 
-          // 반복할일 날짜별 완료 상태 조회
-          let completionData: TodoCompletion[] = [];
-          // exclusion 필터 후 남은 반복할일 재계산
-          const remainingRecurringIds = filteredData
-            .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
-            .map(t => t.id);
-
-          if (remainingRecurringIds.length > 0) {
-            const {data: completions} = await supabase
-              .from('todo_completions')
-              .select('id, todo_id, user_id, completion_date')
-              .eq('completion_date', date)
-              .eq('user_id', userId)
-              .in('todo_id', remainingRecurringIds);
-            completionData = (completions ?? []) as TodoCompletion[];
+            // excluded된 할일의 completion은 제외
+            completionData = ((completions ?? []) as TodoCompletion[])
+              .filter(c => !excludedIds.has(c.todo_id));
           }
 
           // 반복할일의 completed 필드를 날짜별 상태로 덮어씀
@@ -291,12 +422,121 @@ export const useTodoStore = create<TodoState>()(
             todos: normalizedData.map(parseTodo),
             completions: completionData,
             selectedDate: date,
+            loading: false,
           });
         } catch (err: any) {
           console.error('[TodoStore] Fetch error:', err);
-          set({error: err.message ?? 'Failed to fetch todos'});
-        } finally {
-          set({loading: false});
+          set({error: err.message ?? 'Failed to fetch todos', loading: false});
+        }
+      },
+
+      fetchTodosForDateRange: async (startDate: string, endDate: string) => {
+        try {
+          const userId = await getCurrentUserId();
+          if (!userId) return {};
+
+          const rangeStart = startOfDay(new Date(startDate)).toISOString();
+          const rangeEnd = endOfDay(new Date(endDate)).toISOString();
+
+          const {data, error} = await supabase
+            .from('todos')
+            .select('id, title, start_time, end_time, completed, color, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date')
+            .eq('user_id', userId)
+            .or(
+              [
+                // 시간 지정: 범위 내 시작 또는 범위에 걸침
+                `and(schedule_type.eq.timed,start_time.gte.${rangeStart},start_time.lte.${rangeEnd},recurrence_pattern.eq.none)`,
+                `and(schedule_type.eq.timed,start_time.lt.${rangeStart},end_time.gt.${rangeStart},recurrence_pattern.eq.none)`,
+                // 종일: 범위 내 시작 또는 범위에 걸침 (다일 종일 포함)
+                `and(schedule_type.eq.all_day,start_time.gte.${rangeStart},start_time.lte.${rangeEnd},recurrence_pattern.eq.none)`,
+                `and(schedule_type.eq.all_day,start_time.lt.${rangeStart},end_time.gt.${rangeStart},recurrence_pattern.eq.none)`,
+                `and(schedule_type.eq.anytime,start_time.gte.${rangeStart},start_time.lte.${rangeEnd})`,
+                `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${startDate}))`,
+                `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEnd},or(recurrence_end_date.is.null,recurrence_end_date.gt.${startDate}))`,
+              ].join(','),
+            );
+
+          if (error) throw error;
+
+          const todos = (data ?? []) as Todo[];
+
+          // 반복 할일 exclusions 조회 — "지금 반복" 등으로 분리된 occurrence를 부모로부터 숨기기 위함
+          const recurringIds = todos
+            .filter(t => t.recurrence_pattern && t.recurrence_pattern !== 'none')
+            .map(t => t.id);
+
+          const exclusionMap = new Map<string, Set<string>>();
+          if (recurringIds.length > 0) {
+            const {data: exclusions} = await supabase
+              .from('todo_exclusions')
+              .select('parent_todo_id, excluded_date, exclusion_reason')
+              .gte('excluded_date', startDate)
+              .lte('excluded_date', endDate)
+              .in('parent_todo_id', recurringIds);
+
+            for (const e of exclusions ?? []) {
+              if (e.exclusion_reason !== 'deleted' && e.exclusion_reason !== 'postponed') continue;
+              const set = exclusionMap.get(e.excluded_date) ?? new Set<string>();
+              set.add(e.parent_todo_id);
+              exclusionMap.set(e.excluded_date, set);
+            }
+          }
+
+          const result: Record<string, Todo[]> = {};
+
+          // 범위 내 각 날짜별 할일 매핑
+          const days = eachDayOfInterval({
+            start: new Date(startDate),
+            end: new Date(endDate),
+          });
+
+          for (const day of days) {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const dayOfWeek = getDay(day);
+            const excludedForDay = exclusionMap.get(dateStr);
+
+            result[dateStr] = todos.filter(todo => {
+              // 해당 날짜에 deleted/postponed 처리된 반복 할일은 숨김
+              if (excludedForDay && excludedForDay.has(todo.id)) return false;
+
+              if (todo.recurrence_pattern === 'daily') {
+                if (!todo.start_time) return false;
+                const todoStartDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (todoStartDate > dateStr) return false;
+                if ((todo as any).recurrence_end_date && (todo as any).recurrence_end_date <= dateStr) return false;
+                return true;
+              }
+              if (todo.recurrence_pattern === 'weekly') {
+                if (!todo.start_time) return false;
+                const todoStartDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (todoStartDate > dateStr) return false;
+                if ((todo as any).recurrence_end_date && (todo as any).recurrence_end_date <= dateStr) return false;
+                return (todo as any).recurrence_days_of_week?.includes(dayOfWeek) ?? false;
+              }
+              // 다일 종일·시간 지정 — dateStr이 [start_date, end_date] 범위 안이면 매치 (inclusive)
+              if (
+                (todo.schedule_type === 'all_day' || todo.schedule_type === 'timed') &&
+                todo.start_time &&
+                todo.end_time
+              ) {
+                const startStr = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                const endStr = format(parseISO(todo.end_time), 'yyyy-MM-dd');
+                if (startStr !== endStr) {
+                  return dateStr >= startStr && dateStr <= endStr;
+                }
+              }
+              // 단일/기본
+              if (todo.start_time) {
+                return format(parseISO(todo.start_time), 'yyyy-MM-dd') === dateStr;
+              }
+              return false;
+            });
+          }
+
+          return result;
+        } catch (err) {
+          console.error('[TodoStore] fetchTodosForDateRange error:', err);
+          return {};
         }
       },
 
@@ -349,7 +589,12 @@ export const useTodoStore = create<TodoState>()(
             todos: state.todos.map(t =>
               t.id === tempId ? parseTodo(data) : t,
             ),
+            dataVersion: state.dataVersion + 1,
           }));
+
+          // 위젯 동기화 (3개월 풀셋 재쿼리 — fire-and-forget)
+          const {year, month} = getWidgetMonthForTodo(data, get().selectedDate);
+          syncWidgetForMonth(year, month);
 
           return parseTodo(data);
         } catch (err: any) {
@@ -363,12 +608,14 @@ export const useTodoStore = create<TodoState>()(
 
       updateTodo: async (id, updates) => {
         const originalTodos = get().todos;
+        const originalTodo = originalTodos.find(t => t.id === id);
         try {
           // Optimistic update
           set(state => ({
             todos: state.todos.map(t =>
               t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
             ),
+            dataVersion: state.dataVersion + 1,
           }));
 
           const {error} = await supabase
@@ -377,6 +624,23 @@ export const useTodoStore = create<TodoState>()(
             .eq('id', id);
 
           if (error) throw error;
+
+          // 위젯 동기화: 변경 전/후 날짜가 다를 수 있으므로 양쪽 월 모두 갱신
+          const updatedTodo = get().todos.find(t => t.id === id);
+          const oldMonth = originalTodo
+            ? getWidgetMonthForTodo(originalTodo, get().selectedDate)
+            : null;
+          const newMonth = updatedTodo
+            ? getWidgetMonthForTodo(updatedTodo, get().selectedDate)
+            : null;
+          if (newMonth) syncWidgetForMonth(newMonth.year, newMonth.month);
+          if (
+            oldMonth &&
+            (!newMonth || oldMonth.year !== newMonth.year || oldMonth.month !== newMonth.month)
+          ) {
+            syncWidgetForMonth(oldMonth.year, oldMonth.month);
+          }
+
           return true;
         } catch (err: any) {
           // 롤백
@@ -389,10 +653,12 @@ export const useTodoStore = create<TodoState>()(
 
       deleteTodo: async (id) => {
         const originalTodos = get().todos;
+        const deletedTodo = originalTodos.find(t => t.id === id);
         try {
           // Optimistic delete
           set(state => ({
             todos: state.todos.filter(t => t.id !== id),
+            dataVersion: state.dataVersion + 1,
           }));
 
           const {error} = await supabase
@@ -401,6 +667,13 @@ export const useTodoStore = create<TodoState>()(
             .eq('id', id);
 
           if (error) throw error;
+
+          // 위젯 동기화
+          if (deletedTodo) {
+            const {year, month} = getWidgetMonthForTodo(deletedTodo, get().selectedDate);
+            syncWidgetForMonth(year, month);
+          }
+
           return true;
         } catch (err: any) {
           // 롤백
@@ -453,6 +726,7 @@ export const useTodoStore = create<TodoState>()(
                 user_id: userId,
                 completion_date: date,
               }],
+          dataVersion: state.dataVersion + 1,
         }));
 
         try {
@@ -485,6 +759,11 @@ export const useTodoStore = create<TodoState>()(
               ),
             }));
           }
+
+          // 위젯 동기화: 토글된 날짜 기준 월
+          const toggleDate = parseISO(date);
+          syncWidgetForMonth(toggleDate.getFullYear(), toggleDate.getMonth() + 1);
+
           return true;
         } catch (err: any) {
           // 롤백
@@ -500,8 +779,18 @@ export const useTodoStore = create<TodoState>()(
           const userId = await getCurrentUserId();
           if (!userId) throw new Error('Not authenticated');
 
-          const todo = get().todos.find(t => t.id === id);
-          if (!todo) throw new Error('Todo not found');
+          // store.todos는 selectedDate 기준이라 주/3일/월간 뷰에서 호출 시 stale일 수 있음.
+          // 못 찾으면 supabase에서 직접 fetch (raw 데이터, recurrence_pattern 등 보존).
+          let todo: any = get().todos.find(t => t.id === id);
+          if (!todo) {
+            const {data, error: fetchErr} = await supabase
+              .from('todos')
+              .select('*')
+              .eq('id', id)
+              .maybeSingle();
+            if (fetchErr || !data) throw new Error('Todo not found');
+            todo = data;
+          }
 
           switch (updateType) {
             case 'this': {
@@ -549,25 +838,67 @@ export const useTodoStore = create<TodoState>()(
                   ...state.todos.filter(t => t.id !== id),
                   parseTodo(newTodo),
                 ],
+                dataVersion: state.dataVersion + 1,
               }));
               break;
             }
             case 'future': {
-              // 부모 ID 찾기
-              const parentId = (todo as any).parent_todo_id || id;
-              const {error} = await supabase
+              // 매일/주간 반복은 한 부모 todo가 모든 occurrence를 표현하므로
+              // (1) 부모의 recurrence_end_date를 occurrenceDate 직전 날로 단축
+              // (2) occurrenceDate부터 새 시간으로 시작하는 새 반복 todo 생성
+              const occDate = parseISO(occurrenceDate);
+              const prevDate = new Date(occDate.getTime() - 86_400_000);
+              const prevDateStr = format(prevDate, 'yyyy-MM-dd');
+
+              const {error: updateErr} = await supabase
                 .from('todos')
-                .update({...updates, updated_at: new Date().toISOString()})
-                .or(`id.eq.${parentId},parent_todo_id.eq.${parentId}`)
-                .gte('start_time', new Date(occurrenceDate).toISOString());
+                .update({
+                  recurrence_end_date: prevDateStr,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', id);
+              if (updateErr) throw updateErr;
 
-              if (error) throw error;
+              // 새 반복 todo — occurrenceDate부터 시작, 새 시간/폭, 같은 recurrence 패턴
+              const newTodoData: Record<string, any> = {
+                title: todo.title,
+                schedule_type: todo.schedule_type || 'timed',
+                icon: (todo as any).icon ?? null,
+                color: (todo as any).color ?? null,
+                user_id: userId,
+                completed: false,
+                order_index: (todo as any).order_index ?? 0,
+                importance: (todo as any).importance ?? null,
+                urgency: (todo as any).urgency ?? null,
+                is_reluctant_must_do: (todo as any).is_reluctant_must_do ?? false,
+                recurrence_pattern: (todo as any).recurrence_pattern,
+                recurrence_days_of_week: (todo as any).recurrence_days_of_week ?? null,
+                recurrence_end_date: null,
+                ...updates,
+              };
 
-              // 로컬 상태 업데이트
+              const {data: newTodo, error: createErr} = await supabase
+                .from('todos')
+                .insert(newTodoData)
+                .select()
+                .single();
+              if (createErr) throw createErr;
+
+              // 로컬 상태: 원본의 recurrence_end_date 갱신 + 새 todo 추가
               set(state => ({
-                todos: state.todos.map(t =>
-                  t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
-                ),
+                todos: [
+                  ...state.todos.map(t =>
+                    t.id === id
+                      ? {
+                          ...t,
+                          recurrence_end_date: prevDateStr,
+                          updated_at: new Date().toISOString(),
+                        }
+                      : t,
+                  ),
+                  parseTodo(newTodo),
+                ],
+                dataVersion: state.dataVersion + 1,
               }));
               break;
             }
@@ -585,10 +916,25 @@ export const useTodoStore = create<TodoState>()(
                 todos: state.todos.map(t =>
                   t.id === id ? {...t, ...updates, updated_at: new Date().toISOString()} : t,
                 ),
+                dataVersion: state.dataVersion + 1,
               }));
               break;
             }
           }
+
+          // 위젯 동기화: occurrenceDate 월 + 원본 start_time 월
+          const occDate = parseISO(occurrenceDate);
+          syncWidgetForMonth(occDate.getFullYear(), occDate.getMonth() + 1);
+          if (todo.start_time) {
+            const origDate = parseISO(todo.start_time);
+            if (
+              origDate.getFullYear() !== occDate.getFullYear() ||
+              origDate.getMonth() !== occDate.getMonth()
+            ) {
+              syncWidgetForMonth(origDate.getFullYear(), origDate.getMonth() + 1);
+            }
+          }
+
           return true;
         } catch (err: any) {
           console.error('[TodoStore] updateRecurringTodo error:', err);
@@ -618,7 +964,8 @@ export const useTodoStore = create<TodoState>()(
           /** HH:mm → 해당 날짜의 ISO string */
           const toISO = (time: string) => {
             const [h, m] = time.split(':').map(Number);
-            const d = new Date(selectedDate + 'T00:00:00+09:00');
+            // timezone 미지정 → 사용자 기기 로컬 자정 (글로벌 호환)
+            const d = new Date(selectedDate + 'T00:00:00');
             d.setHours(h, m, 0, 0);
             return d.toISOString();
           };
@@ -730,6 +1077,10 @@ export const useTodoStore = create<TodoState>()(
                 parseTodo(newTodo),
               ],
             }));
+
+            // 위젯 동기화: 새로 이동된 날짜 월
+            const {year, month} = getWidgetMonthForTodo(newTodo, get().selectedDate);
+            syncWidgetForMonth(year, month);
           }
 
           return true;
@@ -936,42 +1287,42 @@ export const useTodoStore = create<TodoState>()(
         }
       },
 
-      fetchFuelsForTodos: async (todoIds: string[]) => {
+      fetchMotivationsForTodos: async (todoIds: string[]) => {
         if (todoIds.length === 0) {
-          set({fuelMap: {}});
+          set({motivationMap: {}});
           return;
         }
         try {
-          // 1. todo_notes에서 fuel 카테고리 노트 링크 조회
+          // 1. todo_notes에서 motivation 카테고리 노트 링크 조회
           const {data: links, error: linkErr} = await supabase
-            .from('todo_notes')
-            .select('todo_id, note_id')
+            .from('todo_motivations')
+            .select('todo_id, motivation_id')
             .in('todo_id', todoIds);
 
           if (linkErr || !links || links.length === 0) {
-            set({fuelMap: {}});
+            set({motivationMap: {}});
             return;
           }
 
-          // 2. 연결된 노트 ID로 fuel 노트만 조회
-          const noteIds = [...new Set(links.map((l: any) => l.note_id))];
+          // 2. 연결된 노트 ID로 motivation 노트만 조회
+          const noteIds = [...new Set(links.map((l: any) => l.motivation_id))];
           const {data: notes, error: noteErr} = await supabase
-            .from('notes')
-            .select('id, title, content, note_category')
+            .from('motivations')
+            .select('id, title, content, category')
             .in('id', noteIds)
-            .eq('note_category', 'fuel');
+            .eq('category', 'motivation');
 
           if (noteErr || !notes || notes.length === 0) {
-            set({fuelMap: {}});
+            set({motivationMap: {}});
             return;
           }
 
-          // 3. todoId → fuel notes 매핑 구성
-          const fuelNoteMap = new Map(notes.map((n: any) => [n.id, n]));
-          const map: Record<string, LinkedFuel[]> = {};
+          // 3. todoId → motivation notes 매핑 구성
+          const motivationNoteMap = new Map(notes.map((n: any) => [n.id, n]));
+          const map: Record<string, LinkedMotivation[]> = {};
 
           for (const link of links) {
-            const note = fuelNoteMap.get(link.note_id);
+            const note = motivationNoteMap.get(link.motivation_id);
             if (!note) continue;
             if (!map[link.todo_id]) map[link.todo_id] = [];
             map[link.todo_id].push({
@@ -981,9 +1332,9 @@ export const useTodoStore = create<TodoState>()(
             });
           }
 
-          set({fuelMap: map});
+          set({motivationMap: map});
         } catch (err) {
-          console.error('[TodoStore] fetchFuelsForTodos error:', err);
+          console.error('[TodoStore] fetchMotivationsForTodos error:', err);
         }
       },
 
@@ -1000,30 +1351,8 @@ export const useTodoStore = create<TodoState>()(
           const monthStart = startOfMonth(new Date(year, month - 1));
           const monthEnd = endOfMonth(new Date(year, month - 1));
 
-          // 위젯용 ±1개월 확장 범위
-          const prevMonthStart = startOfMonth(subMonths(new Date(year, month - 1), 1));
-          const nextMonthEnd = endOfMonth(addMonths(new Date(year, month - 1), 1));
-          const rangeStartISO = prevMonthStart.toISOString();
-          const rangeEndISO = nextMonthEnd.toISOString();
-          const rangeStartDate = format(prevMonthStart, 'yyyy-MM-dd');
-
-          // 3개월 범위 쿼리 (전월~익월)
-          const {data, error} = await supabase
-            .from('todos')
-            .select('id, title, start_time, schedule_type, recurrence_pattern, recurrence_days_of_week, recurrence_end_date, color')
-            .eq('user_id', userId)
-            .or(
-              [
-                `and(schedule_type.eq.timed,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
-                `and(schedule_type.eq.anytime,start_time.gte.${rangeStartISO},start_time.lte.${rangeEndISO})`,
-                `and(recurrence_pattern.eq.daily,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
-                `and(recurrence_pattern.eq.weekly,start_time.lte.${rangeEndISO},or(recurrence_end_date.is.null,recurrence_end_date.gt.${rangeStartDate}))`,
-              ].join(','),
-            );
-
-          if (error) throw error;
-
-          const todos = (data ?? []) as MonthTodoSummary[];
+          // 3개월 범위 쿼리 (전월~익월) — 위젯과 공용 헬퍼 재사용
+          const todos = await fetchWidgetTodosRange(userId, year, month);
 
           // monthViewData: 현재 월만 (플래너용)
           const monthDays = eachDayOfInterval({start: monthStart, end: monthEnd});
@@ -1046,7 +1375,13 @@ export const useTodoStore = create<TodoState>()(
                 return todo.recurrence_days_of_week?.includes(dayOfWeek) ?? false;
               }
               if (todo.start_time) {
-                return format(parseISO(todo.start_time), 'yyyy-MM-dd') === dateStr;
+                const startDate = format(parseISO(todo.start_time), 'yyyy-MM-dd');
+                if (startDate === dateStr) return true;
+                // 크로스데이: start_time < 오늘 && end_time >= 오늘
+                if (todo.end_time && todo.schedule_type === 'timed') {
+                  const endDate = format(parseISO(todo.end_time), 'yyyy-MM-dd');
+                  if (startDate < dateStr && endDate >= dateStr) return true;
+                }
               }
               return false;
             });
@@ -1059,26 +1394,20 @@ export const useTodoStore = create<TodoState>()(
 
           set({monthViewData: result});
 
-          // iOS 위젯 동기화: 3개월 범위
-          const allDays = eachDayOfInterval({start: prevMonthStart, end: nextMonthEnd});
-          const widgetResult: Record<string, MonthTodoSummary[]> = {};
-          for (const day of allDays) {
-            const dateStr = format(day, 'yyyy-MM-dd');
-            widgetResult[dateStr] = filterTodosForDay(dateStr, getDay(day));
-          }
-          const widgetDays = Object.entries(widgetResult).map(([date, dayTodos]) => ({
-            date,
-            todos: dayTodos.slice(0, 5).map(t => ({
-              title: t.title,
-              color: t.color || '#3B82F6',
-            })),
-          }));
-          syncWidgetData({year, month, days: widgetDays}).catch(() => {/* 위젯 실패는 조용히 */});
+          // 위젯 동기화: 3개월 범위 (iOS + Android)
+          buildAndSyncWidget(todos as unknown as Todo[], year, month);
         } catch (err: any) {
           console.error('[TodoStore] fetchTodosForMonthView error:', err);
         } finally {
           set({monthViewLoading: false});
         }
+      },
+
+      syncWidget: async (year, month) => {
+        const now = new Date();
+        const y = year ?? now.getFullYear();
+        const m = month ?? now.getMonth() + 1;
+        await syncWidgetForMonth(y, m);
       },
 
       clearError: () => set({error: null}),
@@ -1090,9 +1419,15 @@ export const useTodoStore = create<TodoState>()(
         todos: state.todos,
         completions: state.completions,
         selectedDate: state.selectedDate,
-        fuelMap: state.fuelMap,
+        motivationMap: state.motivationMap,
         offlineQueue: state.offlineQueue,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          const today = format(new Date(), 'yyyy-MM-dd');
+          state.selectedDate = today;
+        }
+      },
     },
   ),
 );
