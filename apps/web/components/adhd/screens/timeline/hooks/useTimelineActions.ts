@@ -419,7 +419,7 @@ export function useTimelineActions({
             if (action === 'reschedule' && newTime) {
               const [hours, minutes] = newTime.split(':').map(Number);
               const occDate = postponingItem.recurrenceOccurrenceDate!;
-              const startDate = new Date(`${occDate}T00:00:00+09:00`);
+              const startDate = new Date(`${occDate}T00:00:00`);
               startDate.setHours(hours, minutes, 0, 0);
               newStartTime = startDate.toISOString();
 

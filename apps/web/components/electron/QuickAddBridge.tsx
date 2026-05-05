@@ -130,5 +130,6 @@ function todayStartIsoKst(): string {
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
-  return new Date(`${yyyy}-${mm}-${dd}T00:00:00+09:00`).toISOString();
+  // timezone 미지정 → 사용자 기기 로컬 자정으로 해석 (글로벌 호환)
+  return new Date(`${yyyy}-${mm}-${dd}T00:00:00`).toISOString();
 }

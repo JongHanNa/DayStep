@@ -964,7 +964,8 @@ export const useTodoStore = create<TodoState>()(
           /** HH:mm → 해당 날짜의 ISO string */
           const toISO = (time: string) => {
             const [h, m] = time.split(':').map(Number);
-            const d = new Date(selectedDate + 'T00:00:00+09:00');
+            // timezone 미지정 → 사용자 기기 로컬 자정 (글로벌 호환)
+            const d = new Date(selectedDate + 'T00:00:00');
             d.setHours(h, m, 0, 0);
             return d.toISOString();
           };

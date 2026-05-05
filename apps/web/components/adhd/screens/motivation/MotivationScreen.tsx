@@ -150,7 +150,7 @@ export function MotivationScreen({ userId }: MotivationScreenProps) {
     await checkAndProceed('todo', async () => {
       try {
         const today = new Date();
-        const startTime = new Date(`${today.toISOString().split('T')[0]}T00:00:00+09:00`).toISOString();
+        const startTime = new Date(`${today.toISOString().split('T')[0]}T00:00:00`).toISOString();
         const newTodo = await createTodo({
           user_id: userId,
           title,
