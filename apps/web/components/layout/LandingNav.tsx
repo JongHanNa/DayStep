@@ -94,7 +94,7 @@ export default function LandingNav() {
         <div className="flex items-center justify-between h-16">
           {/* 로고 */}
           <Link href="/landing" className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-white">DayStep</span>
+            <span className="text-2xl font-bold text-white">일상투두</span>
           </Link>
 
           {/* 데스크톱 메뉴 */}

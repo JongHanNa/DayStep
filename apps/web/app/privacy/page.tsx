@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '개인정보 처리방침 - DayStep',
-  description: 'DayStep 개인정보 처리방침',
+  title: '개인정보 처리방침 - 일상투두',
+  description: '일상투두 개인정보 처리방침',
 };
 
 export default function PrivacyPage() {
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
         </nav>
 
         <p className="text-gray-600 mb-8">
-          DayStep(이하 &quot;서비스&quot;)은 정보주체의 자유와 권리 보호를 위해
+          일상투두(이하 &quot;서비스&quot;)은 정보주체의 자유와 권리 보호를 위해
           「개인정보 보호법」 및 관계 법령이 정한 바를 준수하여, 적법하게
           개인정보를 처리하고 안전하게 관리하고 있습니다. 이에 「개인정보
           보호법」 제30조에 따라 정보주체에게 개인정보 처리에 관한 절차 및

@@ -8,7 +8,7 @@ import { fadeInUpVariants, getViewportOptions, tiltVariants, getMagneticProps } 
 const testimonials = [
   {
     rating: 5,
-    text: '계획을 세우고 습관을 만드는 데 어려움이 있었는데, DayStep이 완전히 바꿔놓았어요. 시각적으로 일정을 관리할 수 있어서 훨씬 편해요.',
+    text: '계획을 세우고 습관을 만드는 데 어려움이 있었는데, 일상투두이 완전히 바꿔놓았어요. 시각적으로 일정을 관리할 수 있어서 훨씬 편해요.',
     author: '김민지',
     role: '프리랜서 디자이너',
   },

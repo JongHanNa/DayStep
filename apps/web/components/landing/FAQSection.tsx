@@ -8,16 +8,16 @@ import { fadeInUpVariants, getViewportOptions } from '@/lib/animations/scrollAni
 
 const faqs = [
   {
-    question: 'DayStep은 무료인가요?',
-    answer: 'DayStep은 기본 기능을 무료로 제공합니다. 타임라인 관리, 할일 목록, Second Brain 기본 기능을 무료로 사용할 수 있으며, 추가 기능이 필요한 경우 프리미엄 플랜을 선택할 수 있습니다.',
+    question: '일상투두은 무료인가요?',
+    answer: '일상투두은 기본 기능을 무료로 제공합니다. 타임라인 관리, 할일 목록, Second Brain 기본 기능을 무료로 사용할 수 있으며, 추가 기능이 필요한 경우 프리미엄 플랜을 선택할 수 있습니다.',
   },
   {
     question: '다른 플래너 앱과 어떻게 다른가요?',
-    answer: 'DayStep은 단순한 할일 관리를 넘어 Second Brain 시스템을 통합한 생산성 앱입니다. 타임라인 뷰로 하루를 시각화하고, AI 추천으로 스마트한 일정 관리가 가능하며, 생각을 체계적으로 정리할 수 있습니다.',
+    answer: '일상투두은 단순한 할일 관리를 넘어 Second Brain 시스템을 통합한 생산성 앱입니다. 타임라인 뷰로 하루를 시각화하고, AI 추천으로 스마트한 일정 관리가 가능하며, 생각을 체계적으로 정리할 수 있습니다.',
   },
   {
     question: '모바일과 웹에서 모두 사용할 수 있나요?',
-    answer: '네! DayStep은 웹 브라우저에서 사용할 수 있으며, iOS와 Android 앱도 제공합니다. 모든 기기에서 실시간으로 동기화되어 어디서든 일정을 관리할 수 있습니다.',
+    answer: '네! 일상투두은 웹 브라우저에서 사용할 수 있으며, iOS와 Android 앱도 제공합니다. 모든 기기에서 실시간으로 동기화되어 어디서든 일정을 관리할 수 있습니다.',
   },
   {
     question: '데이터는 안전하게 보호되나요?',
@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     question: '어떤 기능들이 포함되어 있나요?',
-    answer: 'DayStep은 타임라인 뷰, Second Brain 시스템, 목표 관리, 할일 관리, AI 추천, 반복 일정, 집중 타이머 등 다양한 생산성 도구를 제공합니다. 각 기능은 직관적으로 설계되어 쉽게 사용할 수 있습니다.',
+    answer: '일상투두은 타임라인 뷰, Second Brain 시스템, 목표 관리, 할일 관리, AI 추천, 반복 일정, 집중 타이머 등 다양한 생산성 도구를 제공합니다. 각 기능은 직관적으로 설계되어 쉽게 사용할 수 있습니다.',
   },
 ];
 
@@ -53,7 +53,7 @@ export default function FAQSection() {
             자주 묻는 질문
           </h2>
           <p className="text-lg text-white/90">
-            DayStep에 대해 궁금한 점이 있으신가요?
+            일상투두에 대해 궁금한 점이 있으신가요?
           </p>
         </div>
 

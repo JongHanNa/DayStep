@@ -765,7 +765,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                     {/* 플랜 변경 */}
                     <a
                       className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
-                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
+                      href="mailto:skwhdgks@gmail.com?subject=일상투두%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
                     >
                       <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                         <RefreshCw className="w-4 h-4 text-muted-foreground" />
@@ -799,7 +799,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                     {/* 플랜 변경 */}
                     <a
                       className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
-                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
+                      href="mailto:skwhdgks@gmail.com?subject=일상투두%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
                     >
                       <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                         <RefreshCw className="w-4 h-4 text-muted-foreground" />
@@ -827,7 +827,7 @@ export default function SubscriptionView({ onBack }: SubscriptionViewProps) {
                     {/* 플랜 변경 */}
                     <a
                       className="flex items-center gap-3 w-full px-4 py-3 text-left bg-muted/50 hover:bg-muted/80 transition-colors border-t"
-                      href="mailto:skwhdgks@gmail.com?subject=DayStep%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
+                      href="mailto:skwhdgks@gmail.com?subject=일상투두%20%ED%94%8C%EB%9E%9C%20%EB%B3%80%EA%B2%BD%20%EC%9A%94%EC%B2%AD"
                     >
                       <span className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                         <RefreshCw className="w-4 h-4 text-muted-foreground" />

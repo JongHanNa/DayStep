@@ -147,7 +147,7 @@ export default function AIChatScreen() {
             <Text style={{fontSize: 14, color: '#374151', lineHeight: 22, marginBottom: 8}}>
               • 전송 데이터: 입력 텍스트, 할일 정보{'\n'}
               • 목적: AI 기반 일정 계획 및 조언 제공{'\n'}
-              • 보관: DayStep 서버를 통해 전달되며 로그는 30일 후 삭제
+              • 보관: 일상투두 서버를 통해 전달되며 로그는 30일 후 삭제
             </Text>
             <Text style={{fontSize: 13, color: '#6B7280', lineHeight: 20, marginBottom: 20}}>
               동의하시면 AI 기능을 이용할 수 있습니다. 자세한 내용은 개인정보처리방침을 확인하세요.

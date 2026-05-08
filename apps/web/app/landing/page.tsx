@@ -393,12 +393,12 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
             집중이 어려운 하루,
             <br />
-            DayStep과 함께 시작하세요
+            일상투두과 함께 시작하세요
           </h2>
           <p className="text-lg text-white/90 max-w-2xl mx-auto">
             ADHD가 있어도 일상을 잘 돌볼 수 있습니다.
             <br />
-            DayStep이 함께할게요.
+            일상투두이 함께할게요.
           </p>
           <button
             onClick={handleGetStarted}
@@ -416,7 +416,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* About */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">DayStep</h3>
+              <h3 className="text-lg font-semibold text-white">일상투두</h3>
               <p className="text-sm text-white/80">
                 집중이 어려운 당신을 위한 하루 관리 앱
               </p>
@@ -443,13 +443,13 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">문의</h3>
               <p className="text-sm text-white/80">
-                support@daystep.app
+                support@ilsangtodo.com
               </p>
             </div>
           </div>
 
           <div className="pt-8 border-t border-base-300 text-center text-sm text-white/80">
-            © 2025-2026 DayStep. All rights reserved.
+            © 2025-2026 일상투두. All rights reserved.
           </div>
         </div>
       </footer>

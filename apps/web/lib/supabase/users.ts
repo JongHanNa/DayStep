@@ -59,7 +59,7 @@ export async function ensureUserExists(
     // 2. public.users 없음 → 자동 생성 (Defensive Programming)
     console.log('⚠️ public.users 레코드 없음 - 자동 생성 시작');
 
-    const fallbackEmail = email || `user_${userId}@daystep.app`;
+    const fallbackEmail = email || `user_${userId}@ilsangtodo.com`;
     const fallbackName = name || email?.split('@')[0] || 'User';
 
     const newUserData = {

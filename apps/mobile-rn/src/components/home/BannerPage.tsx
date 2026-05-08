@@ -150,7 +150,7 @@ export function BannerPage() {
             <Sparkles size={24} color={primaryColor} />
             <Text className="text-sm text-gray-500 mt-3 text-center leading-5">
               "ADHD가 있어도 일상을 잘 돌볼 수 있어요"{'\n'}
-              DayStep이 오늘도 함께할게요.
+              일상투두이 오늘도 함께할게요.
             </Text>
           </View>
         </AnimatedCard>

@@ -9,7 +9,7 @@ interface SmartAppBannerProps {
 export const SmartAppBanner: React.FC<SmartAppBannerProps> = ({
   iosAppId = process.env.NEXT_PUBLIC_IOS_APP_ID,
   androidPackageName = process.env.NEXT_PUBLIC_ANDROID_PACKAGE_NAME,
-  siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://daystep.app",
+  siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ilsangtodo.com",
 }) => {
   return (
     <>
@@ -35,11 +35,11 @@ export const SmartAppBanner: React.FC<SmartAppBannerProps> = ({
 
       {/* Deep Link 관련 메타 태그 */}
       <meta property="al:ios:app_store_id" content={iosAppId} />
-      <meta property="al:ios:app_name" content="DayStep" />
+      <meta property="al:ios:app_name" content="일상투두" />
       <meta property="al:ios:url" content="daystep://open" />
 
       <meta property="al:android:package" content={androidPackageName} />
-      <meta property="al:android:app_name" content="DayStep" />
+      <meta property="al:android:app_name" content="일상투두" />
       <meta property="al:android:url" content="daystep://open" />
 
       <meta property="al:web:url" content={siteUrl} />

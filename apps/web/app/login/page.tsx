@@ -106,7 +106,7 @@ export default function LoginPage() {
           {/* 헤더 */}
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
-              DayStep
+              일상투두
             </h1>
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-3">
               로그인

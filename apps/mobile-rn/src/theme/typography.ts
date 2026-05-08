@@ -1,5 +1,5 @@
 /**
- * DayStep Typography System
+ * 일상투두 Typography System
  * iOS SF Pro 기반, ADHD 가독성 최적화
  */
 import {Platform, TextStyle} from 'react-native';

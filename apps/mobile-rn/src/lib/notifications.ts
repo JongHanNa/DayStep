@@ -80,7 +80,7 @@ export async function setupNotificationChannel(): Promise<void> {
   if (Platform.OS === 'android') {
     await notifee.createChannel({
       id: CHANNEL_ID,
-      name: 'DayStep 할일 알림',
+      name: '일상투두 할일 알림',
       importance: AndroidImportance.HIGH,
       sound: 'default',
     });
@@ -152,7 +152,7 @@ export async function scheduleTodoAlarm(
   await notifee.createTriggerNotification(
     {
       id: notificationId,
-      title: 'DayStep',
+      title: '일상투두',
       body:
         offsetMinutes === 0
           ? `지금 시작: ${title}`
@@ -331,7 +331,7 @@ export async function scheduleTrialExpiryReminder(trialDays: number = 7): Promis
   await notifee.createTriggerNotification(
     {
       id: TRIAL_REMINDER_ID,
-      title: 'DayStep Pro 무료 체험 안내',
+      title: '일상투두 Pro 무료 체험 안내',
       body: '무료 체험이 내일 종료됩니다. 취소를 원하시면 설정에서 변경해주세요.',
       android: {channelId: CHANNEL_ID, importance: AndroidImportance.HIGH},
       ios: {sound: 'default'},

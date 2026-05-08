@@ -1,5 +1,5 @@
 /**
- * DayStep Design Tokens
+ * 일상투두 Design Tokens
  * "Calm Luxe + ADHD Care" — 시각적 소음 없이 고급스러움 + ADHD 특성 배려
  */
 

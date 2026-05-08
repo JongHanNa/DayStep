@@ -106,7 +106,7 @@ export const NotificationManagerComponent: React.FC = () => {
       } else {
         toast({
           title: "알림 권한 거부됨",
-          description: "설정 > DayStep > 알림에서 권한을 허용해주세요.",
+          description: "설정 > 일상투두 > 알림에서 권한을 허용해주세요.",
           variant: "destructive",
         });
       }
@@ -312,7 +312,7 @@ export const NotificationManagerComponent: React.FC = () => {
             💡 <strong>사용법:</strong> 알림 권한을 허용한 후 예약된 알림을 관리할 수 있습니다.
           </p>
           <p>
-            🔔 <strong>iOS 설정:</strong> 설정 → DayStep → 알림에서 세부 설정을 변경할 수 있습니다.
+            🔔 <strong>iOS 설정:</strong> 설정 → 일상투두 → 알림에서 세부 설정을 변경할 수 있습니다.
           </p>
           <p>
             ⏱️ <strong>실시간 카운트다운:</strong> 예약된 알림의 남은 시간을 실시간으로 확인할 수 있습니다.

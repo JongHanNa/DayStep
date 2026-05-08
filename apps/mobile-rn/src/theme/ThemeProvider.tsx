@@ -1,5 +1,5 @@
 /**
- * DayStep Theme Provider
+ * 일상투두 Theme Provider
  * 컬러 테마 + 다크/라이트 모드 관리
  */
 import React, {createContext, useContext, useMemo, useState, useCallback} from 'react';

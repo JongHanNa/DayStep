@@ -43,11 +43,11 @@ export default function WidgetsView({ onBack }: WidgetsViewProps) {
             <h2 className="text-lg font-semibold text-emerald-800 dark:text-emerald-200">홈 화면 위젯</h2>
           </div>
           <p className="text-sm text-emerald-700 dark:text-emerald-300 mb-3">
-            DayStep 위젯을 홈 화면에 추가하면 앱을 열지 않고도 할일과 다짐을 빠르게 확인할 수 있습니다.
+            일상투두 위젯을 홈 화면에 추가하면 앱을 열지 않고도 할일과 다짐을 빠르게 확인할 수 있습니다.
           </p>
           <div className="bg-white/50 dark:bg-black/20 p-3 rounded border-2 border-dashed border-emerald-200 dark:border-emerald-800">
             <p className="text-xs text-emerald-600 dark:text-emerald-400">
-              📱 <strong>위젯 추가 방법:</strong> 홈 화면에서 빈 공간을 길게 누른 후 위젯 추가를 선택하고 DayStep을 찾아서 추가하세요.
+              📱 <strong>위젯 추가 방법:</strong> 홈 화면에서 빈 공간을 길게 누른 후 위젯 추가를 선택하고 일상투두을 찾아서 추가하세요.
             </p>
           </div>
         </div>

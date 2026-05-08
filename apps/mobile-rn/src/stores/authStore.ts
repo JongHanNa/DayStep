@@ -102,8 +102,8 @@ export const useAuthStore = create<AuthState>()(
             // 마케팅 데모 계정으로 실제 로그인 (DB 데이터 로드를 위해)
             try {
               const {data, error} = await supabase.auth.signInWithPassword({
-                email: 'demo@daystep.app',
-                password: 'DayStep2026!',
+                email: 'demo@ilsangtodo.com',
+                password: '일상투두2026!',
               });
               if (data?.session) {
                 set({user: data.session.user, session: data.session, isAuthenticated: true, initializing: false});

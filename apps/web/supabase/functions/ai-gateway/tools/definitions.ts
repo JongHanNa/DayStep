@@ -1,7 +1,7 @@
 /**
  * AI Tool 정의
  *
- * DayStep MCP 도구와 동일한 도구를 AI에게 제공
+ * 일상투두 MCP 도구와 동일한 도구를 AI에게 제공
  */
 
 import type { ToolDefinition } from '../types/index.ts';

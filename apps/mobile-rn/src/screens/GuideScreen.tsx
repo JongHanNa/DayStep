@@ -121,11 +121,11 @@ export default function GuideScreen() {
             <View className="flex-row items-center mb-2">
               <Sparkles size={20} color={primaryColor} />
               <Text className="text-sm font-semibold ml-2" style={{color: primaryColor}}>
-                DayStep + Claude Desktop
+                일상투두 + Claude Desktop
               </Text>
             </View>
             <Text className="text-sm leading-5" style={{color: primaryColor}}>
-              Claude Desktop에서 DayStep의 할일, 프로젝트, 메모를 직접 관리할 수
+              Claude Desktop에서 일상투두의 할일, 프로젝트, 메모를 직접 관리할 수
               있습니다. MCP(Model Context Protocol)를 통해 연결합니다.
             </Text>
           </View>

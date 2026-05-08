@@ -208,7 +208,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
                   <div>
                     <Label htmlFor="notifications-enabled" className="text-base font-medium">알림 활성화</Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      모든 DayStep 알림 활성화/비활성화
+                      모든 일상투두 알림 활성화/비활성화
                     </p>
                   </div>
                   <Switch
@@ -432,7 +432,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({ clas
                   <h4 className="font-medium text-blue-800 mb-2">추가 설정</h4>
                   <p className="text-sm text-blue-700 leading-relaxed">
                     {systemInfo.isNative 
-                      ? 'iOS 설정 > DayStep > 알림에서 더 자세한 설정을 조정할 수 있습니다.'
+                      ? 'iOS 설정 > 일상투두 > 알림에서 더 자세한 설정을 조정할 수 있습니다.'
                       : '브라우저 설정에서 더 자세한 알림 설정을 조정할 수 있습니다.'
                     }
                   </p>

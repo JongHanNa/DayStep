@@ -9,7 +9,7 @@ test.describe("Todo Management", () => {
 
   test("should display todos page", async ({ page }) => {
     // Check if the todos page loads correctly
-    await expect(page).toHaveTitle(/DayStep/);
+    await expect(page).toHaveTitle(/일상투두/);
 
     // Look for todo-related elements
     const hasTodoElements = await Promise.race([
@@ -139,7 +139,7 @@ test.describe("Todo Management", () => {
     await page.reload();
 
     // Verify mobile-specific elements or layout
-    await expect(page).toHaveTitle(/DayStep/);
+    await expect(page).toHaveTitle(/일상투두/);
 
     // Check if the page is responsive
     const bodyElement = page.locator("body");
@@ -163,7 +163,7 @@ test.describe("Todo Management", () => {
       await page.goto("/");
 
       // Verify page is still accessible
-      await expect(page).toHaveTitle(/DayStep/);
+      await expect(page).toHaveTitle(/일상투두/);
     }
   });
 });

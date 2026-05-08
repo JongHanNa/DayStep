@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: '가격 안내 - DayStep',
-  description: 'DayStep Pro 구독 플랜 및 가격 안내',
+  title: '가격 안내 - 일상투두',
+  description: '일상투두 Pro 구독 플랜 및 가격 안내',
 };
 
 export default function PricingPage() {
@@ -13,7 +13,7 @@ export default function PricingPage() {
         {/* 헤더 */}
         <div className="text-center mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            DayStep Pro
+            일상투두 Pro
           </h1>
           <p className="text-lg text-gray-600">
             소중한 관계를 더 깊게 관리하세요

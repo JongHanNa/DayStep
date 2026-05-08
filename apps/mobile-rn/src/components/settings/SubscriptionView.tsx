@@ -106,7 +106,7 @@ async function handleManageSubscription(platform: SubPlatform | undefined) {
     await showManageSubscriptions();
     return;
   }
-  const webBase = Config.WEB_BASE_URL ?? 'https://daystep.app';
+  const webBase = Config.WEB_BASE_URL ?? 'https://ilsangtodo.com';
   let url: string;
   switch (platform) {
     case 'android':
@@ -232,7 +232,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
       <View style={styles.crownCircle}>
         <Crown size={32} color={fixedColors.premiumGold} strokeWidth={2.5} />
       </View>
-      <Text style={styles.heroTitle}>DayStep Pro</Text>
+      <Text style={styles.heroTitle}>일상투두 Pro</Text>
       <Text style={styles.heroSubtitle}>하루 관리의 모든 것, 제한 없이</Text>
     </View>
   );
@@ -340,11 +340,11 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
         <Text style={styles.footerLink}>구독 복원</Text>
       </AnimatedPressable>
       <Text style={styles.footerDot}>·</Text>
-      <AnimatedPressable onPress={() => Linking.openURL('https://daystep.app/terms')} hapticType="light" scaleValue={0.95}>
+      <AnimatedPressable onPress={() => Linking.openURL('https://ilsangtodo.com/terms')} hapticType="light" scaleValue={0.95}>
         <Text style={styles.footerLink}>이용약관</Text>
       </AnimatedPressable>
       <Text style={styles.footerDot}>·</Text>
-      <AnimatedPressable onPress={() => Linking.openURL('https://daystep.app/privacy')} hapticType="light" scaleValue={0.95}>
+      <AnimatedPressable onPress={() => Linking.openURL('https://ilsangtodo.com/privacy')} hapticType="light" scaleValue={0.95}>
         <Text style={styles.footerLink}>개인정보처리방침</Text>
       </AnimatedPressable>
     </View>
@@ -498,7 +498,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             <View style={styles.crownCircle}>
               <Crown size={32} color={fixedColors.premiumGold} strokeWidth={2.5} />
             </View>
-            <Text style={styles.heroTitle}>DayStep Pro</Text>
+            <Text style={styles.heroTitle}>일상투두 Pro</Text>
             <Text style={styles.heroSubtitle}>
               하루 관리의 모든 것, 제한 없이
             </Text>
@@ -691,7 +691,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             <Text style={styles.footerDot}>·</Text>
             <AnimatedPressable
               onPress={() =>
-                Linking.openURL('https://daystep.app/terms')
+                Linking.openURL('https://ilsangtodo.com/terms')
               }
               hapticType="light"
               scaleValue={0.95}>
@@ -700,7 +700,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
             <Text style={styles.footerDot}>·</Text>
             <AnimatedPressable
               onPress={() =>
-                Linking.openURL('https://daystep.app/privacy')
+                Linking.openURL('https://ilsangtodo.com/privacy')
               }
               hapticType="light"
               scaleValue={0.95}>
@@ -744,7 +744,7 @@ export function SubscriptionView({onBack}: SubscriptionViewProps) {
           )}
 
           <Crown size={28} color={fixedColors.premiumGold} strokeWidth={2} />
-          <Text style={styles.statusTitle}>DayStep Pro</Text>
+          <Text style={styles.statusTitle}>일상투두 Pro</Text>
 
           {planInfo.price ? (
             <Text style={styles.planInfoText}>
