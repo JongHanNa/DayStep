@@ -449,7 +449,7 @@ export default function LandingPage() {
           </div>
 
           <div className="pt-8 border-t border-base-300 text-center text-sm text-white/80">
-            © 2024 DayStep. All rights reserved.
+            © 2025-2026 DayStep. All rights reserved.
           </div>
         </div>
       </footer>
