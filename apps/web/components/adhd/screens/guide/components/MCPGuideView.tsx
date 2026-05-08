@@ -14,9 +14,9 @@ import {
   Rocket
 } from 'lucide-react';
 /**
- * MCP 연결 가이드 - Claude Desktop에서 DayStep MCP를 연결하는 방법 안내
+ * MCP 연결 가이드 - Claude Desktop에서 일상투두 MCP를 연결하는 방법 안내
  *
- * 사용자가 자신의 Claude API를 통해 DayStep과 연동하도록 안내합니다.
+ * 사용자가 자신의 Claude API를 통해 일상투두과 연동하도록 안내합니다.
  */
 export default function MCPGuideView() {
   const [copiedConfig, setCopiedConfig] = useState(false);
@@ -119,7 +119,7 @@ export default function MCPGuideView() {
             <div>
               <h2 className="font-semibold text-lg">Claude Desktop으로 AI 할일 자동 생성</h2>
               <p className="text-sm text-base-content/70 mt-1">
-                Claude Desktop에서 DayStep을 연결하면 AI가 할일을 자동으로 생성해줍니다.
+                Claude Desktop에서 일상투두을 연결하면 AI가 할일을 자동으로 생성해줍니다.
                 <br />
                 <span className="text-xs text-base-content/50">사용자 본인의 Claude 사용량으로 작동합니다.</span>
               </p>
@@ -131,7 +131,7 @@ export default function MCPGuideView() {
       {/* Step 1: 토큰 발급 */}
       <StepCard step={1} title="MCP 토큰 발급" icon={Key}>
         <p className="text-sm text-base-content/70 mb-3">
-          DayStep 계정을 Claude Desktop에 연결하기 위한 인증 토큰을 발급받습니다.
+          일상투두 계정을 Claude Desktop에 연결하기 위한 인증 토큰을 발급받습니다.
         </p>
         <button
           onClick={handleOpenAuth}

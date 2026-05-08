@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '이용약관 - DayStep',
-  description: 'DayStep 서비스 이용약관',
+  title: '이용약관 - 일상투두',
+  description: '일상투두 서비스 이용약관',
 };
 
 export default function TermsPage() {
@@ -82,7 +82,7 @@ export default function TermsPage() {
         </nav>
 
         <p className="text-gray-600 mb-8">
-          본 약관은 DayStep(이하 &quot;서비스&quot;)의 이용조건 및 절차, 회사와
+          본 약관은 일상투두(이하 &quot;서비스&quot;)의 이용조건 및 절차, 회사와
           회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
         </p>
 
@@ -92,7 +92,7 @@ export default function TermsPage() {
             제1조 (목적)
           </h2>
           <p className="text-gray-600 mb-4">
-            본 약관은 DayStep(이하 &quot;회사&quot;)이 제공하는 할일 관리 및
+            본 약관은 일상투두(이하 &quot;회사&quot;)이 제공하는 할일 관리 및
             생산성 서비스(이하 &quot;서비스&quot;)의 이용과 관련하여 회사와 회원
             간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로
             합니다.

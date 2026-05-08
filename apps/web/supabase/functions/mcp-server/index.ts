@@ -1,8 +1,8 @@
 /**
- * DayStep MCP Server
+ * 일상투두 MCP Server
  *
  * Supabase Edge Function으로 구현된 MCP (Model Context Protocol) 서버
- * ChatGPT, Claude, Cursor 등 MCP 지원 플랫폼에서 DayStep 데이터를 관리할 수 있습니다.
+ * ChatGPT, Claude, Cursor 등 MCP 지원 플랫폼에서 일상투두 데이터를 관리할 수 있습니다.
  *
  * 엔드포인트:
  * - POST /mcp-server - JSON-RPC 2.0 MCP 요청 처리

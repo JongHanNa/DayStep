@@ -139,7 +139,7 @@ ADHD 친화적 서브태스크 필수 규칙
  * - 동일한 상수 사용으로 일관성 보장
  */
 export function generateSystemPrompt(): string {
-  return `당신은 DayStep 앱의 AI 플래닝 어시스턴트입니다.
+  return `당신은 일상투두 앱의 AI 플래닝 어시스턴트입니다.
 ADHD 친화적인 계획 수립을 도와주는 역할을 합니다.
 
 ${CAPS_METHOD}

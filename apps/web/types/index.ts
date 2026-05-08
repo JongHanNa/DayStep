@@ -1,4 +1,4 @@
-// Global type definitions for DayStep app
+// Global type definitions for 일상투두 app
 import { Database } from "./supabase";
 
 // Supabase database types

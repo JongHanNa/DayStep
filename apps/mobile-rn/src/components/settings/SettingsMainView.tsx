@@ -104,7 +104,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
   }, [freeProUntil, handleFreeProDateChange]);
 
   const [isAdmin, setIsAdmin] = useState(false);
-  const isDemoAccount = user?.email === 'demo@daystep.app';
+  const isDemoAccount = user?.email === 'demo@ilsangtodo.com';
   const isGoogleUser = user?.app_metadata?.providers?.includes('google') ?? false;
   const avatarUrl = user?.user_metadata?.avatar_url;
 

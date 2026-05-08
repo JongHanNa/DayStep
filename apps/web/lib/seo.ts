@@ -2,13 +2,13 @@ import { Metadata } from "next";
 
 // 기본 SEO 설정
 export const defaultSEO = {
-  title: "DayStep - 나만의 할일 관리",
+  title: "일상투두 - 나만의 할일 관리",
   description:
     "할일을 관리하는 개인 생산성 앱. 할일 목록과 템플릿 보관함을 한 곳에서 체계적으로 관리하세요.",
   keywords:
-    "할일 관리, 생산성, 목표 관리, 템플릿, 보관함, todo, productivity",
-  author: "DayStep Team",
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://daystep.app",
+    "할일 관리, 생산성, 목표 관리, 템플릿, 보관함, todo, productivity, 일상투두, Ilsangtodo",
+  author: "일상투두 Team",
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://ilsangtodo.com",
   locale: "ko_KR",
 };
 
@@ -29,7 +29,7 @@ export function generateSEO({
   keywords?: string;
 }): Metadata {
   const seo = {
-    title: title ? `${title} - DayStep` : defaultSEO.title,
+    title: title ? `${title} - 일상투두` : defaultSEO.title,
     description: description || defaultSEO.description,
     keywords: keywords || defaultSEO.keywords,
   };
@@ -51,7 +51,7 @@ export function generateSEO({
       url,
       title: seo.title,
       description: seo.description,
-      siteName: "DayStep",
+      siteName: "일상투두",
       locale: defaultSEO.locale,
       images: [
         {
@@ -69,15 +69,15 @@ export function generateSEO({
       title: seo.title,
       description: seo.description,
       images: [imageUrl],
-      creator: "@daystep_app",
+      creator: "@ilsangtodo",
     },
 
     // 추가 메타 태그
     other: {
       "apple-mobile-web-app-capable": "yes",
       "apple-mobile-web-app-status-bar-style": "default",
-      "apple-mobile-web-app-title": "DayStep",
-      "application-name": "DayStep",
+      "apple-mobile-web-app-title": "일상투두",
+      "application-name": "일상투두",
       "mobile-web-app-capable": "yes",
       "msapplication-TileColor": "#2563eb",
       "theme-color": "#ffffff",
@@ -179,11 +179,11 @@ export function createJsonLd(structuredData: any) {
 export const pageStructuredData = {
   home: generateStructuredData("website"),
   todos: generateStructuredData("webapp", {
-    name: "할일 관리 - DayStep",
+    name: "할일 관리 - 일상투두",
     description: "체계적으로 할일을 관리하고 생산성을 높여보세요.",
   }),
   repository: generateStructuredData("webapp", {
-    name: "보관함 - DayStep",
+    name: "보관함 - 일상투두",
     description: "재사용 가능한 템플릿과 중요한 내용을 보관하고 관리하세요.",
   }),
 };

@@ -10,7 +10,7 @@ import { Mail, Lock, LogIn } from 'lucide-react';
  */
 export default function DemoLoginForm() {
   const { signInWithEmail, loading } = useAuth();
-  const [email, setEmail] = useState('demo@daystep.app');
+  const [email, setEmail] = useState('demo@ilsangtodo.com');
   const [password, setPassword] = useState('Demo2026!');
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +48,7 @@ export default function DemoLoginForm() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="demo@daystep.app"
+          placeholder="demo@ilsangtodo.com"
           className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           disabled={loading}
         />

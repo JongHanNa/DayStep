@@ -158,7 +158,7 @@ export default function ScrollProgressSection() {
           </h2>
           <p className="text-xl text-white/90 max-w-2xl mx-auto">
             집중이 어려운 날에도 괜찮아요.<br className="hidden sm:block" />
-            DayStep이 옆에서 함께할게요.
+            일상투두이 옆에서 함께할게요.
           </p>
         </motion.div>
 

@@ -3,28 +3,28 @@ import { generateStructuredData, createJsonLd, defaultSEO } from '@/lib/seo';
 
 // 랜딩 페이지 전용 메타데이터
 export const metadata: Metadata = {
-  title: 'DayStep - ADHD 친화적 할일 관리',
+  title: '일상투두 - ADHD 친화적 할일 관리',
   description:
     '실행과 집중에 최적화된 할일 관리 앱. 소중한 사람 챙기기, 복잡한 생각 정리까지. ADHD 성향이 있어도 복잡하지 않은 도구로 하루를 관리하세요.',
   keywords:
     'ADHD, 할일 관리, 생산성, 집중력, 실행 모드, 타이머, 일정 관리, 관계 관리, todo, productivity',
-  authors: [{ name: 'DayStep Team' }],
+  authors: [{ name: '일상투두 Team' }],
 
   // Open Graph
   openGraph: {
     type: 'website',
     url: `${defaultSEO.siteUrl}/landing`,
-    title: 'DayStep - ADHD 친화적 할일 관리',
+    title: '일상투두 - ADHD 친화적 할일 관리',
     description:
       '실행과 집중에 최적화된 할일 관리 앱. 소중한 사람 챙기기, 복잡한 생각 정리까지.',
-    siteName: 'DayStep',
+    siteName: '일상투두',
     locale: 'ko_KR',
     images: [
       {
         url: `${defaultSEO.siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: 'DayStep - ADHD 친화적 할일 관리',
+        alt: '일상투두 - ADHD 친화적 할일 관리',
       },
     ],
   },
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   // Twitter Card
   twitter: {
     card: 'summary_large_image',
-    title: 'DayStep - ADHD 친화적 할일 관리',
+    title: '일상투두 - ADHD 친화적 할일 관리',
     description:
       '실행과 집중에 최적화된 할일 관리 앱. 소중한 사람 챙기기, 복잡한 생각 정리까지.',
     images: [`${defaultSEO.siteUrl}/og-image.png`],
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'DayStep',
+  name: '일상투두',
   description:
     '실행과 집중에 최적화된 ADHD 친화적 할일 관리 앱. 소중한 사람 챙기기, 복잡한 생각 정리까지.',
   url: defaultSEO.siteUrl,
@@ -67,12 +67,12 @@ const structuredData = {
   browserRequirements: 'Requires JavaScript enabled',
   author: {
     '@type': 'Organization',
-    name: 'DayStep Team',
+    name: '일상투두 Team',
     url: defaultSEO.siteUrl,
   },
   publisher: {
     '@type': 'Organization',
-    name: 'DayStep Team',
+    name: '일상투두 Team',
   },
   offers: {
     '@type': 'Offer',

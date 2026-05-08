@@ -1,5 +1,5 @@
 /**
- * DayStep Animation Presets
+ * 일상투두 Animation Presets
  * 웹앱 appleMotion.ts → Reanimated v3 스프링 설정 포팅
  *
  * Reanimated withSpring config:

@@ -12,7 +12,7 @@ import {MicrotaskBreakdownSection} from '@/components/cleaning-adhd-info/Microta
 import {EnergyManagementSection} from '@/components/cleaning-adhd-info/EnergyManagementSection';
 import {RoutineAutomationSection} from '@/components/cleaning-adhd-info/RoutineAutomationSection';
 import {CleaningComparisonSection} from '@/components/cleaning-adhd-info/CleaningComparisonSection';
-import {DayStepApproachSection} from '@/components/cleaning-adhd-info/DayStepApproachSection';
+import {IlsangtodoApproachSection} from '@/components/cleaning-adhd-info/DayStepApproachSection';
 import {SourcesCitation} from '@/components/common/SourcesCitation';
 import {CLEANING_ADHD_SOURCES, CLEANING_ADHD_DISCLAIMER} from '@/constants/cleaning-adhd-info-data';
 
@@ -53,7 +53,7 @@ export default function CleaningADHDInfoScreen() {
         <EnergyManagementSection />
         <RoutineAutomationSection />
         <CleaningComparisonSection />
-        <DayStepApproachSection />
+        <IlsangtodoApproachSection />
         <SourcesCitation sources={CLEANING_ADHD_SOURCES} disclaimer={CLEANING_ADHD_DISCLAIMER} />
         <View style={{height: 60}} />
       </ScrollView>

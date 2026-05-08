@@ -74,7 +74,7 @@ export function ServiceWorkerProvider() {
 
   const showInstallNotification = () => {
     toast.success("앱이 오프라인에서도 사용 가능합니다!", {
-      description: "DayStep를 인터넷 연결 없이도 이용할 수 있어요.",
+      description: "일상투두를 인터넷 연결 없이도 이용할 수 있어요.",
       duration: 5000,
     });
   };
@@ -115,14 +115,14 @@ export function usePWAInstall() {
       console.log("[PWA] App installed successfully");
       deferredPrompt = null;
 
-      toast.success("DayStep가 설치되었습니다!", {
+      toast.success("일상투두가 설치되었습니다!", {
         description: "홈 화면에서 바로 앱을 실행할 수 있어요.",
         duration: 5000,
       });
     };
 
     const showInstallPrompt = () => {
-      toast.info("DayStep를 홈 화면에 추가하세요", {
+      toast.info("일상투두를 홈 화면에 추가하세요", {
         description: "앱처럼 빠르고 편리하게 이용할 수 있어요.",
         action: {
           label: "설치",

@@ -1,5 +1,5 @@
 /**
- * DayStep Color System
+ * 일상투두 Color System
  * 웹앱 9개 컬러 테마 포팅 + Calm Luxe 팔레트
  */
 

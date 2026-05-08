@@ -68,9 +68,9 @@ export function Navigation() {
             <Link
               href="/"
               className="touch-target text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-sm"
-              aria-label="DayStep 홈으로 이동"
+              aria-label="일상투두 홈으로 이동"
             >
-              DayStep
+              일상투두
             </Link>
           </div>
 

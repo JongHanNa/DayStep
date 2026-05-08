@@ -1,6 +1,6 @@
 {
   "name": "DayStepRN",
-  "displayName": "DayStepRN",
+  "displayName": "일상투두",
   "expo": {
     "entryPoint": "./index.js"
   }

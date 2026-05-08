@@ -2,7 +2,7 @@
  * AI Gateway Edge Function
  *
  * 멀티 AI 프로바이더 추상화 + Tool Use 오케스트레이션
- * DayStep 앱 내 AI 플래닝 기능을 위한 백엔드
+ * 일상투두 앱 내 AI 플래닝 기능을 위한 백엔드
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.52.0';

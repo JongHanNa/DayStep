@@ -12,7 +12,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        // DayStep brand colors
+        // 일상투두 brand colors
         primary: {
           50: '#EFF6FF',
           100: '#DBEAFE',

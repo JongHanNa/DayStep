@@ -8,17 +8,17 @@ export function getOpenApiSchema(baseUrl: string) {
   return {
     openapi: '3.0.3',
     info: {
-      title: 'DayStep API',
+      title: '일상투두 API',
       version: '1.0.0',
       description: 'ADHD 친화적 할일 관리 앱 API. ChatGPT Actions를 통해 할일을 관리할 수 있습니다.',
       contact: {
-        name: 'DayStep Support',
+        name: '일상투두 Support',
       },
     },
     servers: [
       {
         url: baseUrl,
-        description: 'DayStep MCP Server',
+        description: '일상투두 MCP Server',
       },
     ],
     paths: {

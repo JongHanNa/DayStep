@@ -1,5 +1,5 @@
 /**
- * DayStepApproachSection — DayStep 접근법 + 마무리 강조 메시지
+ * IlsangtodoApproachSection — 일상투두 접근법 + 마무리 강조 메시지
  */
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
@@ -9,7 +9,7 @@ import {hexWithOpacity} from '@/lib/todoUtils';
 import {DAYSTEP_APPROACH_DATA} from '@/constants/cleaning-adhd-info-data';
 import {sectionStyles} from '@/components/sleep-adhd-info/sectionStyles';
 
-export function DayStepApproachSection() {
+export function IlsangtodoApproachSection() {
   const {primaryColor} = useTheme();
 
   // 마지막 문단을 강조 박스로 표시

@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '환불 정책 - DayStep',
-  description: 'DayStep 서비스 환불 정책',
+  title: '환불 정책 - 일상투두',
+  description: '일상투두 서비스 환불 정책',
 };
 
 export default function RefundPage() {
@@ -67,7 +67,7 @@ export default function RefundPage() {
         </nav>
 
         <p className="text-gray-600 mb-8">
-          DayStep(이하 &quot;서비스&quot;)의 결제는 Paddle.com을 통해 처리됩니다.
+          일상투두(이하 &quot;서비스&quot;)의 결제는 Paddle.com을 통해 처리됩니다.
           본 환불 정책은 Paddle의 소비자 약관(Consumer Terms)을 따르며, 고객님의 권리를 보장합니다.
         </p>
 
@@ -77,7 +77,7 @@ export default function RefundPage() {
             1. 환불 정책 개요
           </h2>
           <p className="text-gray-600 mb-4">
-            DayStep의 유료 서비스(Pro 구독)에 대한 환불은 다음 원칙에 따라 처리됩니다.
+            일상투두의 유료 서비스(Pro 구독)에 대한 환불은 다음 원칙에 따라 처리됩니다.
           </p>
           <ul className="list-disc list-inside text-gray-600 space-y-2">
             <li>
@@ -137,7 +137,7 @@ export default function RefundPage() {
           </div>
 
           <p className="text-gray-600 mb-4">
-            DayStep Pro 구독의 경우, 서비스에 접속하여 Pro 기능을 사용하기 시작하면
+            일상투두 Pro 구독의 경우, 서비스에 접속하여 Pro 기능을 사용하기 시작하면
             디지털 콘텐츠 이용이 시작된 것으로 간주됩니다.
           </p>
 
@@ -324,7 +324,7 @@ export default function RefundPage() {
           <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
             <li>iPhone 설정 앱 열기</li>
             <li>상단의 Apple ID 탭</li>
-            <li>구독 → DayStep 선택</li>
+            <li>구독 → 일상투두 선택</li>
             <li>구독 취소</li>
           </ol>
 
@@ -334,7 +334,7 @@ export default function RefundPage() {
           <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
             <li>Google Play 스토어 앱 열기</li>
             <li>프로필 아이콘 → 결제 및 구독</li>
-            <li>구독 → DayStep 선택</li>
+            <li>구독 → 일상투두 선택</li>
             <li>구독 취소</li>
           </ol>
 
@@ -353,7 +353,7 @@ export default function RefundPage() {
             8. 결제 대행사 안내
           </h2>
           <p className="text-gray-600 mb-4">
-            DayStep의 결제는 <strong>Paddle.com Market Limited</strong>를 통해 처리됩니다.
+            일상투두의 결제는 <strong>Paddle.com Market Limited</strong>를 통해 처리됩니다.
           </p>
 
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
@@ -374,7 +374,7 @@ export default function RefundPage() {
           </div>
 
           <p className="text-gray-600">
-            Paddle은 DayStep의 공식 결제 대행사로서, 결제 처리, 영수증 발행,
+            Paddle은 일상투두의 공식 결제 대행사로서, 결제 처리, 영수증 발행,
             환불 처리를 담당합니다. 결제 관련 문의는 영수증 이메일에 포함된
             지원 링크를 통해 Paddle에 직접 문의하실 수도 있습니다.
           </p>

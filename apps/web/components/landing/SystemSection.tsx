@@ -56,7 +56,7 @@ const challenges = [
   },
 ];
 
-// DayStep 해결책 데이터
+// 일상투두 해결책 데이터
 const solutions = [
   {
     challenge: '시작이 어려워요',
@@ -200,7 +200,7 @@ export default function SystemSection() {
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full mb-4">
               <CheckCircle2 className="w-5 h-5 text-success" />
-              <span className="text-white font-medium">DayStep이 도와드릴게요</span>
+              <span className="text-white font-medium">일상투두이 도와드릴게요</span>
             </div>
             <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">
               당신의 일상을 함께 관리해요
@@ -256,7 +256,7 @@ export default function SystemSection() {
               ADHD가 있어도 일상을 잘 돌볼 수 있습니다.
               <br className="sm:hidden" />
               <span className="hidden sm:inline"> </span>
-              DayStep이 함께할게요.
+              일상투두이 함께할게요.
             </p>
           </motion.div>
         </div>

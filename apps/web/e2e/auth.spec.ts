@@ -10,7 +10,7 @@ test.describe("Authentication Flow", () => {
     page,
   }) => {
     // Check if the login page loads correctly
-    await expect(page).toHaveTitle(/DayStep/);
+    await expect(page).toHaveTitle(/일상투두/);
 
     // Check for login elements
     await expect(page.getByText("로그인")).toBeVisible();

@@ -92,7 +92,7 @@ export const NotificationPermissionModal: React.FC<
             </Button>
           </div>
           <DialogDescription>
-            DayStep에서 제공하는 스마트 알림을 받으시겠어요?
+            일상투두에서 제공하는 스마트 알림을 받으시겠어요?
           </DialogDescription>
         </DialogHeader>
 

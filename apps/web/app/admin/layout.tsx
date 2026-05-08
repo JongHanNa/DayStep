@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="bg-base-100 border-b border-base-300 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <span className="font-bold text-lg">DayStep Admin</span>
+              <span className="font-bold text-lg">일상투두 Admin</span>
               <nav className="flex items-center gap-1">
                 {NAV_ITEMS.map((item) => {
                   const isActive = item.href === '/admin'

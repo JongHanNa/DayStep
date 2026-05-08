@@ -188,7 +188,7 @@ export default function LoginScreen() {
             <Animated.Text
               entering={FadeIn.duration(800)}
               className="text-5xl font-bold text-gray-900 mb-2">
-              DayStep
+              일상투두
             </Animated.Text>
           </Pressable>
           <Animated.Text
