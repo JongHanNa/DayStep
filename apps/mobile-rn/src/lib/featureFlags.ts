@@ -3,6 +3,16 @@
  * (웹 apps/web/lib/featureFlags.ts 에서 포팅)
  */
 
+export const FEATURE_FLAGS = {
+  /**
+   * 결제/구독 기능 활성화 여부.
+   * false: 모든 사용자에게 Pro 기능 무료 개방, 구독/페이월 UI 비표시.
+   * true: 정상 구독 게이트 적용.
+   * 출시 초기 / Apple IAP 미준비 상태에서는 false.
+   */
+  PAYMENTS_ENABLED: false,
+} as const;
+
 export const FREE_TIER_LIMITS = {
   MAX_TODOS: 60,
   MAX_PROJECTS: 15,

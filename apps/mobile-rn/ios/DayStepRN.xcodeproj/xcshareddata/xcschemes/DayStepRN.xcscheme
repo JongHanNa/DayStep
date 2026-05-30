@@ -15,7 +15,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>
@@ -33,7 +33,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "DayStep.app"
+               BuildableName = "Ilsangtodo.app"
                BlueprintName = "DayStepRN"
                ReferencedContainer = "container:DayStepRN.xcodeproj">
             </BuildableReference>
@@ -61,7 +61,7 @@
             parallelizable = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A42366BE2F7296980054947D"
+               BlueprintIdentifier = "A423671F2F729E6E0054947D"
                BuildableName = "DayStepRNUITests.xctest"
                BlueprintName = "DayStepRNUITests"
                ReferencedContainer = "container:DayStepRN.xcodeproj">
@@ -89,7 +89,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>
@@ -102,7 +102,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "DayStep.app"
+            BuildableName = "Ilsangtodo.app"
             BlueprintName = "DayStepRN"
             ReferencedContainer = "container:DayStepRN.xcodeproj">
          </BuildableReference>
@@ -127,7 +127,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>
@@ -140,7 +140,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "DayStep.app"
+            BuildableName = "Ilsangtodo.app"
             BlueprintName = "DayStepRN"
             ReferencedContainer = "container:DayStepRN.xcodeproj">
          </BuildableReference>
@@ -162,7 +162,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>

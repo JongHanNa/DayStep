@@ -7,6 +7,7 @@ import {create} from 'zustand';
 import {persist, createJSONStorage} from 'zustand/middleware';
 import {supabase} from '@/lib/supabase';
 import {zustandMMKVStorage} from '@/lib/mmkv';
+import {FEATURE_FLAGS} from '@/lib/featureFlags';
 import {
   type SubscriptionStatus,
   type Platform,
@@ -216,6 +217,19 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         const isFreeProActive = !!(
           freeProUntil && new Date(freeProUntil).getTime() > Date.now()
         );
+
+        // PAYMENTS_ENABLED=false (앱 무료 운영기): 모든 사용자 자동 Pro
+        // 페이월/구독 UI 비표시는 컴포넌트 레벨에서 PAYMENTS_ENABLED로 처리
+        if (!FEATURE_FLAGS.PAYMENTS_ENABLED) {
+          set({
+            hasActiveSubscription: true,
+            isInTrial: false,
+            daysRemainingInTrial: null,
+            isFreeProActive: true,
+            ...graceUpdate,
+          });
+          return;
+        }
 
         // 관리자 강제 Pro 토글 — 다른 모든 로직보다 우선
         if (adminOverride) {

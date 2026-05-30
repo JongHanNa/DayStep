@@ -17,6 +17,7 @@ import {MiniDayPreview} from '@/components/subscription/MiniDayPreview';
 import {MiniThreeDayPreview} from '@/components/subscription/MiniThreeDayPreview';
 import {MiniWeekPreview} from '@/components/subscription/MiniWeekPreview';
 import {SubscriptionView} from '@/components/settings/SubscriptionView';
+import {FEATURE_FLAGS} from '@/lib/featureFlags';
 import {MonthlyFAB} from '@/components/monthly-planner';
 import {TodoFormBottomSheet, type TodoFormBottomSheetRef} from '@/components/todo/TodoFormBottomSheet';
 import {NativeDayTimeGridNative} from '@/components/native/NativeDayTimeGrid';
@@ -100,6 +101,7 @@ export default function PlannerScreen() {
   });
 
   const handleUpgrade = useCallback(() => {
+    if (!FEATURE_FLAGS.PAYMENTS_ENABLED) return;
     setShowPaywallModal(true);
   }, []);
 
@@ -595,17 +597,19 @@ export default function PlannerScreen() {
         <MonthlyFAB onPress={() => formSheetRef.current?.openCreate(selectedDate)} />
       )}
       <TodoFormBottomSheet ref={formSheetRef} />
-      <Modal
-        visible={showPaywallModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowPaywallModal(false)}>
-        <SafeAreaProvider>
-          <SubscriptionView
-            onBack={() => setShowPaywallModal(false)}
-          />
-        </SafeAreaProvider>
-      </Modal>
+      {FEATURE_FLAGS.PAYMENTS_ENABLED && (
+        <Modal
+          visible={showPaywallModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowPaywallModal(false)}>
+          <SafeAreaProvider>
+            <SubscriptionView
+              onBack={() => setShowPaywallModal(false)}
+            />
+          </SafeAreaProvider>
+        </Modal>
+      )}
     </ScreenContainer>
   );
 }

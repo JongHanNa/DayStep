@@ -15,7 +15,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>
@@ -33,7 +33,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "DayStep.app"
+               BuildableName = "Ilsangtodo.app"
                BlueprintName = "DayStepRN"
                ReferencedContainer = "container:DayStepRN.xcodeproj">
             </BuildableReference>
@@ -89,7 +89,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>
@@ -102,7 +102,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "DayStep.app"
+            BuildableName = "Ilsangtodo.app"
             BlueprintName = "DayStepRN"
             ReferencedContainer = "container:DayStepRN.xcodeproj">
          </BuildableReference>
@@ -127,7 +127,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>
@@ -140,7 +140,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "DayStep.app"
+            BuildableName = "Ilsangtodo.app"
             BlueprintName = "DayStepRN"
             ReferencedContainer = "container:DayStepRN.xcodeproj">
          </BuildableReference>
@@ -162,7 +162,23 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-                     BuildableName = "DayStep.app"
+                     BuildableName = "Ilsangtodo.app"
+                     BlueprintName = "DayStepRN"
+                     ReferencedContainer = "container:DayStepRN.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Bump Build Number"
+               scriptText = "cd &quot;$PROJECT_DIR&quot;&#10;/usr/bin/perl -i -pe &apos;s/CURRENT_PROJECT_VERSION = (\d+)/&quot;CURRENT_PROJECT_VERSION = &quot; . ($1+1)/ge&apos; DayStepRN.xcodeproj/project.pbxproj&#10;echo &quot;[Bump Build] CURRENT_PROJECT_VERSION incremented&quot;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+                     BuildableName = "Ilsangtodo.app"
                      BlueprintName = "DayStepRN"
                      ReferencedContainer = "container:DayStepRN.xcodeproj">
                   </BuildableReference>

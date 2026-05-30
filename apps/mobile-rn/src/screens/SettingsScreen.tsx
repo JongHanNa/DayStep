@@ -16,6 +16,7 @@ import {QAChecklistScreen} from '@/screens/admin/QAChecklistScreen';
 import {MarketingToolkitScreen} from '@/screens/admin/MarketingToolkitScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import Animated, {FadeIn} from 'react-native-reanimated';
+import {FEATURE_FLAGS} from '@/lib/featureFlags';
 
 type SettingsView =
   | 'main'
@@ -68,16 +69,18 @@ export default function SettingsScreen() {
         )}
       </ScreenContainer>
 
-      {/* 구독 관리 — Modal fullScreen */}
-      <Modal
-        visible={view === 'subscription'}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={goBack}>
-        <SafeAreaProvider>
-          <SubscriptionView onBack={goBack} />
-        </SafeAreaProvider>
-      </Modal>
+      {/* 구독 관리 — Modal fullScreen (결제 비활성 시 마운트 안 함) */}
+      {FEATURE_FLAGS.PAYMENTS_ENABLED && (
+        <Modal
+          visible={view === 'subscription'}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={goBack}>
+          <SafeAreaProvider>
+            <SubscriptionView onBack={goBack} />
+          </SafeAreaProvider>
+        </Modal>
+      )}
 
     </>
   );
