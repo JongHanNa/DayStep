@@ -32,6 +32,7 @@ import {
 import {useCalendarStore} from '@/stores/calendarStore';
 import {useSubscriptionStore, type SubscriptionStatus, type Platform} from '@/stores/subscriptionStore';
 import {useDailyCheckInStore} from '@/stores/dailyCheckInStore';
+import {FEATURE_FLAGS} from '@/lib/featureFlags';
 
 interface SettingsMainViewProps {
   onNavigate: (view: string) => void;
@@ -193,17 +194,19 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
               <User size={24} color={primaryColor} strokeWidth={1.5} />
             </View>
           )}
-          <View style={[
-            styles.crownBadge,
-            !hasActiveSubscription && styles.crownBadgeInactive,
-          ]}>
-            <Crown
-              size={10}
-              color={hasActiveSubscription ? '#92400E' : '#FFFFFF'}
-              strokeWidth={2.5}
-              fill={hasActiveSubscription ? '#FCD34D' : 'none'}
-            />
-          </View>
+          {FEATURE_FLAGS.PAYMENTS_ENABLED && (
+            <View style={[
+              styles.crownBadge,
+              !hasActiveSubscription && styles.crownBadgeInactive,
+            ]}>
+              <Crown
+                size={10}
+                color={hasActiveSubscription ? '#92400E' : '#FFFFFF'}
+                strokeWidth={2.5}
+                fill={hasActiveSubscription ? '#FCD34D' : 'none'}
+              />
+            </View>
+          )}
         </View>
         <View style={styles.accountInfo}>
           <Text style={styles.accountName}>{displayName}</Text>
@@ -212,8 +215,8 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
         <ChevronRight size={18} color="#9CA3AF" />
       </AnimatedCard>
 
-      {/* Grace Period 진행 중 배너 */}
-      {graceChecked && isInGracePeriod && !hasActiveSubscription && gracePeriodDaysRemaining > 0 && (
+      {/* Grace Period 진행 중 배너 (결제 비활성 시 숨김) */}
+      {FEATURE_FLAGS.PAYMENTS_ENABLED && graceChecked && isInGracePeriod && !hasActiveSubscription && gracePeriodDaysRemaining > 0 && (
         <AnimatedCard enterDelay={100} style={styles.graceBanner}>
           <View style={[styles.graceDot, {backgroundColor: primaryColor}]} />
           <View style={styles.graceBannerContent}>
@@ -225,8 +228,8 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
         </AnimatedCard>
       )}
 
-      {/* Grace Period 만료 배너 */}
-      {graceChecked && !isInGracePeriod && !hasActiveSubscription && (
+      {/* Grace Period 만료 배너 (결제 비활성 시 숨김) */}
+      {FEATURE_FLAGS.PAYMENTS_ENABLED && graceChecked && !isInGracePeriod && !hasActiveSubscription && (
         <AnimatedCard
           enterDelay={100}
           style={styles.graceExpiredBanner}
@@ -433,7 +436,8 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                     // 2. users 테이블도 함께 (다른 곳에서 has_active_subscription 사용하는 경우 일관성)
                     const {error} = await supabase.from('users').update({
                       has_active_subscription: value,
-                      subscription_type: value ? 'pro_monthly' : 'free',
+                      // PAYMENTS_ENABLED=false 시 'pro_monthly' 문자열 제거 — 재전환 시 원복
+                      subscription_type: value ? 'pro' : 'free',
                     }).eq('id', user.id);
                     if (error) throw error;
                     // 3. MMKV에 직접 저장 — zustand persist hydration timing과 무관하게
@@ -586,8 +590,8 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
         </Modal>
       )}
 
-      {/* 데모 계정용 구독 상태 전환 (관리자 메뉴 없이 토글만) */}
-      {isDemoAccount && !isAdmin && (
+      {/* 데모 계정용 구독 상태 전환 (결제 비활성 시 숨김) */}
+      {FEATURE_FLAGS.PAYMENTS_ENABLED && isDemoAccount && !isAdmin && (
         <>
           <Text style={styles.sectionTitle}>심사용 도구</Text>
           <View style={[styles.section, {marginBottom: 16}]}>
@@ -619,7 +623,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                             userId: user.id,
                             status: 'active' as SubscriptionStatus,
                             platform: 'ios' as Platform,
-                            productId: 'pro_monthly',
+                            productId: 'pro', // PAYMENTS_ENABLED=false: 원복 시 'pro_monthly'
                             subscriptionStartDate: new Date().toISOString(),
                             subscriptionEndDate: null,
                             trialStartDate: null,

@@ -11,14 +11,14 @@
 		01CC33DD44EE55FF66778899 /* NativeTodoPickerBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 01DD44EE55FF66778899AABB /* NativeTodoPickerBridge.m */; };
 		02AA11BB22CC33DD44EE55F6 /* NativeMotivationJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BB22CC33DD44EE55FF6677 /* NativeMotivationJournal.swift */; };
 		02CC33DD44EE55FF66778899 /* NativeMotivationJournalBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 02DD44EE55FF66778899AABB /* NativeMotivationJournalBridge.m */; };
+		03A711A6634CCE600EF8A599 /* NativeMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */; };
 		03AA11BB22CC33DD44EE55F6 /* NativeFeedbackEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03BB22CC33DD44EE55FF6677 /* NativeFeedbackEditor.swift */; };
 		03CC33DD44EE55FF66778899 /* NativeFeedbackEditorBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 03DD44EE55FF66778899AABB /* NativeFeedbackEditorBridge.m */; };
 		04AA11BB22CC33DD44EE55F6 /* NativeProjectForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04BB22CC33DD44EE55FF6677 /* NativeProjectForm.swift */; };
 		04CC33DD44EE55FF66778899 /* NativeProjectFormBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 04DD44EE55FF66778899AABB /* NativeProjectFormBridge.m */; };
+		051A3F3962BD4CA6AC7F4177 /* NativeUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* NativeUtils.swift */; };
 		05AA11BB22CC33DD44EE55F6 /* NativeAddPerson.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */; };
 		05CC33DD44EE55FF66778899 /* NativeAddPersonBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */; };
-		03A711A6634CCE600EF8A599 /* NativeMotivationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A6A9F20785788C781CC10EE /* NativeMotivationCard.swift */; };
-		051A3F3962BD4CA6AC7F4177 /* NativeUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735A184A2544A4E64A659FAF /* NativeUtils.swift */; };
 		0B3C275442CA372D372F51C4 /* NativeMotivationCardBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 42023738D1793F209AFDF171 /* NativeMotivationCardBridge.m */; };
 		117B8C9D0E1F2A3B4C5D6E7F /* NativeMenuBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 228C9D0E1F2A3B4C5D6E7F80 /* NativeMenuBridge.m */; };
 		124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */; };
@@ -32,7 +32,6 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */; };
 		9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */; };
-		A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D662F483FF800A4C1D8 /* StoreKit.framework */; };
 		A41F7D6F2F500A4C00A4C1D8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */; };
 		A41F7D712F500A4C00A4C1D8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */; };
 		A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -158,7 +157,7 @@
 		05BB22CC33DD44EE55FF6677 /* NativeAddPerson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeAddPerson.swift; path = DayStepRN/NativeModules/Form/NativeAddPerson.swift; sourceTree = "<group>"; };
 		05DD44EE55FF66778899AABB /* NativeAddPersonBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeAddPersonBridge.m; path = DayStepRN/NativeModules/Form/NativeAddPersonBridge.m; sourceTree = "<group>"; };
 		079876F8CC97D9070E6729CB /* NativeBackgroundBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = NativeBackgroundBridge.m; path = DayStepRN/DesignSystem/NativeBackgroundBridge.m; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* DevDayStep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevDayStep.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* Dev일상투두.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Dev일상투두.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = DayStepRN/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = DayStepRN/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = DayStepRN/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -182,7 +181,6 @@
 		9EEA7499BC65BF0DA97E5E45 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
 		A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DayStepRN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleanupAccordion.swift; path = DayStepRN/NativeModules/Sections/NativeCleanupAccordion.swift; sourceTree = "<group>"; };
-		A41F7D662F483FF800A4C1D8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = DayStepRN.entitlements; path = DayStepRN/DayStepRN.entitlements; sourceTree = "<group>"; };
 		A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepCalendarWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -349,7 +347,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A47606AD2F9177BD00375BC1 /* CallKit.framework in Frameworks */,
-				A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */,
 				124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -405,24 +402,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* DayStepRN */ = {
-			isa = PBXGroup;
-			children = (
-				761780EC2CA45674006654EE /* AppDelegate.swift */,
-				A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */,
-				13B07FB51A68108700A75B9A /* Images.xcassets */,
-				13B07FB61A68108700A75B9A /* Info.plist */,
-				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
-				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
-				D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */,
-				0991000010000000A1B20001 /* Intents */,
-				0991000010000000A1B20002 /* DesignSystem */,
-				0991000010000000A1B20003 /* NativeModules */,
-				0991000010000000A1B20009 /* Modules */,
-			);
-			name = DayStepRN;
-			sourceTree = "<group>";
-		};
 		0991000010000000A1B20001 /* Intents */ = {
 			isa = PBXGroup;
 			children = (
@@ -544,11 +523,28 @@
 			name = Modules;
 			sourceTree = "<group>";
 		};
+		13B07FAE1A68108700A75B9A /* DayStepRN */ = {
+			isa = PBXGroup;
+			children = (
+				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */,
+				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				13B07FB61A68108700A75B9A /* Info.plist */,
+				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
+				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				D1F2A3B42D0519FF00C4E5F6 /* Products.storekit */,
+				0991000010000000A1B20001 /* Intents */,
+				0991000010000000A1B20002 /* DesignSystem */,
+				0991000010000000A1B20003 /* NativeModules */,
+				0991000010000000A1B20009 /* Modules */,
+			);
+			name = DayStepRN;
+			sourceTree = "<group>";
+		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				A47606AC2F9177BD00375BC1 /* CallKit.framework */,
-				A41F7D662F483FF800A4C1D8 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */,
 				A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */,
@@ -594,7 +590,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* DevDayStep.app */,
+				13B07F961A680F5B00A75B9A /* Dev일상투두.app */,
 				A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */,
 				A43C01062F6CB890001C082C /* ActivityMonitorExtension.appex */,
 				A43C011B2F6CB8BC001C082C /* ShieldConfiguration.appex */,
@@ -658,7 +654,7 @@
 			);
 			name = DayStepRN;
 			productName = DayStepRN;
-			productReference = 13B07F961A680F5B00A75B9A /* DevDayStep.app */;
+			productReference = 13B07F961A680F5B00A75B9A /* Dev일상투두.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A41F7D6C2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension */ = {
@@ -1145,7 +1141,7 @@
 				CODE_SIGN_ENTITLEMENTS = DayStepRN/DayStepRN.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = DayStepRN/Info.plist;
@@ -1154,7 +1150,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1162,7 +1158,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.dev;
-				PRODUCT_NAME = DevDayStep;
+				PRODUCT_NAME = DevIlsangtodo;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
 				SWIFT_OBJC_BRIDGING_HEADER = "DayStepRN/DayStepRN-Bridging-Header.h";
@@ -1181,7 +1177,7 @@
 				CODE_SIGN_ENTITLEMENTS = DayStepRN/DayStepRN.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				INFOPLIST_FILE = DayStepRN/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -1189,7 +1185,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1197,7 +1193,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app;
-				PRODUCT_NAME = DayStep;
+				PRODUCT_NAME = Ilsangtodo;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.com.daystep.app;
 				SWIFT_OBJC_BRIDGING_HEADER = "DayStepRN/DayStepRN-Bridging-Header.h";
@@ -1369,7 +1365,7 @@
 				CODE_SIGN_ENTITLEMENTS = DayStepCalendarWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1385,7 +1381,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -1420,7 +1416,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1436,7 +1432,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.DayStepCalendarWidget;
@@ -1464,7 +1460,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1472,7 +1468,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -1502,7 +1498,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1510,7 +1506,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = jhn.DayStepRNUITests;
@@ -1539,7 +1535,7 @@
 				CODE_SIGN_ENTITLEMENTS = ActivityMonitorExtension/ActivityMonitorExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1555,7 +1551,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -1588,7 +1584,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1604,7 +1600,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ActivityMonitorExtension;
@@ -1634,7 +1630,7 @@
 				CODE_SIGN_ENTITLEMENTS = ShieldConfiguration/ShieldConfiguration.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1650,7 +1646,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -1683,7 +1679,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1699,7 +1695,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ShieldConfiguration;
@@ -1729,7 +1725,7 @@
 				CODE_SIGN_ENTITLEMENTS = ShieldAction/ShieldAction.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1745,7 +1741,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -1778,7 +1774,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1794,7 +1790,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.ShieldAction;
@@ -1824,7 +1820,7 @@
 				CODE_SIGN_ENTITLEMENTS = DayStepShareExtension/DayStepShareExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1840,7 +1836,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
@@ -1872,7 +1868,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1888,7 +1884,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				MTL_FAST_MATH = YES;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.daystep.app.DayStepShareExtension;

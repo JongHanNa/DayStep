@@ -2,7 +2,7 @@
 # DayStep 포트폴리오 스크린샷 및 데모 GIF 이동 스크립트
 # Chrome 다운로드 폴더에서 프로젝트 폴더로 파일을 이동합니다.
 #
-# 사용법: cd /Users/jonghanna/workspace/inputserver_myMac/DayStep && bash move_screenshots.sh
+# 사용법: cd /Users/jonghanna/workspace/inputserver_myMac/ilsangtodo && bash move_screenshots.sh
 
 DOWNLOADS="$HOME/Downloads"
 SCREENSHOTS_DIR="./portfolio_screenshots"

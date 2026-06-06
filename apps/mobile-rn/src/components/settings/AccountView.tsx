@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import {showManageSubscriptions} from '@/lib/revenueCat';
 import {AnimatedPressable} from '@/components/core';
+import {FEATURE_FLAGS} from '@/lib/featureFlags';
 
 interface AccountViewProps {
   onBack: () => void;
@@ -50,6 +51,10 @@ export function AccountView({onBack}: AccountViewProps) {
 
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
+
+  // 결제/구독 기능 비활성(무료 운영) 시 구독 관련 UI를 모두 숨긴다.
+  // (App Store 심사: 앱 내 구독 참조가 있으면 IAP 제출 요구됨)
+  const paymentsEnabled = FEATURE_FLAGS.PAYMENTS_ENABLED;
 
   const avatarUrl = user?.user_metadata?.avatar_url;
   const displayName =
@@ -152,31 +157,35 @@ export function AccountView({onBack}: AccountViewProps) {
                 <User size={32} color={primaryColor} strokeWidth={1.5} />
               </View>
             )}
-            <View
-              style={[
-                styles.crownBadge,
-                !hasActiveSubscription && styles.crownBadgeInactive,
-              ]}>
-              <Crown
-                size={10}
-                color={hasActiveSubscription ? '#92400E' : '#FFFFFF'}
-                strokeWidth={2.5}
-                fill={hasActiveSubscription ? '#FCD34D' : 'none'}
-              />
-            </View>
+            {paymentsEnabled && (
+              <View
+                style={[
+                  styles.crownBadge,
+                  !hasActiveSubscription && styles.crownBadgeInactive,
+                ]}>
+                <Crown
+                  size={10}
+                  color={hasActiveSubscription ? '#92400E' : '#FFFFFF'}
+                  strokeWidth={2.5}
+                  fill={hasActiveSubscription ? '#FCD34D' : 'none'}
+                />
+              </View>
+            )}
           </View>
           <Text style={styles.name}>{displayName}</Text>
           <Text style={styles.email}>{user?.email ?? ''}</Text>
-          <View style={styles.statusRow}>
-            <View
-              style={[styles.statusDot, {backgroundColor: getStatusColor()}]}
-            />
-            <Text style={styles.statusText}>{getStatusText()}</Text>
-          </View>
+          {paymentsEnabled && (
+            <View style={styles.statusRow}>
+              <View
+                style={[styles.statusDot, {backgroundColor: getStatusColor()}]}
+              />
+              <Text style={styles.statusText}>{getStatusText()}</Text>
+            </View>
+          )}
         </AnimatedCard>
 
-        {/* 구독 관리 */}
-        {hasActiveSubscription && (
+        {/* 구독 관리 — 결제 활성 + 구독 중일 때만 */}
+        {paymentsEnabled && hasActiveSubscription && (
           <AnimatedCard
             enterDelay={50}
             style={styles.actionCard}
@@ -187,53 +196,57 @@ export function AccountView({onBack}: AccountViewProps) {
           </AnimatedCard>
         )}
 
-        {/* 주문 내역 */}
-        <Text style={styles.sectionTitle}>
-          {ordersLoading
-            ? '주문 내역'
-            : orders.length > 0
-            ? `${orders.length}건의 주문`
-            : '주문 내역'}
-        </Text>
+        {/* 주문 내역 — 결제 활성 시에만 표시 */}
+        {paymentsEnabled && (
+          <>
+            <Text style={styles.sectionTitle}>
+              {ordersLoading
+                ? '주문 내역'
+                : orders.length > 0
+                ? `${orders.length}건의 주문`
+                : '주문 내역'}
+            </Text>
 
-        {ordersLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#9CA3AF" />
-          </View>
-        ) : orders.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>주문 내역이 없습니다</Text>
-          </View>
-        ) : (
-          orders.map((order, idx) => (
-            <AnimatedCard
-              key={order.id}
-              enterDelay={100 + idx * 30}
-              style={styles.orderCard}>
-              <View style={styles.orderHeader}>
-                <Text style={styles.orderDate}>
-                  {formatDate(order.created_at)}
-                </Text>
-                <Text style={styles.orderEvent}>
-                  {getEventLabel(order.event_type)}
-                </Text>
+            {ordersLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#9CA3AF" />
               </View>
-              {order.product_id && (
-                <Text style={styles.orderProduct}>
-                  {getProductLabel(order.product_id)}
-                </Text>
-              )}
-              {order.platform && (
-                <Text style={styles.orderPlatform}>
-                  {order.platform === 'ios'
-                    ? 'App Store'
-                    : order.platform === 'web'
-                    ? 'Paddle'
-                    : order.platform}
-                </Text>
-              )}
-            </AnimatedCard>
-          ))
+            ) : orders.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>주문 내역이 없습니다</Text>
+              </View>
+            ) : (
+              orders.map((order, idx) => (
+                <AnimatedCard
+                  key={order.id}
+                  enterDelay={100 + idx * 30}
+                  style={styles.orderCard}>
+                  <View style={styles.orderHeader}>
+                    <Text style={styles.orderDate}>
+                      {formatDate(order.created_at)}
+                    </Text>
+                    <Text style={styles.orderEvent}>
+                      {getEventLabel(order.event_type)}
+                    </Text>
+                  </View>
+                  {order.product_id && (
+                    <Text style={styles.orderProduct}>
+                      {getProductLabel(order.product_id)}
+                    </Text>
+                  )}
+                  {order.platform && (
+                    <Text style={styles.orderPlatform}>
+                      {order.platform === 'ios'
+                        ? 'App Store'
+                        : order.platform === 'web'
+                        ? 'Paddle'
+                        : order.platform}
+                    </Text>
+                  )}
+                </AnimatedCard>
+              ))
+            )}
+          </>
         )}
 
       </ScrollView>

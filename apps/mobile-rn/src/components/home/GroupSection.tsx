@@ -13,6 +13,7 @@ import Animated, {
 import {AnimatedPressable} from '@/components/core';
 import {Crown} from 'lucide-react-native';
 import {useTheme} from '@/theme';
+import {FEATURE_FLAGS} from '@/lib/featureFlags';
 import {NativeGroupSectionNative, isIOS26Plus} from '@/components/native';
 import {springs} from '@/theme/animations';
 import {useResponsiveLayout} from '@/hooks/useResponsiveLayout';
@@ -173,8 +174,8 @@ export function GroupSection({
                 borderWidth: 1,
                 borderColor: '#F3F4F6',
               }}>
-              {/* PRO 배지 */}
-              {item.isPro && (
+              {/* PRO 배지 (결제 비활성 시 숨김) */}
+              {Boolean(FEATURE_FLAGS.PAYMENTS_ENABLED && item.isPro) && (
                 <View
                   style={{
                     position: 'absolute',

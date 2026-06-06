@@ -78,6 +78,14 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// 릴리스 서명 정보는 git에 포함되지 않는 keystore.properties에서 로드
+// (파일 위치: apps/mobile-rn/android/keystore.properties)
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -91,8 +99,8 @@ android {
         applicationId "com.daystep.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "1.0.4"
+        versionCode 7
+        versionName "1.0.5"
         resValue "string", "build_config_package", "com.daysteprn"
     }
     signingConfigs {
@@ -103,10 +111,12 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('upload-keystore.jks')
-            storePassword '***REMOVED_FROM_HISTORY***'
-            keyAlias 'upload'
-            keyPassword '***REMOVED_FROM_HISTORY***'
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['UPLOAD_STORE_FILE'] ?: 'upload-keystore.jks')
+                storePassword keystoreProperties['UPLOAD_STORE_PASSWORD']
+                keyAlias keystoreProperties['UPLOAD_KEY_ALIAS']
+                keyPassword keystoreProperties['UPLOAD_KEY_PASSWORD']
+            }
         }
     }
     buildTypes {
