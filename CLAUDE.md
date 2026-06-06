@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 정보
 
-**저장소**: DayStep - 성인 ADHD 일상 관리 시스템
+**저장소**: 일상투도(ilsangtodo) - 성인 ADHD 일상 관리 시스템
 **배포**: 웹 (Vercel) + Desktop (Electron) + React Native (iOS/Android)
 → [앱 철학 상세](docs/APP_PHILOSOPHY.md)
 
 ## 모노레포 구조 (Turborepo + npm Workspaces)
 
 ```
-DayStep/
+ilsangtodo/
   turbo.json
   package.json                 (루트: workspaces 설정)
   apps/
@@ -72,19 +72,19 @@ DayStep/
 ## 환경 설정
 
 **환경 파일 분리** (apps/web/ 디렉터리 내):
-- `.env.development` → 개발 DB (DayStep)
-- `.env.production` → 프로덕션 DB (DayStep Production)
+- `.env.development` → 개발 DB (일상투도)
+- `.env.production` → 프로덕션 DB (일상투도 Production)
 
 **BUILD_TARGET**: `web` (기본), `electron`
 
 **Vercel 배포**:
 - Vercel 루트 디렉터리: 프로젝트 루트 (vercel.json에서 buildCommand로 apps/web 지정)
-- **Production**: main 브랜치 → 프로덕션 DB → `daystep.app`
+- **Production**: main 브랜치 → 프로덕션 DB → `ilsangtodo.com`
 - **Preview**: develop/feature 브랜치 → 개발 DB → 자동 생성 URL
 
 ## MCP 서버
 
-### DayStep MCP 서버 배포
+### 일상투도(ilsangtodo) MCP 서버 배포
 
 ```bash
 npx supabase functions deploy mcp-server --project-ref <PROJECT_REF> --no-verify-jwt
