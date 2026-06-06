@@ -32,7 +32,6 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		899DF060AF3CFD6F3D09A603 /* NativeGroupSectionBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 960611B77EE6B4C0F01B935A /* NativeGroupSectionBridge.m */; };
 		9F99651CB32F4771008AE730 /* NativeContactNudgeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 9CA8017E4753A74AB266F1D8 /* NativeContactNudgeBridge.m */; };
-		A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D662F483FF800A4C1D8 /* StoreKit.framework */; };
 		A41F7D6F2F500A4C00A4C1D8 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */; };
 		A41F7D712F500A4C00A4C1D8 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */; };
 		A41F7D822F500A4E00A4C1D8 /* DayStepCalendarWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -182,7 +181,6 @@
 		9EEA7499BC65BF0DA97E5E45 /* Pods-DayStepRN.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DayStepRN.debug.xcconfig"; path = "Target Support Files/Pods-DayStepRN/Pods-DayStepRN.debug.xcconfig"; sourceTree = "<group>"; };
 		A0692CA8D4F364733F4A9B4E /* libPods-DayStepRN.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-DayStepRN.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* NativeCleanupAccordion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NativeCleanupAccordion.swift; path = DayStepRN/NativeModules/Sections/NativeCleanupAccordion.swift; sourceTree = "<group>"; };
-		A41F7D662F483FF800A4C1D8 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		A41F7D682F5009AD00A4C1D8 /* DayStepRN.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = DayStepRN.entitlements; path = DayStepRN/DayStepRN.entitlements; sourceTree = "<group>"; };
 		A41F7D6D2F500A4C00A4C1D8 /* DayStepCalendarWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayStepCalendarWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -349,7 +347,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A47606AD2F9177BD00375BC1 /* CallKit.framework in Frameworks */,
-				A41F7D672F483FF800A4C1D8 /* StoreKit.framework in Frameworks */,
 				124248F544644EE02F3DF050 /* libPods-DayStepRN.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -548,7 +545,6 @@
 			isa = PBXGroup;
 			children = (
 				A47606AC2F9177BD00375BC1 /* CallKit.framework */,
-				A41F7D662F483FF800A4C1D8 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				A41F7D6E2F500A4C00A4C1D8 /* WidgetKit.framework */,
 				A41F7D702F500A4C00A4C1D8 /* SwiftUI.framework */,
@@ -1145,7 +1141,7 @@
 				CODE_SIGN_ENTITLEMENTS = DayStepRN/DayStepRN.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = DayStepRN/Info.plist;
@@ -1181,7 +1177,7 @@
 				CODE_SIGN_ENTITLEMENTS = DayStepRN/DayStepRN.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				INFOPLIST_FILE = DayStepRN/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -1369,7 +1365,7 @@
 				CODE_SIGN_ENTITLEMENTS = DayStepCalendarWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1420,7 +1416,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1464,7 +1460,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1502,7 +1498,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1539,7 +1535,7 @@
 				CODE_SIGN_ENTITLEMENTS = ActivityMonitorExtension/ActivityMonitorExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1588,7 +1584,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1634,7 +1630,7 @@
 				CODE_SIGN_ENTITLEMENTS = ShieldConfiguration/ShieldConfiguration.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1683,7 +1679,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1729,7 +1725,7 @@
 				CODE_SIGN_ENTITLEMENTS = ShieldAction/ShieldAction.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1778,7 +1774,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5SSJ3GPKAR;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;

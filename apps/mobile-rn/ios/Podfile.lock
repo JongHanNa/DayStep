@@ -219,8 +219,6 @@ PODS:
     - SocketRocket
     - Yoga
   - PromisesObjC (2.4.0)
-  - PurchasesHybridCommon (17.31.0):
-    - RevenueCat (= 5.57.0)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -2900,7 +2898,6 @@ PODS:
     - SocketRocket
   - ReactNativeDeviceActivity (0.6.1):
     - ExpoModulesCore
-  - RevenueCat (5.57.0)
   - RNAppleAuthentication (2.5.1):
     - React-Core
   - RNCAsyncStorage (2.2.0):
@@ -3076,9 +3073,6 @@ PODS:
     - React-Core
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
-    - React-Core
-  - RNPurchases (9.7.6):
-    - PurchasesHybridCommon (= 17.31.0)
     - React-Core
   - RNReactNativeHapticFeedback (2.3.3):
     - boost
@@ -3519,7 +3513,6 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../../../node_modules/@react-native-google-signin/google-signin`)"
   - RNLocalize (from `../../../node_modules/react-native-localize`)
   - "RNNotifee (from `../../../node_modules/@notifee/react-native`)"
-  - RNPurchases (from `../../../node_modules/react-native-purchases`)
   - RNReactNativeHapticFeedback (from `../../../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../../../node_modules/react-native-reanimated`)
   - RNScreens (from `../../../node_modules/react-native-screens`)
@@ -3540,8 +3533,6 @@ SPEC REPOS:
     - MMKV
     - MMKVCore
     - PromisesObjC
-    - PurchasesHybridCommon
-    - RevenueCat
     - SocketRocket
     - SwiftUIIntrospect
 
@@ -3761,8 +3752,6 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/react-native-localize"
   RNNotifee:
     :path: "../../../node_modules/@notifee/react-native"
-  RNPurchases:
-    :path: "../../../node_modules/react-native-purchases"
   RNReactNativeHapticFeedback:
     :path: "../../../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -3802,7 +3791,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  hermes-engine: 98d02f60a14b782c6e6c3fcee6793277080abccc
+  hermes-engine: 5797f526c43d83aa7a4f5892d7c3a08ae0ae507d
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: 691b8363e8c591fb78a78254ff2517258891456b
   MMKV: 1a8e7dbce7f9cad02c52e1b1091d07bd843aefaf
@@ -3810,7 +3799,6 @@ SPEC CHECKSUMS:
   NitroMmkv: 0be91455465952f2b943f753b9ee7df028d89e5c
   NitroModules: d0e5470ab0c26d531ee75be456cd77ddde9be7de
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  PurchasesHybridCommon: 21a11c5d66c8a52cf9aede45cecc2efe1551b98b
   RCT-Folly: 846fda9475e61ec7bcbf8a3fe81edfcaeb090669
   RCTDeprecation: a41bbdd9af30bf2e5715796b313e44ec43eefff1
   RCTRequired: 7be34aabb0b77c3cefe644528df0fa0afad4e4d0
@@ -3887,7 +3875,6 @@ SPEC CHECKSUMS:
   ReactCodegen: b8e56b780fffe6edd6405be0af4a1e3049a937f7
   ReactCommon: ac934cb340aee91282ecd6f273a26d24d4c55cae
   ReactNativeDeviceActivity: ddf3bbd29889bd8d4b51370408c35d3f3de18f63
-  RevenueCat: 2d8aa56c68fa8e92c0d669e5e797c4a93e284f20
   RNAppleAuthentication: a89c9804592b38ed4ab11f0aee68d05ba12ad432
   RNCAsyncStorage: 29f0230e1a25f36c20b05f65e2eb8958d6526e82
   RNCClipboard: 4b58c780f63676367640f23c8e114e9bd0cf86ac
@@ -3896,7 +3883,6 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 4122717989e2544988cb4cec3e917da3ebc969a5
   RNLocalize: 1aedbc2c15073861a364174919d23c31c5924b16
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
-  RNPurchases: 462fb7edb0304dba1db46e3d38368a271ebe4cc2
   RNReactNativeHapticFeedback: be4f1b4bf0398c30b59b76ed92ecb0a2ff3a69c6
   RNReanimated: b84b4a747d27faeda5f34dd1e222bd335fa4cba9
   RNScreens: afaf526a9c804c3b4503f950cf3e67ed81e29ada

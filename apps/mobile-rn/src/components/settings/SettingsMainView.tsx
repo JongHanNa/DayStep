@@ -436,7 +436,8 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                     // 2. users 테이블도 함께 (다른 곳에서 has_active_subscription 사용하는 경우 일관성)
                     const {error} = await supabase.from('users').update({
                       has_active_subscription: value,
-                      subscription_type: value ? 'pro_monthly' : 'free',
+                      // PAYMENTS_ENABLED=false 시 'pro_monthly' 문자열 제거 — 재전환 시 원복
+                      subscription_type: value ? 'pro' : 'free',
                     }).eq('id', user.id);
                     if (error) throw error;
                     // 3. MMKV에 직접 저장 — zustand persist hydration timing과 무관하게
@@ -622,7 +623,7 @@ export function SettingsMainView({onNavigate}: SettingsMainViewProps) {
                             userId: user.id,
                             status: 'active' as SubscriptionStatus,
                             platform: 'ios' as Platform,
-                            productId: 'pro_monthly',
+                            productId: 'pro', // PAYMENTS_ENABLED=false: 원복 시 'pro_monthly'
                             subscriptionStartDate: new Date().toISOString(),
                             subscriptionEndDate: null,
                             trialStartDate: null,
