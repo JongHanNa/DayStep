@@ -117,3 +117,5 @@ apps/desktop/dist/
 # Task files
 # tasks.json
 # tasks/
+apps/mobile-rn/android/keystore.properties
+apps/mobile-rn/android/app/upload-keystore.jks
